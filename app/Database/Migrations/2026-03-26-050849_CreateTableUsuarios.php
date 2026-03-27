@@ -19,6 +19,7 @@ class CreateTableUsuarios extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
                 'null' => false,
+                'unsigned' => true,
             ]
         ]);
         $this->forge->addKey('id_usuario', true);

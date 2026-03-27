@@ -9,7 +9,7 @@ class CreateTableTipoEventos extends Migration
     public function up()
     {
         //
-        $this->forge->addFields([
+        $this->forge->addField([
             'id_tipo_evento' => [
                 'type' => 'INT',
                 'constraint' => 11,
@@ -22,6 +22,8 @@ class CreateTableTipoEventos extends Migration
                 'null' => false,
             ]
         ]);
+        $this->forge->addKey('id_tipo_evento', true);
+        $this->forge->createTable('tipo_eventos');
     }
 
     public function down()
@@ -30,3 +32,4 @@ class CreateTableTipoEventos extends Migration
         $this->forge->dropTable('tipo_eventos');
     }
 }
+

@@ -59,7 +59,7 @@ class CreateTablaPersonas extends Migration
         // Constraints for the table Personas:
         $this->forge->addKey('id_persona', true);
         $this->forge->addUniqueKey('telefono_persona');
-        $this->forge->addUniqueKey('correo_persona');
+        $this->forge->addUniqueKey('email_persona');
         $this->forge->createTable('personas');
     }
 

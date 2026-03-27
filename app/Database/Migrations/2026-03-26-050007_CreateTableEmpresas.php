@@ -8,7 +8,7 @@ class CreateTableEmpresas extends Migration
 {
     public function up()
     {
-        $this->forge->addFields([
+        $this->forge->addField([
            'id_empresa'          => [
                'type'           => 'INT',
                'constraint'     => 11,
