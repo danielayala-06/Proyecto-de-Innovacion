@@ -60,7 +60,7 @@ class CreateTablaPersonas extends Migration
         $this->forge->addKey('id_persona', true);
         $this->forge->addUniqueKey('telefono_persona');
         $this->forge->addUniqueKey('email_persona');
-        $this->forge->createTable('personas');
+        $this->forge->createTable('personas', true);
     }
 
     /**

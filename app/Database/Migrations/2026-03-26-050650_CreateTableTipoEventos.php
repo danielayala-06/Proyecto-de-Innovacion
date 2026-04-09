@@ -23,7 +23,7 @@ class CreateTableTipoEventos extends Migration
             ]
         ]);
         $this->forge->addKey('id_tipo_evento', true);
-        $this->forge->createTable('tipo_eventos');
+        $this->forge->createTable('tipo_eventos', true);
     }
 
     public function down()

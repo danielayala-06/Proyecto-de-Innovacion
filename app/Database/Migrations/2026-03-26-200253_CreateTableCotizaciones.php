@@ -53,13 +53,13 @@ class CreateTableCotizaciones extends Migration
             ],
             'latitud'=>[
                 'type'              => 'DECIMAL',
-                'constraint'        => 8.6,
+                'constraint'        => '8,6',
                 'unsigned'          => false,
                 'null'              => true,  
             ],
-            'longintud'=>[
+            'longitud'=>[
                 'type'              => 'DECIMAL',
-                'constraint'        => 8.6,
+                'constraint'        => '8,6',
                 'unsigned'          => false,
                 'null'              => true,
             ]
@@ -94,6 +94,6 @@ class CreateTableCotizaciones extends Migration
 
     public function down()
     {
-        //
+        $this->forge->dropTable('cotizaciones');
     }
 }

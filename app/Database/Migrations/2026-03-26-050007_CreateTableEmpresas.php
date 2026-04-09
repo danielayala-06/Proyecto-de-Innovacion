@@ -28,7 +28,7 @@ class CreateTableEmpresas extends Migration
         ]);
         $this->forge->addKey('id_empresa', true);
         $this->forge->addUniqueKey('ruc');
-        $this->forge->createTable('empresas');
+        $this->forge->createTable('empresas', true);
     }
 
     public function down()

@@ -24,6 +24,7 @@ class ServiciosContratados extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
+                'null' => false,
             ],
             'cantidad' =>[
                 'type' => 'TINYINT',
@@ -40,7 +41,7 @@ class ServiciosContratados extends Migration
         ]);
 
         // PRIMARY KEY
-        $this->forge->addKey('id_servicio_contratado', true);
+        $this->forge->addPrimaryKey('id_servicio_contratado');
 
         // FORANEA con la TABLA SERVICIOS
         $this->forge->addForeignKey('id_servicio', 'servicios', 'id_servicio');
@@ -49,7 +50,7 @@ class ServiciosContratados extends Migration
         $this->forge->addForeignKey('id_cotizacion', 'cotizaciones', 'id_cotizacion');
 
         //
-        $this->forge->createTable('servicios_contratados');
+        $this->forge->createTable('servicios_contratados', true);
     }
 
     public function down()

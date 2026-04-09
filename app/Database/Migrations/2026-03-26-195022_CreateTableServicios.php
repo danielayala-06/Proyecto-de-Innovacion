@@ -9,22 +9,23 @@ class CreateTableServicios extends Migration
     public function up()
     {
         $this->forge->addField([
-            'id_servicios'=>[
+            'id_servicio'=>[
                 'type'              => 'INT',
                 'constraint'        => 11,
+                'unsigned'          => true,
                 'auto_increment'    => true,
                 'null'              => false
             ],
             'nombre' =>[
                 'type'              => 'VARCHAR',
-                'constraint'        => '50',
+                'constraint'        => 50,
                 'null'              => false
             ]
         ]);
 
-        $this->forge->addKey('id_servicios', true);
+        $this->forge->addPrimaryKey('id_servicio');
 
-        $this->forge->createTable('servicios');
+        $this->forge->createTable('servicios', true);
 
     }
 

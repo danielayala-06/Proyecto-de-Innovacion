@@ -24,11 +24,11 @@ class CreateTableUsuarios extends Migration
         ]);
         $this->forge->addKey('id_usuario', true);
         $this->forge->addForeignKey('id_persona', 'personas', 'id_persona');
-        $this->forge->createTable('usuarios');
+        $this->forge->createTable('usuarios', true);
     }
 
     public function down()
     {
-        //
+        $this->forge->dropTable('usuarios');
     }
 }
