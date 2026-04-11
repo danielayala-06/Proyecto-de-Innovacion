@@ -7,7 +7,7 @@ use CodeIgniter\Database\Migration;
 class ServiciosContratados extends Migration
 {
     public function up()
-    {
+    {/*
         $this->forge->addField([
            'id_servicio_contratado' => [
                'type' => 'INT',
@@ -50,7 +50,7 @@ class ServiciosContratados extends Migration
         $this->forge->addForeignKey('id_cotizacion', 'cotizaciones', 'id_cotizacion');
 
         //
-        $this->forge->createTable('servicios_contratados', true);
+        $this->forge->createTable('servicios_contratados', true);*/
     }
 
     public function down()
