@@ -33,7 +33,7 @@ php spark migrate
 ```
 Semillas:
 ```bash
-php spark db:seed CotizacionesPruebas
+php spark db:seed DatabaseSeeder
 ```
 
 ## Ejecucion
