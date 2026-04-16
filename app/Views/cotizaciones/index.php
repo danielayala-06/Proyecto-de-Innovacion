@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+<?= $header ?>
+<h1>Si funcionoooo</h1>
+<?= $footer ?>
+=======
 <?= $header?>
 
 <!-- SECCIÓN COTIZACIONES -->
@@ -68,3 +73,4 @@
 </section>
 
 <?= $footer?>
+>>>>>>> 0fafb9b635853e892959eca9cf09354dd25a735e
