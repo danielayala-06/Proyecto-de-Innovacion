@@ -29,32 +29,32 @@
     <nav>
         <ul class="nav flex-column gap-1">
             <li class="nav-item">
-                <a href="<?=base_url('/')?>" class="nav-link active" onclick="setActive(this); return false;">
+                <a href="<?=base_url('/')?>" class="nav-link active" id="url_home">
                     <i class="bi bi-house"></i> Inicio
                 </a>
             </li>
             <li class="nav-item">
-                <a href="<?=base_url('/cotizacion')?>" class="nav-link" onclick="setActive(this); return false;">
+                <a href="<?=base_url('/cotizaciones')?>" class="nav-link" id="url_cotizacion">
                     <i class="bi bi-file-earmark-text"></i> Cotizacion
                 </a>
             </li>
             <li class="nav-item">
-                <a href="<?=base_url('/contratos')?>" class="nav-link" onclick="setActive(this); return false;">
+                <a href="<?=base_url('/contratos')?>" class="nav-link" id="url_contrato">
                     <i class="bi bi-file-earmark-text"></i> Contratos
                 </a>
             </li>
             <li class="nav-item">
-                <a href="<?=base_url('/calendario')?>" class="nav-link" onclick="setActive(this); return false;">
+                <a href="<?=base_url('/calendario')?>" class="nav-link" id="url_calendario">
                     <i class="bi bi-calendar3"></i> Calendario
                 </a>
             </li>
             <li class="nav-item">
-                <a href="<?=base_url('/paquetes')?>" class="nav-link" onclick="setActive(this); return false;">
+                <a href="<?=base_url('/paquetes')?>" class="nav-link" id="url_paquete">
                     <i class="bi bi-box-seam"></i> Paquetes
                 </a>
             </li>
             <li class="nav-item">
-                <a href="<?=base_url('/clientes')?>" class="nav-link" onclick="setActive(this); return false;">
+                <a href="<?=base_url('/clientes')?>" class="nav-link" id="url_cliente">
                     <i class="bi bi-people"></i> Clientes
                 </a>
             </li>
@@ -64,64 +64,3 @@
 
 <!-- MAIN CONTENT -->
 <main id="main-content">
-    <h3 class="fw-lighter">Inicio</h3>
-
-    <!-- STAT CARDS -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
-                <div class="stat-label">Sesiones este mes</div>
-                <div class="stat-value">12</div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
-                <div class="stat-label">Contratos activos</div>
-                <div class="stat-value">5</div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
-                <div class="stat-label">Clientes totales</div>
-                <div class="stat-value">38</div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
-                <div class="stat-label">Ingresos (S/)</div>
-                <div class="stat-value">4,200</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TABLE -->
-    <div class="table-card">
-        <div class="card-title">Próximas sesiones</div>
-        <table class="table table-borderless">
-            <thead>
-            <tr>
-                <th>Cliente</th>
-                <th>Tipo</th>
-                <th>Fecha</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>Daniel Ayala</td>
-                <td>Matrimonio</td>
-                <td>16 abr</td>
-            </tr>
-            <tr>
-                <td>Morgan Bondioli</td>
-                <td>Retrato</td>
-                <td>18 abr</td>
-            </tr>
-            <tr>
-                <td>Diggy Félix</td>
-                <td>Quinceañero</td>
-                <td>22 abr</td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-</main>
