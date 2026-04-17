@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Api\ResponseTrait;
 use App\Models\Cotizacion;
+use App\Transformers\CotizacionesTransformer;
 use CodeIgniter\Model;
 
 class Cotizaciones extends BaseController
@@ -20,17 +21,21 @@ class Cotizaciones extends BaseController
      */
     public function getIndex(?int $id = null)
     {
-        $cotizacion = new Cotizacion();
+        $model = new Cotizacion();
+        $transformer = new CotizacionesTransformer();
         
         //Obtiene todos los registros
-        if($id==null){
-            $lista_cotizacion = $cotizacion->findAll(30);
-            return var_dump($lista_cotizacion);
+        if ($id === null) {
+            return $this->paginate($model, 20, CotizacionesTransformer::class);
         }
 
-        //Obtiene un registro por id
-        return $cotizacion->find($id);
+        $cotizacion = $model->find($id);
 
+        if (!$cotizacion) {
+            return $this->failNotFound('No encontrado');
+        }
+
+        return $this->respond($transformer->transform($cotizacion));
     }
 
     /**
