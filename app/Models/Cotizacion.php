@@ -6,14 +6,12 @@ use CodeIgniter\Model;
 
 class Cotizacion extends Model
 {
-    protected $table            = 'cotizacion_pruebas';
+    protected $table            = 'cotizaciones';
     protected $primaryKey       = 'id_cotizacion';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
     protected $protectFields    = true;
-    protected $allowedFields    = ['dni', 'cliente', 'paquete', 'created_at', 'updated_at', 'fecha_evento', 'monto_acordado','estado'];
-
-
+    protected $allowedFields    = ['num_dias_vigencia', 'fecha_registro', 'fecha_hora_inicio', 'fecha_hora_fin', 'direccion', 'referencia', 'latitud','estado', 'total_estimado', 'id_cliente', 'id_usuario'];
 
     // Dates
     protected $useTimestamps = false;
