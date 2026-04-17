@@ -5,6 +5,8 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Api\ResponseTrait;
+use App\Transformers\PaquetesTransformer;
+use App\Models\Paquete;
 
 
 class Paquetes extends BaseController
@@ -19,6 +21,20 @@ class Paquetes extends BaseController
      */
     public function getIndex(?int $id = null)
     {
+        $model = new Paquete();
+        $transformer = new PaquetesTransformer();
+
+        if (!$id) {
+            return $this->paginate($model, 20, PaquetesTransformer::class);
+        }
+
+        $paquete = $model->find($id);
+
+        if(!$paquete){
+            return $this->failNotFound('No encontrado');
+        }
+
+         return $this->respond($transformer->transform($paquete));
     }
 
     /**
