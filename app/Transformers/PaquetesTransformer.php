@@ -16,7 +16,12 @@ class PaquetesTransformer extends BaseTransformer
     public function toArray(mixed $resource): array
     {
         return [
-            // Add your transformation logic here
+            'id_paquete' => $resource['id_paquete'],
+            'nombre_paquete' => $resource['nombre_paquete'],
+            'precio_base' => $resource['precio_base'],
+            'imagen' => $resource['imagen'],
+            'detalle_paquete' => $resource['detalle_paquete'], 
+            'estado' => $resource['estado'], 
         ];
     }
 }
