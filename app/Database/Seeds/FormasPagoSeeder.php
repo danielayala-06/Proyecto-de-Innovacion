@@ -11,6 +11,7 @@ class FormasPagoSeeder extends Seeder
         $this->db->table('formas_pago')->insertBatch([
             ['forma_pago'=>'EFECTIVO','tipo_pago'=>'CONTADO'],
             ['forma_pago'=>'TRANSFERENCIA','tipo_pago'=>'YAPE'],
+            ['forma_pago'=>'TRANSFERENCIA','tipo_pago'=>'PLIN']
         ]);
     }
 }

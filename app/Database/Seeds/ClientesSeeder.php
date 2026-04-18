@@ -18,7 +18,22 @@ class ClientesSeeder extends Seeder
                 'red_social'=>'instagram.com/maria',
                 'id_persona'=>2,
                 'id_empresa'=>1
-            ]
+            ],
+            [
+                'red_social'=>'instagram.com/morgan',
+                'id_persona'=>3,
+                'id_empresa'=>null
+            ],
+            [
+                'red_social'=>'instagram.com/digtyT',
+                'id_persona'=>4,
+                'id_empresa'=>null
+            ],
+            [
+                'red_social'=>'instagram.com/arellaT',
+                'id_persona'=>8,
+                'id_empresa'=>null
+            ],
         ]);
     }
 }
