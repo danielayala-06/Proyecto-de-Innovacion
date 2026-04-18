@@ -10,21 +10,53 @@ class PersonasSeeder extends Seeder
     {
          $this->db->table('personas')->insertBatch([
             [
-                'nombres'=>'Juan',
-                'apellidos'=>'Perez',
-                'telefono'=>'999111222',
-                'correo'=>'juan@test.com',
-                'numero_documento'=>'12345678',
+                'nombres'=>'MORGAN MURILO',
+                'apellidos'=>'BONDIOLI MOLINA',
+                'telefono'=>'978576845',
+                'correo'=>'morgan123@gmail.com',
+                'numero_documento'=>'87634526',
                 'tipo_documento'=>'DNI'
             ],
             [
-                'nombres'=>'Maria',
-                'apellidos'=>'Lopez',
-                'telefono'=>'988777666',
-                'correo'=>'maria@test.com',
-                'numero_documento'=>'87654321',
+                'nombres'=>'DIGGY TONY',
+                'apellidos'=>'FELIX TIPPACTI',
+                'telefono'=>'967356695',
+                'correo'=>'diggytonidotta2@hotmail.com',
+                'numero_documento'=>'39879656',
                 'tipo_documento'=>'DNI'
-            ]
+            ],
+            [
+                'nombres'=>'HENRY MANUEL',
+                'apellidos'=>'SAMANIEGO PACHAS',
+                'telefono'=>'987678765',
+                'correo'=>'samikeykopresidente@gmail.com',
+                'numero_documento'=>'78654565',
+                'tipo_documento'=>'DNI'
+            ],
+            [
+                'nombres'=>'JOAO SOSA',
+                'apellidos'=>'CASTILLA HERRERA',
+                'telefono'=>'987567346',
+                'correo'=>'joao_sosa_01@gmail.com',
+                'numero_documento'=>'68756789',
+                'tipo_documento'=>'DNI'
+            ],
+            [
+                'nombres'=>'JOSE FABRICIO',
+                'apellidos'=>'CASTILLA HERRERA',
+                'telefono'=>'978654318',
+                'correo'=>'wedo_castilla@gmail.com',
+                'numero_documento'=>'75678978',
+                'tipo_documento'=>'DNI'
+            ],
+            [
+                'nombres'=>'ARELLA',
+                'apellidos'=>'TAPIA HERNANDEZ',
+                'telefono'=>'987678298',
+                'correo'=>'tuarellitadediggy@gmail.com',
+                'numero_documento'=>'76982415',
+                'tipo_documento'=>'DNI'
+            ],
         ]);
     }
 }
