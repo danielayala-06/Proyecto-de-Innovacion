@@ -24,11 +24,11 @@ class EmpresasSeeder extends Seeder
                 'correo'=>'fuji_soto@gmail.com'
             ],
             [
-                'razon_social'=>'Eventos SAC',
+                'razon_social'=>'Corporacion E.R.L',
                 'ruc'=>'20123456789',
-                'nombre_comercial'=>'EventosPro',
-                'telefono'=>'987654321',
-                'correo'=>'empresa@test.com'
+                'nombre_comercial'=>'InkaCorp',
+                'telefono'=>'945367453',
+                'correo'=>'empresa@gmail.com'
             ],
          ]);
     }
