@@ -9,12 +9,46 @@ class Paquetes extends Migration
     public function up()
     {
          $this->forge->addField([
-            'id_paquete'=>['type'=>'INT','auto_increment'=>true],
-            'nombre_paquete'=>['type'=>'VARCHAR','constraint'=>150],
-            'precio_base'=>['type'=>'DECIMAL','constraint'=>'10,2'],
-            'imagen'=>['type'=>'VARCHAR','constraint'=>255,'null'=>true],
-            'detalle_paquete'=>['type'=>'TEXT','null'=>true],
-            'estado'=>['type'=>'VARCHAR','constraint'=>20],
+            'id_paquete'=>
+            [
+                'type'=>'INT',
+                'auto_increment'=>true,
+                'unsigned'=>true,
+            ],
+            'nombre_paquete'=>
+            [
+                'type'=>'VARCHAR',
+                'constraint'=>150
+            ],
+            'categoria'=>
+            [
+                'type'=>'ENUM',
+                'constraint'=>['SESION', 'EVENTO', 'ESCOLAR'],
+                'null'=>false,
+            ],
+            'precio_base'=>
+            [
+                'type'=>'DECIMAL',
+                'constraint'=>'10,2',
+                'unsigned'=>true
+            ],
+            'imagen'=>
+            [
+                'type'=>'VARCHAR',
+                'constraint'=>255,
+                'null'=>true
+            ],
+            'descripcion'=>
+            [
+                'type'=>'TEXT',
+                'null'=>true
+            ],
+            'estado'=>
+            [
+                'type'=>'ENUM',
+                'constraint'=>['ACTIVO','INACTIVO'],
+                'default'=>'ACTIVO'
+            ]
         ]);
         $this->forge->addKey('id_paquete', true);
         $this->forge->createTable('paquetes');
