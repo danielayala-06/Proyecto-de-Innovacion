@@ -10,4 +10,5 @@ class CotizacionClienteModel extends Model
     protected $primaryKey       = 'id_cotizacion';
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
+    protected $allowedFields    = [];
 }
