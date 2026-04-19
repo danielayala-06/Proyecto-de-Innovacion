@@ -14,7 +14,7 @@ class Productos extends Migration
                 'auto_increment'=>true,
                 'unsigned'=>true
             ],
-            'nombre'=>[
+            'nombre_producto'=>[
                 'type'=>'VARCHAR',
                 'constraint'=>150,
                 'null'=>false
