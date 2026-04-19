@@ -10,34 +10,32 @@ class ProductosSeeder extends Seeder
     {
         $this->db->table('productos')->insertBatch([
             [
-                'nombre'=>'Album rojo Mediano',
-                'descripcion'=>'Álbum rojo tamanio mediano',
-                'precio_referencial'=>150,
-                'tamanio'=>'10x25'
+                'nombre'          => 'Álbum fotográfico premium',
+                'detalle'         => 'Álbum tapa dura 30x30cm, 40 páginas impresas en papel mate.',
+                'tamanio'         => '30x30cm',
+                'unidad'          => 'unidad',
+                'estado'          => 'ACTIVO',
             ],
             [
-                'nombre'=>'Cuadro laminado grande',
-                'descripcion'=>'Cuadro laminado grande con extension wifi',
-                'precio_referencial'=>110,
-                'tamanio'=>'50x30'
+                'nombre'          => 'Fotografías digitales',
+                'detalle'         => 'Pack de fotografías editadas entregadas en USB y galería online.',
+                'tamanio'         => null,
+                'unidad'          => 'pack',
+                'estado'          => 'ACTIVO',
             ],
             [
-                'nombre'=>'Libro Virtual',
-                'descripcion'=>'Libro virtual estatico con 5 fotografias',
-                'precio_referencial'=>20,
-                'tamanio'=>null,
+                'nombre'          => 'Anuario escolar',
+                'detalle'         => 'Anuario impreso full color, tapa dura personalizada con logo del colegio.',
+                'tamanio'         => 'A4',
+                'unidad'          => 'unidad',
+                'estado'          => 'ACTIVO',
             ],
             [
-                'nombre'=>'USB pack promo',
-                'descripcion'=>'USB con 50 fotografias y 12 videos.',
-                'precio_referencial'=>40,
-                'tamanio'=>null,
-            ],
-            [
-                'nombre'=>'Anuario',
-                'descripcion'=>'Anuario basico',
-                'precio_referencial'=>90,
-                'tamanio'=>'30x20',
+                'nombre'          => 'Fotolibro tamaño mediano',
+                'detalle'         => 'Fotolibro 20x20cm, 20 páginas, tapa blanda personalizada.',
+                'tamanio'         => '20x20cm',
+                'unidad'          => 'unidad',
+                'estado'          => 'ACTIVO',
             ],
         ]);
     }

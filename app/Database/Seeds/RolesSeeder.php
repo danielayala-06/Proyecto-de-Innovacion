@@ -9,8 +9,8 @@ class RolesSeeder extends Seeder
     public function run()
     {
          $this->db->table('roles')->insertBatch([
-            ['rol'=>'admin'],
-            ['rol'=>'editor'],
+             ['rol' => 'Administrador', 'estado' => 'ACTIVO'],
+             ['rol' => 'Visualizador',  'estado' => 'ACTIVO'],
         ]);
     }
 }

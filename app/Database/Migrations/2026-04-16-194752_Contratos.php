@@ -22,7 +22,7 @@ class Contratos extends Migration
                 'type'=>'DATE',
                 'default'=>date('Y-m-d')
             ],
-            'fecha_emision_contrato'=>[
+            'fecha_emision'=>[
                 'type'=>'DATE',
                 'null'=>true
             ],

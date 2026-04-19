@@ -30,6 +30,34 @@ class EmpresasSeeder extends Seeder
                 'telefono'=>'945367453',
                 'correo'=>'empresa@gmail.com'
             ],
+            [
+                 'razon_social'    => 'Eventos Mágicos S.A.C.',
+                 'ruc'             => '20512345678',
+                 'nombre_comercial'=> 'Eventos Mágicos',
+                 'telefono'        => '014567890',
+                 'correo'          => 'contacto@eventosmagicos.pe',
+             ],
+            [
+                 'razon_social'    => 'Corporación Lima Norte S.R.L.',
+                 'ruc'             => '20598765432',
+                 'nombre_comercial'=> 'Lima Norte Corp',
+                 'telefono'        => '013456789',
+                 'correo'          => 'admin@limanorte.com',
+             ],
+            [
+                 'razon_social'    => 'Grupo Bodas & Sueños E.I.R.L.',
+                 'ruc'             => '20567891234',
+                 'nombre_comercial'=> 'Bodas & Sueños',
+                 'telefono'        => null,
+                 'correo'          => 'info@bodasysuen.pe',
+             ],
+            [
+                 'razon_social'    => 'Inversiones Pacífico S.A.',
+                 'ruc'             => '20534567891',
+                 'nombre_comercial'=> 'Inv. Pacífico',
+                 'telefono'        => '016789012',
+                 'correo'          => 'contacto@invpacifico.pe',
+             ],
          ]);
     }
 }

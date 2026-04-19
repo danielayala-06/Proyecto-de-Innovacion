@@ -8,13 +8,23 @@ class UsuariosSeeder extends Seeder
 {
     public function run()
     {
-        $this->db->table('usuarios')->insert([
-            'estado'=>'activo',
-            'nom_user'=>'admin',
-            'password'=>password_hash('123456', PASSWORD_DEFAULT),
-            'tipo_usuario'=>'interno',
-            'id_persona'=>1,
-            'id_rol'=>1
+        $this->db->table('usuarios')->insertBatch([
+            [
+                'id_persona'   => 1,
+                'id_rol'       => 1, // Administrador
+                'nombre_user'     => 'admin',
+                'password'     => password_hash('Admin123!', PASSWORD_BCRYPT),
+                'tipo_usuario' => 'ADMINISTRADOR',
+                'estado'       => 'ACTIVO',
+            ],
+            [
+                'id_persona'   => 4,
+                'id_rol'       => 2, // Visualizador
+                'nombre_user'     => 'mariana.flores',
+                'password'     => password_hash('Invitado123!', PASSWORD_BCRYPT),
+                'tipo_usuario' => 'INVITADO',
+                'estado'       => 'ACTIVO',
+            ],
         ]);
     }
 }
