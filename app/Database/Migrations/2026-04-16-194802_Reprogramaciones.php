@@ -9,15 +9,39 @@ class Reprogramaciones extends Migration
     public function up()
     {
         $this->forge->addField([
-            'id_reprogramacion'=>['type'=>'INT','auto_increment'=>true],
-            'fecha_anterior'=>['type'=>'DATETIME'],
-            'fecha_nueva'=>['type'=>'DATETIME'],
-            'motivo'=>['type'=>'TEXT'],
-            'fecha_cambio'=>['type'=>'DATETIME'],
-            'id_contrato'=>['type'=>'INT'],
+            'id_reprogramacion'=>[
+                'type'=>'INT',
+                'auto_increment'=>true,
+                'unsigned'=>true,
+            ],
+            'id_contrato'=>[
+                'type'=>'INT',
+                'unsigned'=>true,
+            ],
+            'fecha_anterior'=>[
+                'type'=>'DATETIME',
+                'null'=>false,
+            ],
+            'fecha_nueva'=>[
+                'type'=>'DATETIME',
+                'null'=>false,
+            ],
+            'motivo'=>[
+                'type'=>'TEXT',
+                'null'=>true,
+            ],
+            'fecha_cambio'=>[
+                'type'=>'DATETIME',
+                'default'=>date('Y-m-d H:i:s'),
+            ],
+            //Fecha limite para usar el adelanto en otra fecha(30 dias desde fecha cambio)
+            'fecha_limite_aplicacion'=>[
+                'type'=>'DATE',
+                'null'=>true,
+            ],
         ]);
         $this->forge->addKey('id_reprogramacion', true);
-        $this->forge->addForeignKey('id_contrato','contratos','id_contrato','CASCADE','CASCADE');
+        $this->forge->addForeignKey('id_contrato','contratos','id_contrato','RESTRICT','RESTRICT');
         $this->forge->createTable('reprogramaciones');
     }
 

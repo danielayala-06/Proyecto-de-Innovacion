@@ -42,7 +42,7 @@ class CotizacionesPaquetes extends Migration
         $this->forge->addKey('id_cot_paquete', true);
         $this->forge->addForeignKey('id_cotizacion','cotizaciones','id_cotizacion','CASCADE','CASCADE');
         $this->forge->addForeignKey('id_paquete','paquetes','id_paquete','CASCADE','CASCADE');
-        $this->forge->createTable('cot_paquetes');
+        $this->forge->createTable('cotizaciones_paquetes');
 
         // COTIZACIONES SERVICIOS
         $this->forge->addField([
@@ -75,7 +75,7 @@ class CotizacionesPaquetes extends Migration
         $this->forge->addKey(['id_cotizacion', 'id_servicio'], true);
         $this->forge->addForeignKey('id_cotizacion', 'cotizaciones', 'id_cotizacion', 'CASCADE',  'CASCADE');
         $this->forge->addForeignKey('id_servicio',   'servicios',    'id_servicio',   'RESTRICT', 'RESTRICT');
-        $this->forge->createTable('cot_servicios');
+        $this->forge->createTable('cotizaciones_servicios');
 
         // COTIZACIONES PRODUCTOS
         $this->forge->addField([
@@ -107,13 +107,13 @@ class CotizacionesPaquetes extends Migration
         $this->forge->addKey(['id_cotizacion', 'id_producto'], true);
         $this->forge->addForeignKey('id_cotizacion', 'cotizaciones', 'id_cotizacion', 'CASCADE',  'CASCADE');
         $this->forge->addForeignKey('id_producto',   'productos',    'id_producto',   'RESTRICT', 'RESTRICT');
-        $this->forge->createTable('cot_productos');
+        $this->forge->createTable('cotizaciones_productos');
     }
 
     public function down()
     {
-        $this->forge->dropTable('cot_productos');
-        $this->forge->dropTable('cot_servicios');
-        $this->forge->dropTable('cot_paquetes');
+        $this->forge->dropTable('cotizaciones_productos');
+        $this->forge->dropTable('cotizaciones_servicios');
+        $this->forge->dropTable('cotizaciones_paquetes');
     }
 }
