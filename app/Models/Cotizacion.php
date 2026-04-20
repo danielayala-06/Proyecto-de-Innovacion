@@ -11,7 +11,20 @@ class Cotizacion extends Model
     protected $useAutoIncrement = true;
     protected $returnType       = 'object';
     protected $protectFields    = true;
-    protected $allowedFields    = ['num_dias_vigencia', 'fecha_registro', 'fecha_hora_inicio', 'fecha_hora_fin', 'direccion', 'referencia', 'latitud','estado', 'total_estimado', 'id_cliente', 'id_usuario'];
+    protected $allowedFields    = [
+        'id_cliente',
+        'id_usuario',
+        'nombre_cotizacion',
+        'num_dias_vigencia',
+        'fecha_registro',
+        'fecha_hora_inicio',
+        'fecha_hora_fin',
+        'direccion',
+        'referencia',
+        'latitud',
+        'estado',
+        'total_estimado',
+    ];
 
     // Dates
     protected $useTimestamps = false;

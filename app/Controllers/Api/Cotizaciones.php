@@ -8,6 +8,7 @@ use App\Models\Views\CotizacionesFull; //Modelo de la vista Cotizaciones full
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Api\ResponseTrait;
 use App\Transformers\CotizacionesTransformer;
+use http\Env\Response;
 
 class Cotizaciones extends BaseController
 {
@@ -51,6 +52,29 @@ class Cotizaciones extends BaseController
      */
     public function putIndex(int $id)
     {
+        $model = new Cotizacion();
+
+        // Validaciones
+        if(!$id)return $this->respond(['status'=>'ok','message'=>'Id no encontrado' ], 401);
+
+        // Buscamos la cotizacion por su ID
+        $cotizacion = $model->find($id);
+
+        // No se encontro la cotizacion
+        if (!$cotizacion) return $this->respond(['status'=>'not found', 'message'=>'Cotizacion no encontrada'], 401);
+
+        // Obtenemos el cuerpo de la REQUEST
+        $data = $this->request->getBody();
+        // Convertimos a array
+        $data = json_decode($data);
+
+        // Validaciones ...
+
+        // Guardamos los datos de la nueva cotizacion
+        $model->update($id,$data);
+        $cotizacionUpdated = $model->find($id);
+        return $this->respond($cotizacionUpdated, 200, 'Cotizacion actualizada con exito!');
+
     }
 
     /**
