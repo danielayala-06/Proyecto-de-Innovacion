@@ -3,7 +3,8 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
-use App\Models\Views\CotizacionesFull; //Modelo de la vista Cotizaciones
+use App\Models\Cotizacion;
+use App\Models\Views\CotizacionesFull; //Modelo de la vista Cotizaciones full
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\Api\ResponseTrait;
 use App\Transformers\CotizacionesTransformer;
@@ -20,7 +21,7 @@ class Cotizaciones extends BaseController
      */
     public function getIndex(?int $id = null)
     {
-        $model = new CotizacionesFull();
+        $model = new Cotizacion();
         $transformer = new CotizacionesTransformer();
         
         //Obtiene todos los registros
@@ -32,6 +33,7 @@ class Cotizaciones extends BaseController
 
         if (!$cotizacion) {
             return $this->failNotFound('No encontrado');
+
         }
 
         return $this->respond($transformer->transform($cotizacion));

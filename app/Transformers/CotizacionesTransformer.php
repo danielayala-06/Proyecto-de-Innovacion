@@ -17,17 +17,20 @@ class CotizacionesTransformer extends BaseTransformer
     {
         return [
             'id_cotizacion' => $resource['id_cotizacion'],
-            'fecha_registro' => $resource['fecha_registro'],
-            'estado' => $resource['estado'],
-            'total_estimado' => $resource['total_estimado'],
             'id_cliente' => $resource['id_cliente'],
-            'nombres' => $resource['nombres'],
-            'apellidos' => $resource['apellidos'],
-            'numero_documento' => $resource['numero_documento'],
-            'telefono' => $resource['telefono'],
-            'cantidad_paquetes' => $resource['cantidad_paquetes'],
-            'total_paquetes' => $resource['total_paquetes'],
-            'paquetes' => $resource['paquetes'],
+            'id_usuario' => $resource['id_usuario'],
+            'nombre_cotizacion' => $resource['nombre_cotizacion'],
+            'num_dias_vigencia' => $resource['num_dias_vigencia'],
+            'fecha_registro' => $resource['fecha_registro'],
+            'fecha_hora_inicio' => $resource['fecha_hora_inicio'],
+            'fecha_hora_fin' => $resource['fecha_hora_fin'],
+            'direccion' => $resource['direccion'],
+            'referencia' => $resource['referencia'],
+            'latitud' => $resource['latitud'],
+            'longitud' => $resource['longitud'],
+            'observaciones' => $resource['observaciones'],
+            'total_estimado' => $resource['total_estimado'],
+            'estado' => $resource['estado'],
         ];
     }
 }
