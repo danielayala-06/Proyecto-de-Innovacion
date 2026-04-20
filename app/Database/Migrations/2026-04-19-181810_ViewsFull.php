@@ -126,44 +126,59 @@ class ViewsFull extends Migration
                 cot.referencia,
                 cot.observaciones,
                 cot.total_estimado,
+            
                 -- Cliente
                 cl.id_cliente,
                 CONCAT(p.nombres, ' ', p.apellidos) AS nombre_cliente,
-                p.telefono                          AS telefono_cliente,
-                p.correo                            AS correo_cliente,
+                p.telefono AS telefono_cliente,
+                p.correo AS correo_cliente,
                 cl.tipo_cliente,
-                e.razon_social                      AS empresa_cliente,
-                -- Usuario que gestiona
+                e.razon_social AS empresa_cliente,
+            
+                -- Usuario
                 u.id_usuario,
                 CONCAT(pu.nombres, ' ', pu.apellidos) AS nombre_usuario,
+            
                 -- Paquetes
-                
-                -- Agregados de paquetes
-                COUNT(cp.id_paquete) AS cantidad_paquetes,
-                COALESCE(SUM(pa.precio_base), 0) AS total_paquetes,
-                
-                -- Totales por tipo de ítem
-                COALESCE(cp.subtotal_paquetes,  0) AS subtotal_paquetes,
+                COALESCE(cp.cantidad_paquetes, 0) AS cantidad_paquetes,
+                COALESCE(cp.subtotal_paquetes, 0) AS subtotal_paquetes,
+            
+                -- Otros totales
                 COALESCE(cs.subtotal_servicios, 0) AS subtotal_servicios,
                 COALESCE(cpd.subtotal_productos, 0) AS subtotal_productos
+            
             FROM cotizaciones cot
-            INNER JOIN clientes  cl  ON cl.id_cliente = cot.id_cliente
-            INNER JOIN personas  p   ON p.id_persona  = cl.id_persona
-            INNER JOIN usuarios  u   ON u.id_usuario  = cot.id_usuario
-            INNER JOIN personas  pu  ON pu.id_persona = u.id_persona
-            LEFT  JOIN empresas  e   ON e.id_empresa  = cl.id_empresa
-            LEFT  JOIN (
-                SELECT id_cotizacion, SUM(subtotal) AS subtotal_paquetes
-                FROM cotizaciones_paquetes GROUP BY id_cotizacion
-            ) cp  ON cp.id_cotizacion  = cot.id_cotizacion
-            LEFT  JOIN (
-                SELECT id_cotizacion, SUM(subtotal) AS subtotal_servicios
-                FROM cotizaciones_servicios GROUP BY id_cotizacion
-            ) cs  ON cs.id_cotizacion  = cot.id_cotizacion
-            LEFT  JOIN (
-                SELECT id_cotizacion, SUM(subtotal) AS subtotal_productos
-                FROM cotizaciones_productos GROUP BY id_cotizacion
-            ) cpd ON cpd.id_cotizacion = cot.id_cotizacion
+            
+            INNER JOIN clientes cl ON cl.id_cliente = cot.id_cliente
+            INNER JOIN personas p ON p.id_persona = cl.id_persona
+            INNER JOIN usuarios u ON u.id_usuario = cot.id_usuario
+            INNER JOIN personas pu ON pu.id_persona = u.id_persona
+            LEFT JOIN empresas e ON e.id_empresa = cl.id_empresa
+            
+            LEFT JOIN (
+                SELECT 
+                    id_cotizacion,
+                    COUNT(id_paquete) AS cantidad_paquetes,
+                    SUM(subtotal) AS subtotal_paquetes
+                FROM cotizaciones_paquetes
+                GROUP BY id_cotizacion
+            ) cp ON cp.id_cotizacion = cot.id_cotizacion
+            
+            LEFT JOIN (
+                SELECT 
+                    id_cotizacion, 
+                    SUM(subtotal) AS subtotal_servicios
+                FROM cotizaciones_servicios 
+                GROUP BY id_cotizacion
+            ) cs ON cs.id_cotizacion = cot.id_cotizacion
+            
+            LEFT JOIN (
+                SELECT 
+                    id_cotizacion, 
+                    SUM(subtotal) AS subtotal_productos
+                FROM cotizaciones_productos 
+                GROUP BY id_cotizacion
+            ) cpd ON cpd.id_cotizacion = cot.id_cotizacion;
         ");
 
         // ------------------------------------------------------------
