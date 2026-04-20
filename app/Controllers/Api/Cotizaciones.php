@@ -60,6 +60,24 @@ class Cotizaciones extends BaseController
      */
     public function postIndex()
     {
+        $data = $this->request->getBody();
+
+        $data   = json_decode($data);
+
+        // Validaciones
+        //echo $data;
+
+        $model = new Cotizacion();
+        $rules = $model->getValidationRules();
+
+        // Insertamos la cotizacion
+        $model->insert($data);
+
+        // Obtenemos la nueva cotizacion:
+        $newCotizacion = $model->find($model->getInsertID());
+
+        // Enviamos los datos de la nueva cotizacion al endpoint
+        return $this->respondCreated($newCotizacion);
     }
 
     /**

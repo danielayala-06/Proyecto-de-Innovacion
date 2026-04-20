@@ -21,6 +21,7 @@ $routes->get('/cotizaciones/crear', 'CotizacionController::index');
 //Cotizaciones
 $routes->get('/api/cotizaciones','Api\Cotizaciones::getIndex');
 $routes->get('/api/cotizaciones/(:num)','Api\Cotizaciones::getIndex/$1');
+$routes->post('/api/cotizaciones','Api\Cotizaciones::postIndex');
 
 //Paquetes
 $routes->get('/api/paquetes','Api\Paquetes::getIndex');
