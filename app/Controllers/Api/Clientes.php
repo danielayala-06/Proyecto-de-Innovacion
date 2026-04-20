@@ -20,11 +20,11 @@ class Clientes extends BaseController
         $transformer = new ClientesTransformer();
 
         try {
-            // Si no se introdujo el ID
+            // Si no se introdujo el ID(Devolvemos todos los datos)
             if($id===null){
                 $clientes = $model->findAll(30);
 
-                return ($clientes)? $this->respond($clientes):  $this->failNotFound('No hay clientes registrados');
+                return ($clientes)? $this->respond($transformer->transformMany($clientes)):  $this->failNotFound('No hay clientes registrados');
             }
 
             // Buscamos por el ID

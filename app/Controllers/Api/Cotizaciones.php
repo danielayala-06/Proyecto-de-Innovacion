@@ -21,18 +21,23 @@ class Cotizaciones extends BaseController
      */
     public function getIndex(?int $id = null)
     {
+        // Modelo de la cotizacion (Acceso a la BD)
         $model = new Cotizacion();
+
+        // Transformador de la cotizacion
         $transformer = new CotizacionesTransformer();
         
         //Obtiene todos los registros
         if ($id === null) {
-            return $this->paginate($model, 20, CotizacionesTransformer::class);
+            $cotizaciones = $model->findAll(30);
+
+            return  $this->respond($transformer->transformMany($cotizaciones));
         }
 
         $cotizacion = $model->find($id);
 
         if (!$cotizacion) {
-            return $this->failNotFound('No encontrado');
+            return $this->failNotFound('Cotizacion no encontrada');
 
         }
 
