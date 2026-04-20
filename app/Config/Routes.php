@@ -23,6 +23,7 @@ $routes->get('/api/cotizaciones','Api\Cotizaciones::getIndex');
 $routes->get('/api/cotizaciones/(:num)','Api\Cotizaciones::getIndex/$1');
 $routes->post('/api/cotizaciones','Api\Cotizaciones::postIndex');
 $routes->put('/api/cotizaciones/(:num)','Api\Cotizaciones::putIndex/$1');
+$routes->delete('/api/cotizaciones/(:num)','Api\Cotizaciones::deleteIndex/$1');
 
 //Paquetes
 $routes->get('/api/paquetes','Api\Paquetes::getIndex');

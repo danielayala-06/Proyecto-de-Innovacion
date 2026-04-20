@@ -109,7 +109,32 @@ class Cotizaciones extends BaseController
      *
      * DELETE /api/cotizacion/{id}
      */
-    public function deleteIndex(int $id)
+    public function deleteIndex(?int $id = null)
     {
+        // En caso de que no se haya introducido el id
+        if(!$id)return $this->respond(['status'=>'401','message'=>'Id no encontrado' ], 401);
+
+        //
+        $model = new Cotizacion();
+
+        // NO SE ELIMINA LA COTIZACION SOLO SE DESACTIVA
+        $cotizacion = $model->find($id);
+        if (!$cotizacion){
+            return $this->respond([
+                'status'=>'not found',
+                'message'=>'Cotizacion no encontrada'],
+                401);
+        };
+        // CAMBIAMOS EL ESTADO DE LA COTIZACION
+        $cotizacion->estado = 'RECHAZADA';
+
+        // Actualizamos el modelo
+        $model->update($id,$cotizacion);
+
+        // Obtenemos la actualizacion
+        $cotizacionUpdated = $model->find($id);
+
+        return $this->respond($cotizacionUpdated, 200, 'Cotizacion eliminada con exito!');
+
     }
 }
