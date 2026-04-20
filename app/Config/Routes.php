@@ -25,3 +25,7 @@ $routes->get('/api/cotizaciones/(:num)','Api\Cotizaciones::getIndex/$1');
 //Paquetes
 $routes->get('/api/paquetes','Api\Paquetes::getIndex');
 $routes->get('/api/paquetes/(:num)','Api\Paquetes::getIndex/$1');
+
+//Clientes
+$routes->get('api/clientes','Api\Clientes::getIndex');
+$routes->get('api/clientes/(:num)','Api\Clientes::getIndex/$1');

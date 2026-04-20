@@ -20,7 +20,7 @@ class ViewCotizacionesPersona extends Migration
                 p.numero_documento,
                 p.telefono
             FROM Cotizaciones c
-            JOIN Clientes cl ON c.id_cliente = cl.id_cliente
+            JOIN ApiClientes cl ON c.id_cliente = cl.id_cliente
             JOIN Personas p ON cl.id_persona = p.id_persona
         ");
     }
