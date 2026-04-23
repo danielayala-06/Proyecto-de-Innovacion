@@ -10,9 +10,24 @@ class CotizacionController extends BaseController
     public function index()
     {
         $data = [
-            'header' => view("Partials/header"),
-            'footer' => view("Partials/footer"),
+            'header' => view("layouts/header"),
+            'footer' => view("layouts/footer"),
         ];
-        return view('cotizaciones/index', $data);
+
+        return view("cotizaciones/index", $data);
+    }
+    public function create()
+    {
+        $data = [
+            'header' => view("layouts/header"),
+            'footer' => view("layouts/footer"),
+        ];
+
+        return view("cotizaciones/create", $data);
+    }
+
+    public function fetchCotizaciones()
+    {
+
     }
 }

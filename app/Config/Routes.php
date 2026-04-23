@@ -12,7 +12,8 @@ $routes->get('/', 'Home::index');
  *      RUTAS PARA COTIZACIONES
  */
 
-$routes->get('/cotizaciones/crear', 'CotizacionController::index');
+$routes->get('/cotizaciones', 'CotizacionController::index');
+$routes->get('/cotizaciones/crear', 'CotizacionController::create');
 
 /**
  *      RUTAS PARA LAS API's
