@@ -13,6 +13,7 @@ $routes->get('/', 'Home::index');
  */
 
 $routes->get('/cotizaciones', 'CotizacionController::index');
+$routes->get('/cotizaciones/(:num)', 'CotizacionController::index/$1');// Para paginaciones
 $routes->get('/cotizaciones/crear', 'CotizacionController::create');
 
 /**

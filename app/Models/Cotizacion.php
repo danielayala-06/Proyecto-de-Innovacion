@@ -32,4 +32,13 @@ class Cotizacion extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
+
+    public function getCotizacionesResumen(int $perPage = 10, int $page = 1)
+    {
+        $offset = ($page - 1) * $perPage;
+        return $this->db->table('vista_cotizaciones_resumen')
+        ->limit($perPage, $offset)
+        ->get()
+        ->getResultArray();
+    }
 }
