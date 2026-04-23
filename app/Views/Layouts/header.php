@@ -70,5 +70,3 @@
     </nav>
   </aside>
 
-<!-- MAIN CONTENT -->
-  <main id="main-content">

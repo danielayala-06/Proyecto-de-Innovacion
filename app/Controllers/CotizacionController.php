@@ -27,7 +27,7 @@ class CotizacionController extends BaseController
             'footer' => view("layouts/footer"),
         ];
 
-        return view("cotizaciones/create", $data);
+        return view("cotizaciones/crear", $data);
     }
 
     public function fetchCotizaciones()

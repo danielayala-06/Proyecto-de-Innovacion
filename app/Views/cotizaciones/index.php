@@ -1,4 +1,5 @@
 <?= $header ?>
+<main>
 <p class="page-title"><i class="bi bi-list-ul"></i> Cotizaciones</p>
 
     <!-- STATS -->
@@ -49,7 +50,7 @@
           <option value="Otro">Otro</option>
         </select>
       </div>
-      <a href="cotizacion.html" class="btn-nuevo-paquete" style="text-decoration:none;">
+      <a href="<?= base_url('cotizaciones/crear') ?>" class="btn-nuevo-paquete" style="text-decoration:none;">
         <i class="bi bi-plus-circle"></i> Nueva cotización
       </a>
     </div>
@@ -73,44 +74,60 @@
           <!-- FILAS GENERADAS POR PHP :D -->
            <?php foreach ($cotizaciones as $cotizacion): ?>
             <tr>
+              
               <td class="col-md-2">
                 <p class="cot-detail-val">
-                  COT-0<?= $cotizacion['id_cotizacion'] ?>
+                  <span class="cot-codigo">
+                    COT-0<?= $cotizacion['id_cotizacion'] ?>
+                  </span>
                 </p>
               </td>
+              <!-- FALTA AGREGAR EL TELEFONO -->
               <td class="col-md-4">
-                <p class="cot-detail-val">
+                <div style="font-weight:600;color:var(--text-primary);">
                   <?= $cotizacion['cliente'] ?>
-                </p>
+                </div>
+                <div style="font-size:0.72rem;color:var(--text-muted);">
+                  <?= $cotizacion['cliente'] ?>
+                </div>
               </td>
-              <td class="col-md-2">
+
+              <!-- FALTA AGREGAR TIPO EVENTO -->
+              <!-- <td class="col-md-2">
+                <span class="cot-tipo"></span>
                 <p class="cot-detail-val">
-                  <?= $cotizacion['fecha_evento'] ?>
+                  tipo evento desde php
                 </p>
+              </td> -->
+              
+              <td class="col-md-2" style="color:var(--text-secondary);white-space:nowrap;">
+                <?= $cotizacion['fecha_evento'] ?>
               </td>
-              <td class="col-md-2">
-                <p class="cot-detail-val">
-                  <?= $cotizacion['total'] ?>
-                </p> 
+
+              <td class="col-md-2" style="font-weight:700;color:var(--accent);">
+                S/ <?= $cotizacion['total'] ?>
               </td>
+
               <td class="col-md-2">
-                <p class="cot-detail-val">
-                  <?= $cotizacion['estado'] ?>
-                </p>
+                <?= $cotizacion['estado'] ?>
               </td>
-              <td class="col-md-2">
-                <p class="cot-detail-val">
-                  <?= $cotizacion['fecha_creado'] ?>
-                </p>
+
+              <td class="col-md-2" style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;">
+                <?= $cotizacion['fecha_creado'] ?>
               </td>
               <!-- ACCIONES -->
-              <td style="text-align:center;">
-                <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalDetalle" onclick="verDetalle(<?= $cotizacion['id_cotizacion'] ?>)">
-                  <i class="bi bi-eye"></i>
-                </a>
-                <a href="#" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalConfirm" onclick="prepararEliminar(<?= $cotizacion['id_cotizacion'] ?>)">
-                  <i class="bi bi-trash"></i>
-                </a>
+              <td>
+                <div class="cot-actions" onclick="event.stopPropagation()">
+                  <button class="btn-icon" title="Ver" onclick="verDetalle(<?= $cotizacion['id_cotizacion'] ?>)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn-icon" title="Editar" onclick="editarCotizacion(<?= $cotizacion['id_cotizacion'] ?>)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn-icon danger" title="Eliminar" onclick="confirmarEliminar(<?= $cotizacion['id_cotizacion'] ?>)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -160,5 +177,6 @@
         </div>
       </div>
     </div>
+</main>
 
 <?= $footer ?>
