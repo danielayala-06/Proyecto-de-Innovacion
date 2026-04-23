@@ -7,8 +7,8 @@ class Home extends BaseController
     public function index(): string
     {
         $data = [
-            'header' => view('Partials/header'),
-            'footer' => view('Partials/footer')
+            'header' => view('Layouts/header'),
+            'footer' => view('Layouts/footer')
         ];
         return view('index', $data);
     }
