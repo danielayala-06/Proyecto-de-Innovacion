@@ -16,7 +16,7 @@
       <button class="btn btn-link p-1 text-white" id="toggleSidebar">
         <i class="bi bi-list fs-4"></i>
       </button>
-      <a href="index.html" class="brand">
+      <a href="<?= base_url('/')?>" class="brand">
         <i class="bi bi-camera"></i>
         <span>Ronceros</span>
       </a>
