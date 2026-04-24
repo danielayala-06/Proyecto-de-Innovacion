@@ -137,7 +137,7 @@
                             <!-- Nombre del evento -->
                             <div class="col-12">
                                 <label for="nombre" class="form-label">Nombre del evento*</label>
-                                <input type="text" class="form-control" required minlength="5" maxlength="50" name="nombre">
+                                <input type="text" class="form-control" required minlength="5" maxlength="50" id="nombre" name="nombre">
                             </div>
 
                             <!-- Fecha hora incio del evento-->
@@ -149,19 +149,19 @@
                             <!-- Fecha hora fin del evento-->
                             <div class="col-12 col-md-6">
                                 <label for="fechaFin" class="form-label">Fecha fin del evento</label>
-                                <input type="datetime-local" name="fechaFin" class="form-control" id="fechaFinEvento">
+                                <input type="datetime-local" name="fechaFin" class="form-control" id="fechaFin">
                             </div>
 
                             <!-- Direccion del evento-->
                             <div class="col-12">
                                 <label for="direccion" class="form-label">Direccion del evento</label>
-                                <input type="text" name="direccion" class="form-control" id="direccionEvento">
+                                <input type="text" name="direccion" class="form-control" id="direccion">
                             </div>
 
                             <!-- Referencia del sitio -->
                             <div class="col-12">
                                 <label for="referencia" class="form-label">Referencia del evento</label>
-                                <input type="text" name="referencia" class="form-control" id="referenciaEvento">
+                                <input type="text" name="referencia" class="form-control" id="referencia">
                             </div>
 
                             <!-- Observaciones -->
@@ -217,12 +217,12 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label>Nombre del servicio</label>
+                    <label for="servicioNombre">Nombre del servicio</label>
                     <input type="text" class="form-control" id="servicioNombre" placeholder="Ej: Sesión de fotos 2h">
                 </div>
                 <div class="mb-3">
                     <label for="precio">Precio (S/)</label>
-                    <input type="number" name="precio" class="form-control" id="servicioPrecio" placeholder="0.00" required min="5">
+                    <input type="number" name="precio" id="precio" class="form-control" id="servicioPrecio" placeholder="0.00" required min="5">
                 </div>
             </div>
             <div class="modal-footer">
