@@ -1,6 +1,6 @@
 <?= $header ?>
-    <main class="container">
-        <div class="main-content">
+    <main class="main-content" id="main-content">
+        <div class="container">
         <p class="page-title"><i class="bi bi-list-ul"></i> Cotizaciones</p>
 
             <!-- STATS -->
