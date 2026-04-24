@@ -16,6 +16,7 @@ $routes->get('/cotizaciones', 'CotizacionController::index');
 $routes->get('/cotizaciones/(:num)', 'CotizacionController::index/$1');// Para paginaciones
 $routes->get('/cotizaciones/crear', 'CotizacionController::create');
 $routes->post('/cotizaciones/insertar', 'CotizacionController::createCotizacion');
+$routes->post('/cotizaciones/searchCliente', 'CotizacionController::searchCliente');
 
 /**
  *      RUTAS PARA LAS API's

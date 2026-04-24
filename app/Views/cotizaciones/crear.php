@@ -23,7 +23,7 @@
                                 <div class="input-group">
                                     <label for="searchCliente" class="visually-hidden">Buscar cliente</label>
                                     <input type="text" class="form-control" id="searchCliente" placeholder="Buscar cliente...">
-                                    <button class="btn btn-outline-secondary" type="button" id="btnBuscar" onclick="fetchClientes">
+                                    <button class="btn btn-outline-secondary" type="button" id="btnBuscar" onclick="buscarClientes">
                                         <i class="bi bi-search"></i>
                                     </button>
                                 </div>
@@ -168,24 +168,24 @@
 
                 <!-- RESUMEN -->
                 <div class="col-md-3">
-            <div class="resumen-card mb-3">
-                <div class="resumen-title">Resumen</div>
-                <div id="resumenItems">
-                    <div class="resumen-row" style="color:#666;font-size:0.8rem;justify-content:center;">Sin ítems aún</div>
+                    <div class="resumen-card mb-3">
+                        <div class="resumen-title">Resumen</div>
+                        <div id="resumenItems">
+                            <div class="resumen-row" style="color:#666;font-size:0.8rem;justify-content:center;">Sin ítems aún</div>
+                        </div>
+                        <div class="resumen-row total mt-2">
+                            <span>Total</span>
+                            <span id="totalResumen">S/ 0.00</span>
+                        </div>
+                    </div>
+                    <div class="resumen-card mb-3">
+                        <div class="resumen-title">Cliente seleccionado</div>
+                        <div id="clienteSeleccionado" style="font-size:0.82rem;color:#666;">Ningún cliente seleccionado</div>
+                    </div>
+                    <button class="btn-guardar" type="submit">
+                        <i class="bi bi-check-circle me-2"></i>Guardar cotización
+                    </button>
                 </div>
-                <div class="resumen-row total mt-2">
-                    <span>Total</span>
-                    <span id="totalResumen">S/ 0.00</span>
-                </div>
-            </div>
-            <div class="resumen-card mb-3">
-                <div class="resumen-title">Cliente seleccionado</div>
-                <div id="clienteSeleccionado" style="font-size:0.82rem;color:#666;">Ningún cliente seleccionado</div>
-            </div>
-            <button class="btn-guardar" type="submit">
-                <i class="bi bi-check-circle me-2"></i>Guardar cotización
-            </button>
-        </div>
         <!--FIN DEL FORMULARIO-->
             </div>
         </form>
@@ -287,6 +287,8 @@
     </div>
 </div>
 
+<script>const BASE_URL = "<?= base_url('/cotizaciones') ?>";</script>
 <script src="<?= base_url('js/cotizaciones/cotizaciones.js')?>"></script>
+<script src="<?= base_url('js/cotizaciones/SearchClient.js')?>"></script>
 
 <?= $footer ?>

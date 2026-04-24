@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\Cliente;
 use App\Models\Cotizacion;
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -52,6 +53,43 @@ class CotizacionController extends BaseController
         return $this->respondCreated($newCotizacion);
     }
 
+    public function searchCliente()
+    {
+        $data = $this->request->getJSON(true);
+
+        $tipo = $data['tipo'] ?? null;
+        $valor = $data['valor'] ?? null;
+
+        // Validación básica
+        if (!$tipo || !$valor) {
+            return $this->fail('Faltan datos');
+        }
+
+        // Validar columnas permitidas (IMPORTANTE)
+        $allowed = ['numero_documento', 'telefono', 'nombres'];
+        if (!in_array($tipo, $allowed)) {
+            return $this->fail('Tipo de búsqueda inválido');
+        }
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('personas');
+
+        // Aplicar filtro
+        if ($tipo === 'dni') {
+            $builder->where($tipo, $valor); // exacto
+        } else {
+            $builder->like($tipo, $valor); // parcial
+        }
+
+        $query = $builder->get();
+        $clientes = $query->getResult();
+
+        if (empty($clientes)) {
+            return $this->failNotFound('No se encontraron resultados');
+        }
+
+        return $this->respond($clientes, 200);
+    }
     public function fetchCotizaciones()
     {
 
