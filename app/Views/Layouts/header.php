@@ -30,7 +30,7 @@
       <!-- NAVIGATION -->
       <ul class="nav flex-column gap-1">
         <li>
-          <a href="<?= base_url('/index') ?>"        class="nav-link">
+          <a href="<?= base_url('') ?>"        class="nav-link">
             <i class="bi bi-house"></i> Inicio
           </a>
         </li>
@@ -45,8 +45,8 @@
           </a>
         </li>
         <li>
-          <a href="<?= base_url('/calendario') ?>"   class="nav-link">
-            <i class="bi bi-calendar3"></i> Calendario
+          <a href="<?= base_url('/clientes') ?>"     class="nav-link">
+            <i class="bi bi-people"></i> Clientes
           </a>
         </li>
         <li>
@@ -55,13 +55,13 @@
           </a>
         </li>
         <li>
-          <a href="<?= base_url('/clientes') ?>"     class="nav-link">
-            <i class="bi bi-people"></i> Clientes
+          <a href="<?= base_url('/promociones') ?>"  class="nav-link">
+            <i class="bi bi-tag"></i> Promociones
           </a>
         </li>
         <li>
-          <a href="<?= base_url('/promociones') ?>"  class="nav-link">
-            <i class="bi bi-tag"></i> Promociones
+          <a href="<?= base_url('/calendario') ?>"   class="nav-link">
+            <i class="bi bi-calendar3"></i> Calendario
           </a>
         </li>
       </ul>
