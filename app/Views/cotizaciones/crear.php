@@ -34,22 +34,22 @@
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label for="nombreCliente" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="nombreCliente">
+                            <input type="text" class="form-control" id="nombreCliente" name="nombre_cliente">
                         </div>
 
                         <div class="col-12 col-md-6">
                             <label for="dniCliente" class="form-label">DNI</label>
-                            <input type="text" class="form-control" id="dniCliente">
+                            <input type="text" class="form-control" id="dniCliente" name="dni">
                         </div>
 
                         <div class="col-12 col-md-6">
                             <label for="telefonoCliente" class="form-label">Teléfono</label>
-                            <input type="text" class="form-control" id="telefonoCliente">
+                            <input type="text" class="form-control" id="telefonoCliente" name="telefono">
                         </div>
 
                         <div class="col-12 col-md-6">
                             <label for="emailCliente" class="form-label">Correo electrónico</label>
-                            <input type="email" class="form-control" id="emailCliente">
+                            <input type="email" class="form-control" id="emailCliente" name="correo">
                         </div>
                     </div>
                 </fieldset>
@@ -156,6 +156,7 @@
                             <textarea
                                     class="form-control"
                                     id="notas"
+                                    name="observaciones"
                                     rows="3"
                                     placeholder="Observaciones o detalles del contrato..."
                             ></textarea>
@@ -164,7 +165,7 @@
                 </fieldset>
 
             </div>
-        </form>
+
         <!-- RESUMEN -->
         <div class="col-12 col-xl-4">
             <div class="resumen-card mb-3">
@@ -181,10 +182,13 @@
                 <div class="resumen-title">Cliente seleccionado</div>
                 <div id="clienteSeleccionado" style="font-size:0.82rem;color:#666;">Ningún cliente seleccionado</div>
             </div>
-            <button class="btn-guardar" onclick="guardarCotizacion()">
+            <button class="btn-guardar" type="submit">
                 <i class="bi bi-check-circle me-2"></i>Guardar cotización
             </button>
         </div>
+        <!--FIN DEL FORMULARIO-->
+        </form>
+
     </div>
 </div>
 </main>
@@ -290,10 +294,65 @@
 
         // Capturamos los datos del formulario:
         form.addEventListener("submit", (event) => {
+            // Capturamos el envio del formulario
             event.preventDefault();
+
+            // Creamos un objeto FormData para acceder a los datos del form
             const formData = new FormData(form);
-            const nombre = formData.get("nombre");
+
+            const observaciones = formData.get("observaciones");
+
+            // CREAMOS EL OBJETO JSON PARA ENVIAR LOS DATOS
+            let cotizacion_json = {
+                "id_cliente": 10,
+                "id_usuario": 1,
+                "nombre_cotizacion": "COTIZACION INGRESADO POR EL FORMULARIO",
+                "fecha_hora_inicio": "2026-12-12 12:30",
+                "fecha_hora_fin": "2026-12-12 21:00",
+                "direccion": "AUN NO HAY",
+                "referencia": "aun no hay",
+                "observaciones": observaciones,
+                "total_estimado": 2500.20,
+            }
+
+            cotizacion_json = JSON.stringify(cotizacion_json)
+            createCotizacion(cotizacion_json);
         })
+
+        async function createCotizacion(data_json) {
+
+            if (!data_json) {
+                console.error("No hay datos para enviar");
+                return;
+            }
+
+            try {
+                const res = await fetch("<?= base_url('/cotizaciones/insertar') ?>", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: data_json,
+                });
+
+                const result = await res.json();
+
+                if (res.status !== 201) {
+                    alert('No se logró insertar');
+                    console.log(data_json);
+                    console.log(res.status);
+                    console.log(result);
+                    return;
+                }
+
+                alert('Se insertó la cotización en la BD');
+                return res.status;
+
+            } catch (e) {
+                console.error("Error en la petición:", e);
+                return null;
+            }
+        }
 
         document.getElementById('toggleSidebar').addEventListener('click', () => {
             document.getElementById('sidebar').classList.toggle('hidden');
