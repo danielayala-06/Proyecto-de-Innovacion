@@ -33,17 +33,17 @@
                         <!-- Datos -->
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label for="nombreCliente" class="form-label">Nombre</label>
+                                <label for="nombreCliente" class="form-label">Nombre*</label>
                                 <input type="text" class="form-control" id="nombreCliente" name="nombre_cliente">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label for="dniCliente" class="form-label">DNI</label>
+                                <label for="dniCliente" class="form-label">DNI*</label>
                                 <input type="text" class="form-control" id="dniCliente" name="dni">
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label for="telefonoCliente" class="form-label">Teléfono</label>
+                                <label for="telefonoCliente" class="form-label">Teléfono*</label>
                                 <input type="text" class="form-control" id="telefonoCliente" name="telefono">
                             </div>
 
@@ -134,23 +134,37 @@
                         <legend class="section-divider">Detalles del Evento</legend>
 
                         <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <label for="fechaEvento" class="form-label">Fecha del evento</label>
-                                <input type="date" class="form-control" id="fechaEvento">
+                            <!-- Nombre del evento -->
+                            <div class="col-12">
+                                <label for="nombreEvento" class="form-label">Nombre del evento*</label>
+                                <input type="text" class="form-control" required minlength="5" maxlength="50">
                             </div>
 
+                            <!-- Fecha hora incio del evento-->
                             <div class="col-12 col-md-6">
-                                <label for="tipoEvento" class="form-label">Tipo de evento</label>
-                                <select class="form-select" id="tipoEvento">
-                                    <option value="">Seleccionar...</option>
-                                    <option>Matrimonio</option>
-                                    <option>Quinceañero</option>
-                                    <option>Retrato</option>
-                                    <option>Corporativo</option>
-                                    <option>Otro</option>
-                                </select>
+                                <label for="fechaInicio" class="form-label">Fecha del evento</label>
+                                <input type="datetime-local" class="form-control" id="fechaInicio">
                             </div>
 
+                            <!-- Fecha hora fin del evento-->
+                            <div class="col-12 col-md-6">
+                                <label for="fechaFin" class="form-label">Fecha fin del evento</label>
+                                <input type="datetime-local" name="fechaFin" class="form-control" id="fechaFinEvento">
+                            </div>
+
+                            <!-- Direccion del evento-->
+                            <div class="col-12">
+                                <label for="direccion" class="form-label">Direccion del evento</label>
+                                <input type="text" name="direccion" class="form-control" id="direccionEvento">
+                            </div>
+
+                            <!-- Referencia del sitio -->
+                            <div class="col-12">
+                                <label for="referencia" class="form-label">Referencia del evento</label>
+                                <input type="text" name="direccion" class="form-control" id="direccionEvento">
+                            </div>
+
+                            <!-- Observaciones -->
                             <div class="col-12">
                                 <label for="notas" class="form-label">Notas adicionales</label>
                                 <textarea
@@ -207,8 +221,8 @@
                     <input type="text" class="form-control" id="servicioNombre" placeholder="Ej: Sesión de fotos 2h">
                 </div>
                 <div class="mb-3">
-                    <label>Precio (S/)</label>
-                    <input type="number" class="form-control" id="servicioPrecio" placeholder="0.00">
+                    <label for="precio">Precio (S/)</label>
+                    <input type="number" name="precio" class="form-control" id="servicioPrecio" placeholder="0.00" required min="5">
                 </div>
             </div>
             <div class="modal-footer">
