@@ -17,6 +17,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const referenciaEvento = formData.get("referencia");
         const observaciones = formData.get("observaciones");
 
+        // Validaciones
+
+        // Probamos que los datos esten llegando correctamente
          console.log("DATOS RECIVIDOS:")
          console.log(fechaInicio)
          console.log(fechaFin)
@@ -31,8 +34,8 @@ document.addEventListener("DOMContentLoaded", () => {
             "id_cliente": 4,
             "id_usuario": 1,
             "nombre_cotizacion": nombreEvento,
-            "fecha_hora_inicio": "2026-12-12 12:30",
-            "fecha_hora_fin": "2026-12-12 21:00",
+            "fecha_hora_inicio": fechaInicio,
+            "fecha_hora_fin": fechaFin,
             "direccion": direccionEvento,
             "referencia": referenciaEvento,
             "observaciones": observaciones,
