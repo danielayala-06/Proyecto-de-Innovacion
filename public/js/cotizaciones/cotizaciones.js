@@ -1,67 +1,81 @@
 document.addEventListener("DOMContentLoaded", () => {
-        // referencia al formulario de registro de cotizaciones
-        const form = document.getElementById("form-cotizacion");
+    // referencia al formulario de registro de cotizaciones
+    const form = document.getElementById("form-cotizacion");
 
-        // Capturamos los datos del formulario:
-        form.addEventListener("submit", (event) => {
-            // Capturamos el envio del formulario
-            event.preventDefault();
+    // Capturamos los datos del formulario:
+    form.addEventListener("submit", (event) => {
+        // Capturamos el envio del formulario
+        event.preventDefault();
 
-            // Creamos un objeto FormData para acceder a los datos del form
-            const formData = new FormData(form);
+        // Creamos un objeto FormData para acceder a los datos del form
+        const formData = new FormData(form);
 
-            const observaciones = formData.get("observaciones");
+        const nombreEvento = formData.get("nombre");
+        const fechaInicio = formData.get("fechaInicio");
+        const fechaFin = formData.get("fechaFin");
+        const direccionEvento = formData.get("direccion");
+        const referenciaEvento = formData.get("referencia");
+        const observaciones = formData.get("observaciones");
 
-            // CREAMOS EL OBJETO JSON PARA ENVIAR LOS DATOS
-            let cotizacion_json = {
-            "id_cliente": 10,
+         console.log("DATOS RECIVIDOS:")
+         console.log(fechaInicio)
+         console.log(fechaFin)
+         console.log(direccionEvento)
+         console.log(nombreEvento)
+         console.log(referenciaEvento)
+         console.log(observaciones)
+         console.log("=======================")
+
+        // CREAMOS EL OBJETO PARA ENVIAR LOS DATOS
+        const cotizacion_json = {
+            "id_cliente": 4,
             "id_usuario": 1,
-            "nombre_cotizacion": "COTIZACION INGRESADO POR EL FORMULARIO",
+            "nombre_cotizacion": nombreEvento,
             "fecha_hora_inicio": "2026-12-12 12:30",
             "fecha_hora_fin": "2026-12-12 21:00",
-            "direccion": "AUN NO HAY",
-            "referencia": "aun no hay",
+            "direccion": direccionEvento,
+            "referencia": referenciaEvento,
             "observaciones": observaciones,
             "total_estimado": 2500.20,
-            }
+        }
 
-                cotizacion_json = JSON.stringify(cotizacion_json)
-                createCotizacion(cotizacion_json);
-            })
+        createCotizacion(cotizacion_json);
+    })
 
-        async function createCotizacion(data_json) {
 
-        if (!data_json) {
-        console.error("No hay datos para enviar");
-        return;
-    }
+    async function createCotizacion(data_object) {
+
+        if (!data_object) {
+            console.error("No hay datos para enviar");
+            return;
+        }
 
         try {
-        const res = await fetch("<?= base_url('/cotizaciones/insertar') ?>", {
-        method: "POST",
-        headers: {
-        "Content-Type": "application/json"
-    },
-        body: data_json,
-    });
+            const res = await fetch(`${BASE_URL}/insertar`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+                body: JSON.stringify(data_object),
+            });
 
         const result = await res.json();
 
         if (res.status !== 201) {
-        alert('No se logró insertar');
-        console.log(data_json);
-        console.log(res.status);
-        console.log(result);
-        return;
-    }
+            alert('No se logró insertar');
+            console.log(data_object);
+            console.log(res.status);
+            console.log(result);
+            return;
+        }
 
         alert('Se insertó la cotización en la BD');
         return res.status;
 
-    } catch (e) {
-        console.error("Error en la petición:", e);
-        return null;
-    }
+        } catch (e) {
+            console.error("Error en la petición:", e);
+            return null;
+        }
     }
 
     const presets = { dron: false, video: false, foto: false };

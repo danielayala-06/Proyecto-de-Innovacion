@@ -136,14 +136,14 @@
                         <div class="row g-3">
                             <!-- Nombre del evento -->
                             <div class="col-12">
-                                <label for="nombreEvento" class="form-label">Nombre del evento*</label>
-                                <input type="text" class="form-control" required minlength="5" maxlength="50">
+                                <label for="nombre" class="form-label">Nombre del evento*</label>
+                                <input type="text" class="form-control" required minlength="5" maxlength="50" name="nombre">
                             </div>
 
                             <!-- Fecha hora incio del evento-->
                             <div class="col-12 col-md-6">
                                 <label for="fechaInicio" class="form-label">Fecha del evento</label>
-                                <input type="datetime-local" class="form-control" id="fechaInicio">
+                                <input type="datetime-local" name="fechaInicio" class="form-control" id="fechaInicio">
                             </div>
 
                             <!-- Fecha hora fin del evento-->
@@ -161,7 +161,7 @@
                             <!-- Referencia del sitio -->
                             <div class="col-12">
                                 <label for="referencia" class="form-label">Referencia del evento</label>
-                                <input type="text" name="direccion" class="form-control" id="direccionEvento">
+                                <input type="text" name="referencia" class="form-control" id="referenciaEvento">
                             </div>
 
                             <!-- Observaciones -->

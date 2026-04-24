@@ -7,13 +7,32 @@
 
 document.addEventListener("DOMContentLoaded", async function (){
 
-    console.log("Ejecutando js");
+    // Obtenemos referencia a los input del cliente
+    const input_nombre = document.querySelector('#nombreCliente')
+    const input_dni = document.querySelector('#dniCliente')
+    const input_telefono = document.querySelector('#telefonoCliente')
+    const input_correo = document.querySelector('#emailCliente')
 
+    // Probamos la request
     const clientes = await sendRequest(76982415);
     console.log(clientes);
     console.log(`${BASE_URL}/searchCliente`);
 
 });
+//
+function setDataCliente(data){
+    // Verificamos que la data no este vacia:
+    if(!data)return;
+
+    // Obtenemos referencia a los input del cliente
+    const input_nombre = document.querySelector('#nombreCliente')
+    const input_dni = document.querySelector('#dniCliente')
+    const input_telefono = document.querySelector('#telefonoCliente')
+    const input_correo = document.querySelector('#emailCliente')
+
+    // Insertamos los datos recividos al formulario.
+
+}
 
 /**
  * Esta funcion envia una solicitud al back-end para buscar al cliente por el (dni, telefono, nombres)
