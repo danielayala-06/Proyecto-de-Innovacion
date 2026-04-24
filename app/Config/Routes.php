@@ -18,6 +18,23 @@ $routes->get('/cotizaciones/crear', 'CotizacionController::create');
 $routes->post('/cotizaciones/insertar', 'CotizacionController::createCotizacion');
 $routes->post('/cotizaciones/searchCliente', 'CotizacionController::searchCliente');
 
+
+/**
+ *      RUTAS PARA CONTRATOS
+ */
+$routes->get('/contratos', 'ContratosController::index');
+
+/**
+ *      RUTAS PARA CLIENTES
+ */
+$routes->get('/clientes', 'ClientesController::index');
+
+/**
+ *      RUTAS PARA PAQUETES
+ */
+$routes->get('/paquetes', 'PaquetesController::index');
+
+
 /**
  *      RUTAS PARA LAS API's
  */
