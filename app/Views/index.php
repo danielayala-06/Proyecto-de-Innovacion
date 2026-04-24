@@ -1,5 +1,5 @@
 <?= $header ?>
-<main>
+<main class="main-content" id="main-content">
     <h3 class="fw-lighter">Inicio</h3>
 
     <!-- STAT CARDS -->
