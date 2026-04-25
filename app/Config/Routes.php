@@ -32,7 +32,19 @@ $routes->get('/clientes', 'ClientesController::index');
 /**
  *      RUTAS PARA PAQUETES
  */
-$routes->get('/paquetes', 'PaquetesController::index');
+//$routes->get('/api/paquetes', 'PaquetesController::index');
+
+/**
+ *      RUTAS PARA PRODUCTOS
+ */
+$routes->get('/api/productos', 'ProductosController::index');
+
+/**
+ *      RUTAS PARA SERVICIOS
+ */
+$routes->get('/api/servicios', 'ServiciosController::index');
+
+
 
 
 /**

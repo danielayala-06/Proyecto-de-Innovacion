@@ -21,11 +21,17 @@ class Paquetes extends BaseController
      */
     public function getIndex(?int $id = null)
     {
+        // conexion con la entidad paquete
         $model = new Paquete();
+
+        // Transformador de los paquetes
         $transformer = new PaquetesTransformer();
 
+
         if (!$id) {
-            return $this->paginate($model, 20, PaquetesTransformer::class);
+            $paquetes = $model->findAll();
+
+            return $this->respond($transformer->transformMany($paquetes), 200, 'Paquetes enviados!');
         }
 
         $paquete = $model->find($id);
@@ -34,7 +40,7 @@ class Paquetes extends BaseController
             return $this->failNotFound('No encontrado');
         }
 
-         return $this->respond($transformer->transform($paquete));
+         return $this->respond($transformer->transform($paquete), 200, 'Paquete encontrado!');
     }
 
     /**
