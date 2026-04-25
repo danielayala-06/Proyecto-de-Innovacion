@@ -13,7 +13,13 @@ class Paquete extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
-    protected $allowedFields    = ['nombre_paquete', 'precio_base', 'imagen', 'detalle_paquete', 'estado'];
+    protected $allowedFields    = [
+        'nombre_paquete',
+        'precio_base',
+        'imagen',
+        'descripcion',
+        'estado'
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
