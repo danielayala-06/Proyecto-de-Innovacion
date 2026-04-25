@@ -9,7 +9,7 @@ class Producto extends Model
     protected $table            = 'productos';
     protected $primaryKey       = 'id_producto';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'object';
+    protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [

@@ -9,7 +9,7 @@ class Servicio extends Model
     protected $table            = 'servicios';
     protected $primaryKey       = 'id_servicio';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'object';
+    protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
