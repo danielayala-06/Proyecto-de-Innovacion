@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const res = await fetch(`${BASE_URL}/insertar`, {
+            const res = await fetch(`${BASE_URL}/cotizaciones/insertar`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

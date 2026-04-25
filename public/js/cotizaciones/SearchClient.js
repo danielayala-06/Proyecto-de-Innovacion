@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async function (){
     // Probamos la request
     const clientes = await sendRequest(76982415);
     console.log(clientes);
-    console.log(`${BASE_URL}/searchCliente`);
+    console.log(`${BASE_URL}/cotizaciones/searchCliente`);
 
 });
 //
@@ -49,7 +49,7 @@ async function sendRequest(input_value){
     }
 
     try{
-        const res = await fetch(`${BASE_URL}/searchCliente`, {
+        const res = await fetch(`${BASE_URL}/cotizaciones/searchCliente`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
