@@ -1,4 +1,4 @@
-import {getAllItems, calcularTotal} from "./cotizacionManager.js";
+import {getAllItems, calcularTotal, seleccionarOpcion} from "./cotizacionManager.js";
 import {fetchPaquetes} from "../../api/paquetesApi.js";
 
 /**
@@ -52,16 +52,17 @@ export async function renderPaquetesModal() {
     // Referencia al container de PAQUETES
     const cont = document.getElementById('panel-quinceaneros');
 
+    // Limpiamos el modal
+    cont.innerHTML = '';
+
     // Obtenemos los paquetes
     const paquetes = await fetchPaquetes();
 
+    // En caso de que no haya paquetes
     if (!paquetes) return;
 
     // Convertimos el objeto a array
     const arrayPaquetes = Object.values(paquetes);
-
-    console.log(typeof arrayPaquetes); // "object" (los arrays en JS son objetos)
-    console.log(arrayPaquetes);
 
     // Iteramos correctamente el array
     arrayPaquetes.forEach(paquete => {
@@ -85,9 +86,6 @@ export async function renderPaquetesModal() {
  */
 function layoutModalPaquete(paquete, html_container){
 
-    console.log('tipo del contenedor')
-    console.log(typeof html_container)
-
     // En caso de que no se encuentre el contenedor
     if(!html_container)return;
 
@@ -106,19 +104,22 @@ function layoutModalPaquete(paquete, html_container){
             <i class="bi bi-check-circle-fill po-check"></i>
          </div>`
 
-    //onclick="seleccionarOpcion(this,'Paquete Quinceañero Básico','Sesión + 50 fotos editadas',350)"
-    html_container.innerHTML +=(newPaquete)
+    // Agregamos el paquete renderizado al modal cotizaciones
+    html_container.innerHTML += newPaquete
+
+    // Referenciamos al paquete
+    const contPaquete = document.getElementById(`paquete-${paquete['id_paquete']}`)
 }
 function layoutPaqueteRender(paquete, html_container){
     cont.innerHTML = paquetes.map((p, i) => `
                 <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:10px 13px;font-size:0.81rem;">
                   <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <span style="color:#ccc;font-weight:500;">${p.nombre}</span>
-                    <button style="background:none;border:none;color:#555;cursor:pointer;" onclick="eliminarPaquete(${i})">
+                    <span style="color:#ccc;font-weight:500;">${paquete['nombre_paquete']}</span>
+                    <button style="background:none;border:none;color:#555;cursor:pointer;" onclick="eliminarPaquete(${paquete['id_paquete']})">
                       <i class="bi bi-x"></i>
                     </button>
                   </div>
-                  ${p.desc ? `<div style="color:#555;font-size:0.74rem;margin-top:2px;">${p.desc}</div>` : ''}
-                  <div style="color:#5a9eff;margin-top:4px;font-size:0.82rem;">S/ ${p.precio.toFixed(2)}</div>
+                  ${paquete['descripcion'] ? `<div style="color:#555;font-size:0.74rem;margin-top:2px;">${paquete['descripcion']}</div>` : ''}
+                  <div style="color:#5a9eff;margin-top:4px;font-size:0.82rem;">S/ ${paquete['precio_base']}</div>
                 </div>`);
 }

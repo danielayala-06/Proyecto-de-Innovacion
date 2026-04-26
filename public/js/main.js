@@ -3,6 +3,7 @@ import {abrirModal, renderPaquetesModal} from "./modules/cotizaciones/cotizacion
 import { initClienteSearch } from "./modules/clientes/clienteSearch.js";
 import { fetchPaquetes } from "./api/paquetesApi.js";
 import { fetchServicios } from "./api/serviciosApi.js";
+//import {seleccionarOpcion} from "./modules/cotizaciones/cotizacionManager";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -20,6 +21,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Búsqueda de cliente (solo si existe input)
     if (document.getElementById("searchCliente")) {
         initClienteSearch();
+    }
+
+    // para los botones de confirmar paquete
+    if (document.getElementById("btn-confirmar-paquetes")) {
+        const btn_confirmar_pa = document.getElementById("btn-confirmar-paquete")
+
+        //btn_confirmar_pa.addEventListener('click', function (){seleccionarOpcion()})
     }
 
     /**

@@ -1,9 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
     // referencia al formulario de registro de cotizaciones
     const form = document.getElementById("form-cotizacion");
+})
+    // BOTONES PARA ABRIR LOS MODALES
+    // Referencia al boton agregar sevicio;
+    const btn_modal_s = document.getElementById('btn-modal-sevicio');
+    // Referencia al boton agregar paquete;
+    const btn_modal_pa = document.getElementById('btn-modal-paquete');
+/**
+ * Evento del boton para realizar la peticion de los servicios
+ */
+btn_modal_s.addEventListener("click", ()=>{
+        abrirModalServicio()
+        fetchServicios()
+    })
+/**
+ * Evento del modal para realizar la peticion de los paquetes
+ */
+btn_modal_pa.addEventListener("click", ()=>{
+        abrirModalPaquete()
+        fetchPaquetes()
+    })
 
-    // Capturamos los datos del formulario:
-    form.addEventListener("submit", (event) => {
+/**
+ * Evento del formulario para capturar cuando este envie los datos.
+ */
+form.addEventListener("submit", (event) => {
         // Capturamos el envio del formulario
         event.preventDefault();
 
@@ -45,41 +67,45 @@ document.addEventListener("DOMContentLoaded", () => {
         createCotizacion(cotizacion_json);
     })
 
+/**
+ * Esta funcion recibe un objeto json y envia los datos al back para crear la cotizacion
+ * @param data_object
+ * @returns {Promise<number|null>}
+ */
+async function createCotizacion(data_object) {
 
-    async function createCotizacion(data_object) {
-
-        if (!data_object) {
-            console.error("No hay datos para enviar");
-            return;
-        }
-
-        try {
-            const res = await fetch(`${BASE_URL}/cotizaciones/insertar`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-                body: JSON.stringify(data_object),
-            });
-
-        const result = await res.json();
-
-        if (res.status !== 201) {
-            alert('No se logró insertar');
-            console.log(data_object);
-            console.log(res.status);
-            console.log(result);
-            return;
-        }
-
-        alert('Se insertó la cotización en la BD');
-        return res.status;
-
-        } catch (e) {
-            console.error("Error en la petición:", e);
-            return null;
-        }
+    if (!data_object) {
+        console.error("No hay datos para enviar");
+        return;
     }
+
+    try {
+        const res = await fetch(`${BASE_URL}/cotizaciones/insertar`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+            body: JSON.stringify(data_object),
+        });
+
+    const result = await res.json();
+
+    if (res.status !== 201) {
+        alert('No se logró insertar');
+        console.log(data_object);
+        console.log(res.status);
+        console.log(result);
+        return;
+    }
+
+    alert('Se insertó la cotización en la BD');
+    return res.status;
+
+    } catch (e) {
+        console.error("Error en la petición:", e);
+        return null;
+    }
+}
 
     const presets = { dron: false, video: false, foto: false };
     let fotoPrecio = 0;
@@ -107,26 +133,26 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
     function abrirModalServicio() {
-    new bootstrap.Modal(document.getElementById('modalServicio')).show();
-}
+        new bootstrap.Modal(document.getElementById('modalServicio')).show();
+    }
 
     function agregarServicioCustom() {
-    const nombre = document.getElementById('servicioNombre').value.trim();
-    const precio = parseFloat(document.getElementById('servicioPrecio').value) || 0;
-    if (!nombre) return;
-    serviciosCustom.push({ nombre, precio });
-    renderServiciosCustom();
-    actualizarResumen();
-    document.getElementById('servicioNombre').value = '';
-    document.getElementById('servicioPrecio').value = '';
-    bootstrap.Modal.getInstance(document.getElementById('modalServicio')).hide();
-}
+        const nombre = document.getElementById('servicioNombre').value.trim();
+        const precio = parseFloat(document.getElementById('servicioPrecio').value) || 0;
+        if (!nombre) return;
+        serviciosCustom.push({ nombre, precio });
+        renderServiciosCustom();
+        actualizarResumen();
+        document.getElementById('servicioNombre').value = '';
+        document.getElementById('servicioPrecio').value = '';
+        bootstrap.Modal.getInstance(document.getElementById('modalServicio')).hide();
+    }
 
     function eliminarServicioCustom(i) {
-    serviciosCustom.splice(i, 1);
-    renderServiciosCustom();
-    actualizarResumen();
-}
+        serviciosCustom.splice(i, 1);
+        renderServiciosCustom();
+        actualizarResumen();
+    }
 
     function renderServiciosCustom() {
         const cont = document.getElementById('serviciosList');
@@ -229,4 +255,4 @@ document.addEventListener("DOMContentLoaded", () => {
         const total = all.reduce((s, x) => s + x.precio, 0);
         alert(`Cotización guardada para ${nombre}\nTotal: S/ ${total.toFixed(2)}`);
     }
-})
+

@@ -63,7 +63,7 @@
 
                             <div id="paquetesContainer" class="d-flex flex-column gap-2"></div>
 
-                            <button type="button" class="btn-paquete mt-2" onclick="abrirModalPaquete()">
+                            <button type="button" class="btn-paquete mt-2" id="btn-modal-paquete">
                                 <i class="bi bi-plus-circle me-1"></i> Agregar paquete
                             </button>
                         </fieldset>
@@ -117,7 +117,7 @@
 
                             <!-- Lista dinámica -->
                             <div class="servicios-list mt-3">
-                                <button type="button" class="btn btn-light servicio-add w-100" onclick="abrirModalServicio()">
+                                <button type="button" class="btn btn-light servicio-add w-100" id="btn-modal-sevicio">
                                     <i class="bi bi-plus-circle"></i> Agregar servicio +
                                 </button>
 
@@ -242,21 +242,32 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <!-- CATEGORIAS DE LOS PAQUETES-->
                 <div class="cat-tabs">
                     <button class="cat-tab active" onclick="cambiarCategoria('quinceaneros', this)">Quinceañeros</button>
                     <button class="cat-tab" onclick="cambiarCategoria('cuadros', this)">Cuadros</button>
                     <button class="cat-tab" onclick="cambiarCategoria('anuarios', this)">Anuarios</button>
                 </div>
+                <!-- -->
+                <div class="cat-panel active overflow-auto" id="panel-quinceaneros" style="max-height: 20rem;">
 
-                <div class="cat-panel active" id="panel-quinceaneros">
+                    <!-- PAQUETES GENERADOS DE MANERA ASYNC POR JS  -->
                     <div class="paquete-option" onclick="seleccionarOpcion(this,'Paquete Quinceañero Básico','Sesión + 50 fotos editadas',350)">
-                        <div class="po-left"><div class="po-name">Paquete Básico</div><div class="po-desc">Sesión + 50 fotos editadas</div></div>
-                        <span class="po-price">S/ 350.00</span><i class="bi bi-check-circle-fill po-check"></i>
+                        <div class="po-left">
+                            <div class="po-name">Paquete Básico</div>
+                            <div class="po-desc">Sesión + 50 fotos editadas</div>
+                        </div>
+
+                        <span class="po-price">S/ 350.00</span>
+                        <i class="bi bi-check-circle-fill po-check"></i>
+
                     </div>
+
                     <div class="paquete-option" onclick="seleccionarOpcion(this,'Paquete Quinceañero Plus','Sesión + 100 fotos + álbum 20×30',550)">
                         <div class="po-left"><div class="po-name">Paquete Plus</div><div class="po-desc">Sesión + 100 fotos + álbum 20×30</div></div>
                         <span class="po-price">S/ 550.00</span><i class="bi bi-check-circle-fill po-check"></i>
                     </div>
+
                     <div class="paquete-option" onclick="seleccionarOpcion(this,'Paquete Quinceañero Premium','Sesión + 150 fotos + álbum + video',850)">
                         <div class="po-left"><div class="po-name">Paquete Premium</div><div class="po-desc">Sesión + 150 fotos + álbum + video</div></div>
                         <span class="po-price">S/ 850.00</span><i class="bi bi-check-circle-fill po-check"></i>
@@ -295,14 +306,17 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-primary btn-sm" onclick="confirmarPaquete()">Agregar paquete</button>
+                <button class="btn btn-primary btn-sm" id="btn-confirmar-paquetes">Agregar paquete</button>
             </div>
         </div>
     </div>
 </div>
 
-<script>const BASE_URL = "<?= base_url('/cotizaciones') ?>";</script>
-<script src="<?= base_url('js/cotizaciones/cotizaciones.js')?>"></script>
-<script src="<?= base_url('js/cotizaciones/SearchClient.js')?>"></script>
+<script>const BASE_URL = "<?= base_url('') ?>"</script>
+<script type="module" src="<?= base_url('js/main.js')?>"></script>
+<!--<script src="<?php /*= base_url('js/cotizaciones/cotizaciones.js')*/?>"></script>
+<script src="<?php /*= base_url('js/cotizaciones/SearchClient.js')*/?>"></script>
+<script src="<?php /*= base_url('js/cotizaciones/FetchServicios.js')*/?>"></script>
+<script src="<?php /*= base_url('js/cotizaciones/FetchProductos.js')*/?>"></script>-->
 
 <?= $footer ?>

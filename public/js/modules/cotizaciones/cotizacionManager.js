@@ -67,3 +67,25 @@ export function agregarPaquete(paquete) {
 export function eliminarPaquete(index) {
     paquetes.splice(index, 1);
 }
+
+export function seleccionarOpcion(paquete, container) {
+    const paquetes = document.querySelectorAll('.paquete-option');
+
+    paquetes.forEach(p=> p.addEventListener("click",function(){console.log("has presionado un paquete")}))
+    paquetes.forEach(p => p.classList.remove('selected'));
+    // Cambiamos de estado al container del paquete
+    container.classList.add('selected');
+
+    // Agregamos los paquetes al array para su inserccion
+    paqueteSeleccionado = {
+        nombre:      paquete['nombre_paquete'],
+        descripcion: paquete['paquete_desccripcion'],
+        precio:      paquete['precio_base']
+    };
+}
+/*
+function seleccionarOpcion(el, nombre, desc, precio) {
+    document.querySelectorAll('.paquete-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    paqueteSeleccionado = { nombre, desc, precio };
+}*/
