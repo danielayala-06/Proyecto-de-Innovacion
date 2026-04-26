@@ -1,16 +1,16 @@
-export async function fetchPaquetes(){
-
-    try{
-
+export async function fetchPaquetes() {
+    try {
         const res = await fetch(`${BASE_URL}/api/paquetes`);
-
         // En caso de que haya sucedido un error
-        if(res.status!== 200)return res.status
+        if (!res.ok) {
+            console.error("Error obteniendo paquetes:", res.status);
+            return null;
+        }
 
-        return await res.json()
-
-    }catch (error) {
-        console.log(error)
-        return null
+        // Devolvemos los paquetes
+        return await res.json();
+    } catch (error) {
+        console.error("Error en fetchPaquetes:", error);
+        return null;
     }
 }

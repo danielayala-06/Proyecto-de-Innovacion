@@ -6,23 +6,37 @@ import { setDataCliente } from "./clienteUI.js";
  */
 
 export function initClienteSearch() {
-    document.addEventListener("DOMContentLoaded", init);
-}
-
-function init() {
     const inputBusqueda = document.getElementById("searchCliente");
+    const btnBuscar     = document.getElementById("btnBuscar");
 
-    inputBusqueda.addEventListener("change", handleSearch);
+    if (!inputBusqueda) return;
+
+    // Buscar al presionar Enter en el input
+    inputBusqueda.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            await handleSearch(inputBusqueda.value);
+        }
+    });
+
+    // Buscar al hacer click en el botón lupa
+    if (btnBuscar) {
+        btnBuscar.addEventListener("click", async () => {
+            await handleSearch(inputBusqueda.value);
+        });
+    }
 }
 
-async function handleSearch(e) {
-    const valor = e.target.value.trim();
-
+async function handleSearch(valor) {
+    valor = valor.trim();
     if (!valor) return;
 
     const data = await buscarCliente(valor);
 
-    console.log("Cliente encontrado:", data);
+    if (!data) {
+        console.warn("No se encontró cliente con:", valor);
+        return;
+    }
 
     setDataCliente(data);
 }

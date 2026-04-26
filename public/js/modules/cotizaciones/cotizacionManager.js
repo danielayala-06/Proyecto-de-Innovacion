@@ -1,12 +1,12 @@
 /**
- * Maneja el estado y la lógica de la cotización
+ * Estado y lógica de la cotización
  */
 
 const presets = { dron: false, video: false, foto: false };
 
 let fotoPrecio = 0;
 let serviciosCustom = [];
-let paquetes = [];
+let paquetesList = [];
 let paqueteSeleccionado = null;
 
 /**
@@ -14,28 +14,36 @@ let paqueteSeleccionado = null;
  * GETTERS
  * ==============================
  */
+export function getPresets() {
+    return { ...presets };
+}
 
 export function getServiciosPreset() {
     const servicios = [];
-
-    if (presets.dron)
-        servicios.push({ nombre: "Toma con Dron", precio: 150 });
-
-    if (presets.video)
-        servicios.push({ nombre: "Video resumen", precio: 100 });
-
-    if (presets.foto)
-        servicios.push({ nombre: "Foto", precio: fotoPrecio });
-
+    if (presets.dron)  servicios.push({ nombre: "Toma con Dron",         precio: 150 });
+    if (presets.video) servicios.push({ nombre: "Video resumen (3 min)", precio: 100 });
+    if (presets.foto)  servicios.push({ nombre: "Foto",                  precio: fotoPrecio });
     return servicios;
 }
 
+export function getServiciosCustom() {
+    return [...serviciosCustom];
+}
+
+export function getPaquetes() {
+    return [...paquetesList];
+}
+
 export function getAllItems() {
-    return [...getServiciosPreset(), ...serviciosCustom, ...paquetes];
+    return [...getServiciosPreset(), ...serviciosCustom, ...paquetesList];
 }
 
 export function calcularTotal() {
-    return getAllItems().reduce((sum, item) => sum + item.precio, 0);
+    return getAllItems().reduce((sum, item) => sum + Number(item.precio), 0);
+}
+
+export function getPaqueteSeleccionado() {
+    return paqueteSeleccionado;
 }
 
 /**
@@ -43,8 +51,8 @@ export function calcularTotal() {
  * ACCIONES
  * ==============================
  */
-
 export function togglePreset(key) {
+    if (!(key in presets)) return;
     presets[key] = !presets[key];
 }
 
@@ -53,7 +61,7 @@ export function setFotoPrecio(valor) {
 }
 
 export function agregarServicio(nombre, precio) {
-    serviciosCustom.push({ nombre, precio });
+    serviciosCustom.push({ nombre, precio: parseFloat(precio) || 0 });
 }
 
 export function eliminarServicio(index) {
@@ -61,31 +69,37 @@ export function eliminarServicio(index) {
 }
 
 export function agregarPaquete(paquete) {
-    paquetes.push(paquete);
+    paquetesList.push({ ...paquete });
 }
 
 export function eliminarPaquete(index) {
-    paquetes.splice(index, 1);
+    paquetesList.splice(index, 1);
 }
 
-export function seleccionarOpcion(paquete, container) {
-    const paquetes = document.querySelectorAll('.paquete-option');
+/**
+ * Marca un paquete como seleccionado (para confirmar luego con confirmarPaquete())
+ * @param {Object} paquete  - objeto con campos del backend
+ * @param {HTMLElement} el  - elemento DOM del paquete clickeado
+ */
+export function seleccionarPaquete(paquete, el) {
+    // Quitar selección anterior
+    document.querySelectorAll(".paquete-option").forEach(p => p.classList.remove("selected"));
+    el.classList.add("selected");
 
-    paquetes.forEach(p=> p.addEventListener("click",function(){console.log("has presionado un paquete")}))
-    paquetes.forEach(p => p.classList.remove('selected'));
-    // Cambiamos de estado al container del paquete
-    container.classList.add('selected');
-
-    // Agregamos los paquetes al array para su inserccion
     paqueteSeleccionado = {
-        nombre:      paquete['nombre_paquete'],
-        descripcion: paquete['paquete_desccripcion'],
-        precio:      paquete['precio_base']
+        nombre:      paquete.nombre_paquete      || paquete.nombre,
+        descripcion: paquete.descripcion         || "",
+        precio:      parseFloat(paquete.precio_base || paquete.precio) || 0,
     };
 }
-/*
-function seleccionarOpcion(el, nombre, desc, precio) {
-    document.querySelectorAll('.paquete-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    paqueteSeleccionado = { nombre, desc, precio };
-}*/
+
+/**
+ * Confirma el paquete seleccionado y lo agrega a la lista
+ * @returns {boolean} true si se agregó, false si no había selección
+ */
+export function confirmarPaquete() {
+    if (!paqueteSeleccionado) return false;
+    paquetesList.push({ ...paqueteSeleccionado });
+    paqueteSeleccionado = null;
+    return true;
+}
