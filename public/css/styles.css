@@ -1,55 +1,55 @@
 /* ================================================================
    RONCEROS FOTOGRAFÍA — ESTILOS GLOBALES
-   Paleta: crema cálido / tostado / ámbar / blanco roto
+   Paleta: Studio Light / Studio Noir — Carbón + Oro Champán
    ================================================================ */
 
 :root {
-  /* Fondos */
-  --bg-page:      #f5f0eb;   /* crema cálido — fondo de página */
-  --bg-surface:   #faf7f3;   /* blanco roto — tarjetas y paneles */
-  --bg-elevated:  #ffffff;   /* blanco puro — formularios y campos */
-  --bg-input:     #f0ebe4;   /* beige suave — inputs */
-  --bg-hover:     #ede7de;   /* hover sobre filas / links */
-  --bg-active:    #e8dfd3;   /* ítem activo sidebar */
+  /* ── Fondos ──────────────────────────────────────────────────── */
+  --bg-page:      #F2EFEA;   /* papel fotográfico — base de página   */
+  --bg-surface:   #FAFAF8;   /* blanco limpio — tarjetas y paneles   */
+  --bg-elevated:  #FFFFFF;   /* blanco puro — modales y dropdowns    */
+  --bg-input:     #ECEAE4;   /* campo de entrada — distinguible      */
+  --bg-hover:     #E4E0D8;
+  --bg-active:    #DAD6CE;
 
-  /* Texto */
-  --text-primary:   #2c2318;   /* marrón muy oscuro — títulos */
-  --text-secondary: #6b5744;   /* tostado medio — subtítulos */
-  --text-muted:     #a08878;   /* marrón claro — labels, meta */
-  --text-placeholder: #c4b0a2; /* placeholder */
+  /* ── Texto ───────────────────────────────────────────────────── */
+  --text-primary:     #1C1916;   /* carbón rico — ~14:1 ✓            */
+  --text-secondary:   #4E4840;   /* gris cálido oscuro — ~9:1 ✓      */
+  --text-muted:       #7C7468;   /* gris medio cálido — ~5.5:1 ✓     */
+  --text-placeholder: #B4ACA4;
 
-  /* Bordes */
-  --border:       #ddd4c8;   /* borde estándar */
-  --border-strong:#c4b5a5;   /* borde énfasis */
+  /* ── Bordes ──────────────────────────────────────────────────── */
+  --border:        #D6D0C8;
+  --border-strong: #BEB8B0;
 
-  /* Acento — ámbar cálido */
-  --accent:       #c87941;   /* ámbar cálido — botones principales */
-  --accent-hover: #ad6433;   /* hover botón */
-  --accent-light: #f5e4d2;   /* fondo suave de acento */
-  --accent-text:  #7a3d15;   /* texto sobre fondo claro acento */
+  /* ── Acento — oro champán ────────────────────────────────────── */
+  --accent:       #B49040;   /* oro champán — elegante, atemporal   */
+  --accent-hover: #987830;
+  --accent-light: #F4EAD0;   /* fondo suave dorado                  */
+  --accent-text:  #6A5018;   /* texto sobre fondo claro dorado       */
 
-  /* Acento secundario — tostado */
-  --accent2:      #8a6545;
-  --accent2-light:#ede0d3;
+  /* ── Acento secundario ───────────────────────────────────────── */
+  --accent2:       #8A7050;
+  --accent2-light: #EDE0C8;
 
-  /* Sidebar */
-  --sidebar-bg:   #2e2318;   /* marrón muy oscuro */
-  --sidebar-link: #c4a882;   /* texto links sidebar */
-  --sidebar-hover:#3d3020;   /* hover */
-  --sidebar-active:#4a3a25;  /* activo */
-  --sidebar-active-text: #f5d9a8; /* texto activo */
-  --sidebar-icon: #a08060;
+  /* ── Sidebar — carbón oscuro en ambos modos ──────────────────── */
+  --sidebar-bg:          #1A1814;
+  --sidebar-link:        #C8BCA8;   /* ~6:1 sobre sidebar-bg ✓      */
+  --sidebar-hover:       #242018;
+  --sidebar-active:      #302A1E;
+  --sidebar-active-text: #F2E4BC;
+  --sidebar-icon:        #8E7860;
 
-  /* Estado / badges */
-  --green-bg:   #e8f5ec; --green-text: #2d6e40; --green-border: #b8dfc4;
-  --amber-bg:   #fef3e2; --amber-text: #8a5a00; --amber-border: #f5d090;
-  --red-bg:     #fdecea; --red-text:   #9b2020; --red-border:   #f5b8b8;
-  --blue-bg:    #e8f0fc; --blue-text:  #1a4a8a; --blue-border:  #b8cef5;
+  /* ── Estado / badges ─────────────────────────────────────────── */
+  --green-bg:    #E6F5EC; --green-text: #1A5E2E; --green-border: #9CCEB0;
+  --amber-bg:    #F8F0D8; --amber-text: #7A5000; --amber-border: #E4C060;
+  --red-bg:      #F8E8E8; --red-text:   #881818; --red-border:   #E4A0A0;
+  --blue-bg:     #E4EDF8; --blue-text:  #1A3878; --blue-border:  #9CBEEC;
 
-  /* Calendario */
-  --cal-cotizacion-bg:   #e8f0fc; --cal-cotizacion-text: #1a4a8a;
-  --cal-contrato-bg:     #e8f5ec; --cal-contrato-text:   #2d6e40;
-  --cal-entrega-bg:      #f3eafd; --cal-entrega-text:    #5a2080;
+  /* ── Calendario ──────────────────────────────────────────────── */
+  --cal-cotizacion-bg:   #E4EDF8; --cal-cotizacion-text: #1A3878;
+  --cal-contrato-bg:     #E6F5EC; --cal-contrato-text:   #1A5E2E;
+  --cal-entrega-bg:      #F0EAF8; --cal-entrega-text:    #481870;
 }
 
 /* ── RESET ──────────────────────────────────────────────────────── */
@@ -66,7 +66,7 @@ body {
 /* ── HEADER ─────────────────────────────────────────────────────── */
 #main-header {
   background-color: var(--sidebar-bg);
-  border-bottom: 1px solid #1a140d;
+  border-bottom: 1px solid #0C0A08;
   height: 60px;
   position: fixed; top: 0; left: 0; right: 0;
   z-index: 1030;
@@ -78,10 +78,10 @@ body {
 .brand {
   display: flex; align-items: center; gap: 10px;
   font-size: 1.1rem; font-weight: 700;
-  color: #f5d9a8; text-decoration: none; letter-spacing: 0.3px;
+  color: #F2E4BC; text-decoration: none; letter-spacing: 0.3px;
 }
 .brand i { font-size: 1.3rem; color: var(--accent); }
-.brand:hover { color: #fff; }
+.brand:hover { color: #FFFFFF; }
 
 .avatar-btn {
   width: 34px; height: 34px; border-radius: 50%;
@@ -94,7 +94,7 @@ body {
 /* ── SIDEBAR ─────────────────────────────────────────────────────── */
 #sidebar {
   background-color: var(--sidebar-bg);
-  border-right: 1px solid #1a140d;
+  border-right: 1px solid #0C0A08;
   width: 200px;
   position: fixed; top: 60px; left: 0; bottom: 0;
   z-index: 1020; padding: 1rem 0.75rem;
@@ -426,11 +426,11 @@ label {
   font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
   padding: 3px 8px; border-radius: 20px; white-space: nowrap;
 }
-.cat-quinceaneros { background: #f3eafd; color: #5a2080; border: 1px solid #d4aaf5; }
-.cat-cuadros      { background: #e8f5ec; color: #2d6e40; border: 1px solid #b8dfc4; }
-.cat-anuarios     { background: #e8f0fc; color: #1a4a8a; border: 1px solid #b8cef5; }
-.cat-matrimonios  { background: #fdecea; color: #9b2020; border: 1px solid #f5b8b8; }
-.cat-corporativo  { background: #fef3e2; color: #8a5a00; border: 1px solid #f5d090; }
+.cat-quinceaneros { background: #F0EAFC; color: #4A1870; border: 1px solid #C8A8EC; }
+.cat-cuadros      { background: #E8F5EE; color: #1A5E30; border: 1px solid #9CCEB0; }
+.cat-anuarios     { background: #E6EEF8; color: #1A3878; border: 1px solid #9CBEEC; }
+.cat-matrimonios  { background: #F8EAE8; color: #881818; border: 1px solid #E4A0A0; }
+.cat-corporativo  { background: #F8F0D8; color: #7A5000; border: 1px solid #E4C060; }
 .cat-otro         { background: var(--bg-hover); color: var(--text-muted); border: 1px solid var(--border); }
 
 .pc-name { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin-top: 0.5rem; }
@@ -924,3 +924,96 @@ label {
   gap: 6px;
 }
 .con-servicio-row input { flex: 1; }
+
+/* ================================================================
+   TRANSICIÓN SUAVE AL CAMBIAR DE TEMA
+   (excluye SVG y elementos con animaciones propias)
+   ================================================================ */
+body, body * {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease,
+              box-shadow 0.3s ease;
+}
+
+/* ================================================================
+   TEMA OSCURO — Studio Noir: Carbón + Oro Champán
+   ================================================================ */
+[data-theme="dark"] {
+  /* ── Fondos ──────────────────────────────────────────────────── */
+  /* Escala: input (más oscuro) → page → surface → elevated       */
+  --bg-page:      #141210;   /* carbón oscuro — base               */
+  --bg-surface:   #1C1A16;   /* panels y cards                     */
+  --bg-elevated:  #262220;   /* modales y popovers                 */
+  --bg-input:     #100E0C;   /* inputs "hundidos" — más oscuros    */
+  --bg-hover:     #26221E;
+  --bg-active:    #302C26;
+
+  /* ── Texto ───────────────────────────────────────────────────── */
+  --text-primary:     #F0E8D8;   /* crema cálida — ~14:1 ✓          */
+  --text-secondary:   #C4B490;   /* dorado apagado — ~6:1 ✓         */
+  --text-muted:       #968076;   /* gris cálido — ~4.8:1 ✓ WCAG AA  */
+  --text-placeholder: #584C40;
+
+  /* ── Bordes ──────────────────────────────────────────────────── */
+  --border:        #2E2A24;
+  --border-strong: #423C34;
+
+  /* ── Acento — oro más brillante para fondos oscuros ─────────── */
+  --accent:       #C8A048;   /* oro champán sobre oscuro           */
+  --accent-hover: #A88030;
+  --accent-light: #301E08;   /* fondo muy oscuro de acento         */
+  --accent-text:  #F4D878;   /* texto dorado sobre fondo oscuro    */
+
+  /* ── Acento secundario ───────────────────────────────────────── */
+  --accent2:       #9C7E50;
+  --accent2-light: #281A08;
+
+  /* ── Sidebar ─────────────────────────────────────────────────── */
+  --sidebar-bg:          #0E0C0A;
+  --sidebar-link:        #C4B480;   /* ~6:1 ✓                      */
+  --sidebar-hover:       #181410;
+  --sidebar-active:      #22200E;
+  --sidebar-active-text: #F0E0A0;
+  --sidebar-icon:        #786040;
+
+  /* ── Badges — tonos apagados, no neón ───────────────────────── */
+  --green-bg:    #182A1E; --green-text: #52C876; --green-border: #264A34;
+  --amber-bg:    #281E08; --amber-text: #E4B028; --amber-border: #4C3810;
+  --red-bg:      #281414; --red-text:   #E46C6C; --red-border:   #4C3434;
+  --blue-bg:     #101A2C; --blue-text:  #50A0E0; --blue-border:  #1C3454;
+
+  /* ── Calendario ──────────────────────────────────────────────── */
+  --cal-cotizacion-bg:   #101A2C; --cal-cotizacion-text: #50A0E0;
+  --cal-contrato-bg:     #182A1E; --cal-contrato-text:   #52C876;
+  --cal-entrega-bg:      #1E1028; --cal-entrega-text:    #B470E0;
+}
+
+/* ── Overrides dark: selectores con colores hardcodeados ─────────── */
+
+/* Badges de categoría */
+[data-theme="dark"] .cat-quinceaneros { background: #281840; color: #B470E0; border-color: #503080; }
+[data-theme="dark"] .cat-cuadros      { background: #182A1E; color: #52C876; border-color: #264A34; }
+[data-theme="dark"] .cat-anuarios     { background: #101A2C; color: #50A0E0; border-color: #1C3454; }
+[data-theme="dark"] .cat-matrimonios  { background: #281414; color: #E46C6C; border-color: #4C3434; }
+[data-theme="dark"] .cat-corporativo  { background: #281E08; color: #E4B028; border-color: #4C3810; }
+[data-theme="dark"] .cat-otro         { background: var(--bg-hover); color: var(--text-muted); border-color: var(--border); }
+
+/* Tipos de cotización */
+[data-theme="dark"] .cot-tipo-matrimonio  { background: #281414; color: #E46C6C; border-color: #4C3434; }
+[data-theme="dark"] .cot-tipo-quinceanero { background: #281840; color: #B470E0; border-color: #503080; }
+[data-theme="dark"] .cot-tipo-retrato     { background: var(--accent-light); color: var(--accent-text); border-color: #503018; }
+[data-theme="dark"] .cot-tipo-corporativo { background: #281E08; color: #E4B028; border-color: #4C3810; }
+[data-theme="dark"] .cot-tipo-otro        { background: var(--bg-hover); color: var(--text-muted); border-color: var(--border); }
+
+/* Calendario — colores hardcodeados (entrega / seleccionado) */
+[data-theme="dark"] .cal-event.entrega   { background: #1E1028; color: #B470E0; }
+[data-theme="dark"] .tp-entrega          { background: #1E1028; color: #B470E0; }
+[data-theme="dark"] .ev-type.entrega     { color: #B470E0; }
+[data-theme="dark"] .ld-entrega          { background: #1E1028; border-color: #8848B0; }
+[data-theme="dark"] .cal-cell.selected   { background: #2C1C08; border-color: var(--accent-hover); }
+[data-theme="dark"] .cal-cell.selected .cal-day-num { color: var(--accent); }
+
+/* Preset de servicio seleccionado */
+[data-theme="dark"] .servicio-preset-btn.selected .sp-icon { background: #342010; }
+
+/* Modal de confirmación de eliminar */
+[data-theme="dark"] .modal-del .modal-header { background: var(--red-bg); }

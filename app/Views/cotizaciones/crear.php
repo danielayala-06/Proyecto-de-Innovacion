@@ -61,70 +61,20 @@
                         <fieldset class="col-12 col-md-5">
                             <legend class="section-divider">Paquetes</legend>
 
-                            <div id="paquetesContainer" class="d-flex flex-column gap-2"></div>
-
                             <button type="button" class="btn-paquete mt-2" id="btn-modal-paquete">
                                 <i class="bi bi-plus-circle me-1"></i> Agregar paquete
                             </button>
+                            <div id="paquetesContainer" class="d-flex flex-column gap-2"></div>
+
                         </fieldset>
 
                         <!-- SERVICIOS -->
                         <fieldset class="col-12 col-md-7">
                             <legend class="section-divider">Servicios</legend>
-
-                            <!-- Presets -->
-                            <div role="group" aria-label="Servicios predefinidos">
-
-                                <div class="servicio-preset-btn" id="btn-dron" onclick="togglePreset('dron')">
-                                    <div class="sp-left">
-                                        <div class="sp-icon"><i class="bi bi-joystick"></i></div>
-                                        <span class="sp-name">Toma con Dron</span>
-                                    </div>
-                                    <span class="sp-price">S/ 150.00</span>
-                                    <i class="bi bi-check-circle-fill sp-check"></i>
-                                </div>
-
-                                <div class="servicio-preset-btn" id="btn-video" onclick="togglePreset('video')">
-                                    <div class="sp-left">
-                                        <div class="sp-icon"><i class="bi bi-camera-video"></i></div>
-                                        <span class="sp-name">Video resumen (3 min)</span>
-                                    </div>
-                                    <span class="sp-price">S/ 100.00</span>
-                                    <i class="bi bi-check-circle-fill sp-check"></i>
-                                </div>
-
-                                <div class="servicio-preset-btn" id="btn-foto" onclick="togglePreset('foto')">
-                                    <div class="sp-left">
-                                        <div class="sp-icon"><i class="bi bi-image"></i></div>
-                                        <span class="sp-name">Foto</span>
-                                    </div>
-
-                                    <label for="fotoPrecioInput" class="visually-hidden">Precio de foto</label>
-                                    <input
-                                            class="foto-precio-input"
-                                            id="fotoPrecioInput"
-                                            type="number"
-                                            min="0"
-                                            placeholder="S/ 0.00"
-                                            onclick="event.stopPropagation()"
-                                            oninput="onFotoPrecioInput()"
-                                    >
-
-                                    <i class="bi bi-check-circle-fill sp-check"></i>
-                                </div>
-
-                            </div>
-
-                            <!-- Lista dinámica -->
-                            <div class="servicios-list mt-3">
-                                <button type="button" class="btn btn-light servicio-add w-100" id="btn-modal-sevicio">
-                                    <i class="bi bi-plus-circle"></i> Agregar servicio +
-                                </button>
-
-                                <div id="serviciosList">
-                                    <div class="servicios-empty">Sin servicios adicionales</div>
-                                </div>
-                            </div>
+                            <button type="button" class="btn-paquete mt-2" id="btn-modal-servicio">
+                                <i class="bi bi-plus-circle me-1"></i> Agregar servicio
+                            </button>
+                            <div id="serviciosContainer" class="d-flex flex-column gap-2"></div>
 
                         </fieldset>
                     </div>
@@ -140,16 +90,28 @@
                                 <input type="text" class="form-control" required minlength="5" maxlength="50" id="nombre" name="nombre">
                             </div>
 
-                            <!-- Fecha hora incio del evento-->
+                            <!-- Fecha hora inicio del evento-->
                             <div class="col-12 col-md-6">
-                                <label for="fechaInicio" class="form-label">Fecha del evento</label>
-                                <input type="datetime-local" name="fechaInicio" class="form-control" id="fechaInicio">
+                                <label class="form-label">Fecha del evento</label>
+                                <div class="d-flex gap-2">
+                                    <input type="date" class="form-control" id="fechaInicio-date">
+                                    <select class="form-select" id="fechaInicio-time" style="flex:0 0 auto;width:115px;">
+                                        <option value="">Hora</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" name="fechaInicio" id="fechaInicio">
                             </div>
 
                             <!-- Fecha hora fin del evento-->
                             <div class="col-12 col-md-6">
-                                <label for="fechaFin" class="form-label">Fecha fin del evento</label>
-                                <input type="datetime-local" name="fechaFin" class="form-control" id="fechaFin">
+                                <label class="form-label">Fecha fin del evento</label>
+                                <div class="d-flex gap-2">
+                                    <input type="date" class="form-control" id="fechaFin-date">
+                                    <select class="form-select" id="fechaFin-time" style="flex:0 0 auto;width:115px;">
+                                        <option value="">Hora</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" name="fechaFin" id="fechaFin">
                             </div>
 
                             <!-- Direccion del evento-->
@@ -207,27 +169,26 @@
 </div>
 </main>
 
-<!-- MODAL SERVICIO PERSONALIZADO -->
+<!-- MODAL SERVICIOS -->
 <div class="modal fade" id="modalServicio" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title">Agregar servicio</h6>
+                <h6 class="modal-title">Seleccionar servicio</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label for="servicioNombre">Nombre del servicio</label>
-                    <input type="text" class="form-control" id="servicioNombre" placeholder="Ej: Sesión de fotos 2h">
+                <div id="panel-servicios" class="overflow-auto" style="max-height: 20rem;">
+                    <!-- Servicios cargados dinámicamente por JS -->
                 </div>
-                <div class="mb-3">
-                    <label for="precio">Precio (S/)</label>
-                    <input type="number" name="precio" id="precio" class="form-control" id="servicioPrecio" placeholder="0.00" required min="5">
+                <div class="mt-3">
+                    <label for="servicioModalPrecio" class="form-label">Precio (S/)</label>
+                    <input type="number" class="form-control" id="servicioModalPrecio" placeholder="0.00" min="0" step="0.01">
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-primary btn-sm" onclick="agregarServicioCustom()">Agregar</button>
+                <button class="btn btn-primary btn-sm" id="btn-confirmar-servicio">Agregar servicio</button>
             </div>
         </div>
     </div>
