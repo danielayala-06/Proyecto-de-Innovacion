@@ -45,9 +45,16 @@ $routes->get('/api/productos', 'ProductosController::index');
 $routes->get('/api/servicios', 'ServiciosController::index');
 
 /**
+ *      RUTAS PARA PAQUETES
+ */
+$routes->get('/paquetes', 'PaquetesController::index');
+
+/**
  *      RUTAS PARA CALENDARIO
  */
 $routes->get('/calendario', 'CalendarioController::index');
+
+
 
 
 

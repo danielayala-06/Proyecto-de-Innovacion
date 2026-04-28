@@ -54,7 +54,7 @@
     <div class="paquetes-grid" id="paquetesGrid"></div>
 </main>
 
-<!-- ══ MODAL NUEVO / EDITAR ══════════════════════════════════════════ -->
+<!-- MODAL NUEVO / EDITAR -->
 <div class="modal fade" id="modalPaquete" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -143,4 +143,8 @@
         </div>
     </div>
 </div>
+
+<script>const BASE_URL = "<?= base_url('') ?>"</script>
+<script type="module" src="<?= base_url('js/modules/paquetes/paquetesMain.js') ?>"></script>
+
 <?= $footer ?>
