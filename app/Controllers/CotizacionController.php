@@ -14,11 +14,15 @@ class CotizacionController extends BaseController
     public function index(int $page = 1)
     {
         $modelCotizacion = new Cotizacion();// Accedemos al model
+        $resumenes = $modelCotizacion->getResumenGeneralCoti();
+
         $cotizaciones = $modelCotizacion->getCotizacionesResumen(10, $page);
+
         $data = [
             'header' => view("layouts/header"),
             'footer' => view("layouts/footer"),
             'cotizaciones' => $cotizaciones,
+            'resumenes' => $resumenes,
         ];
 
         return view("cotizaciones/index", $data);

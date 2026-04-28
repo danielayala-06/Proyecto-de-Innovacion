@@ -50,7 +50,7 @@ class Cotizacion extends Model
             COUNT(id_cotizacion) as total_cotizaciones,
             SUM(total_estimado) as total_estimado,
             SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
-            SUM(CASE WHEN estado = 'aprobado' THEN 1 ELSE 0 END) as aprobadas,
+            SUM(CASE WHEN estado = 'aprobada' THEN 1 ELSE 0 END) as aprobadas,
             SUM(CASE WHEN estado = 'rechazada' THEN 1 ELSE 0 END) as rechazadas
         ")
         ->get()

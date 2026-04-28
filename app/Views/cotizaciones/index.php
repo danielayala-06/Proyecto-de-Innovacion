@@ -7,23 +7,23 @@
             <div class="cot-stats-bar">
               <div class="stat-card">
                 <div class="stat-label">Total</div>
-                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-value" id="statTotal"><?= $resumenes['total_cotizaciones']?></div>
               </div>
               <div class="stat-card" style="border-left-color:var(--amber-text);">
                 <div class="stat-label">Pendientes</div>
-                <div class="stat-value" id="statPend" style="color:var(--amber-text);">0</div>
+                <div class="stat-value" id="statPend" style="color:var(--amber-text);"><?= $resumenes['pendientes']?></div>
               </div>
               <div class="stat-card" style="border-left-color:var(--green-text);">
                 <div class="stat-label">Aprobadas</div>
-                <div class="stat-value" id="statAprobadas" style="color:var(--green-text);">0</div>
+                <div class="stat-value" id="statAprobadas" style="color:var(--green-text);"><?=$resumenes['aprobadas']?></div>
               </div>
               <div class="stat-card" style="border-left-color:var(--red-text);">
                 <div class="stat-label">Rechazadas</div>
-                <div class="stat-value" id="statRechazadas" style="color:var(--red-text);">0</div>
+                <div class="stat-value" id="statRechazadas" style="color:var(--red-text);"><?=$resumenes['rechazadas']?></div>
               </div>
               <div class="stat-card" style="border-left-color:var(--accent);">
                 <div class="stat-label">Monto total</div>
-                <div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.2rem;">S/ 0</div>
+                <div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.2rem;">S/ <?=$resumenes['total_estimado']?></div>
               </div>
             </div>
             <!-- FIN STATS -->
@@ -85,11 +85,11 @@
                       </td>
                       <!-- FALTA AGREGAR EL TELEFONO -->
                       <td class="col-md-4">
-                        <div style="font-weight:600;color:var(--text-primary);">
+                        <div style="font-weight:600;color:var(--text-primary);" class="text-uppercase">
                           <?= $cotizacion['cliente'] ?>
                         </div>
                         <div style="font-size:0.72rem;color:var(--text-muted);">
-                          <?= $cotizacion['cliente'] ?>
+                          <?= $cotizacion['telefono'] ?>
                         </div>
                       </td>
 
