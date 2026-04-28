@@ -8,6 +8,7 @@ let fotoPrecio = 0;
 let serviciosCustom = [];
 let paquetesList = [];
 let paqueteSeleccionado = null;
+let servicioSeleccionado = null;
 
 /**
  * ==============================
@@ -101,5 +102,22 @@ export function confirmarPaquete() {
     if (!paqueteSeleccionado) return false;
     paquetesList.push({ ...paqueteSeleccionado });
     paqueteSeleccionado = null;
+    return true;
+}
+
+export function seleccionarServicio(servicio, el) {
+    document.querySelectorAll(".servicio-option").forEach(s => s.classList.remove("selected"));
+    el.classList.add("selected");
+    servicioSeleccionado = {
+        nombre:      servicio.nombre_servicio,
+        descripcion: servicio.detalle_servicio || "",
+        precio:      0,
+    };
+}
+
+export function confirmarServicio(precio) {
+    if (!servicioSeleccionado) return false;
+    serviciosCustom.push({ ...servicioSeleccionado, precio: parseFloat(precio) || 0 });
+    servicioSeleccionado = null;
     return true;
 }

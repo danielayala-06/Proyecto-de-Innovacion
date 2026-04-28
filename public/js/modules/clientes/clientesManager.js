@@ -9,5 +9,5 @@ export function detectarTipo(input) {
     if (/^\d{9}$/.test(input)) return "telefono";
     if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(input)) return "nombres";
 
-    return "desconocido";
+    return "desconocido";   
 }

@@ -11,8 +11,11 @@ import {
     eliminarPaquete as eliminarPaqueteEstado,
     seleccionarPaquete,
     confirmarPaquete,
+    seleccionarServicio,
+    confirmarServicio,
 } from "./cotizacionManager.js";
 import { fetchPaquetes } from "../../api/paquetesApi.js";
+import { fetchServicios } from "../../api/serviciosApi.js";
 /**
  * UI: render y manipulación del DOM
  */
@@ -60,7 +63,7 @@ export function renderResumen() {
 // ──────────────────────────────────────────
 
 export function renderServiciosCustom() {
-    const cont     = document.getElementById("serviciosList");
+    const cont     = document.getElementById("serviciosContainer");
     const servicios = getServiciosCustom();
     if (!cont) return;
 
@@ -70,16 +73,18 @@ export function renderServiciosCustom() {
     }
 
     cont.innerHTML = servicios.map((s, i) => `
-        <div class="servicio-item">
-            <span class="servicio-name">${s.nombre}</span>
-            <span class="servicio-price">S/ ${s.precio.toFixed(2)}</span>
-            <button class="btn-remove" data-index="${i}">
-                <i class="bi bi-x"></i>
-            </button>
+        <div style="background:#1a1a1a;border:1px solid #2d5aa0;border-radius:8px;padding:10px 13px;font-size:0.81rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#ccc;font-weight:500;">${s.nombre}</span>
+                <button style="background:none;border:none;color:#555;cursor:pointer;" data-index="${i}">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            ${s.descripcion ? `<div style="color:#555;font-size:0.74rem;margin-top:2px;">${s.descripcion}</div>` : ""}
+            <div style="color:#5a9eff;margin-top:4px;font-size:0.82rem;">S/ ${Number(s.precio).toFixed(2)}</div>
         </div>`).join("");
 
-    // Eventos de eliminar
-    cont.querySelectorAll(".btn-remove").forEach(btn => {
+    cont.querySelectorAll("button[data-index]").forEach(btn => {
         btn.addEventListener("click", () => {
             eliminarServicio(parseInt(btn.dataset.index));
             renderServiciosCustom();
@@ -98,7 +103,7 @@ export function renderPaquetesSeleccionados() {
     if (!cont) return;
 
     cont.innerHTML = paquetes.map((p, i) => `
-        <div style="background:#1a1a1a;border:1px solid #2e2e2e;border-radius:8px;padding:10px 13px;font-size:0.81rem;">
+        <div style="background:#1a1a1a;border:1px solid #aa2d2d;border-radius:8px;padding:10px 13px;font-size:0.81rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <span style="color:#ccc;font-weight:500;">${p.nombre}</span>
                 <button style="background:none;border:none;color:#555;cursor:pointer;" data-index="${i}">
@@ -189,27 +194,7 @@ window.togglePreset = (key) => {
     renderResumen();
 };
 
-window.onFotoPrecioInput = () => {
-    const input = document.getElementById("fotoPrecioInput");
-    if (input) setFotoPrecio(input.value);
-    renderResumen();
-};
 
-window.agregarServicioCustom = () => {
-    const nombre = document.getElementById("servicioNombre")?.value.trim();
-    const precio = document.getElementById("servicioPrecio")?.value;
-
-    if (!nombre) return;
-
-    agregarServicio(nombre, precio);
-    renderServiciosCustom();
-    renderResumen();
-
-    if (document.getElementById("servicioNombre")) document.getElementById("servicioNombre").value = "";
-    if (document.getElementById("servicioPrecio")) document.getElementById("servicioPrecio").value = "";
-
-    cerrarModal("modalServicio");
-};
 
 window.cambiarCategoria = cambiarCategoria;
 
@@ -220,3 +205,58 @@ window.confirmarPaquete = () => {
     renderResumen();
     cerrarModal("modalPaquete");
 };
+
+window.confirmarServicio = () => {
+    const precio = document.getElementById("servicioModalPrecio")?.value;
+    const ok = confirmarServicio(precio);
+    if (!ok) return;
+    renderServiciosCustom();
+    renderResumen();
+    const input = document.getElementById("servicioModalPrecio");
+    if (input) input.value = "";
+    cerrarModal("modalServicio");
+};
+
+// ──────────────────────────────────────────
+// MODAL SERVICIOS – carga dinámica desde API
+// ──────────────────────────────────────────
+
+export async function renderServiciosModal() {
+    const cont = document.getElementById("panel-servicios");
+    if (!cont) return;
+
+    cont.innerHTML = `<div style="color:#555;padding:1rem;text-align:center;">Cargando servicios...</div>`;
+
+    const servicios = await fetchServicios();
+
+    if (!servicios) {
+        cont.innerHTML = `<div style="color:#e07070;padding:1rem;">Error al cargar servicios.</div>`;
+        return;
+    }
+
+    const array = Array.isArray(servicios) ? servicios : Object.values(servicios);
+    const activos = array.filter(s => s.estado !== "INACTIVO");
+
+    if (!activos.length) {
+        cont.innerHTML = `<div style="color:#555;padding:1rem;text-align:center;">No hay servicios disponibles.</div>`;
+        return;
+    }
+
+    cont.innerHTML = "";
+    activos.forEach(servicio => _renderLayoutServicioModal(servicio, cont));
+}
+
+function _renderLayoutServicioModal(servicio, container) {
+    const div = document.createElement("div");
+    div.className = "servicio-option paquete-option";
+    div.id = `servicio-${servicio.id_servicio}`;
+    div.innerHTML = `
+        <div class="po-left">
+            <div class="po-name">${servicio.nombre_servicio}</div>
+            <div class="po-desc">${servicio.detalle_servicio || ""}</div>
+        </div>
+        <i class="bi bi-check-circle-fill po-check"></i>`;
+
+    div.addEventListener("click", () => seleccionarServicio(servicio, div));
+    container.appendChild(div);
+}
