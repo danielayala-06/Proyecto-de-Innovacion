@@ -75,7 +75,7 @@
           </a>
         </li>
         <li>
-          <a href="<?= base_url('/promociones') ?>" class="<?= navActivo('promociones', $segmento) ?>">
+          <a href="<?= base_url('/promociones') ?>" class="disabled <?= navActivo('promociones', $segmento) ?>">
             <i class="bi bi-tag"></i> Promociones
           </a>
         </li>

@@ -12,7 +12,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'Paquete Básico',
                 'precio_base'       =>500.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye fotografía',
                 'estado'            =>'activo'
@@ -20,7 +20,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'Paquete Premium',
                 'precio_base'       =>1200.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'       =>'Foto + video + álbum',
                 'estado'            =>'activo'
@@ -28,7 +28,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'ANUARIO SMALL',
                 'precio_base'       =>135.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'ANUARIOS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes y 1 sesion en exterior o estudio',
                 'estado'            =>'ACTIVO'
@@ -36,7 +36,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'ANUARIO MEDIUM',
                 'precio_base'       =>145.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'ANUARIOS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes y 1 sesion en exterior o estudio',
                 'estado'            =>'ACTIVO'
@@ -44,7 +44,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'ANUARIO BIG',
                 'precio_base'       =>150.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'ANUARIOS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes y 1 sesion en exterior o estudio',
                 'estado'            =>'ACTIVO'
@@ -52,7 +52,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'ANUARIO BIG PREMIUM',
                 'precio_base'       =>210.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'ANUARIOS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye 3 sesiones: 
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -63,7 +63,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'BLANCO PREMIUM BRILLANTE',
                 'precio_base'       =>150.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'ANUARIOS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye 2 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -73,7 +73,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'ACADEMICO',
                 'precio_base'       =>145.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye 2 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -83,7 +83,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'MARAVILLAS DEL MUNDO',
                 'precio_base'       =>110.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye 2 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -93,7 +93,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'MARAVILLAS DEL MUNDO BASIC',
                 'precio_base'       =>110.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'       =>'Incluye 1 sesion de fotos.',
                 'estado'            =>'ACTIVO'
@@ -101,7 +101,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'     =>'CUADROS BRILLANTES',
                 'precio_base'        =>150.00,
-                'categoria'          =>'ESCOLAR',
+                'categoria'          =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'        =>'Incluye 2 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -111,7 +111,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'     =>'CUADROS ENCAJADOS',
                 'precio_base'        =>160.00,
-                'categoria'          =>'ESCOLAR',
+                'categoria'          =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'        =>'Incluye 2 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -121,7 +121,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'     =>'PACK ADIOS PRIMARIA',
                 'precio_base'        =>240.00,
-                'categoria'          =>'ESCOLAR',
+                'categoria'          =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'        =>'Incluye 2 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -131,7 +131,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'     =>'PACK MIS RECUERDOS',
                 'precio_base'        =>310.00,
-                'categoria'          =>'ESCOLAR',
+                'categoria'          =>'CUADROS',
                 'imagen'             =>null,
                 'descripcion'        =>'Incluye 2 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -141,7 +141,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'PACK PREMIUM',
                 'precio_base'       =>350.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'CUADROS',
                 'imagen'            =>null,
                 'descripcion'       =>'Incluye 2 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -151,7 +151,7 @@ class PaquetesSeeder extends Seeder
             [
                 'nombre_paquete'    =>'PACK PREMIUM GOLD',
                 'precio_base'       =>420.00,
-                'categoria'         =>'ESCOLAR',
+                'categoria'         =>'CUADROS',
                 'imagen'            =>null,
                 'descripcion'       =>'Incluye 3 sesiones:
                 1 sesion de fotos en el centro educativo, en el horario de lunes a viernes.
@@ -177,7 +177,7 @@ class PaquetesSeeder extends Seeder
          ],
             [
              'nombre_paquete' => 'Paquete Anuario Escolar',
-             'categoria'      => 'ESCOLAR',
+             'categoria'      => 'ANUARIOS',
              'imagen'         => null,
              'descripcion'    => 'Sesión fotográfica grupal e individual + anuario impreso para cada alumno.',
              'precio_base'    => 75.00,

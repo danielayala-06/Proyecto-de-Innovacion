@@ -23,7 +23,7 @@ class Paquetes extends Migration
             'categoria'=>
             [
                 'type'=>'ENUM',
-                'constraint'=>['CUADRO', 'ANUARIO', 'QUINO', 'OTRO'],
+                'constraint'=>['CUADROS', 'ANUARIOS', 'QUINOS', 'SESIONES', 'OTROS'],
                 'null'=>false,
             ],
             'precio_base'=>
