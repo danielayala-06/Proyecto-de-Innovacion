@@ -14,6 +14,7 @@ class ViewCotizacionesIndex extends Migration
                 c.id_cotizacion AS id_cotizacion,
                 c.nombre_cotizacion AS cotizacion,
                 CONCAT(p.nombres, ' ', p.apellidos) AS cliente,
+                p.telefono AS telefono,
                 c.fecha_hora_inicio AS fecha_evento,
                 c.fecha_registro AS fecha_creado,
                 c.total_estimado AS total,

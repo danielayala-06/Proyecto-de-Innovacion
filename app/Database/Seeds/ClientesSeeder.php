@@ -10,11 +10,10 @@ class ClientesSeeder extends Seeder
     {
          $this->db->table('clientes')->insertBatch([
              [
-                 'id_persona'          => 1, // Carlos Mendoza
+                 'id_persona'          => 10, // ARELLA JSOFDJALKSDJF;LA
                  'id_empresa'          => null,
-                 'red_social'          => '@carlosmendoza_ig',
+                 'red_social'          => null,
                  'metodo_comunicacion' => 'WhatsApp',
-                 'tipo_cliente'        => 'RECURRENTE',
                  'estado'              => 'ACTIVO',
              ],
              [
@@ -22,7 +21,6 @@ class ClientesSeeder extends Seeder
                  'id_empresa'          => 1, // Eventos Mágicos
                  'red_social'          => 'lucia.torres',
                  'metodo_comunicacion' => 'Correo',
-                 'tipo_cliente'        => 'LEAL',
                  'estado'              => 'ACTIVO',
              ],
              [
@@ -30,7 +28,6 @@ class ClientesSeeder extends Seeder
                  'id_empresa'          => 2, // Lima Norte Corp
                  'red_social'          => null,
                  'metodo_comunicacion' => 'Teléfono',
-                 'tipo_cliente'        => 'NUEVO',
                  'estado'              => 'ACTIVO',
              ],
              [
@@ -38,7 +35,6 @@ class ClientesSeeder extends Seeder
                  'id_empresa'          => null,
                  'red_social'          => '@mariana.flores',
                  'metodo_comunicacion' => 'WhatsApp',
-                 'tipo_cliente'        => 'NUEVO',
                  'estado'              => 'ACTIVO',
              ],
         ]);

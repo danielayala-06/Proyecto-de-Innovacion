@@ -23,7 +23,7 @@ class CotizacionesSeeder extends Seeder
                  'longitud'          => -77.0904000,
                  'observaciones'     => 'Cliente solicita entrega del álbum antes de viajar.',
                  'total_estimado'    => 2500.00,
-                 'estado'            => 'CONVERTIDA',
+                 'estado'            => 'APROBADA',
              ],
              [
                  'id_cliente'        => 2,
@@ -55,7 +55,7 @@ class CotizacionesSeeder extends Seeder
                  'longitud'          => -77.0500000,
                  'observaciones'     => 'Requiere cobertura en redes sociales en tiempo real.',
                  'total_estimado'    => 800.00,
-                 'estado'            => 'ENVIADA',
+                 'estado'            => 'PENDIENTE',
              ],
              [
                  'id_cliente'        => 4,
@@ -71,7 +71,7 @@ class CotizacionesSeeder extends Seeder
                  'longitud'          => -77.0300000,
                  'observaciones'     => null,
                  'total_estimado'    => 350.00,
-                 'estado'            => 'BORRADOR',
+                 'estado'            => 'PENDIENTE',
              ],
         ]);
 
