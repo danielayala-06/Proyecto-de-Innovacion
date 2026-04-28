@@ -17,6 +17,7 @@ class Paquete extends Model
         'nombre_paquete',
         'precio_base',
         'imagen',
+        'categoria',
         'descripcion',
         'estado'
     ];

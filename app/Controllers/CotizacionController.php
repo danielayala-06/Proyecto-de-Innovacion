@@ -25,7 +25,6 @@ class CotizacionController extends BaseController
     }
     public function create()
     {
-
         $data = [
             'header' => view("layouts/header"),
             'footer' => view("layouts/footer"),
@@ -35,10 +34,20 @@ class CotizacionController extends BaseController
     }
     public function createCotizacion()
     {
-        $data   = $this->request->getJSON(true);;
+        $data   = $this->request->getJSON(true);
+
+        // Flujo de crear cotizacion: cliente->cotizacion->paquetes/servicios/productos
 
         // Validaciones
 
+        // No se envio el cliente
+        if($data['cliente'] === null)return $this->respond(null, );
+
+        // No se envio la cotizacion
+        if($data['cotizacion'] === null)return $this->respond(null, 404,'Cotizacion no encontrada');
+
+        // Validamos los campos en la cotizacion enviada
+        if(!validarCotizacion())return $this->respond(null, 404,'Cotizacion no encontrada');
 
         $model = new Cotizacion();
        // $rules = $model->getValidationRules();
@@ -89,9 +98,5 @@ class CotizacionController extends BaseController
         }
 
         return $this->respond($clientes, 200);
-    }
-    public function fetchCotizaciones()
-    {
-
     }
 }

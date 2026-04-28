@@ -17,7 +17,6 @@ class Cliente extends Model
         'id_persona',
         'id_empresa',
         'metodo_comunicacion',
-        'tipo_cliente',
         'estado',
     ];
 
@@ -36,7 +35,6 @@ class Cliente extends Model
         'id_empresa'            => 'is_natural_no_zero|max_length[8]',
         'red_social'            => 'max_length[100]|min_length[3]',
         'metodo_comunicacion'   => 'required|in_list[CORREO, WHATSAPP, LLAMADAS, OTRO]',
-        'tipo_cliente'          => 'required|in_list[NUEVO, RECURRENTE, LEAL]',
         'estado'                => 'required|in_list[ACTIVO, INACTIVO]',
     ];
     protected $validationMessages   = [
@@ -57,10 +55,6 @@ class Cliente extends Model
             'required' => 'El metodo de comunicacion es obligatorio',
             'in_list' => 'Metodo de comunicacion no valido',
         ],
-        'tipo_cliente'        => [
-            'required' => 'El tipo de cliente es obligatorio',
-            'in_list' => 'Tipo de cliente no valido',
-        ],
         'estado'              => [
             'required' => 'El estado es obligatorio',
             'in_list' => 'Estado no valido',
@@ -69,14 +63,35 @@ class Cliente extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
-    // Callbacks
-    protected $allowCallbacks = true;
-    protected $beforeInsert   = [];
-    protected $afterInsert    = [];
-    protected $beforeUpdate   = [];
-    protected $afterUpdate    = [];
-    protected $beforeFind     = [];
-    protected $afterFind      = [];
-    protected $beforeDelete   = [];
-    protected $afterDelete    = [];
+    public function clientesWithPersona(int $id = null)
+    {
+        // Devolvemos todos los clientes con las personas
+        if($id === null) {
+            return $this->db->table('clientes c')
+                ->select('
+                    c.*,
+                    p.nombres,
+                    p.apellidos,
+                    p.telefono,
+                    p.correo as persona_correo,'
+                )
+                ->join('personas p', 'p.id_persona = c.id_persona')
+                ->get()
+                ->getResult();
+        }
+
+        // Devolvemos las cotizacions por el id del cliente
+        return $this->db->table('clientes c')
+            ->select('
+                c.*,
+                p.nombres,
+                p.apellidos,
+                p.telefono,
+                p.correo as persona_correo,'
+            )
+            ->join('personas p', 'p.id_persona = c.id_persona')
+            ->where('c.id_cliente', $id)
+            ->get()
+            ->getResult();
+    }
 }

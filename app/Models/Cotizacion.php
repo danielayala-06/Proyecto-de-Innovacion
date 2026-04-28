@@ -41,4 +41,19 @@ class Cotizacion extends Model
         ->get()
         ->getResultArray();
     }
+
+    // Devuelve datos relevantes (KPI's) (numero de contratos, monto_estimado, etc)
+    public function getResumenGeneralCoti()
+    {
+        return $this->db->table('cotizaciones')
+            ->select("
+            COUNT(id_cotizacion) as total_cotizaciones,
+            SUM(total_estimado) as total_estimado,
+            SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as pendientes,
+            SUM(CASE WHEN estado = 'aprobado' THEN 1 ELSE 0 END) as aprobadas,
+            SUM(CASE WHEN estado = 'rechazada' THEN 1 ELSE 0 END) as rechazadas
+        ")
+        ->get()
+        ->getRowArray();
+    }
 }

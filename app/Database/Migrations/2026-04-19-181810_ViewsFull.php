@@ -48,7 +48,6 @@ class ViewsFull extends Migration
             CREATE VIEW v_clientes_completo AS
             SELECT
                 c.id_cliente,
-                c.tipo_cliente,
                 c.estado,
                 c.red_social,
                 c.metodo_comunicacion,
@@ -132,7 +131,6 @@ class ViewsFull extends Migration
                 CONCAT(p.nombres, ' ', p.apellidos) AS nombre_cliente,
                 p.telefono AS telefono_cliente,
                 p.correo AS correo_cliente,
-                cl.tipo_cliente,
                 e.razon_social AS empresa_cliente,
             
                 -- Usuario
@@ -210,7 +208,6 @@ class ViewsFull extends Migration
                 CONCAT(p.nombres, ' ', p.apellidos) AS nombre_cliente,
                 p.telefono                          AS telefono_cliente,
                 p.correo                            AS correo_cliente,
-                cl.tipo_cliente,
                 e.razon_social                      AS empresa_cliente,
                 -- Reprogramaciones
                 COALESCE(rp.total_reprogramaciones, 0) AS total_reprogramaciones,
@@ -355,7 +352,6 @@ class ViewsFull extends Migration
                 CONCAT(p.nombres, ' ', p.apellidos) AS nombre_completo,
                 p.telefono,
                 p.correo,
-                cl.tipo_cliente,
                 cl.estado,
                 e.razon_social                       AS empresa,
                 COUNT(DISTINCT cot.id_cotizacion)    AS total_cotizaciones,
@@ -376,7 +372,7 @@ class ViewsFull extends Migration
             ) pg ON pg.id_contrato = con.id_contrato
             GROUP BY
                 cl.id_cliente, p.nombres, p.apellidos,
-                p.telefono, p.correo, cl.tipo_cliente,
+                p.telefono, p.correo,
                 cl.estado, e.razon_social
         ");
         // ------------------------------------------------------------

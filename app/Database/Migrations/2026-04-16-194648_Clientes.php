@@ -35,11 +35,6 @@ class Clientes extends Migration
                 'constraint'=>['CORREO', 'WHATSAPP', 'LLAMADAS', 'OTRO'],
                 'null'=>true,
             ],
-            'tipo_cliente' => [
-                'type'=>'ENUM',
-                'constraint'=>['NUEVO', 'RECURRENTE', 'LEAL'],
-                'default'=>'NUEVO',
-            ],
             'estado' => [
                 'type'=>'ENUM',
                 'constraint'=>['ACTIVO', 'INACTIVO'],

@@ -75,8 +75,8 @@ class Cotizaciones extends Migration
             ],
             'estado'=>[
                 'type'=>'ENUM',
-                'constraint'=>['BORRADOR', 'APROBADA', 'RECHAZADA', 'EXPIRADA'],
-                'default'=>'BORRADOR'
+                'constraint'=>['APROBADA', 'RECHAZADA', 'PENDIENTE'],
+                'default'=>'PENDIENTE'
             ],
         ]);
         $this->forge->addKey('id_cotizacion', true);
