@@ -610,12 +610,13 @@ label {
 /* ── BADGES ──────────────────────────────────────────────────────── */
 .badge-estado, .badge-activo, .badge-inactivo,
 .badge-pend, .badge-conf,
-.badge-pendiente {
-  font-size: 0.62rem; padding: 2px 8px; border-radius: 20px; font-weight: 700; display: inline-block;
+.badge-pendiente, .badge-aprobada, .badge-rechazada, .badge-completada {
+  font-size: 0.62rem; padding: 2px 8px; border-radius: 20px; font-weight: 700; display: inline-block; white-space: nowrap;
 }
-.badge-activo, .badge-conf   { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
-.badge-pendiente, .badge-pend { background: var(--amber-bg); color: var(--amber-text); border: 1px solid var(--amber-border); }
-.badge-inactivo              { background: var(--bg-hover); color: var(--text-muted); border: 1px solid var(--border); }
+.badge-activo, .badge-conf, .badge-aprobada { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
+.badge-pendiente, .badge-pend               { background: var(--amber-bg); color: var(--amber-text); border: 1px solid var(--amber-border); }
+.badge-inactivo, .badge-rechazada           { background: var(--red-bg);   color: var(--red-text);   border: 1px solid var(--red-border); }
+.badge-completada                           { background: var(--accent-light); color: var(--accent-text); border: 1px solid var(--accent); }
 
 /* ── MODALS CONFIRM DELETE ───────────────────────────────────────── */
 .modal-del .modal-content { border-color: var(--red-border); }

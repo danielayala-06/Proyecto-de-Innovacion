@@ -1,3 +1,24 @@
+<?php
+// ── Helpers de presentación ────────────────────────────────────────────────────
+function badgeEstadoCot(string $e): string {
+    $e = strtolower($e);
+    $m = [
+        'pendiente'  => ['badge-pendiente',  'Pendiente'],
+        'aprobada'   => ['badge-aprobada',   'Aprobada'],
+        'rechazada'  => ['badge-rechazada',  'Rechazada'],
+        'completada' => ['badge-completada', 'Completada'],
+    ];
+    [$cls, $lb] = $m[$e] ?? ['badge-inactivo', ucfirst($e)];
+    return "<span class=\"{$cls}\">{$lb}</span>";
+}
+
+function fmtFechaCot(?string $f): string {
+    if (!$f) return '—';
+    $meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    $d = new DateTime($f);
+    return $d->format('d') . ' ' . $meses[(int)$d->format('n') - 1] . ' ' . $d->format('Y');
+}
+?>
 <?= $header ?>
     <main class="main-content" id="main-content">
         <div class="container">
@@ -7,32 +28,31 @@
             <div class="cot-stats-bar">
               <div class="stat-card">
                 <div class="stat-label">Total</div>
-                <div class="stat-value" id="statTotal"><?= $resumenes['total_cotizaciones']?></div>
+                <div class="stat-value" id="statTotal"><?= $resumenes['total_cotizaciones'] ?></div>
               </div>
               <div class="stat-card" style="border-left-color:var(--amber-text);">
                 <div class="stat-label">Pendientes</div>
-                <div class="stat-value" id="statPend" style="color:var(--amber-text);"><?= $resumenes['pendientes']?></div>
+                <div class="stat-value" id="statPend" style="color:var(--amber-text);"><?= $resumenes['pendientes'] ?></div>
               </div>
               <div class="stat-card" style="border-left-color:var(--green-text);">
                 <div class="stat-label">Aprobadas</div>
-                <div class="stat-value" id="statAprobadas" style="color:var(--green-text);"><?=$resumenes['aprobadas']?></div>
+                <div class="stat-value" id="statAprobadas" style="color:var(--green-text);"><?= $resumenes['aprobadas'] ?></div>
               </div>
               <div class="stat-card" style="border-left-color:var(--red-text);">
                 <div class="stat-label">Rechazadas</div>
-                <div class="stat-value" id="statRechazadas" style="color:var(--red-text);"><?=$resumenes['rechazadas']?></div>
+                <div class="stat-value" id="statRechazadas" style="color:var(--red-text);"><?= $resumenes['rechazadas'] ?></div>
               </div>
               <div class="stat-card" style="border-left-color:var(--accent);">
                 <div class="stat-label">Monto total</div>
-                <div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.2rem;">S/ <?=$resumenes['total_estimado']?></div>
+                <div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.2rem;">S/ <?= number_format($resumenes['total_estimado'] ?? 0, 2, '.', ',') ?></div>
               </div>
             </div>
-            <!-- FIN STATS -->
 
             <!-- TOOLBAR -->
             <div class="toolbar mb-3">
               <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;">
                 <div class="search-wrap" style="max-width:300px;">
-                  <input type="text" id="searchInput" placeholder="Buscar cliente, tipo o código...">
+                  <input type="text" id="searchInput" placeholder="Buscar cliente o código...">
                   <button><i class="bi bi-search"></i></button>
                 </div>
                 <select class="filter-select" id="filterEstado">
@@ -41,14 +61,6 @@
                   <option value="aprobada">Aprobada</option>
                   <option value="rechazada">Rechazada</option>
                   <option value="completada">Completada</option>
-                </select>
-                <select class="filter-select" id="filterTipo">
-                  <option value="">Todos los tipos</option>
-                  <option value="Matrimonio">Matrimonio</option>
-                  <option value="Quinceañero">Quinceañero</option>
-                  <option value="Retrato">Retrato</option>
-                  <option value="Corporativo">Corporativo</option>
-                  <option value="Otro">Otro</option>
                 </select>
               </div>
               <a href="<?= base_url('cotizaciones/crear') ?>" class="btn-nuevo-paquete" style="text-decoration:none;">
@@ -63,7 +75,6 @@
                   <tr>
                     <th onclick="sortBy('codigo')">Código <i class="bi bi-arrow-down-up sort-icon" id="sort-codigo"></i></th>
                     <th onclick="sortBy('cliente')">Cliente <i class="bi bi-arrow-down-up sort-icon" id="sort-cliente"></i></th>
-                    <!-- <th onclick="sortBy('tipoEvento')">Tipo evento <i class="bi bi-arrow-down-up sort-icon" id="sort-tipoEvento"></i></th> -->
                     <th onclick="sortBy('fecha')">Fecha evento <i class="bi bi-arrow-down-up sort-icon" id="sort-fecha"></i></th>
                     <th onclick="sortBy('total')">Total <i class="bi bi-arrow-down-up sort-icon" id="sort-total"></i></th>
                     <th onclick="sortBy('estado')">Estado <i class="bi bi-arrow-down-up sort-icon" id="sort-estado"></i></th>
@@ -72,65 +83,42 @@
                   </tr>
                 </thead>
                 <tbody id="tablaBody">
-                  <!-- FILAS GENERADAS POR PHP :D -->
-                   <?php foreach ($cotizaciones as $cotizacion): ?>
-                    <tr>
-
-                      <td class="col-md-2">
-                        <p class="cot-detail-val">
-                          <span class="cot-codigo">
-                            COT-0<?= $cotizacion['id_cotizacion'] ?>
-                          </span>
-                        </p>
-                      </td>
-                      <!-- FALTA AGREGAR EL TELEFONO -->
-                      <td class="col-md-4">
-                        <div style="font-weight:600;color:var(--text-primary);" class="text-uppercase">
-                          <?= $cotizacion['cliente'] ?>
-                        </div>
-                        <div style="font-size:0.72rem;color:var(--text-muted);">
-                          <?= $cotizacion['telefono'] ?>
-                        </div>
-                      </td>
-
-                      <!-- FALTA AGREGAR TIPO EVENTO -->
-                      <!-- <td class="col-md-2">
-                        <span class="cot-tipo"></span>
-                        <p class="cot-detail-val">
-                          tipo evento desde php
-                        </p>
-                      </td> -->
-
-                      <td class="col-md-2" style="color:var(--text-secondary);white-space:nowrap;">
-                        <?= $cotizacion['fecha_evento'] ?>
-                      </td>
-
-                      <td class="col-md-2" style="font-weight:700;color:var(--accent);">
-                        S/ <?= $cotizacion['total'] ?>
-                      </td>
-
-                      <td class="col-md-2">
-                        <?= $cotizacion['estado'] ?>
-                      </td>
-
-                      <td class="col-md-2" style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;">
-                        <?= $cotizacion['fecha_creado'] ?>
-                      </td>
-                      <!-- ACCIONES -->
-                      <td>
-                        <div class="cot-actions" onclick="event.stopPropagation()">
-                          <button class="btn-icon" title="Ver" onclick="verDetalle(<?= $cotizacion['id_cotizacion'] ?>)">
-                            <i class="bi bi-eye"></i>
-                          </button>
-                          <button class="btn-icon" title="Editar" onclick="editarCotizacion(<?= $cotizacion['id_cotizacion'] ?>)">
-                            <i class="bi bi-pencil"></i>
-                          </button>
-                          <button class="btn-icon danger" title="Eliminar" onclick="confirmarEliminar(<?= $cotizacion['id_cotizacion'] ?>)">
-                            <i class="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                  <?php foreach ($cotizaciones as $c): ?>
+                  <tr onclick="verDetalle(<?= $c['id_cotizacion'] ?>)" style="cursor:pointer;">
+                    <td>
+                      <span class="cot-codigo"><?= sprintf('COT-%03d', $c['id_cotizacion']) ?></span>
+                      <?php if (!empty($c['cotizacion'])): ?>
+                        <div style="font-size:0.71rem;color:var(--text-muted);margin-top:2px;"><?= esc($c['cotizacion']) ?></div>
+                      <?php endif; ?>
+                    </td>
+                    <td>
+                      <div style="font-weight:600;color:var(--text-primary);"><?= esc($c['cliente']) ?></div>
+                      <div style="font-size:0.72rem;color:var(--text-muted);"><?= esc($c['telefono'] ?? '') ?></div>
+                    </td>
+                    <td style="color:var(--text-secondary);white-space:nowrap;">
+                      <?= fmtFechaCot($c['fecha_evento']) ?>
+                    </td>
+                    <td style="font-weight:700;color:var(--accent);">
+                      S/ <?= number_format($c['total'] ?? 0, 2, '.', ',') ?>
+                    </td>
+                    <td><?= badgeEstadoCot($c['estado']) ?></td>
+                    <td style="color:var(--text-muted);font-size:0.78rem;white-space:nowrap;">
+                      <?= fmtFechaCot($c['fecha_creado']) ?>
+                    </td>
+                    <td>
+                      <div class="cot-actions" onclick="event.stopPropagation()">
+                        <button class="btn-icon" title="Ver" onclick="verDetalle(<?= $c['id_cotizacion'] ?>)">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn-icon" title="Editar" onclick="editarCotizacion(<?= $c['id_cotizacion'] ?>)">
+                          <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn-icon danger" title="Eliminar" onclick="confirmarEliminar(<?= $c['id_cotizacion'] ?>)">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                   <?php endforeach; ?>
                 </tbody>
               </table>
@@ -180,7 +168,13 @@
             </div>
 
         </div>
-
     </main>
+
+<script>
+    const BASE_URL          = "<?= base_url('') ?>";
+    const COTIZACIONES_DATA = <?= json_encode($cotizaciones) ?>;
+    const RESUMENES_DATA    = <?= json_encode($resumenes) ?>;
+</script>
+<script type="module" src="<?= base_url('js/modules/cotizaciones/cotizacionesIndexMain.js') ?>"></script>
 
 <?= $footer ?>
