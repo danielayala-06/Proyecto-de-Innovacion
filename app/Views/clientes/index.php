@@ -133,4 +133,10 @@
             </div>
         </div>
     </div>
+<script>
+    const BASE_URL      = "<?= base_url('') ?>";
+    const CLIENTES_DATA = <?= json_encode($clientes) ?>;
+</script>
+<script type="module" src="<?= base_url('js/modules/clientes/clientesIndexMain.js') ?>"></script>
+
 <?= $footer ?>

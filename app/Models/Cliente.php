@@ -66,29 +66,24 @@ class Cliente extends Model
     public function clientesWithPersona(int $id = null)
     {
         // Devolvemos todos los clientes con las personas
-        if($id === null) {
+        $select = '
+            c.*,
+            p.nombres,
+            p.apellidos,
+            p.numero_documento,
+            p.telefono,
+            p.correo as persona_correo';
+
+        if ($id === null) {
             return $this->db->table('clientes c')
-                ->select('
-                    c.*,
-                    p.nombres,
-                    p.apellidos,
-                    p.telefono,
-                    p.correo as persona_correo'
-                )
+                ->select($select)
                 ->join('personas p', 'p.id_persona = c.id_persona')
                 ->get()
                 ->getResultArray();
         }
 
-        // Devolvemos las cotizacions por el id del cliente
         return $this->db->table('clientes c')
-            ->select('
-                c.*,
-                p.nombres,
-                p.apellidos,
-                p.telefono,
-                p.correo as persona_correo'
-            )
+            ->select($select)
             ->join('personas p', 'p.id_persona = c.id_persona')
             ->where('c.id_cliente', $id)
             ->get()

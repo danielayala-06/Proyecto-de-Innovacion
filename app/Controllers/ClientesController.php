@@ -10,9 +10,13 @@ class ClientesController extends BaseController
 {
     public function index()
     {
+        $model    = new Cliente();
+        $clientes = $model->clientesWithPersona();
+
         $data = [
-            'header' => view("Layouts/header"),
-            'footer' => view("Layouts/footer"),
+            'header'   => view("Layouts/header"),
+            'footer'   => view("Layouts/footer"),
+            'clientes' => $clientes ?? [],
         ];
 
         return view("clientes/index", $data);
