@@ -73,11 +73,11 @@ class Cliente extends Model
                     p.nombres,
                     p.apellidos,
                     p.telefono,
-                    p.correo as persona_correo,'
+                    p.correo as persona_correo'
                 )
                 ->join('personas p', 'p.id_persona = c.id_persona')
                 ->get()
-                ->getResult();
+                ->getResultArray();
         }
 
         // Devolvemos las cotizacions por el id del cliente
@@ -87,11 +87,11 @@ class Cliente extends Model
                 p.nombres,
                 p.apellidos,
                 p.telefono,
-                p.correo as persona_correo,'
+                p.correo as persona_correo'
             )
             ->join('personas p', 'p.id_persona = c.id_persona')
             ->where('c.id_cliente', $id)
             ->get()
-            ->getResult();
+            ->getResultArray();
     }
 }

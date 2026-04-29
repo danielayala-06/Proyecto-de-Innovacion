@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
+use App\Models\Cliente;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class ClientesController extends BaseController
