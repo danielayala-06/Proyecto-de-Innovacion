@@ -47,8 +47,8 @@
     }
   ?>
   <aside id="sidebar">
-    <nav>
-      <ul class="nav flex-column gap-1">
+    <nav style="display:flex;flex-direction:column;height:100%;">
+      <ul class="nav flex-column gap-1" style="flex:1;">
         <li>
           <a href="<?= base_url('') ?>" class="<?= navActivo('inicio', $segmento) ?>">
             <i class="bi bi-house"></i> Inicio
@@ -85,6 +85,18 @@
           </a>
         </li>
       </ul>
+
+      <div style="padding:0.75rem 0.5rem;border-top:1px solid rgba(255,255,255,0.07);">
+        <a href="<?= base_url('/logout') ?>"
+           style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:8px;
+                  color:#C8BCA8;font-size:0.85rem;text-decoration:none;
+                  transition:background 0.15s,color 0.15s;"
+           onmouseover="this.style.background='#242018';this.style.color='#e07070';"
+           onmouseout="this.style.background='transparent';this.style.color='#C8BCA8';">
+          <i class="bi bi-box-arrow-left" style="font-size:1rem;"></i>
+          Cerrar sesión
+        </a>
+      </div>
     </nav>
   </aside>
 

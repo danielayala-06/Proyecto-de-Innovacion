@@ -7,6 +7,13 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 
+/**
+ *      RUTAS DE AUTENTICACIÓN
+ */
+$routes->get('/login',      'AuthController::index');
+$routes->post('/login/auth', 'AuthController::login');
+$routes->get('/logout',     'AuthController::logout');
+
 
 /**
  *      RUTAS PARA COTIZACIONES
