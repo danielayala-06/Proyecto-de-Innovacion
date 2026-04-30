@@ -66,4 +66,9 @@ class Paquete extends Model
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
+
+    public function paquetesFull()
+    {
+
+    }
 }

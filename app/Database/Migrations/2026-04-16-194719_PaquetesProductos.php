@@ -9,6 +9,11 @@ class PaquetesProductos extends Migration
     public function up()
     {
         $this->forge->addField([
+            'id_paquete_prod'=>[
+                'type'=>'INT',
+                'unsigned'=>true,
+                'auto_increment'=>true
+            ],
             'id_paquete'=>
             [
                 'type'=>'INT',
@@ -26,7 +31,7 @@ class PaquetesProductos extends Migration
                 'default'=>1
             ]
         ]);
-        $this->forge->addKey(['id_paquete', 'id_producto'], true);
+        $this->forge->addKey('id_paquete_prod', true);
         $this->forge->addForeignKey('id_producto','productos','id_producto','CASCADE','CASCADE');
         $this->forge->addForeignKey('id_paquete','paquetes','id_paquete','CASCADE','CASCADE');
         $this->forge->createTable('paquetes_productos');

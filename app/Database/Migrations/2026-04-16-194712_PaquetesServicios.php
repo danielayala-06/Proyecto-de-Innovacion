@@ -9,6 +9,11 @@ class PaquetesServicios extends Migration
     public function up()
     {
         $this->forge->addField([
+            'id_paquete_serv'=>[
+                'type'=>'INT',
+                'unsigned'=>true,
+                'auto_increment'=>true
+            ],
             'id_servicio'=>[
                 'type'=>'INT',
                 'unsigned'=>true
@@ -18,7 +23,7 @@ class PaquetesServicios extends Migration
                 'unsigned'=>true
             ],
         ]);
-        $this->forge->addKey(['id_servicio', 'id_paquete'], true);
+        $this->forge->addKey('id_paquete_serv', true);
         $this->forge->addForeignKey('id_servicio','servicios','id_servicio','CASCADE','RESTRICT');
         $this->forge->addForeignKey('id_paquete','paquetes','id_paquete','CASCADE','RESTRICT');
         $this->forge->createTable('paquetes_servicios');

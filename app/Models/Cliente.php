@@ -9,7 +9,7 @@ class Cliente extends Model
     protected $table            = 'clientes';
     protected $primaryKey       = 'id_cliente';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'object';
+    protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
