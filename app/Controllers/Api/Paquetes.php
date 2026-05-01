@@ -19,7 +19,7 @@ class Paquetes extends BaseController
      *    y
      * GET /api/paquetes/{id}
      */
-    public function getIndex(?int $id = null)
+    public function getIndex(int $id = null)
     {
         // conexion con la entidad paquete
         $model = new Paquete();
@@ -27,20 +27,32 @@ class Paquetes extends BaseController
         // Transformador de los paquetes
         $transformer = new PaquetesTransformer();
 
+        // Recuperamos los id
+        $paquetes = $model->paquetesFull($id);
 
-        if (!$id) {
-            $paquetes = $model->findAll();
 
-            return $this->respond($transformer->transformMany($paquetes), 200, 'Paquetes enviados!');
-        }
-
-        $paquete = $model->find($id);
-
-        if(!$paquete){
+        if(!$paquetes){
             return $this->failNotFound('No encontrado');
         }
 
-         return $this->respond($transformer->transform($paquete), 200, 'Paquete encontrado!');
+        if($id){
+            // Recuperamos el id
+            $paquete = $model->paqueteFullById($id);
+
+            if(!$paquete)return $this->failNotFound('Paquete no encontrado');
+
+            return $this->respond(
+                $paquete,
+                200,
+                'ok');
+        }
+
+        $paquetesTrans = $transformer->transformMany($paquetes);
+
+        return $this->respond(
+            $paquetesTrans,
+            200,
+            'ok ');
     }
 
     /**

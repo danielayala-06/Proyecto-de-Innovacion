@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Database\Migrations\Servicios;
+use CodeIgniter\Database\Database;
 use CodeIgniter\Model;
 
 class Paquete extends Model
@@ -69,6 +71,174 @@ class Paquete extends Model
 
     public function paquetesFull()
     {
+        $builder = $this->db->table('paquetes p');
 
+        $builder->select([
+            'p.id_paquete',
+            'p.nombre_paquete',
+            'p.categoria',
+            'p.descripcion',
+            'p.precio_base',
+            'p.imagen',
+            'p.estado',
+
+            'pp.id_producto as prod_id',
+            'pp.cantidad as prod_cantidad',
+            'pr.nombre_producto',
+
+            'ps.id_servicio as serv_id',
+            'sv.nombre_servicio'
+        ]);
+
+        $builder->join('paquetes_productos pp',
+                        'pp.id_paquete = p.id_paquete',
+                        'left');
+        $builder->join('productos pr', 'pr.id_producto = pp.id_producto', 'left');
+        $builder->join('paquetes_servicios ps', 'ps.id_paquete = p.id_paquete', 'left');
+        $builder->join('servicios sv', 'sv.id_servicio = ps.id_servicio', 'left');
+
+        $rows = $builder->get()->getResultArray();
+
+        // Si no hay registros
+        if (empty($rows)) {
+            return [];
+        }
+
+        $data = [];
+
+        foreach ($rows as $row) {
+            $id = $row['id_paquete'];
+
+            // Inicializar paquete
+            if (!isset($data[$id])) {
+                $data[$id] = [
+                    'paquete' => [
+                        'id_paquete'  => $row['id_paquete'],
+                        'nombre'      => $row['nombre_paquete'],
+                        'categoria'   => $row['categoria'],
+                        'descripcion' => $row['descripcion'],
+                        'precio_base' => $row['precio_base'],
+                        'imagen'      => $row['imagen'],
+                        'estado'      => $row['estado'],
+                    ],
+                    'productos' => [],
+                    'servicios' => []
+                ];
+            }
+
+            // Productos
+            if (!empty($row['prod_id'])) {
+                $data[$id]['productos'][$row['prod_id']] = [
+                    'id_producto' => $row['prod_id'],
+                    'nombre'      => $row['nombre_producto'],
+                    'cantidad'    => $row['prod_cantidad'],
+                ];
+            }
+
+            // Servicios
+            if (!empty($row['serv_id'])) {
+                $data[$id]['servicios'][$row['serv_id']] = [
+                    'id_servicio' => $row['serv_id'],
+                    'nombre'      => $row['nombre_servicio'],
+                ];
+            }
+        }
+
+        // Reindexar
+        $paquetes = [];
+
+        foreach ($data as $item) {
+            $paquetes[] = [
+                'paquete'   => $item['paquete'],
+                'productos' => array_values($item['productos']),
+                'servicios' => array_values($item['servicios']),
+            ];
+        }
+
+
+        return $paquetes;
+    }
+
+    public function paqueteFullById($id)
+    {
+        $builder = $this->db->table('paquetes p');
+
+        $builder->select([
+            'p.id_paquete',
+            'p.nombre_paquete',
+            'p.categoria',
+            'p.descripcion',
+            'p.precio_base',
+            'p.imagen',
+            'p.estado',
+
+            'pp.id_producto as prod_id',
+            'pp.cantidad as prod_cantidad',
+            'pr.nombre_producto',
+
+            'ps.id_servicio as serv_id',
+            'sv.nombre_servicio'
+        ]);
+
+        $builder->join('paquetes_productos pp',
+                        'pp.id_paquete = p.id_paquete',
+                        'left');
+
+        $builder->join('productos pr',
+                        'pr.id_producto = pp.id_producto',
+                        'left');
+
+        $builder->join('paquetes_servicios ps',
+                        'ps.id_paquete = p.id_paquete',
+                        'left');
+
+        $builder->join('servicios sv',
+                        'sv.id_servicio = ps.id_servicio',
+                        'left');
+
+        $builder->where('p.id_paquete', $id);
+
+        $rows = $builder->get()->getResultArray();
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        $paquete = [
+            'paquete' => [
+                'id_paquete'  => $rows[0]['id_paquete'],
+                'nombre'      => $rows[0]['nombre_paquete'],
+                'categoria'   => $rows[0]['categoria'],
+                'descripcion' => $rows[0]['descripcion'],
+                'precio_base' => $rows[0]['precio_base'],
+                'imagen'      => $rows[0]['imagen'],
+                'estado'      => $rows[0]['estado'],
+            ],
+            'productos' => [],
+            'servicios' => []
+        ];
+
+        foreach ($rows as $row) {
+
+            if (!empty($row['prod_id'])) {
+                $paquete['productos'][$row['prod_id']] = [
+                    'id_producto' => $row['prod_id'],
+                    'nombre'      => $row['nombre_producto'],
+                    'cantidad'    => $row['prod_cantidad'],
+                ];
+            }
+
+            if (!empty($row['serv_id'])) {
+                $paquete['servicios'][$row['serv_id']] = [
+                    'id_servicio' => $row['serv_id'],
+                    'nombre'      => $row['nombre_servicio'],
+                ];
+            }
+        }
+
+        $paquete['productos'] = array_values($paquete['productos']);
+        $paquete['servicios'] = array_values($paquete['servicios']);
+
+        return $paquete;
     }
 }

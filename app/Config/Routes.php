@@ -32,21 +32,6 @@ $routes->get('/clientes', 'ClientesController::index');
 /**
  *      RUTAS PARA PAQUETES
  */
-//$routes->get('/api/paquetes', 'PaquetesController::index');
-
-/**
- *      RUTAS PARA PRODUCTOS
- */
-$routes->get('/api/productos', 'ProductosController::index');
-
-/**
- *      RUTAS PARA SERVICIOS
- */
-$routes->get('/api/servicios', 'ServiciosController::index');
-
-/**
- *      RUTAS PARA PAQUETES
- */
 $routes->get('/paquetes', 'PaquetesController::index');
 
 /**
@@ -74,7 +59,16 @@ $routes->delete('/api/cotizaciones/(:num)','Api\Cotizaciones::deleteIndex/$1');
 //Paquetes
 $routes->get('/api/paquetes','Api\Paquetes::getIndex');
 $routes->get('/api/paquetes/(:num)','Api\Paquetes::getIndex/$1');
+$routes->post('/api/paquetes','Api\Paquetes::postIndex');
+$routes->put('/api/paquetes/(:num)','Api\Paquetes::putIndex/$1');
+$routes->delete('/api/paquetes/(:num)','Api\Paquetes::deleteIndex/$1');
 
 //Clientes
-$routes->get('api/clientes','Api\Clientes::getIndex');
-$routes->get('api/clientes/(:num)','Api\Clientes::getIndex/$1');
+$routes->get('/api/clientes','Api\Clientes::getIndex');
+$routes->get('/api/clientes/(:num)','Api\Clientes::getIndex/$1');
+
+//Productos
+$routes->get('/api/productos', 'ProductosController::index');
+
+//Servicios
+$routes->get('/api/servicios', 'ServiciosController::index');
