@@ -4,137 +4,111 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Models\Cotizacion;
-use App\Models\Views\CotizacionesFull; //Modelo de la vista Cotizaciones full
-use CodeIgniter\HTTP\ResponseInterface;
-use CodeIgniter\Api\ResponseTrait;
 use App\Transformers\CotizacionesTransformer;
-use http\Env\Response;
+use CodeIgniter\API\ResponseTrait;
 
 class Cotizaciones extends BaseController
 {
     use ResponseTrait;
 
-    /**
-     * Listar uno o algunas cotizaciones
-     * GET /api/cotizaciones
-     *    y
-     * GET /api/cotizaciones/{id}
-     */
     public function getIndex(?int $id = null)
     {
-        // Modelo de la cotizacion (Acceso a la BD)
-        $model = new Cotizacion();
-
-        // Transformador de la cotizacion
+        $model       = new Cotizacion();
         $transformer = new CotizacionesTransformer();
-        
-        //Obtiene todos los registros
-        if ($id === null) {
-            $cotizaciones = $model->findAll(30);
 
-            return  $this->respond($transformer->transformMany($cotizaciones));
+        if ($id === null) {
+            return $this->respond($transformer->transformMany($model->findAll(30)));
         }
 
+        $cotizacion = $model->find($id);
+        return $cotizacion
+            ? $this->respond($transformer->transform($cotizacion))
+            : $this->failNotFound('Cotización no encontrada');
+    }
+
+    public function disponibles()
+    {
+        $db    = \Config\Database::connect();
+        $usados = array_column(
+            $db->table('contratos')->select('id_cotizacion')->get()->getResultArray(),
+            'id_cotizacion'
+        );
+
+        $builder = $db->table('cotizaciones cot')
+            ->select('cot.id_cotizacion, cot.nombre_cotizacion, cot.total_estimado,
+                      cot.fecha_hora_inicio, cot.fecha_hora_fin,
+                      CONCAT(p.nombres, " ", p.apellidos) AS cliente, p.telefono')
+            ->join('clientes cl', 'cl.id_cliente = cot.id_cliente')
+            ->join('personas p',  'p.id_persona = cl.id_persona')
+            ->where('UPPER(cot.estado)', 'APROBADA')
+            ->orderBy('cot.id_cotizacion', 'DESC');
+
+        if (!empty($usados)) {
+            $builder->whereNotIn('cot.id_cotizacion', $usados);
+        }
+
+        return $this->respond($builder->get()->getResultArray(), 200, 'Cotizaciones disponibles');
+    }
+
+    public function putIndex(int $id)
+    {
+        $model      = new Cotizacion();
         $cotizacion = $model->find($id);
 
         if (!$cotizacion) {
-            return $this->failNotFound('Cotizacion no encontrada');
-
+            return $this->failNotFound('Cotización no encontrada');
         }
 
-        return $this->respond($transformer->transform($cotizacion));
+        $data = json_decode($this->request->getBody(), true);
+        if (empty($data)) {
+            return $this->failValidationErrors('Cuerpo de la petición inválido');
+        }
+
+        $model->update($id, $data);
+
+        $transformer = new CotizacionesTransformer();
+        return $this->respond(
+            $transformer->transform($model->find($id)),
+            200,
+            'Cotización actualizada'
+        );
     }
 
-    /**
-     * Actualiza una cotizacion
-     *
-     * PUT /api/cotizacion/{id}
-     */
-    public function putIndex(int $id)
-    {
-        $model = new Cotizacion();
-
-        // Validaciones
-        if(!$id)return $this->respond(['status'=>'ok','message'=>'Id no encontrado' ], 401);
-
-        // Buscamos la cotizacion por su ID
-        $cotizacion = $model->find($id);
-
-        // No se encontro la cotizacion
-        if (!$cotizacion) return $this->respond(['status'=>'not found', 'message'=>'Cotizacion no encontrada'], 401);
-
-        // Obtenemos el cuerpo de la REQUEST
-        $data = $this->request->getBody();
-        // Convertimos a array
-        $data = json_decode($data);
-
-        // Validaciones ...
-
-        // Guardamos los datos de la nueva cotizacion
-        $model->update($id,$data);
-        $cotizacionUpdated = $model->find($id);
-        return $this->respond($cotizacionUpdated, 200, 'Cotizacion actualizada con exito!');
-
-    }
-
-    /**
-     * Crear una nueva cotizacion
-     *
-     * POST /api/cotizacion
-     */
     public function postIndex()
     {
-        $data = $this->request->getBody();
-
-        $data   = json_decode($data);
-
-        // Validaciones
-        //echo $data;
-
+        $data  = json_decode($this->request->getBody(), true);
         $model = new Cotizacion();
-        $rules = $model->getValidationRules();
 
-        // Insertamos la cotizacion
-        $model->insert($data);
+        if (!$model->insert($data)) {
+            return $this->fail($model->errors(), 422);
+        }
 
-        // Obtenemos la nueva cotizacion:
-        $newCotizacion = $model->find($model->getInsertID());
-
-        // Enviamos los datos de la nueva cotizacion al endpoint
-        return $this->respondCreated($newCotizacion);
+        $transformer = new CotizacionesTransformer();
+        return $this->respondCreated(
+            $transformer->transform($model->find($model->getInsertID()))
+        );
     }
 
-    /**
-     * Eliminar un registro
-     *
-     * DELETE /api/cotizacion/{id}
-     */
     public function deleteIndex(?int $id = null)
     {
-        // En caso de que no se haya introducido el id
-        if(!$id)return $this->respond(['status'=>'401','message'=>'Id no encontrado' ], 401);
+        if (!$id) {
+            return $this->fail('Id no encontrado', 400);
+        }
 
-        //
-        $model = new Cotizacion();
-
-        // NO SE ELIMINA LA COTIZACION SOLO SE DESACTIVA
+        $model      = new Cotizacion();
         $cotizacion = $model->find($id);
-        if (!$cotizacion){
-            return $this->respond([
-                'status'=>'not found',
-                'message'=>'Cotizacion no encontrada'],
-                401);
-        };
-        // CAMBIAMOS EL ESTADO DE LA COTIZACION
-        $cotizacion->estado = 'RECHAZADA';
 
-        // Actualizamos el modelo
-        $model->update($id,$cotizacion);
+        if (!$cotizacion) {
+            return $this->failNotFound('Cotización no encontrada');
+        }
 
-        // Obtenemos la actualizacion
-        $cotizacionUpdated = $model->find($id);
+        $model->update($id, ['estado' => 'RECHAZADA']);
 
-        return $this->respond($cotizacionUpdated, 200, 'Cotizacion eliminada con exito!');
-
+        $transformer = new CotizacionesTransformer();
+        return $this->respond(
+            $transformer->transform($model->find($id)),
+            200,
+            'Cotización eliminada'
+        );
     }
 }

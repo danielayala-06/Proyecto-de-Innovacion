@@ -9,7 +9,7 @@ class Cotizacion extends Model
     protected $table            = 'cotizaciones';
     protected $primaryKey       = 'id_cotizacion';
     protected $useAutoIncrement = true;
-    protected $returnType       = 'object';
+    protected $returnType       = 'array';
     protected $protectFields    = true;
     protected $allowedFields    = [
         'id_cliente',

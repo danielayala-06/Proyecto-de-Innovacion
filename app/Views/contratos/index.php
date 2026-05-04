@@ -205,4 +205,10 @@
             </div>
         </div>
     </div>
+<script>
+    const BASE_URL       = "<?= base_url('') ?>";
+    const CONTRATOS_DATA = <?= json_encode($contratos) ?>;
+</script>
+<script type="module" src="<?= base_url('js/modules/contratos/contratosIndexMain.js') ?>"></script>
+
 <?= $footer ?>

@@ -38,32 +38,23 @@ class CotizacionController extends BaseController
     }
     public function createCotizacion()
     {
-        $data   = $this->request->getJSON(true);
+        $data = $this->request->getJSON(true);
 
-        // Flujo de crear cotizacion: cliente->cotizacion->paquetes/servicios/productos
+        if (empty($data['cliente'])) {
+            return $this->fail('El cliente es requerido', 422);
+        }
 
-        // Validaciones
-
-        // No se envio el cliente
-        if($data['cliente'] === null)return $this->respond(null, );
-
-        // No se envio la cotizacion
-        if($data['cotizacion'] === null)return $this->respond(null, 404,'Cotizacion no encontrada');
-
-        // Validamos los campos en la cotizacion enviada
-        if(!validarCotizacion())return $this->respond(null, 404,'Cotizacion no encontrada');
+        if (empty($data['cotizacion'])) {
+            return $this->fail('Los datos de la cotización son requeridos', 422);
+        }
 
         $model = new Cotizacion();
-       // $rules = $model->getValidationRules();
 
-        // Insertamos la cotizacion
-        $model->insert($data);
+        if (!$model->insert($data)) {
+            return $this->fail($model->errors() ?: 'Error al crear la cotización', 422);
+        }
 
-        // Obtenemos la nueva cotizacion:
-        $newCotizacion = $model->find($model->getInsertID());
-
-        // Enviamos los datos de la nueva cotizacion al endpoint
-        return $this->respondCreated($newCotizacion);
+        return $this->respondCreated($model->find($model->getInsertID()));
     }
 
     public function searchCliente()
