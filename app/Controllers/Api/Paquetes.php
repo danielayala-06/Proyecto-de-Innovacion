@@ -11,62 +11,25 @@ class Paquetes extends BaseController
 {
     use ResponseTrait;
 
-<<<<<<< HEAD
     public function getIndex(?int $id = null)
-=======
-    /**
-     * Listar uno o mas paquetes
-     * GET /api/paquetes
-     *    y
-     * GET /api/paquetes/{id}
-     */
-    public function getIndex(int $id = null)
->>>>>>> 5f497efef0ca26de78ddef366e09dfb8f9206ad7
     {
         $model       = new Paquete();
         $transformer = new PaquetesTransformer();
 
-<<<<<<< HEAD
         if ($id !== null) {
-            $paquete = $model->find($id);
+            $paquete = $model->paqueteFullById($id);
             return $paquete
                 ? $this->respond($transformer->transform($paquete))
                 : $this->failNotFound('Paquete no encontrado');
         }
 
+        $paquetes = $model->paquetesFull();
+
         return $this->respond(
-            $transformer->transformMany($model->findAll()),
+            $transformer->transformMany($paquetes),
             200,
             'Paquetes enviados'
         );
-=======
-        // Recuperamos los id
-        $paquetes = $model->paquetesFull($id);
-
-
-        if(!$paquetes){
-            return $this->failNotFound('No encontrado');
-        }
-
-        if($id){
-            // Recuperamos el id
-            $paquete = $model->paqueteFullById($id);
-
-            if(!$paquete)return $this->failNotFound('Paquete no encontrado');
-
-            return $this->respond(
-                $paquete,
-                200,
-                'ok');
-        }
-
-        $paquetesTrans = $transformer->transformMany($paquetes);
-
-        return $this->respond(
-            $paquetesTrans,
-            200,
-            'ok ');
->>>>>>> 5f497efef0ca26de78ddef366e09dfb8f9206ad7
     }
 
     public function postIndex()

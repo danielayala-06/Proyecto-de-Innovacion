@@ -37,32 +37,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const maxDate = new Date(now);
         maxDate.setFullYear(maxDate.getFullYear() + 1);
 
-        const dateInicio  = document.getElementById("fechaInicio-date");
-        const timeInicio  = document.getElementById("fechaInicio-time");
+        const dateInicio   = document.getElementById("fechaInicio-date");
+        const timeInicio   = document.getElementById("fechaInicio-time");
         const hiddenInicio = document.getElementById("fechaInicio");
-        const dateFin     = document.getElementById("fechaFin-date");
-        const timeFin     = document.getElementById("fechaFin-time");
-        const hiddenFin   = document.getElementById("fechaFin");
-
-        // Rellena un <select> con opciones cada 30 min de 06:00 a 23:30
-        function llenarHoras(selectEl, horaMinima = null) {
-            const prevVal = selectEl.value;
-            selectEl.innerHTML = `<option value="">Hora</option>`;
-            for (let h = 6; h < 24; h++) {
-                for (let m = 0; m < 60; m += 30) {
-                    const val = `${pad(h)}:${pad(m)}`;
-                    if (horaMinima && val < horaMinima) continue;
-                    const opt = document.createElement("option");
-                    opt.value = val;
-                    opt.textContent = val;
-                    selectEl.appendChild(opt);
-                }
-            }
-            // Restaurar selección si sigue siendo válida
-            if (prevVal && selectEl.querySelector(`option[value="${prevVal}"]`)) {
-                selectEl.value = prevVal;
-            }
-        }
+        const dateFin      = document.getElementById("fechaFin-date");
+        const timeFin      = document.getElementById("fechaFin-time");
+        const hiddenFin    = document.getElementById("fechaFin");
 
         function sincronizarHidden(dateEl, timeEl, hiddenEl) {
             hiddenEl.value = (dateEl.value && timeEl.value)
@@ -70,26 +50,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 : "";
         }
 
-        // Recalcula la hora mínima de fechaFin según fechaInicio + 2h
         function actualizarMinFin() {
             if (!dateInicio.value || !timeInicio.value) return;
 
-            const inicio   = new Date(`${dateInicio.value}T${timeInicio.value}`);
-            const minFin   = new Date(inicio.getTime() + 2 * 60 * 60 * 1000);
+            const inicio     = new Date(`${dateInicio.value}T${timeInicio.value}`);
+            const minFin     = new Date(inicio.getTime() + 2 * 60 * 60 * 1000);
             const minFinDate = toDateStr(minFin);
 
             dateFin.min = minFinDate;
 
-            // Si misma fecha, filtrar horas disponibles
-            if (dateFin.value === minFinDate) {
-                llenarHoras(timeFin, `${pad(minFin.getHours())}:${pad(minFin.getMinutes())}`);
-            } else {
-                llenarHoras(timeFin);
-            }
+            timeFin.min = (dateFin.value === minFinDate)
+                ? `${pad(minFin.getHours())}:${pad(minFin.getMinutes())}`
+                : "";
 
-            // Limpiar fin si ya no es válido
             if (hiddenFin.value && new Date(hiddenFin.value) < minFin) {
-                timeFin.value  = "";
+                timeFin.value   = "";
                 hiddenFin.value = "";
             }
 
@@ -97,7 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (dateInicio && timeInicio) {
-            llenarHoras(timeInicio);
             dateInicio.min = toDateStr(now);
             dateInicio.max = toDateStr(maxDate);
 
@@ -112,7 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (dateFin && timeFin) {
-            llenarHoras(timeFin);
             dateFin.min = toDateStr(now);
             dateFin.max = toDateStr(maxDate);
 
@@ -122,6 +95,33 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             timeFin.addEventListener("change", () => {
                 sincronizarHidden(dateFin, timeFin, hiddenFin);
+            });
+        }
+
+        // ==============================
+        // TELÉFONO – validación Perú (debe empezar con 9)
+        // ==============================
+        const inputTel     = document.getElementById("telefonoCliente");
+        const feedbackTel  = document.getElementById("telefonoFeedback");
+
+        if (inputTel && feedbackTel) {
+            inputTel.addEventListener("input", () => {
+                // Solo dígitos
+                inputTel.value = inputTel.value.replace(/\D/g, "").slice(0, 9);
+
+                const val = inputTel.value;
+                if (val.length > 0 && val[0] !== "9") {
+                    feedbackTel.textContent = "El teléfono debe empezar con 9.";
+                    feedbackTel.style.display = "block";
+                    inputTel.classList.add("is-invalid");
+                } else if (val.length > 0 && val.length < 9) {
+                    feedbackTel.textContent = "El teléfono debe tener 9 dígitos.";
+                    feedbackTel.style.display = "block";
+                    inputTel.classList.remove("is-invalid");
+                } else {
+                    feedbackTel.style.display = "none";
+                    inputTel.classList.remove("is-invalid");
+                }
             });
         }
     }

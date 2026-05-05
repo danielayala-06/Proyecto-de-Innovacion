@@ -4,6 +4,7 @@
  */
 
 import { getClienteById, setDeleteId } from './clientesIndexManager.js';
+import { buscarClientePorDni } from '../../api/clientesApi.js';
 
 // ── Abrir modal nuevo ──────────────────────────────────────────────────────────
 export function handleAbrirNuevo() {
@@ -63,6 +64,39 @@ export function handleEliminarCliente() {
     // TODO: implementar cuando existan rutas DELETE /api/clientes/{id}
     alert('Funcionalidad en desarrollo.');
     bootstrap.Modal.getInstance(document.getElementById('modalConfirm'))?.hide();
+}
+
+// ── Auto-fill DNI con DECOLECTA ────────────────────────────────────────────────
+export function initDniLookup() {
+    const dniInput = document.getElementById('cDni');
+    if (!dniInput) return;
+
+    dniInput.addEventListener('input', async () => {
+        const val = dniInput.value.replace(/\D/g, '').slice(0, 8);
+        dniInput.value = val;
+
+        if (val.length !== 8) return;
+
+        const nombreEl   = document.getElementById('cNombre');
+        const apellidoEl = document.getElementById('cApellido');
+
+        nombreEl.placeholder   = 'Buscando…';
+        apellidoEl.placeholder = 'Buscando…';
+        nombreEl.disabled      = true;
+        apellidoEl.disabled    = true;
+
+        const data = await buscarClientePorDni(val);
+
+        nombreEl.disabled      = false;
+        apellidoEl.disabled    = false;
+        nombreEl.placeholder   = '';
+        apellidoEl.placeholder = '';
+
+        if (data?.nombres) {
+            nombreEl.value   = data.nombres;
+            apellidoEl.value = data.apellidos;
+        }
+    });
 }
 
 // ── Exponer al scope global ────────────────────────────────────────────────────

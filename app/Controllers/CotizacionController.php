@@ -56,6 +56,9 @@ class CotizacionController extends BaseController
                 if (empty($clienteNuevo['telefono'])) {
                     return $this->fail('El teléfono del cliente es obligatorio.', 422);
                 }
+                if (!preg_match('/^9\d{8}$/', $clienteNuevo['telefono'])) {
+                    return $this->fail('El teléfono debe empezar con 9 y tener 9 dígitos.', 422);
+                }
 
                 // Buscar persona por DNI
                 $persona = $modelPersona
@@ -86,11 +89,11 @@ class CotizacionController extends BaseController
                     $idPersona = (int) $modelPersona->getInsertID();
                 }
 
-                // Buscar cliente asociado a esa persona (returnType = 'object')
+                // Buscar cliente asociado a esa persona
                 $clienteExistente = $modelCliente->where('id_persona', $idPersona)->first();
 
                 if ($clienteExistente) {
-                    $idCliente = (int) $clienteExistente->id_cliente;
+                    $idCliente = (int) $clienteExistente['id_cliente'];
                 } else {
                     $ok = $modelCliente->insert([
                         'id_persona'          => $idPersona,
@@ -106,7 +109,7 @@ class CotizacionController extends BaseController
                 // Cliente existente — actualizar nombres/apellidos si vienen datos de RENIEC
                 $clienteExistente = $modelCliente->find((int) $idCliente);
                 if ($clienteExistente) {
-                    $modelPersona->update($clienteExistente->id_persona, [
+                    $modelPersona->update($clienteExistente['id_persona'], [
                         'nombres'  => strtoupper(trim($clienteNuevo['nombres'])),
                         'apellidos'=> strtoupper(trim($clienteNuevo['apellidos'])),
                     ]);

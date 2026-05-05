@@ -20,10 +20,43 @@ class Cotizaciones extends BaseController
             return $this->respond($transformer->transformMany($model->findAll(30)));
         }
 
-        $cotizacion = $model->find($id);
-        return $cotizacion
-            ? $this->respond($transformer->transform($cotizacion))
-            : $this->failNotFound('Cotización no encontrada');
+        $db  = \Config\Database::connect();
+        $row = $db->table('cotizaciones c')
+            ->select('c.*, CONCAT_WS(" ", p.nombres, NULLIF(TRIM(p.apellidos), "")) AS cliente,
+                      COALESCE(p.telefono, "") AS telefono_cliente')
+            ->join('clientes cl', 'cl.id_cliente = c.id_cliente', 'left')
+            ->join('personas p',  'p.id_persona  = cl.id_persona',  'left')
+            ->where('c.id_cotizacion', $id)
+            ->get()->getRowArray();
+
+        if (!$row) {
+            return $this->failNotFound('Cotización no encontrada');
+        }
+
+        $paquetes = $db->table('cotizaciones_paquetes cp')
+            ->select('pk.nombre_paquete AS nombre, cp.cantidad, cp.precio_unitario, cp.subtotal')
+            ->join('paquetes pk', 'pk.id_paquete = cp.id_paquete', 'left')
+            ->where('cp.id_cotizacion', $id)
+            ->get()->getResultArray();
+
+        $servicios = $db->table('cotizaciones_servicios cs')
+            ->select('s.nombre_servicio AS nombre, cs.cantidad, cs.precio_unitario, cs.subtotal')
+            ->join('servicios s', 's.id_servicio = cs.id_servicio', 'left')
+            ->where('cs.id_cotizacion', $id)
+            ->get()->getResultArray();
+
+        $productos = $db->table('cotizaciones_productos cp')
+            ->select('pr.nombre_producto AS nombre, cp.cantidad, cp.precio_unitario, cp.subtotal')
+            ->join('productos pr', 'pr.id_producto = cp.id_producto', 'left')
+            ->where('cp.id_cotizacion', $id)
+            ->get()->getResultArray();
+
+        $data               = $transformer->transform($row);
+        $data['paquetes']   = $paquetes;
+        $data['servicios']  = $servicios;
+        $data['productos']  = $productos;
+
+        return $this->respond($data);
     }
 
     public function disponibles()
@@ -48,6 +81,29 @@ class Cotizaciones extends BaseController
         }
 
         return $this->respond($builder->get()->getResultArray(), 200, 'Cotizaciones disponibles');
+    }
+
+    public function patchEstado(int $id)
+    {
+        $estados = ['pendiente', 'aprobada', 'rechazada', 'completada'];
+
+        $model = new Cotizacion();
+        if (!$model->find($id)) {
+            return $this->failNotFound('Cotización no encontrada');
+        }
+
+        $body   = $this->request->getJSON(true);
+        $estado = strtolower(trim($body['estado'] ?? ''));
+
+        if (!in_array($estado, $estados, true)) {
+            return $this->failValidationErrors(
+                'Estado inválido. Valores permitidos: ' . implode(', ', $estados)
+            );
+        }
+
+        $model->update($id, ['estado' => $estado]);
+
+        return $this->respond(['id_cotizacion' => $id, 'estado' => $estado], 200, 'Estado actualizado');
     }
 
     public function putIndex(int $id)

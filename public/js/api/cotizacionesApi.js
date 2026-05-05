@@ -47,12 +47,16 @@ export async function deleteCotizacion(id) {
 
 export async function updateEstadoCotizacion(id, estado) {
     try {
-        const res = await fetch(`${BASE_URL}/api/cotizaciones/${id}`, {
-            method: 'PUT',
+        const res = await fetch(`${BASE_URL}/api/cotizaciones/${id}/estado`, {
+            method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ estado }),
         });
-        if (!res.ok) { console.error('Error actualizando estado:', res.status); return false; }
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error('Error actualizando estado:', res.status, err?.messages ?? err);
+            return false;
+        }
         return true;
     } catch (e) { console.error('updateEstadoCotizacion:', e); return false; }
 }

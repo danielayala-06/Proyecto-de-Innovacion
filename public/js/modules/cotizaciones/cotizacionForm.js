@@ -36,6 +36,11 @@ async function handleSubmit(e) {
         return;
     }
 
+    if (!idCliente && telefono && !/^9\d{8}$/.test(telefono)) {
+        alert("El teléfono debe empezar con 9 y tener exactamente 9 dígitos (ej: 987654321).");
+        return;
+    }
+
     if (!formData.get("nombre")?.trim()) {
         alert("Por favor ingresa el nombre del evento.");
         return;

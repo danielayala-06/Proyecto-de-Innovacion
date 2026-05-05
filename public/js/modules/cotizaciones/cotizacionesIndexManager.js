@@ -4,6 +4,8 @@
  * Consume window.COTIZACIONES_DATA inyectado por PHP (vista_cotizaciones_resumen).
  */
 
+import { updateEstadoCotizacion } from '../../api/cotizacionesApi.js';
+
 // ── Mapeo de campos PHP → JS ───────────────────────────────────────────────────
 // Vista devuelve: id_cotizacion, cotizacion, cliente, telefono,
 //                 fecha_evento, fecha_creado, total, estado
@@ -88,9 +90,15 @@ export function formatFecha(s) {
 }
 
 // ── Mutaciones ─────────────────────────────────────────────────────────────────
-export function cambiarEstadoCotizacion(id, estado) {
+function _actualizarEstadoLocal(id, estado) {
     const c = _cotizaciones.find(x => x.id === id);
     if (c) c.estado = estado.toLowerCase();
+}
+
+export async function cambiarEstadoCotizacion(id, estado) {
+    const ok = await updateEstadoCotizacion(id, estado);
+    if (ok) _actualizarEstadoLocal(id, estado);
+    return ok;
 }
 
 export function eliminarCotizacion() {

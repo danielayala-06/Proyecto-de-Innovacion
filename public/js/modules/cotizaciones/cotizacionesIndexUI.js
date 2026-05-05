@@ -144,9 +144,36 @@ function _renderPaginacion(total, inicio, totalPags) {
     document.getElementById('paginaBtns').innerHTML = html;
 }
 
+// ── Helpers del modal ──────────────────────────────────────────────────────────
+function _itemsTable(rows) {
+    if (!rows.length) return '';
+    return `
+        <table class="cot-items-table">
+            <thead><tr>
+                <th>Nombre</th><th>Cant.</th><th>Precio unit.</th><th>Subtotal</th>
+            </tr></thead>
+            <tbody>
+                ${rows.map(r => `<tr>
+                    <td>${r.nombre ?? '—'}</td>
+                    <td>${r.cantidad ?? 1}</td>
+                    <td>S/ ${parseFloat(r.precio_unitario || 0).toLocaleString('es-PE', {minimumFractionDigits:2})}</td>
+                    <td>S/ ${parseFloat(r.subtotal || 0).toLocaleString('es-PE', {minimumFractionDigits:2})}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>`;
+}
+
+function _itemsSection(paquetes, servicios, productos) {
+    const parts = [];
+    if (paquetes.length)  parts.push(`<p class="cot-detail-label" style="margin-bottom:4px;">Paquetes</p>${_itemsTable(paquetes)}`);
+    if (servicios.length) parts.push(`<p class="cot-detail-label" style="margin-bottom:4px;">Servicios adicionales</p>${_itemsTable(servicios)}`);
+    if (productos.length) parts.push(`<p class="cot-detail-label" style="margin-bottom:4px;">Productos</p>${_itemsTable(productos)}`);
+    if (!parts.length) return '';
+    return `<div class="col-12" style="border-top:1px solid var(--border);padding-top:12px;">${parts.join('<div style="margin-top:12px;"></div>')}</div>`;
+}
+
 // ── Modal detalle ──────────────────────────────────────────────────────────────
 export async function verDetalle(id) {
-    // Abre el modal con estado de carga inmediato
     const local  = getCotizaciones().find(x => x.id === id) || {};
     const codigo = local.codigo || `COT-${String(id).padStart(3, '0')}`;
 
@@ -160,7 +187,6 @@ export async function verDetalle(id) {
     document.getElementById('detalleAcciones').innerHTML = '';
     new bootstrap.Modal(document.getElementById('modalDetalle')).show();
 
-    // Llama al endpoint GET /api/cotizaciones/{id}
     const api = await getCotizacionById(id);
 
     if (!api) {
@@ -172,40 +198,59 @@ export async function verDetalle(id) {
         return;
     }
 
-    // Combina datos de la API (detalle completo) con datos locales (cliente, teléfono)
-    const nombre    = api.nombre_cotizacion                    || local.cotizacion || '';
+    const nombre    = api.nombre_cotizacion || local.cotizacion || '';
     const fechaIni  = (api.fecha_hora_inicio || '').slice(0, 10);
     const fechaFin  = (api.fecha_hora_fin    || '').slice(0, 10);
-    const total     = parseFloat(api.total_estimado)           || local.total || 0;
-    const estado    = (api.estado            || local.estado   || '').toLowerCase();
-    const direccion = api.direccion   || '';
-    const referencia= api.referencia  || '';
+    const total     = parseFloat(api.total_estimado) || local.total || 0;
+    const estado    = (api.estado || local.estado || '').toLowerCase();
+    const direccion = api.direccion    || '';
+    const referencia= api.referencia   || '';
     const notas     = api.observaciones || '';
+    const cliente   = api.cliente  || local.cliente  || '—';
+    const telefono  = api.telefono || local.telefono || '—';
+    const paquetes  = api.paquetes  || [];
+    const servicios = api.servicios || [];
+    const productos = api.productos || [];
 
-    document.getElementById('detalleTitle').innerHTML =
-        `<span style="color:var(--text-muted);font-weight:400;margin-right:6px;">${codigo}</span>${local.cliente || ''}`;
+    // Título: código · cliente con nombre del evento como subtítulo
+    document.getElementById('detalleTitle').innerHTML = `
+        <div>
+            <div>
+                <span style="color:var(--text-muted);font-weight:400;margin-right:6px;">${codigo}</span>
+                <span style="font-weight:700;">${cliente !== '—' ? cliente : ''}</span>
+            </div>
+            ${nombre ? `<span class="modal-subtitle">${nombre}</span>` : ''}
+        </div>`;
 
+    // Body: info + items + totales
+    const colFechas = fechaFin ? '4' : '6';
     document.getElementById('detalleBody').innerHTML = `
         <div class="row g-3">
-            ${nombre ? `<div class="col-12"><p class="cot-detail-label">Nombre del evento</p><p class="cot-detail-val">${nombre}</p></div>` : ''}
-            <div class="col-md-6"><p class="cot-detail-label">Cliente</p><p class="cot-detail-val">${local.cliente || '—'}</p></div>
-            <div class="col-md-6"><p class="cot-detail-label">Teléfono</p><p class="cot-detail-val">${local.telefono || '—'}</p></div>
-            <div class="col-md-${fechaFin ? '4' : '6'}"><p class="cot-detail-label">Fecha inicio</p><p class="cot-detail-val">${formatFecha(fechaIni)}</p></div>
-            ${fechaFin ? `<div class="col-md-4"><p class="cot-detail-label">Fecha fin</p><p class="cot-detail-val">${formatFecha(fechaFin)}</p></div>` : ''}
-            <div class="col-md-${fechaFin ? '4' : '6'}"><p class="cot-detail-label">Estado</p><p class="cot-detail-val">${badgeEstado(estado)}</p></div>
+            <div class="col-md-6"><p class="cot-detail-label">Cliente</p><p class="cot-detail-val">${cliente}</p></div>
+            <div class="col-md-6"><p class="cot-detail-label">Teléfono</p><p class="cot-detail-val">${telefono}</p></div>
+
+            <div class="col-md-${colFechas}"><p class="cot-detail-label">Fecha inicio</p><p class="cot-detail-val">${formatFecha(fechaIni)}</p></div>
+            ${fechaFin ? `<div class="col-md-${colFechas}"><p class="cot-detail-label">Fecha fin</p><p class="cot-detail-val">${formatFecha(fechaFin)}</p></div>` : ''}
+            <div class="col-md-${colFechas}"><p class="cot-detail-label">Estado</p><p class="cot-detail-val">${badgeEstado(estado)}</p></div>
+
             ${direccion  ? `<div class="col-md-6"><p class="cot-detail-label">Dirección</p><p class="cot-detail-val">${direccion}</p></div>`  : ''}
             ${referencia ? `<div class="col-md-6"><p class="cot-detail-label">Referencia</p><p class="cot-detail-val">${referencia}</p></div>` : ''}
-            <div class="col-12 d-flex justify-content-between align-items-end" style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
-                <div>${notas ? `<p class="cot-detail-label">Observaciones</p><p style="font-size:0.83rem;color:var(--text-secondary);">${notas}</p>` : ''}</div>
-                <div style="text-align:right;">
+
+            ${_itemsSection(paquetes, servicios, productos)}
+
+            <div class="col-12" style="border-top:1px solid var(--border);padding-top:12px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;">
+                <div style="flex:1;">
+                    ${notas ? `<p class="cot-detail-label">Observaciones</p><p style="font-size:0.83rem;color:var(--text-secondary);">${notas}</p>` : ''}
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
                     <p class="cot-detail-label">Total estimado</p>
-                    <p style="font-size:1.4rem;font-weight:800;color:var(--accent);">S/ ${total.toLocaleString('es-PE')}</p>
+                    <p style="font-size:1.4rem;font-weight:800;color:var(--accent);">S/ ${total.toLocaleString('es-PE', {minimumFractionDigits:2})}</p>
                 </div>
             </div>
         </div>`;
 
-    document.getElementById('detalleAcciones').innerHTML = `
-        ${estado === 'pendiente' ? `
+    document.getElementById('detalleAcciones').innerHTML =
+        `${estado === 'pendiente' ? `
             <button class="btn btn-success btn-sm" onclick="cambiarEstado(${id},'aprobada')"><i class="bi bi-check-circle me-1"></i>Aprobar</button>
             <button class="btn btn-danger btn-sm" onclick="cambiarEstado(${id},'rechazada')"><i class="bi bi-x-circle me-1"></i>Rechazar</button>
         ` : ''}
@@ -229,8 +274,20 @@ function handleIrPag(p) {
     render();
 }
 
-function handleCambiarEstado(id, estado) {
-    cambiarEstadoCotizacion(id, estado);
+async function handleCambiarEstado(id, estado) {
+    const acciones = document.getElementById('detalleAcciones');
+    const btns     = acciones?.querySelectorAll('button') ?? [];
+
+    btns.forEach(b => { b.disabled = true; });
+
+    const ok = await cambiarEstadoCotizacion(id, estado);
+
+    if (!ok) {
+        btns.forEach(b => { b.disabled = false; });
+        alert('No se pudo cambiar el estado. Intenta de nuevo.');
+        return;
+    }
+
     bootstrap.Modal.getInstance(document.getElementById('modalDetalle')).hide();
     render();
 }

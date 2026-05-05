@@ -52,7 +52,9 @@
 
                             <div class="col-12 col-md-6">
                                 <label for="telefonoCliente" class="form-label">Teléfono*</label>
-                                <input type="text" class="form-control" id="telefonoCliente" name="telefono">
+                                <input type="tel" class="form-control" id="telefonoCliente" name="telefono"
+                                       maxlength="9" placeholder="9XXXXXXXX">
+                                <div id="telefonoFeedback" class="form-text text-danger mt-1" style="display:none;"></div>
                             </div>
 
                             <div class="col-12 col-md-6">
@@ -103,9 +105,7 @@
                                 <label class="form-label">Fecha del evento</label>
                                 <div class="d-flex gap-2">
                                     <input type="date" class="form-control" id="fechaInicio-date">
-                                    <select class="form-select" id="fechaInicio-time" style="flex:0 0 auto;width:115px;">
-                                        <option value="">Hora</option>
-                                    </select>
+                                    <input type="time" class="form-control" id="fechaInicio-time" step="1800" style="flex:0 0 auto;width:120px;">
                                 </div>
                                 <input type="hidden" name="fechaInicio" id="fechaInicio">
                             </div>
@@ -115,9 +115,7 @@
                                 <label class="form-label">Fecha fin del evento</label>
                                 <div class="d-flex gap-2">
                                     <input type="date" class="form-control" id="fechaFin-date">
-                                    <select class="form-select" id="fechaFin-time" style="flex:0 0 auto;width:115px;">
-                                        <option value="">Hora</option>
-                                    </select>
+                                    <input type="time" class="form-control" id="fechaFin-time" step="1800" style="flex:0 0 auto;width:120px;">
                                 </div>
                                 <input type="hidden" name="fechaFin" id="fechaFin">
                             </div>
