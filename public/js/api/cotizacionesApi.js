@@ -12,7 +12,11 @@ export async function createCotizacion(data) {
             body: JSON.stringify(data),
         });
         const result = await res.json();
-        if (res.status !== 201) { console.error('Error al insertar cotización:', result); return null; }
+        if (res.status !== 201) {
+            const msg = result?.messages?.error ?? result?.messages ?? JSON.stringify(result);
+            console.error('Error al insertar cotización [' + res.status + ']:', msg);
+            return null;
+        }
         return result;
     } catch (e) { console.error('createCotizacion:', e); return null; }
 }

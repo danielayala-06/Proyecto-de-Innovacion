@@ -3,17 +3,23 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use CodeIgniter\HTTP\ResponseInterface;
+use App\Models\Contrato;
+use App\Transformers\ContratosTransformer;
 
 class ContratosController extends BaseController
 {
     public function index()
     {
+        $model       = new Contrato();
+        $transformer = new ContratosTransformer();
+        $contratos   = $transformer->transformMany($model->contratosConCliente());
+
         $data = [
-            'header' => view("Layouts/header"),
-            'footer' => view("Layouts/footer"),
+            'header'   => view('Layouts/header'),
+            'footer'   => view('Layouts/footer'),
+            'contratos'=> $contratos,
         ];
 
-        return view("contratos/index", $data);
+        return view('contratos/index', $data);
     }
 }

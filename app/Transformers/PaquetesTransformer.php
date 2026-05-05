@@ -21,7 +21,8 @@ class PaquetesTransformer extends BaseTransformer
             'precio_base' => $resource['precio_base'],
             'imagen' => $resource['imagen'],
             'descripcion' => $resource['descripcion'],
-            'estado' => $resource['estado'], 
+            'categoria' => $resource['categoria'],
+            'estado'    => $resource['estado'],
         ];
     }
 }

@@ -7,6 +7,13 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 
+/**
+ *      RUTAS DE AUTENTICACIÓN
+ */
+$routes->get('/login',      'AuthController::index');
+$routes->post('/login/auth', 'AuthController::login');
+$routes->get('/logout',     'AuthController::logout');
+
 
 /**
  *      RUTAS PARA COTIZACIONES
@@ -37,12 +44,14 @@ $routes->get('/clientes', 'ClientesController::index');
 /**
  *      RUTAS PARA PRODUCTOS
  */
-$routes->get('/api/productos', 'ProductosController::index');
+$routes->get('/api/productos',       'Api\Productos::getIndex');
+$routes->get('/api/productos/(:num)', 'Api\Productos::getIndex/$1');
 
 /**
  *      RUTAS PARA SERVICIOS
  */
-$routes->get('/api/servicios', 'ServiciosController::index');
+$routes->get('/api/servicios',       'Api\Servicios::getIndex');
+$routes->get('/api/servicios/(:num)', 'Api\Servicios::getIndex/$1');
 
 /**
  *      RUTAS PARA PAQUETES
@@ -72,9 +81,24 @@ $routes->put('/api/cotizaciones/(:num)','Api\Cotizaciones::putIndex/$1');
 $routes->delete('/api/cotizaciones/(:num)','Api\Cotizaciones::deleteIndex/$1');
 
 //Paquetes
-$routes->get('/api/paquetes','Api\Paquetes::getIndex');
-$routes->get('/api/paquetes/(:num)','Api\Paquetes::getIndex/$1');
+$routes->get(   '/api/paquetes',          'Api\Paquetes::getIndex');
+$routes->get(   '/api/paquetes/(:num)',   'Api\Paquetes::getIndex/$1');
+$routes->post(  '/api/paquetes',          'Api\Paquetes::postIndex');
+$routes->put(   '/api/paquetes/(:num)',   'Api\Paquetes::putIndex/$1');
+$routes->delete('/api/paquetes/(:num)',   'Api\Paquetes::deleteIndex/$1');
 
 //Clientes
-$routes->get('api/clientes','Api\Clientes::getIndex');
-$routes->get('api/clientes/(:num)','Api\Clientes::getIndex/$1');
+$routes->get('api/clientes',              'Api\Clientes::getIndex');
+$routes->get('api/clientes/(:num)',       'Api\Clientes::show/$1');
+$routes->get('api/clientes/dni',          'Api\Clientes::buscarPorDni');
+$routes->post('api/clientes/dni',         'Api\Clientes::buscarPorDni');
+
+//Cotizaciones disponibles (debe ir ANTES de (:num) para no colisionar)
+$routes->get('/api/cotizaciones/disponibles', 'Api\Cotizaciones::disponibles');
+
+//Contratos
+$routes->get(   '/api/contratos',        'Api\Contratos::getIndex');
+$routes->get(   '/api/contratos/(:num)', 'Api\Contratos::getIndex/$1');
+$routes->post(  '/api/contratos',        'Api\Contratos::postIndex');
+$routes->put(   '/api/contratos/(:num)', 'Api\Contratos::putIndex/$1');
+$routes->delete('/api/contratos/(:num)', 'Api\Contratos::deleteIndex/$1');

@@ -11,6 +11,56 @@ class Clientes extends BaseController
 {
     use ResponseTrait;
 
+    public function buscarPorDni()
+    {
+        $dni = $this->request->getGet('dni') ?? $this->request->getPost('dni');
+
+        // Validaciones
+        if (empty($dni)) {
+            return $this->failValidationErrors('El DNI es requerido');
+        }
+
+        if (!ctype_digit($dni)) {
+            return $this->failValidationErrors('El DNI solo debe contener números');
+        }
+
+        if (strlen($dni) !== 8) {
+            return $this->failValidationErrors('El DNI debe tener exactamente 8 dígitos');
+        }
+
+        $token = env('DECOLECTA.KEY');
+
+        if (empty($token)) {
+            return $this->failServerError('Token de DECOLECTA no configurado');
+        }
+
+        try {
+            $client = \Config\Services::curlrequest();
+
+            $response = $client->get(
+                'https://api.decolecta.com/v1/reniec/dni?numero=' . $dni,
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Accept'        => 'application/json',
+                    ],
+                    'timeout' => 10,
+                ]
+            );
+
+            $data = json_decode($response->getBody(), true);
+
+            if ($response->getStatusCode() !== 200 || empty($data)) {
+                return $this->failNotFound('No se encontró información para el DNI ' . $dni);
+            }
+
+            return $this->respond($data, 200, 'Consulta DNI exitosa');
+
+        } catch (\Exception $e) {
+            return $this->failServerError('Error al consultar DECOLECTA: ' . $e->getMessage());
+        }
+    }
+
     public function getIndex()
     {
         $model = new Cliente();
