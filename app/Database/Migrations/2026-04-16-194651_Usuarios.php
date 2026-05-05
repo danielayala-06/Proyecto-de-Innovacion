@@ -32,7 +32,7 @@ class Usuarios extends Migration
             ],
             'tipo_usuario' => [
                 'type'=>'ENUM',
-                'constraint'=>['ADMIN','INVITADO', 'PERSONALIZADO']
+                'constraint'=>['ADMINISTRADOR','INVITADO', 'PERSONALIZADO']
             ],
             'estado' => [
                 'type'=>'ENUM',

@@ -12,7 +12,7 @@ class UsuariosSeeder extends Seeder
             [
                 'id_persona'   => 1,
                 'id_rol'       => 1, // Administrador
-                'nombre_user'     => 'admin',
+                'nombre_user'     => 'Admin',
                 'password'     => password_hash('Admin123!', PASSWORD_BCRYPT),
                 'tipo_usuario' => 'ADMINISTRADOR',
                 'estado'       => 'ACTIVO',

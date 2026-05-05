@@ -109,7 +109,7 @@ function _renderTabla(pag) {
                 ${c.cotizacion ? `<div style="font-size:0.71rem;color:var(--text-muted);margin-top:2px;">${c.cotizacion}</div>` : ''}
             </td>
             <td>
-                <div style="font-weight:600;color:var(--text-primary);">${c.cliente}</div>
+                <div class="text-uppercase" style="font-weight:600;color:var(--text-primary);">${c.cliente}</div>
                 <div style="font-size:0.72rem;color:var(--text-muted);">${c.telefono}</div>
             </td>
             

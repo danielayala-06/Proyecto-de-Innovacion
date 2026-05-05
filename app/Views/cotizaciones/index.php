@@ -92,7 +92,7 @@ function fmtFechaCot(?string $f): string {
                       <?php endif; ?>
                     </td>
                     <td>
-                      <div style="font-weight:600;color:var(--text-primary);"><?= esc($c['cliente']) ?></div>
+                      <div class="text-uppercase" style="font-weight:600;color:var(--text-primary);"><?= esc($c['cliente']) ?></div>
                       <div style="font-size:0.72rem;color:var(--text-muted);"><?= esc($c['telefono'] ?? '') ?></div>
                     </td>
                     <td style="color:var(--text-secondary);white-space:nowrap;">
