@@ -6,6 +6,7 @@
 
         <!-- FORMULARIO -->
         <form id="form-cotizacion" class="col-12 ">
+            <input type="hidden" name="id_cliente" id="idCliente">
             <div class="d-flex justify-content-center gap-4">
                 <div class="form-card">
 
@@ -22,19 +23,26 @@
                             <div class="col-12 col-md-7">
                                 <div class="input-group">
                                     <label for="searchCliente" class="visually-hidden">Buscar cliente</label>
-                                    <input type="text" class="form-control" id="searchCliente" placeholder="Buscar cliente...">
-                                    <button class="btn btn-outline-secondary" type="button" id="btnBuscar" onclick="buscarClientes">
+                                    <input type="text" class="form-control" id="searchCliente"
+                                           placeholder="DNI, teléfono o nombre...">
+                                    <button class="btn btn-outline-secondary" type="button" id="btnBuscar">
                                         <i class="bi bi-search"></i>
                                     </button>
                                 </div>
+                                <div id="searchFeedback" class="form-text mt-1"></div>
                             </div>
                         </div>
 
                         <!-- Datos -->
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label for="nombreCliente" class="form-label">Nombre*</label>
-                                <input type="text" class="form-control" id="nombreCliente" name="nombre_cliente">
+                                <label for="nombresCliente" class="form-label">Nombres*</label>
+                                <input type="text" class="form-control" id="nombresCliente" name="nombres_cliente">
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                                <label for="apellidosCliente" class="form-label">Apellidos*</label>
+                                <input type="text" class="form-control" id="apellidosCliente" name="apellidos_cliente">
                             </div>
 
                             <div class="col-12 col-md-6">

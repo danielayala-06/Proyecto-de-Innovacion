@@ -18,12 +18,31 @@ async function handleSubmit(e) {
     const form     = e.target;
     const formData = new FormData(form);
 
-    // Obtener id_cliente del input oculto (si se implementa) o del DNI ingresado
-    const idCliente = formData.get("id_cliente") || null;
+    const idCliente  = formData.get("id_cliente") || null;
+    const nombres    = formData.get("nombres_cliente")?.trim();
+    const apellidos  = formData.get("apellidos_cliente")?.trim() || null;
+    const dni        = formData.get("dni")?.trim();
+    const telefono   = formData.get("telefono")?.trim();
+    const email      = formData.get("correo")?.trim() || null;
+
+    // Validar que existe un cliente (registrado o datos para crearlo)
+    if (!idCliente && !nombres) {
+        alert("Por favor busca un cliente antes de guardar.");
+        return;
+    }
+
+    if (!idCliente && !telefono) {
+        alert("El teléfono es obligatorio para registrar un nuevo cliente.");
+        return;
+    }
+
+    if (!formData.get("nombre")?.trim()) {
+        alert("Por favor ingresa el nombre del evento.");
+        return;
+    }
 
     const data = {
-        id_cliente:        idCliente,
-        id_usuario:        1,                   // Lo cargamos de la sesion
+        id_cliente:        idCliente ? parseInt(idCliente) : null,
         nombre_cotizacion: formData.get("nombre"),
         fecha_hora_inicio: formData.get("fechaInicio"),
         fecha_hora_fin:    formData.get("fechaFin"),
@@ -31,18 +50,9 @@ async function handleSubmit(e) {
         referencia:        formData.get("referencia"),
         observaciones:     formData.get("observaciones"),
         total_estimado:    calcularTotal(),
+        // Siempre incluir datos del cliente para mantener nombres/apellidos actualizados
+        cliente_nuevo: { nombres, apellidos, dni, telefono, email },
     };
-
-    // Validaciones
-    if (!data.nombre_cotizacion) {
-        alert("Por favor ingresa el nombre del evento.");
-        return;
-    }
-
-    if (!data.id_cliente) {
-        alert("Por favor selecciona un cliente primero.");
-        return;
-    }
 
     const res = await createCotizacion(data);
 
@@ -52,6 +62,5 @@ async function handleSubmit(e) {
     }
 
     alert("¡Cotización guardada correctamente!");
-    // Redirigir a la lista de cotizaciones
     window.location.href = `${BASE_URL}/cotizaciones`;
 }

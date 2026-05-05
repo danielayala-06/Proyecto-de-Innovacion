@@ -88,8 +88,10 @@ $routes->put(   '/api/paquetes/(:num)',   'Api\Paquetes::putIndex/$1');
 $routes->delete('/api/paquetes/(:num)',   'Api\Paquetes::deleteIndex/$1');
 
 //Clientes
-$routes->get('api/clientes',          'Api\Clientes::getIndex');
-$routes->get('api/clientes/(:num)',   'Api\Clientes::show/$1');
+$routes->get('api/clientes',              'Api\Clientes::getIndex');
+$routes->get('api/clientes/(:num)',       'Api\Clientes::show/$1');
+$routes->get('api/clientes/dni',          'Api\Clientes::buscarPorDni');
+$routes->post('api/clientes/dni',         'Api\Clientes::buscarPorDni');
 
 //Cotizaciones disponibles (debe ir ANTES de (:num) para no colisionar)
 $routes->get('/api/cotizaciones/disponibles', 'Api\Cotizaciones::disponibles');

@@ -22,6 +22,8 @@ class Cotizacion extends Model
         'direccion',
         'referencia',
         'latitud',
+        'longitud',
+        'observaciones',
         'estado',
         'total_estimado',
     ];

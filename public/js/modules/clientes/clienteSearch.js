@@ -1,9 +1,5 @@
-import { buscarCliente } from "../../api/clientesApi.js";
-import { setDataCliente } from "./clienteUI.js";
-
-/**
- * Inicializa búsqueda de cliente
- */
+import { buscarCliente, detectarTipo, buscarClientePorDni } from "../../api/clientesApi.js";
+import { setDataCliente, setEstadoBusqueda } from "./clienteUI.js";
 
 export function initClienteSearch() {
     const inputBusqueda = document.getElementById("searchCliente");
@@ -11,7 +7,6 @@ export function initClienteSearch() {
 
     if (!inputBusqueda) return;
 
-    // Buscar al presionar Enter en el input
     inputBusqueda.addEventListener("keydown", async (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -19,7 +14,6 @@ export function initClienteSearch() {
         }
     });
 
-    // Buscar al hacer click en el botón lupa
     if (btnBuscar) {
         btnBuscar.addEventListener("click", async () => {
             await handleSearch(inputBusqueda.value);
@@ -31,12 +25,53 @@ async function handleSearch(valor) {
     valor = valor.trim();
     if (!valor) return;
 
-    const data = await buscarCliente(valor);
+    const tipo = detectarTipo(valor);
 
-    if (!data) {
-        console.warn("No se encontró cliente con:", valor);
+    if (tipo === "desconocido") {
+        setEstadoBusqueda("error", "Ingresa un DNI (8 dígitos), teléfono (9 dígitos) o nombre");
         return;
     }
 
-    setDataCliente(data);
+    setEstadoBusqueda("loading", "Buscando...");
+
+    // Búsqueda por DNI: llamar local + DECOLECTA en paralelo
+    // DECOLECTA siempre da nombres/apellidos bien separados (first_name / apellidos)
+    // La BD local aporta id_cliente, teléfono y correo
+    if (tipo === "numero_documento") {
+        const [dataLocal, dataReniec] = await Promise.all([
+            buscarCliente(valor),
+            buscarClientePorDni(valor),
+        ]);
+
+        if (!dataLocal && !dataReniec) {
+            setEstadoBusqueda("notfound", valor);
+            return;
+        }
+
+        const merged = {
+            id_cliente: dataLocal?.id_cliente ?? null,
+            nombres:    dataReniec?.nombres   || dataLocal?.nombres   || "",
+            apellidos:  dataReniec?.apellidos || dataLocal?.apellidos || "",
+            dni:        valor,
+            telefono:   dataLocal?.telefono   || "",
+            email:      dataLocal?.email      || "",
+        };
+
+        setDataCliente(merged);
+        setEstadoBusqueda(
+            dataLocal ? "idle" : "error",
+            dataLocal ? "" : "Cliente nuevo desde RENIEC — completa el teléfono y se registrará al guardar."
+        );
+        return;
+    }
+
+    // Para teléfono o nombre: solo buscar en la BD local
+    const dataLocal = await buscarCliente(valor);
+    if (dataLocal) {
+        setDataCliente(dataLocal);
+        setEstadoBusqueda("idle");
+        return;
+    }
+
+    setEstadoBusqueda("notfound", valor);
 }
