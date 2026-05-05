@@ -114,3 +114,9 @@ $routes->get('/api/productos', 'ProductosController::index');
 
 //Servicios
 $routes->get('/api/servicios', 'ServiciosController::index');
+
+/**
+ *      RUTAS PARA PDF's
+ */
+$routes->get('/generar/contrato', 'PdfController::generarContrato');
+
