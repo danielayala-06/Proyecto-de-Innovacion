@@ -39,6 +39,7 @@ $routes->get('/clientes', 'ClientesController::index');
 /**
  *      RUTAS PARA PAQUETES
  */
+<<<<<<< HEAD
 //$routes->get('/api/paquetes', 'PaquetesController::index');
 
 /**
@@ -56,6 +57,8 @@ $routes->get('/api/servicios/(:num)', 'Api\Servicios::getIndex/$1');
 /**
  *      RUTAS PARA PAQUETES
  */
+=======
+>>>>>>> 5f497efef0ca26de78ddef366e09dfb8f9206ad7
 $routes->get('/paquetes', 'PaquetesController::index');
 
 /**
@@ -81,6 +84,7 @@ $routes->put('/api/cotizaciones/(:num)','Api\Cotizaciones::putIndex/$1');
 $routes->delete('/api/cotizaciones/(:num)','Api\Cotizaciones::deleteIndex/$1');
 
 //Paquetes
+<<<<<<< HEAD
 $routes->get(   '/api/paquetes',          'Api\Paquetes::getIndex');
 $routes->get(   '/api/paquetes/(:num)',   'Api\Paquetes::getIndex/$1');
 $routes->post(  '/api/paquetes',          'Api\Paquetes::postIndex');
@@ -102,3 +106,20 @@ $routes->get(   '/api/contratos/(:num)', 'Api\Contratos::getIndex/$1');
 $routes->post(  '/api/contratos',        'Api\Contratos::postIndex');
 $routes->put(   '/api/contratos/(:num)', 'Api\Contratos::putIndex/$1');
 $routes->delete('/api/contratos/(:num)', 'Api\Contratos::deleteIndex/$1');
+=======
+$routes->get('/api/paquetes','Api\Paquetes::getIndex');
+$routes->get('/api/paquetes/(:num)','Api\Paquetes::getIndex/$1');
+$routes->post('/api/paquetes','Api\Paquetes::postIndex');
+$routes->put('/api/paquetes/(:num)','Api\Paquetes::putIndex/$1');
+$routes->delete('/api/paquetes/(:num)','Api\Paquetes::deleteIndex/$1');
+
+//Clientes
+$routes->get('/api/clientes','Api\Clientes::getIndex');
+$routes->get('/api/clientes/(:num)','Api\Clientes::getIndex/$1');
+
+//Productos
+$routes->get('/api/productos', 'ProductosController::index');
+
+//Servicios
+$routes->get('/api/servicios', 'ServiciosController::index');
+>>>>>>> 5f497efef0ca26de78ddef366e09dfb8f9206ad7
