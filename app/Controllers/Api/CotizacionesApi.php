@@ -24,19 +24,19 @@ class CotizacionesApi extends BaseController
     public function index()
     {
         try {
+            /* 
             $filters = [
                 'estado' => $this->request->getGet('estado'),
                 'fecha_inicio' => $this->request->getGet('fecha_inicio'),
                 'fecha_fin' => $this->request->getGet('fecha_fin'),
-            ];
+            ]; */
 
-            $cotizaciones = $this->service->listar(
-                $filters
-            );
-
+            $cotizaciones = $this->service->listar();
+            
+            var_dump($cotizaciones);
             return $this->response
-                ->setStatusCode(
-                    ResponseInterface::HTTP_OK
+            ->setStatusCode(
+                ResponseInterface::HTTP_OK
                 )
                 ->setJSON([
                     'status' => 'success',
@@ -63,7 +63,7 @@ class CotizacionesApi extends BaseController
         try {
             $cotizacion = $this->service->obtenerPorId((int) $id);
 
-            if (! $cotizacion) {
+            if (!$cotizacion) {
                 return $this->response
                     ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
                     ->setJSON([

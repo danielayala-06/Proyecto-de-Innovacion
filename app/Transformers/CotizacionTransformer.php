@@ -45,21 +45,16 @@ class CotizacionTransformer extends BaseTransformer
         }
 
         return [
-
-            'id' => (int)
-            $resource['cotizacion']['id'],
-
-            'fecha' =>
-                $resource['cotizacion']['fecha'],
-
-            'estado' =>
-                $resource['cotizacion']['estado'],
-
-            'total' => (float)
-            $resource['cotizacion']['total'],
-
-            'observaciones' =>
-                $resource['cotizacion']['observaciones'],
+            'id' => (int)$resource['cotizacion']['id'],
+            'fecha' =>$resource['cotizacion']['fecha'],
+            'estado' =>$resource['cotizacion']['estado'],
+            'total' => (float)$resource['cotizacion']['total'],
+            'observaciones' =>$resource['cotizacion']['observaciones'],
+            
+            // Includes directos
+            'cliente' => $this->includeCliente(),
+            'usuario' => $this->includeUsuario(),
+            'detalles' => $this->includeDetalles()
         ];
     }
 
@@ -71,7 +66,7 @@ class CotizacionTransformer extends BaseTransformer
         return [
 
             'id' =>
-                $this->resource['cliente']['id'],
+                (int)$this->resource['cliente']['id'],
 
             'nombre_completo' =>
                 $this->resource['cliente']['nombre_completo']
@@ -84,9 +79,7 @@ class CotizacionTransformer extends BaseTransformer
     protected function includeUsuario(): array
     {
         return [
-
-            'username' =>
-                $this->resource['usuario']['username']
+            'username' => $this->resource['usuario']['username']
         ];
     }
 
@@ -96,32 +89,16 @@ class CotizacionTransformer extends BaseTransformer
     protected function includeDetalles(): array
     {
         return array_map(
-
             fn($detalle) => [
-
-                'id' =>
-                    (int)$detalle['id'],
-
-                'tipo_item' =>
-                    $detalle['tipo_item'],
-
-                'descripcion' =>
-                    $detalle['descripcion'],
-
-                'referencia_nombre' =>
-                    $detalle['referencia_nombre'],
-
-                'cantidad' =>
-                    (int)$detalle['cantidad'],
-
-                'precio_unitario' =>
-                    (float)$detalle['precio_unitario'],
-
-                'subtotal' =>
-                    (float)$detalle['subtotal']
+                'id' =>(int)$detalle['id'],
+                'tipo_item' =>$detalle['tipo_item'],
+                'descripcion' =>$detalle['descripcion'],
+                'referencia_nombre' =>$detalle['referencia_nombre'],
+                'cantidad' =>(int)$detalle['cantidad'],
+                'precio_unitario' =>(float)$detalle['precio_unitario'],
             ],
 
-            $this->resource['detalles']
+            $this->resource['detalles'] ?? []
         );
     }
 
