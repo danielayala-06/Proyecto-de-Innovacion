@@ -24,8 +24,22 @@ class UsuariosModel extends Model
     protected bool $updateOnlyChanged = true;
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules = [
+        'id_persona' => 'required|is_natural_no_zero',
+        'id_rol' => 'required|is_natural_no_zero',
+        'nom_user' => 'required|min_length[4]|max_length[50]|is_unique[usuarios.nom_user,id_usuario,{id_usuario}]',
+        'password_hash' => 'required|min_length[8]',
+        'estado' => 'required|in_list[ACTIVO,INACTIVO]'
+    ];
+    protected $validationMessages = [
+        'nom_user' => [
+            'required' => 'El nombre de usuario es obligatorio.',
+            'is_unique' => 'El nombre de usuario ya existe.'
+        ],
+        'password_hash' => [
+            'min_length' => 'La contraseña debe tener mínimo 8 caracteres.'
+        ]
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
     protected function hashPassword(array $data)

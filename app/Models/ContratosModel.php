@@ -26,8 +26,17 @@ class ContratosModel extends Model
     protected bool $updateOnlyChanged = true;
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules = [
+        'id_cotizacion' => 'required|is_natural_no_zero',
+        'adelanto' => 'required|decimal|greater_than_equal_to[0]',
+        'total' => 'required|decimal|greater_than_equal_to[0]',
+        'estado' => 'required|in_list[PENDIENTE,ACTIVO,FINALIZADO,CANCELADO]'
+    ];
+    protected $validationMessages = [
+        'total' => [
+            'required' => 'El total del contrato es obligatorio.'
+        ]
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 }

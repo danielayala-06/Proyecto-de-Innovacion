@@ -25,8 +25,24 @@ class CotizacionesDetallesModel extends Model
     protected bool $updateOnlyChanged = true;
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules = [
+        'tipo_item' => 'required|in_list[PRODUCTO,PAQUETE,PERSONALIZADO]',
+        'cantidad' => 'required|integer|greater_than[0]',
+        'precio_unitario' => 'required|decimal|greater_than_equal_to[0]',
+        'id_cotizacion' => 'required|is_natural_no_zero',
+        'id_referencia' => 'required|is_natural_no_zero'
+    ];
+    protected $validationMessages = [
+        'tipo_item' => [
+            'required' => 'Debe indicar el tipo de item.'
+        ],
+        'id_referencia' => [
+            'required' => 'Se debe indicar el ID del item.'
+        ],
+        'cantidad' => [
+            'greater_than' => 'La cantidad debe ser mayor a cero.'
+        ]
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 

@@ -24,8 +24,20 @@ class ClientesModel extends Model
     protected bool $updateOnlyChanged = true;
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules = [
+        'id_persona' => 'required|is_natural_no_zero',
+        'metodo_comunicacion' => 'required|in_list[whatsapp,llamada,correo,otro]',
+        'aceptar_promociones' => 'required|in_list[0,1]',
+        'estado' => 'required|in_list[ACTIVO,INACTIVO]'
+    ];
+    protected $validationMessages = [
+        'id_persona' => [
+            'required' => 'La persona asociada es obligatoria.'
+        ],
+        'metodo_comunicacion' => [
+            'required' => 'Debe seleccionar un método de comunicación.'
+        ]
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 }

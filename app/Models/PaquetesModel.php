@@ -25,8 +25,18 @@ class PaquetesModel extends Model
     protected bool $updateOnlyChanged = true;
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules = [
+        'nombre_paquete' => 'required|max_length[150]',
+        'nivel_disponible' => 'required|in_list[primaria,secundaria,inicial, otro]',
+        'precio' => 'required|decimal|greater_than_equal_to[0]',
+        'estado' => 'required|in_list[ACTIVO,INACTIVO]'
+    ];
+    protected $validationMessages = [
+        'precio' => [
+            'decimal' => 'El precio debe ser numérico.',
+            'greater_than_equal_to' => 'El precio no puede ser negativo.'
+        ]
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 

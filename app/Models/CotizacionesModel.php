@@ -24,8 +24,21 @@ class CotizacionesModel extends Model
     protected bool $updateOnlyChanged = true;
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules = [
+        'id_cliente' => 'required|is_natural_no_zero',
+        'id_usuario' => 'required|is_natural_no_zero',
+        'fecha_registro' => 'required|valid_date',
+        'total_estimado' => 'required|decimal|greater_than_equal_to[0]',
+        'estado' => 'required|in_list[BORRADOR,ENVIADA,APROBADA,RECHAZADA,CONTRATO_GENERADO]'
+    ];
+    protected $validationMessages = [
+        'id_cliente' => [
+            'required' => 'El cliente es obligatorio.'
+        ],
+        'total_estimado' => [
+            'decimal' => 'El total debe ser numérico.'
+        ]
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 

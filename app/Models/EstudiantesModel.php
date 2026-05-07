@@ -26,8 +26,21 @@ class EstudiantesModel extends Model
     protected bool $updateOnlyChanged = true;
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules = [
+        'nombres' => 'required|max_length[100]',
+        'apellidos' => 'required|max_length[100]',
+        'fecha_nacimiento' => 'permit_empty|valid_date',
+        'id_apoderado' => 'required|is_natural_no_zero',
+        'id_promocion' => 'required|is_natural_no_zero'
+    ];
+    protected $validationMessages = [
+        'nombres' => [
+            'required' => 'Los nombres del estudiante son obligatorios.'
+        ],
+        'id_apoderado' => [
+            'required' => 'El estudiante debe tener un apoderado.'
+        ]
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 }
