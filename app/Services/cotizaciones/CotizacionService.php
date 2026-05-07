@@ -2,8 +2,8 @@
 
 namespace App\Services\Cotizaciones;
 
-use App\Models\Cotizaciones\CotizacionesModel;
-use App\Models\Cotizaciones\CotizacionesDetallesModel;
+use App\Models\CotizacionesModel;
+use App\Models\CotizacionesDetallesModel;
 
 class CotizacionService
 {
@@ -85,7 +85,7 @@ class CotizacionService
                 'personas.nombres',
                 'personas.apellidos',
 
-                'usuarios.nom_user'
+                'usuarios.nombre_user'
             ])
 
             ->join(
@@ -168,7 +168,7 @@ class CotizacionService
             ],
 
             'usuario' => [
-                'username' => $cotizacion['nom_user']
+                'username' => $cotizacion['nombre_user']
             ],
 
             'detalles' => array_map(function ($detalle) {
@@ -192,7 +192,7 @@ class CotizacionService
                         (float) $detalle['precio_unitario'],
 
                     'subtotal' =>
-                        (float) $detalle['subtotal']
+                        (float) $detalle['cantidad']*(float) $detalle['precio_unitario']
                 ];
 
             }, $detalles)
@@ -275,7 +275,6 @@ class CotizacionService
 
             ->select([
                 'cotizaciones.*',
-
                 'personas.nombres',
                 'personas.apellidos'
             ])
@@ -327,9 +326,7 @@ class CotizacionService
         return array_map(function ($item) {
 
             return [
-
                 'id' => $item['id_cotizacion'],
-
                 'cliente' => trim(
                     $item['nombres']
                     . ' ' .
@@ -337,9 +334,7 @@ class CotizacionService
                 ),
 
                 'fecha' => $item['fecha_registro'],
-
                 'estado' => $item['estado'],
-
                 'total' => (float) $item['total_estimado']
             ];
 

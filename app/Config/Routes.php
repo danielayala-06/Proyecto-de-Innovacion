@@ -8,14 +8,10 @@ use CodeIgniter\Router\RouteCollection;
 
 $routes->get('/', 'Home::index');
 
-
-
-
 // ============================================================================
-// Sección vistas de la App
+// Sección VISTAS de la App
 // ============================================================================
 $routes->get('/cotizaciones', 'CotizacionController::index');
-
 
 // ============================================================================
 // Sección de rutas API REST
@@ -32,12 +28,12 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
     $routes->delete('clientes/(:num)', 'ClientesController::delete/$1');
 
     // ── Cotizaciones ──────────────────────────────────────────────────────────
-    $routes->get   ('cotizaciones',              'CotizacionesController::index');
-    $routes->get   ('cotizaciones/(:num)',        'CotizacionesController::show/$1');
-    $routes->post  ('cotizaciones',              'CotizacionesController::create');
-    $routes->put   ('cotizaciones/(:num)',        'CotizacionesController::update/$1');
-    $routes->patch ('cotizaciones/(:num)/estado', 'CotizacionesController::cambiarEstado/$1');
-    $routes->delete('cotizaciones/(:num)',        'CotizacionesController::delete/$1');
+    $routes->get   ('cotizaciones',              'CotizacionesApi::index');
+    $routes->get   ('cotizaciones/(:num)',        'CotizacionesApi::show/$1');
+    $routes->post  ('cotizaciones',              'CotizacionesApi::create');
+    $routes->put   ('cotizaciones/(:num)',        'CotizacionesApi::update/$1');
+    $routes->patch ('cotizaciones/(:num)/estado', 'CotizacionesApi::cambiarEstado/$1');
+    $routes->delete('cotizaciones/(:num)',        'CotizacionesApi::delete/$1');
 
     // ── Contratos ─────────────────────────────────────────────────────────────
     $routes->get   ('contratos',              'ContratosController::index');
