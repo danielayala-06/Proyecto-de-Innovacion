@@ -1,0 +1,348 @@
+<?php
+
+namespace App\Services\Cotizaciones;
+
+use App\Models\Cotizaciones\CotizacionesModel;
+use App\Models\Cotizaciones\CotizacionesDetallesModel;
+
+class CotizacionService
+{
+    protected CotizacionesModel $cotizacionModel;
+    protected CotizacionesDetallesModel $detalleModel;
+
+    protected $db;
+
+    public function __construct()
+    {
+        $this->cotizacionModel = new CotizacionesModel();
+        $this->detalleModel = new CotizacionesDetallesModel();
+
+        $this->db = db_connect();
+    }
+
+    /**
+     * Crear cotización completa
+     */
+    public function crear(array $data): array|int
+    {
+        $this->db->transStart();
+
+        $cotizacion = [
+            'id_cliente'      => $data['id_cliente'],
+            'id_usuario'      => $data['id_usuario'],
+            'observaciones'   => $data['observaciones'] ?? null,
+            'fecha_registro'  => date('Y-m-d H:i:s'),
+            'total_estimado'  => $data['total_estimado'],
+            'estado'          => 'BORRADOR'
+        ];
+
+        $idCotizacion = $this->cotizacionModel->insert($cotizacion);
+
+        // En caso de que no se creo la cotizacion:
+        if(!$idCotizacion)return 0;
+
+        $detallesInsert = [];
+
+        foreach ($data['detalles'] as $detalle) {
+
+            $detallesInsert[] = [
+                'tipo_item'       => $detalle['tipo_item'],
+                'id_referencia'   => $detalle['id_referencia'] ?? null,
+                'descripcion'     => $detalle['descripcion'],
+                'cantidad'        => $detalle['cantidad'],
+                'precio_unitario' => $detalle['precio_unitario'],
+                'subtotal'        => $detalle['subtotal'],
+                'id_cotizacion'   => $idCotizacion,
+            ];
+        }
+
+        if (! empty($detallesInsert)) {
+            $this->detalleModel->insertBatch($detallesInsert);
+        }
+
+        $this->db->transComplete();
+
+        if (! $this->db->transStatus()) {
+            throw new \RuntimeException(
+                'Error al crear la cotización'
+            );
+        }
+
+        return $this->obtenerPorId($idCotizacion);
+    }
+
+    /**
+     * Obtener cotización completa
+     */
+    public function obtenerPorId(int $idCotizacion): ?array
+    {
+        $cotizacion = $this->cotizacionModel
+            ->select([
+                'cotizaciones.*',
+
+                'clientes.id_cliente',
+
+                'personas.nombres',
+                'personas.apellidos',
+
+                'usuarios.nom_user'
+            ])
+
+            ->join(
+                'clientes',
+                'clientes.id_cliente = cotizaciones.id_cliente'
+            )
+
+            ->join(
+                'personas',
+                'personas.id_persona = clientes.id_persona'
+            )
+
+            ->join(
+                'usuarios',
+                'usuarios.id_usuario = cotizaciones.id_usuario'
+            )
+
+            ->find($idCotizacion);
+
+        if (! $cotizacion) {
+            return null;
+        }
+
+        /**
+         * DETALLES
+         */
+        $detalles = $this->detalleModel
+
+            ->select([
+                'cotizaciones_detalles.*',
+
+                'productos.nombre_producto',
+
+                'paquetes.nombre_paquete'
+            ])
+
+            ->join(
+                'productos',
+                '
+                productos.id_producto = cotizaciones_detalles.id_referencia
+                AND cotizaciones_detalles.tipo_item = "PRODUCTO"
+                ',
+                'left'
+            )
+
+            ->join(
+                'paquetes',
+                '
+                paquetes.id_paquete = cotizaciones_detalles.id_referencia
+                AND cotizaciones_detalles.tipo_item = "PAQUETE"
+                ',
+                'left'
+            )
+
+            ->where(
+                'id_cotizacion',
+                $idCotizacion
+            )
+
+            ->findAll();
+
+        return [
+
+            'cotizacion' => [
+                'id'             => $cotizacion['id_cotizacion'],
+                'fecha'          => $cotizacion['fecha_registro'],
+                'estado'         => $cotizacion['estado'],
+                'observaciones'  => $cotizacion['observaciones'],
+                'total'          => (float) $cotizacion['total_estimado']
+            ],
+
+            'cliente' => [
+                'id' => $cotizacion['id_cliente'],
+
+                'nombre_completo' => trim(
+                    $cotizacion['nombres']
+                    . ' ' .
+                    $cotizacion['apellidos']
+                )
+            ],
+
+            'usuario' => [
+                'username' => $cotizacion['nom_user']
+            ],
+
+            'detalles' => array_map(function ($detalle) {
+
+                return [
+
+                    'id' => $detalle['id_detalle'],
+
+                    'tipo_item' => $detalle['tipo_item'],
+
+                    'descripcion' => $detalle['descripcion'],
+
+                    'referencia_nombre' =>
+                        $detalle['nombre_producto']
+                        ?? $detalle['nombre_paquete']
+                            ?? null,
+
+                    'cantidad' => (int) $detalle['cantidad'],
+
+                    'precio_unitario' =>
+                        (float) $detalle['precio_unitario'],
+
+                    'subtotal' =>
+                        (float) $detalle['subtotal']
+                ];
+
+            }, $detalles)
+        ];
+    }
+
+    /**
+     * Actualizar cotización completa
+     */
+    public function actualizar(
+        int $idCotizacion,
+        array $data
+    ): array {
+
+        $this->db->transStart();
+
+        /**
+         * UPDATE CABECERA
+         */
+        $this->cotizacionModel->update(
+            $idCotizacion,
+            [
+                'observaciones'  => $data['observaciones'] ?? null,
+                'total_estimado' => $data['total_estimado'],
+                'estado'         => $data['estado'] ?? 'BORRADOR'
+            ]
+        );
+
+        /**
+         * ELIMINAR DETALLES
+         */
+        $this->detalleModel
+            ->where(
+                'id_cotizacion',
+                $idCotizacion
+            )
+            ->delete();
+
+        /**
+         * INSERTAR NUEVOS DETALLES
+         */
+        $detallesInsert = [];
+
+        foreach ($data['detalles'] as $detalle) {
+
+            $detallesInsert[] = [
+
+                'tipo_item'       => $detalle['tipo_item'],
+                'id_referencia'   => $detalle['id_referencia'] ?? null,
+                'descripcion'     => $detalle['descripcion'],
+                'cantidad'        => $detalle['cantidad'],
+                'precio_unitario' => $detalle['precio_unitario'],
+                'subtotal'        => $detalle['subtotal'],
+                'id_cotizacion'   => $idCotizacion,
+                'id_paquete'      => $detalle['id_paquete'] ?? null
+            ];
+        }
+
+        if (! empty($detallesInsert)) {
+            $this->detalleModel->insertBatch($detallesInsert);
+        }
+
+        $this->db->transComplete();
+
+        if (! $this->db->transStatus()) {
+            throw new \RuntimeException(
+                'Error al actualizar la cotización'
+            );
+        }
+
+        return $this->obtenerPorId($idCotizacion);
+    }
+
+    /**
+     * Listado general
+     */
+    public function listar(array $filters = []): array
+    {
+        $builder = $this->cotizacionModel
+
+            ->select([
+                'cotizaciones.*',
+
+                'personas.nombres',
+                'personas.apellidos'
+            ])
+
+            ->join(
+                'clientes',
+                'clientes.id_cliente = cotizaciones.id_cliente'
+            )
+
+            ->join(
+                'personas',
+                'personas.id_persona = clientes.id_persona'
+            );
+
+        /**
+         * FILTROS
+         */
+        if (! empty($filters['estado'])) {
+
+            $builder->where(
+                'cotizaciones.estado',
+                $filters['estado']
+            );
+        }
+
+        if (! empty($filters['fecha_inicio'])) {
+
+            $builder->where(
+                'fecha_registro >=',
+                $filters['fecha_inicio']
+            );
+        }
+
+        if (! empty($filters['fecha_fin'])) {
+
+            $builder->where(
+                'fecha_registro <=',
+                $filters['fecha_fin']
+            );
+        }
+
+        $results = $builder
+            ->orderBy(
+                'cotizaciones.id_cotizacion',
+                'DESC'
+            )
+            ->findAll();
+
+        return array_map(function ($item) {
+
+            return [
+
+                'id' => $item['id_cotizacion'],
+
+                'cliente' => trim(
+                    $item['nombres']
+                    . ' ' .
+                    $item['apellidos']
+                ),
+
+                'fecha' => $item['fecha_registro'],
+
+                'estado' => $item['estado'],
+
+                'total' => (float) $item['total_estimado']
+            ];
+
+        }, $results);
+    }
+}
