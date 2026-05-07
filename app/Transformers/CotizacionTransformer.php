@@ -54,7 +54,7 @@ class CotizacionTransformer extends BaseTransformer
             // Includes directos
             'cliente' => $this->includeCliente(),
             'usuario' => $this->includeUsuario(),
-            'detalles' => $this->includeDetalles()
+            'items' => $this->includeDetalles()
         ];
     }
 

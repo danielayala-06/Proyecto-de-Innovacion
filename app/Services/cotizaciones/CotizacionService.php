@@ -243,12 +243,13 @@ class CotizacionService
      */
     public function listar(array $filters = []): array
     {
-        $builder = $this->cotizacionModel
-
+        $cotizacionesDB = $this->cotizacionModel
             ->select([
                 'cotizaciones.*',
+                'clientes.id_cliente',
                 'personas.nombres',
-                'personas.apellidos'
+                'personas.apellidos',
+                'usuarios.nombre_user'
             ])
             ->join(
                 'clientes',
@@ -257,57 +258,92 @@ class CotizacionService
             ->join(
                 'personas',
                 'personas.id_persona = clientes.id_persona'
-            );
-
-        /**
-         * FILTROS
-         */
-        /* if (!empty($filters['estado'])) {
-
-            $builder->where(
-                'cotizaciones.estado',
-                $filters['estado']
-            );
-        }
-
-        if (!empty($filters['fecha_inicio'])) {
-
-            $builder->where(
-                'fecha_registro >=',
-                $filters['fecha_inicio']
-            );
-        }
-
-        if (!empty($filters['fecha_fin'])) {
-
-            $builder->where(
-                'fecha_registro <=',
-                $filters['fecha_fin']
-            );
-        } */
-
-        $results = $builder
-            ->orderBy(
-                'cotizaciones.id_cotizacion',
-                'DESC'
             )
-            ->findAll();
+            ->join(
+                'usuarios',
+                'usuarios.id_usuario = cotizaciones.id_usuario'
+            )
+            ->paginate();
 
-        return array_map(function ($item) {
+        if (!$cotizacionesDB) {
+            return [];
+        }
 
-            return [
-                'id' => $item['id_cotizacion'],
-                'cliente' => trim(
-                    $item['nombres']
-                    . ' ' .
-                    $item['apellidos']
-                ),
+        $cotizaciones = [];
 
-                'fecha' => $item['fecha_registro'],
-                'estado' => $item['estado'],
-                'total' => (float) $item['total_estimado']
+        foreach ($cotizacionesDB as $cotizacion) {
+
+            $idCotizacion = $cotizacion['id_cotizacion'];
+
+            $detalles = [];
+
+            $item_detalles = $this->detalleModel
+                ->where('id_cotizacion', $idCotizacion)
+                ->findAll() ?? [];
+
+            foreach ($item_detalles as $item_detalle) {
+
+                // PRODUCTO
+                if ($item_detalle['tipo_item'] == 'producto') {
+                    $producto = $this->productoModel
+                        ->find($item_detalle['id_referencia']);
+
+                    $detalles[] = [
+                        'id' => $item_detalle['id_detalle'],
+                        'tipo_item' => 'producto',
+                        'descripcion' =>$item_detalle['descripcion'],
+                        'cantidad' =>$item_detalle['cantidad'],
+                        'precio_unitario' =>$item_detalle['precio_unitario'],
+                        'referencia_nombre' =>$producto['nombre_producto']
+                    ];
+                }
+
+                // PAQUETE
+                if ($item_detalle['tipo_item'] == 'paquete') {
+
+                    $paquete = $this->paqueteModel
+                        ->find($item_detalle['id_referencia']);
+
+                    $detalles[] = [
+                        'id' => $item_detalle['id_detalle'],
+                        'tipo_item' => 'paquete',
+                        'descripcion'=> $item_detalle['descripcion'],
+                        'cantidad' => $item_detalle['cantidad'],
+                        'precio_unitario' => $item_detalle['precio_unitario'],
+                        'referencia_nombre' => $paquete['nombre_paquete']
+                    ];
+                }
+            }
+
+            $cotizaciones[] = [
+
+                'cotizacion' => [
+                    'id' => $cotizacion['id_cotizacion'],
+                    'fecha' => $cotizacion['fecha_registro'],
+                    'estado' => $cotizacion['estado'],
+                    'observaciones' =>$cotizacion['observaciones'],
+                    'total' =>(float)$cotizacion['total_estimado']
+                ],
+
+                'cliente' => [
+                    'id' => $cotizacion['id_cliente'],
+                    'nombre_completo' => trim(
+                        $cotizacion['nombres']
+                        . ' ' .
+                        $cotizacion['apellidos']
+                    )
+                ],
+
+                'usuario' => [
+                    'username' =>
+                        $cotizacion['nombre_user']
+                ],
+
+                'detalles' => $detalles
             ];
+        }
 
-        }, $results);
+        // IMPORTANTE
+        return $cotizaciones;
     }
 }

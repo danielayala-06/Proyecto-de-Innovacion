@@ -24,16 +24,10 @@ class CotizacionesApi extends BaseController
     public function index()
     {
         try {
-            /* 
-            $filters = [
-                'estado' => $this->request->getGet('estado'),
-                'fecha_inicio' => $this->request->getGet('fecha_inicio'),
-                'fecha_fin' => $this->request->getGet('fecha_fin'),
-            ]; */
 
             $cotizaciones = $this->service->listar();
             
-            var_dump($cotizaciones);
+
             return $this->response
             ->setStatusCode(
                 ResponseInterface::HTTP_OK
