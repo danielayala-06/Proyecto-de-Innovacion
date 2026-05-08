@@ -286,36 +286,27 @@ class CotizacionService
 
             foreach ($item_detalles as $item_detalle) {
 
-                // PRODUCTO
-                if ($item_detalle['tipo_item'] == 'producto') {
-                    $producto = $this->productoModel
-                        ->find($item_detalle['id_referencia']);
+                $tipo  = strtoupper($item_detalle['tipo_item'] ?? '');
+                $idRef = $item_detalle['id_referencia'] ?? null;
+                $referenciaNombre = null;
 
-                    $detalles[] = [
-                        'id' => $item_detalle['id_detalle'],
-                        'tipo_item' => 'producto',
-                        'descripcion' =>$item_detalle['descripcion'],
-                        'cantidad' =>$item_detalle['cantidad'],
-                        'precio_unitario' =>$item_detalle['precio_unitario'],
-                        'referencia_nombre' =>$producto['nombre_producto']
-                    ];
+                if ($tipo === 'PRODUCTO' && $idRef) {
+                    $producto = $this->productoModel->find($idRef);
+                    $referenciaNombre = $producto['nombre_producto'] ?? null;
+                } elseif ($tipo === 'PAQUETE' && $idRef) {
+                    $paquete = $this->paqueteModel->find($idRef);
+                    $referenciaNombre = $paquete['nombre_paquete'] ?? null;
                 }
 
-                // PAQUETE
-                if ($item_detalle['tipo_item'] == 'paquete') {
-
-                    $paquete = $this->paqueteModel
-                        ->find($item_detalle['id_referencia']);
-
-                    $detalles[] = [
-                        'id' => $item_detalle['id_detalle'],
-                        'tipo_item' => 'paquete',
-                        'descripcion'=> $item_detalle['descripcion'],
-                        'cantidad' => $item_detalle['cantidad'],
-                        'precio_unitario' => $item_detalle['precio_unitario'],
-                        'referencia_nombre' => $paquete['nombre_paquete']
-                    ];
-                }
+                $detalles[] = [
+                    'id'               => $item_detalle['id_detalle'],
+                    'tipo_item'        => $tipo,
+                    'id_referencia'    => $idRef,
+                    'descripcion'      => $item_detalle['descripcion'],
+                    'cantidad'         => $item_detalle['cantidad'],
+                    'precio_unitario'  => $item_detalle['precio_unitario'],
+                    'referencia_nombre'=> $referenciaNombre,
+                ];
             }
 
             $cotizaciones[] = [

@@ -134,9 +134,7 @@ function fmtFechaCot(?string $f): string {
         </div>
     </main>
     <script>
-        const BASE_URL          = "<?= base_url('') ?>";
-        const COTIZACIONES_DATA = <?= json_encode($cotizaciones) ?>;
-        const RESUMENES_DATA    = <?= json_encode($resumenes) ?>;
+        const BASE_URL = "<?= base_url('') ?>";
     </script>
     <script type="module" src="<?= base_url('js/modules/cotizaciones/cotizacionesIndex.js') ?>"></script>
 

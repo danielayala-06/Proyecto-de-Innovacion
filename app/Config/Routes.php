@@ -11,7 +11,8 @@ $routes->get('/', 'Home::index');
 // ============================================================================
 // Sección VISTAS de la App
 // ============================================================================
-$routes->get('/cotizaciones', 'CotizacionController::index');
+$routes->get('/cotizaciones',       'CotizacionController::index');
+$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
 
 // ============================================================================
 // Sección de rutas API REST
