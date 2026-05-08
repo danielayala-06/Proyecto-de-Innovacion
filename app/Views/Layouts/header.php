@@ -34,7 +34,7 @@
         <button class="btn btn-link p-1 text-white" id="btn-theme" title="Cambiar tema" style="font-size:1.2rem;line-height:1;">
             <i id="theme-icon" class="bi bi-moon-fill"></i>
         </button>
-        <div class="avatar-btn">JR</div>
+        <div class="avatar-btn">QR</div>
     </div>
 </header>
 

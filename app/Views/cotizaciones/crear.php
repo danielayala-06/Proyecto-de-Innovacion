@@ -262,7 +262,7 @@
             </div>
             <div class="modal-body">
                 <div class="cat-tabs">
-                    <button class="cat-tab active" onclick="cambiarCategoria('quinceaneros', this)">Quinceañeros</button>
+                    <button class="cat-tab active" onclick="cambiarCategoria('quinceaneros', this)">Paquetes</button>
                     <button class="cat-tab" onclick="cambiarCategoria('cuadros', this)">Cuadros</button>
                     <button class="cat-tab" onclick="cambiarCategoria('anuarios', this)">Anuarios</button>
                 </div>
@@ -307,8 +307,6 @@
                            style="font-size:0.85rem;font-weight:500;white-space:nowrap;">Cantidad:</label>
                     <input type="number" class="form-control form-control-sm" id="paqueteCantidad"
                            value="1" min="1" max="999" style="width:75px;">
-                    <span id="paquetePreviewTotal"
-                          style="font-size:0.82rem;color:var(--text-muted,#6c757d);"></span>
                 </div>
             </div>
             <div class="modal-footer">

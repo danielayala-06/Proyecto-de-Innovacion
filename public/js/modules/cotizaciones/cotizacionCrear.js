@@ -341,17 +341,7 @@ window.seleccionarOpcion = function (el, nombre, desc, precio, idRef) {
         nombre,
         precio: parseFloat(precio) || 0,
     };
-    _actualizarPreviewPaquete();
 };
-
-function _actualizarPreviewPaquete() {
-    const preview = document.getElementById('paquetePreviewTotal');
-    if (!preview) return;
-    if (!state.paqueteSeleccionado) { preview.textContent = ''; return; }
-    const cantidad = parseInt(document.getElementById('paqueteCantidad')?.value) || 1;
-    const total    = state.paqueteSeleccionado.precio * cantidad;
-    preview.textContent = `${cantidad} × ${formatters.moneda(state.paqueteSeleccionado.precio)} = ${formatters.moneda(total)}`;
-}
 
 /* ═══════════════════════════════════════════════════════════════
    MODAL SERVICIOS
@@ -602,8 +592,6 @@ async function init() {
         document.querySelectorAll('.paquete-option').forEach(o => o.classList.remove('selected'));
         const cantEl = document.getElementById('paqueteCantidad');
         if (cantEl) cantEl.value = '1';
-        const previewEl = document.getElementById('paquetePreviewTotal');
-        if (previewEl) previewEl.textContent = '';
         _modalPaquete?.show();
     });
 
@@ -641,10 +629,7 @@ async function init() {
         _modalServicio?.hide();
     });
 
-    /* 11b. Preview en tiempo real al cambiar cantidad */
-    document.getElementById('paqueteCantidad')?.addEventListener('input', _actualizarPreviewPaquete);
-
-    /* 12. Auto-guardar borrador en campos de sesión/colegio */
+/* 12. Auto-guardar borrador en campos de sesión/colegio */
     ['notas', 'nombreColegio'].forEach(id =>
         document.getElementById(id)?.addEventListener('input', _saveDraft));
     document.getElementById('provinciaColegio')?.addEventListener('change', _saveDraft);
