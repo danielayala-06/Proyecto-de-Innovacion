@@ -72,6 +72,8 @@ class ClientesController extends BaseController
     // ────────────────────────────────────────────────────────────────────────
     public function create()
     {
+        $body = $this->request->getJSON(true) ?? [];
+
         $rules = [
             'nombres'          => 'required|max_length[100]',
             'apellidos'        => 'permit_empty|max_length[100]',
@@ -82,13 +84,11 @@ class ClientesController extends BaseController
             'metodo_comunicacion' => 'permit_empty|in_list[correo,whatsapp,llamada,otro]',
         ];
 
-        if (!$this->validate($rules)) {
+        if (!$this->validateData($body, $rules)) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
                 ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
         }
-
-        $body = $this->request->getJSON(true);
 
         $this->db->transStart();
 
