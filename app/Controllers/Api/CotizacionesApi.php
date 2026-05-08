@@ -236,7 +236,7 @@ class CotizacionesApi extends BaseController
         try {
             $body = $this->request->getJSON(true);
             $estado = strtoupper($body['estado'] ?? '');
-            $validos = ['BORRADOR','APROBADA','RECHAZADA'];
+            $validos = ['PENDIENTE','APROBADA','RECHAZADA'];
 
             if (! in_array($estado, $validos)) {
                 return $this->response

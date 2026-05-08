@@ -8,12 +8,11 @@ class AlterCotizaciones extends Migration
 {
     public function up()
     {
-        // Agregar BORRADOR al ENUM de estado
         $this->forge->modifyColumn('cotizaciones', [
             'estado' => [
                 'type'       => 'ENUM',
-                'constraint' => ['BORRADOR', 'PENDIENTE', 'APROBADA', 'RECHAZADA'],
-                'default'    => 'BORRADOR',
+                'constraint' => ['PENDIENTE', 'APROBADA', 'RECHAZADA'],
+                'default'    => 'PENDIENTE',
                 'null'       => false,
             ],
         ]);

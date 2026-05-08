@@ -39,7 +39,7 @@ class CotizacionService
             'observaciones'   => $data['observaciones'] ?? null,
             'fecha_registro'  => date('Y-m-d H:i:s'),
             'total_estimado'  => $data['total_estimado'],
-            'estado'          => 'BORRADOR'
+            'estado'          => 'PENDIENTE'
         ];
 
         $idCotizacion = $this->cotizacionModel->insert($cotizacion);

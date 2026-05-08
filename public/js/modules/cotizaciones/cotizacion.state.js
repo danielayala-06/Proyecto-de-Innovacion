@@ -14,7 +14,7 @@ export function calcularResumenes(filas) {
       acc.total++;
       acc.monto_total += parseFloat(c.total) || 0;
       const e = c.estado?.toUpperCase();
-      if (e === 'BORRADOR' || e === 'PENDIENTE') acc.borrador++;
+      if (e === 'PENDIENTE') acc.borrador++;
       else if (e === 'APROBADA')  acc.aprobadas++;
       else if (e === 'RECHAZADA') acc.rechazadas++;
       return acc;

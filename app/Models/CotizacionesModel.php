@@ -29,7 +29,7 @@ class CotizacionesModel extends Model
         'id_usuario' => 'required|is_natural_no_zero',
         'fecha_registro' => 'required|valid_date',
         'total_estimado' => 'required|decimal|greater_than_equal_to[0]',
-        'estado' => 'required|in_list[BORRADOR,ENVIADA,APROBADA,RECHAZADA,CONTRATO_GENERADO]'
+        'estado' => 'required|in_list[PENDIENTE,APROBADA,RECHAZADA]'
     ];
     protected $validationMessages = [
         'id_cliente' => [

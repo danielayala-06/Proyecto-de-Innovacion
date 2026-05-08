@@ -1,7 +1,6 @@
 import { formatters } from '../../utils/formatters.js';
 
 const BADGE_MAP = {
-  BORRADOR:          ['badge-pendiente',  'Borrador'],
   PENDIENTE:         ['badge-pendiente',  'Pendiente'],
   APROBADA:          ['badge-aprobada',   'Aprobada'],
   RECHAZADA:         ['badge-rechazada',  'Rechazada'],
@@ -73,7 +72,7 @@ export const ui = {
     tbody.innerHTML = filas.map(c => {
       const codigo = formatters.codigo(c.id);
       const nombre = nombreCliente(c);
-      const canDel = ['BORRADOR', 'PENDIENTE'].includes(c.estado?.toUpperCase());
+      const canDel = c.estado?.toUpperCase() === 'PENDIENTE';
 
       return `
         <tr>

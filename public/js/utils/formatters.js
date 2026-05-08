@@ -16,7 +16,6 @@ export const formatters = {
 
   estado(e) {
     const map = {
-      BORRADOR:          'Borrador',
       APROBADA:          'Aprobada',
       RECHAZADA:         'Rechazada',
       CONTRATO_GENERADO: 'Contrato generado',
