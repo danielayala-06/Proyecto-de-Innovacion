@@ -87,63 +87,111 @@
                         </fieldset>
                     </div>
 
-                    <!-- ================= EVENTO ================= -->
+                    <!-- ================= COLEGIO ================= -->
                     <fieldset class="mt-4">
-                        <legend class="section-divider">Detalles del Evento</legend>
+                        <legend class="section-divider">Colegio</legend>
 
                         <div class="row g-3">
-                            <!-- Nombre del evento -->
-                            <div class="col-12">
-                                <label for="nombre" class="form-label">Nombre del evento*</label>
-                                <input type="text" class="form-control" required minlength="5" maxlength="50" id="nombre" name="nombre">
+                            <!-- Nombre del colegio -->
+                            <div class="col-12 col-md-6">
+                                <label for="nombreColegio" class="form-label">Nombre del colegio*</label>
+                                <input type="text" class="form-control" id="nombreColegio"
+                                       name="nombre_colegio" required minlength="3" maxlength="100"
+                                       placeholder="Ej: I.E. San Marcos">
                             </div>
 
-                            <!-- Fecha hora inicio del evento-->
+                            <!-- Provincia -->
+                            <div class="col-6 col-md-3">
+                                <label for="provinciaColegio" class="form-label">Provincia</label>
+                                <select class="form-select" id="provinciaColegio" name="provincia_colegio">
+                                    <option value="">Seleccionar...</option>
+                                    <option value="Chincha">Chincha</option>
+                                    <option value="Ica">Ica</option>
+                                    <option value="Pisco">Pisco</option>
+                                    <option value="Cañete">Cañete</option>
+                                </select>
+                            </div>
+
+                            <!-- Distrito (cascada) -->
+                            <div class="col-6 col-md-3">
+                                <label for="distritoColegio" class="form-label">Distrito</label>
+                                <select class="form-select" id="distritoColegio"
+                                        name="distrito_colegio" disabled>
+                                    <option value="">Selecciona provincia...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- ================= PROMOCIÓN Y SESIÓN ================= -->
+                    <fieldset class="mt-4">
+                        <legend class="section-divider">Promoción y sesión fotográfica</legend>
+
+                        <div class="row g-3">
+                            <!-- Nombre de la promoción -->
+                            <div class="col-12 col-md-5">
+                                <label for="nombreProm" class="form-label">Nombre de la promoción</label>
+                                <input type="text" class="form-control" id="nombreProm"
+                                       name="nombre_promocion" maxlength="100"
+                                       placeholder="Ej: Promoción 2025">
+                            </div>
+
+                            <!-- N.° de estudiantes -->
+                            <div class="col-6 col-md-3">
+                                <label for="numEstudiantes" class="form-label">N.° estudiantes</label>
+                                <input type="number" class="form-control" id="numEstudiantes"
+                                       name="num_estudiantes" min="1" max="40" placeholder="0">
+                                <div class="form-text">Máximo 40 alumnos.</div>
+                            </div>
+
+                            <!-- Grado -->
+                            <div class="col-6 col-md-4">
+                                <label for="gradoProm" class="form-label">Grado*</label>
+                                <select class="form-select" id="gradoProm" name="grado" required>
+                                    <option value="">Seleccionar grado...</option>
+                                    <option value="5 añitos">5 añitos</option>
+                                    <option value="6to primaria">6to primaria</option>
+                                    <option value="5to secundaria">5to secundaria</option>
+                                </select>
+                            </div>
+
+                            <!-- Sección -->
+                            <div class="col-6 col-md-3">
+                                <label for="seccionProm" class="form-label">Sección</label>
+                                <input type="text" class="form-control" id="seccionProm"
+                                       name="seccion" maxlength="10"
+                                       placeholder="Ej: A, B, C…">
+                            </div>
+
+                            <!-- Tipo de sesión fotográfica -->
+                            <div class="col-6 col-md-3">
+                                <label for="tipoSesion" class="form-label">Tipo de sesión</label>
+                                <select class="form-select" id="tipoSesion" name="tipo_sesion">
+                                    <option value="colegio">En el colegio</option>
+                                    <option value="exteriores">Exteriores</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                            </div>
+
+                            <!-- Fecha y hora de la sesión -->
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Fecha del evento</label>
+                                <label class="form-label">Fecha y hora de la sesión</label>
                                 <div class="d-flex gap-2">
                                     <input type="date" class="form-control" id="fechaInicio-date">
-                                    <select class="form-select" id="fechaInicio-time" style="flex:0 0 auto;width:115px;">
+                                    <select class="form-select" id="fechaInicio-time"
+                                            style="flex:0 0 auto;width:115px;">
                                         <option value="">Hora</option>
                                     </select>
                                 </div>
                                 <input type="hidden" name="fechaInicio" id="fechaInicio">
                             </div>
 
-                            <!-- Fecha hora fin del evento-->
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">Fecha fin del evento</label>
-                                <div class="d-flex gap-2">
-                                    <input type="date" class="form-control" id="fechaFin-date">
-                                    <select class="form-select" id="fechaFin-time" style="flex:0 0 auto;width:115px;">
-                                        <option value="">Hora</option>
-                                    </select>
-                                </div>
-                                <input type="hidden" name="fechaFin" id="fechaFin">
-                            </div>
-
-                            <!-- Direccion del evento-->
-                            <div class="col-12">
-                                <label for="direccion" class="form-label">Direccion del evento</label>
-                                <input type="text" name="direccion" class="form-control" id="direccion">
-                            </div>
-
-                            <!-- Referencia del sitio -->
-                            <div class="col-12">
-                                <label for="referencia" class="form-label">Referencia del evento</label>
-                                <input type="text" name="referencia" class="form-control" id="referencia">
-                            </div>
-
                             <!-- Observaciones -->
                             <div class="col-12">
-                                <label for="notas" class="form-label">Notas adicionales</label>
-                                <textarea
-                                        class="form-control"
-                                        id="notas"
-                                        name="observaciones"
-                                        rows="3"
-                                        placeholder="Observaciones o detalles del contrato..."
-                                ></textarea>
+                                <label for="notas" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="notas" name="observaciones"
+                                          rows="3"
+                                          placeholder="Notas o acuerdos adicionales sobre la sesión..."></textarea>
                             </div>
                         </div>
                     </fieldset>
@@ -182,12 +230,12 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title">Seleccionar servicio</h6>
+                <h6 class="modal-title">Agregar servicio</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div id="panel-servicios" class="overflow-auto" style="max-height: 20rem;">
-                    <!-- Servicios cargados dinámicamente por JS -->
+                <div id="panel-servicios">
+                    <!-- Cargado por JS -->
                 </div>
                 <div class="mt-3">
                     <label for="servicioModalPrecio" class="form-label">Precio (S/)</label>
@@ -211,54 +259,32 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <!-- CATEGORIAS DE LOS PAQUETES-->
                 <div class="cat-tabs">
                     <button class="cat-tab active" onclick="cambiarCategoria('quinceaneros', this)">Quinceañeros</button>
                     <button class="cat-tab" onclick="cambiarCategoria('cuadros', this)">Cuadros</button>
                     <button class="cat-tab" onclick="cambiarCategoria('anuarios', this)">Anuarios</button>
                 </div>
-                <!-- -->
-                <div class="cat-panel active overflow-auto" id="panel-quinceaneros" style="max-height: 20rem;">
 
-                    <!-- PAQUETES GENERADOS DE MANERA ASYNC POR JS  -->
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Paquete Quinceañero Básico','Sesión + 50 fotos editadas',350)">
-                        <div class="po-left">
-                            <div class="po-name">Paquete Básico</div>
-                            <div class="po-desc">Sesión + 50 fotos editadas</div>
-                        </div>
-
-                        <span class="po-price">S/ 350.00</span>
-                        <i class="bi bi-check-circle-fill po-check"></i>
-
-                    </div>
-
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Paquete Quinceañero Plus','Sesión + 100 fotos + álbum 20×30',550)">
-                        <div class="po-left"><div class="po-name">Paquete Plus</div><div class="po-desc">Sesión + 100 fotos + álbum 20×30</div></div>
-                        <span class="po-price">S/ 550.00</span><i class="bi bi-check-circle-fill po-check"></i>
-                    </div>
-
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Paquete Quinceañero Premium','Sesión + 150 fotos + álbum + video',850)">
-                        <div class="po-left"><div class="po-name">Paquete Premium</div><div class="po-desc">Sesión + 150 fotos + álbum + video</div></div>
-                        <span class="po-price">S/ 850.00</span><i class="bi bi-check-circle-fill po-check"></i>
-                    </div>
+                <div class="cat-panel active overflow-auto" id="panel-quinceaneros" style="max-height:20rem;">
+                    <!-- Cargado por JS desde la API -->
                 </div>
 
-                <div class="cat-panel" id="panel-cuadros">
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Cuadro 30×40 cm','Impresión en canvas, 1 foto',80)">
-                        <div class="po-left"><div class="po-name">Cuadro 30×40 cm</div><div class="po-desc">Impresión en canvas, 1 foto</div></div>
+                <div class="cat-panel overflow-auto" id="panel-cuadros" style="max-height:20rem;">
+                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Cuadro 30x40 cm','Impresión en canvas, 1 foto',80)">
+                        <div class="po-left"><div class="po-name">Cuadro 30x40 cm</div><div class="po-desc">Impresión en canvas, 1 foto</div></div>
                         <span class="po-price">S/ 80.00</span><i class="bi bi-check-circle-fill po-check"></i>
                     </div>
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Cuadro 50×70 cm','Impresión en canvas, 1 foto',130)">
-                        <div class="po-left"><div class="po-name">Cuadro 50×70 cm</div><div class="po-desc">Impresión en canvas, 1 foto</div></div>
+                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Cuadro 50x70 cm','Impresión en canvas, 1 foto',130)">
+                        <div class="po-left"><div class="po-name">Cuadro 50x70 cm</div><div class="po-desc">Impresión en canvas, 1 foto</div></div>
                         <span class="po-price">S/ 130.00</span><i class="bi bi-check-circle-fill po-check"></i>
                     </div>
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Pack Cuadros ×3','3 cuadros 20×30 a elección',200)">
-                        <div class="po-left"><div class="po-name">Pack Cuadros ×3</div><div class="po-desc">3 cuadros 20×30 a elección</div></div>
+                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Pack Cuadros x3','3 cuadros 20x30 a elección',200)">
+                        <div class="po-left"><div class="po-name">Pack Cuadros x3</div><div class="po-desc">3 cuadros 20x30 a elección</div></div>
                         <span class="po-price">S/ 200.00</span><i class="bi bi-check-circle-fill po-check"></i>
                     </div>
                 </div>
 
-                <div class="cat-panel" id="panel-anuarios">
+                <div class="cat-panel overflow-auto" id="panel-anuarios" style="max-height:20rem;">
                     <div class="paquete-option" onclick="seleccionarOpcion(this,'Anuario Básico','20 páginas, tapa blanda, 30 fotos',120)">
                         <div class="po-left"><div class="po-name">Anuario Básico</div><div class="po-desc">20 páginas, tapa blanda, 30 fotos</div></div>
                         <span class="po-price">S/ 120.00</span><i class="bi bi-check-circle-fill po-check"></i>
@@ -282,10 +308,131 @@
 </div>
 
 <script>const BASE_URL = "<?= base_url('') ?>"</script>
+
+<script>
+/* ── Cascada Provincia → Distrito ─────────────────────────── */
+(function () {
+    const DISTRITOS = {
+        'Chincha': [
+            'Alto Larán', 'Chavin', 'Chincha Alta', 'Chincha Baja',
+            'El Carmen', 'Grocio Prado', 'Pueblo Nuevo',
+            'San Juan de Yanac', 'San Pedro de Huacarpana',
+            'Sunampe', 'Tambo de Mora'
+        ],
+        'Pisco': [
+            'Huancano', 'Humay', 'Independencia', 'Paracas',
+            'Pisco', 'San Andrés', 'San Clemente', 'Túpac Amaru Inca'
+        ],
+        'Ica': [
+            'Ica', 'La Tinguiña', 'Los Aquijes', 'Ocucaje', 'Pachacutec',
+            'Parcona', 'Pueblo Nuevo', 'Salas', 'San José de Los Molinos',
+            'San Juan Bautista', 'Santiago', 'Subtanjalla', 'Tate', 'Yauca del Rosario'
+        ],
+        'Cañete': [
+            'Asia', 'Calango', 'Cerro Azul', 'Chilca', 'Coayllo',
+            'Imperial', 'Lunahuaná', 'Mala', 'Nuevo Imperial',
+            'Quilmaná', 'San Antonio', 'San Luis',
+            'San Vicente de Cañete', 'Santa Cruz de Flores', 'Zúñiga'
+        ]
+    };
+
+    const selProv = document.getElementById('provinciaColegio');
+    const selDist = document.getElementById('distritoColegio');
+
+    selProv.addEventListener('change', function () {
+        const distritos = DISTRITOS[this.value] || [];
+
+        selDist.innerHTML = '<option value="">Seleccionar...</option>';
+        distritos.forEach(function (d) {
+            const opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = d;
+            selDist.appendChild(opt);
+        });
+
+        selDist.disabled = distritos.length === 0;
+    });
+})();
+</script>
+
+<script>
+/* ── Validación Fecha y Hora de la sesión ─────────────────── */
+(function () {
+    const inputFecha = document.getElementById('fechaInicio-date');
+    const selHora    = document.getElementById('fechaInicio-time');
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    /* Fecha mínima = hoy */
+    const hoy = new Date();
+    const minFecha = `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
+    inputFecha.min = minFecha;
+
+    /* Genera opciones de hora (06:00 – 21:00 cada 30 min) */
+    function generarHoras(soloFuturas) {
+        const ahora    = new Date();
+        const hActual  = ahora.getHours();
+        const mActual  = ahora.getMinutes();
+        const opciones = [];
+
+        for (let h = 6; h <= 21; h++) {
+            for (let m = 0; m < 60; m += 30) {
+                if (soloFuturas && (h < hActual || (h === hActual && m <= mActual))) continue;
+                opciones.push(`${pad(h)}:${pad(m)}`);
+            }
+        }
+        return opciones;
+    }
+
+    function poblarHoras(soloFuturas) {
+        const anterior = selHora.value;
+        selHora.innerHTML = '<option value="">Hora</option>';
+        generarHoras(soloFuturas).forEach(function (h) {
+            const opt = document.createElement('option');
+            opt.value = h;
+            opt.textContent = h;
+            selHora.appendChild(opt);
+        });
+        /* Mantener la hora elegida si sigue disponible */
+        if ([...selHora.options].some(o => o.value === anterior)) selHora.value = anterior;
+    }
+
+    function esHoy(valor) {
+        return valor === minFecha;
+    }
+
+    /* Poblar horas al cargar (sin fecha elegida = todas disponibles) */
+    poblarHoras(false);
+
+    /* Al cambiar la fecha filtrar horas si es hoy */
+    inputFecha.addEventListener('change', function () {
+        if (this.value && this.value < minFecha) {
+            this.value = minFecha; /* fuerza al mínimo si el navegador lo permite */
+        }
+        poblarHoras(esHoy(this.value));
+    });
+
+    /* ── N.° estudiantes: solo dígitos, sin símbolos ni emojis ── */
+    const inputAlumnos = document.getElementById('numEstudiantes');
+
+    /* Bloquea teclas no numéricas antes de que lleguen al input */
+    inputAlumnos.addEventListener('keydown', function (e) {
+        const permitidas = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
+        if (permitidas.includes(e.key)) return;
+        if (!/^\d$/.test(e.key)) e.preventDefault();
+    });
+
+    /* Limpia lo que llega por paste o autocompletado */
+    inputAlumnos.addEventListener('input', function () {
+        /* Elimina todo lo que no sea dígito (símbolos, letras, emojis, unicode) */
+        const soloDigitos = this.value.replace(/\D/g, '');
+        const numero = parseInt(soloDigitos, 10);
+        if (!soloDigitos || isNaN(numero)) { this.value = ''; return; }
+        this.value = Math.min(40, Math.max(1, numero));
+    });
+})();
+</script>
+
 <script type="module" src="<?= base_url('js/main.js')?>"></script>
-<!--<script src="<?php /*= base_url('js/cotizaciones/cotizaciones.js')*/?>"></script>
-<script src="<?php /*= base_url('js/cotizaciones/SearchClient.js')*/?>"></script>
-<script src="<?php /*= base_url('js/cotizaciones/FetchServicios.js')*/?>"></script>
-<script src="<?php /*= base_url('js/cotizaciones/FetchProductos.js')*/?>"></script>-->
 
 <?= $footer ?>
