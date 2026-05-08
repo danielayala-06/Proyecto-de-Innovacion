@@ -221,17 +221,22 @@ function _actualizarResumen() {
         return;
     }
 
-    const total = state.items.reduce((s, i) => s + i.precio, 0);
-    el.innerHTML = state.items.map((item, idx) => `
+    const total = state.items.reduce((s, i) => s + i.precio * (i.cantidad ?? 1), 0);
+    el.innerHTML = state.items.map((item, idx) => {
+        const cant    = item.cantidad ?? 1;
+        const subtotal = item.precio * cant;
+        const cantLabel = cant > 1 ? `<span style="color:#888;font-size:0.72rem;">×${cant} </span>` : '';
+        return `
         <div class="resumen-row" style="align-items:center;gap:6px;">
             <span style="flex:1;font-size:0.78rem;">${item.nombre}</span>
-            <span style="white-space:nowrap;font-size:0.78rem;">${formatters.moneda(item.precio)}</span>
+            <span style="white-space:nowrap;font-size:0.78rem;">${cantLabel}${formatters.moneda(subtotal)}</span>
             <button type="button" data-idx="${idx}"
                     style="background:none;border:none;padding:0 2px;color:#e57373;cursor:pointer;font-size:0.78rem;line-height:1;"
                     class="btn-res-del" title="Quitar">
                 <i class="bi bi-x-lg"></i>
             </button>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 
     if (totalEl) totalEl.textContent = formatters.moneda(total);
 
@@ -263,17 +268,25 @@ function _renderContainer(containerId, tipo) {
 
     if (!filtered.length) { el.innerHTML = ''; return; }
 
-    el.innerHTML = filtered.map(({ item, idx }) => `
+    el.innerHTML = filtered.map(({ item, idx }) => {
+        const cant     = item.cantidad ?? 1;
+        const subtotal = item.precio * cant;
+        const cantTag  = cant > 1
+            ? `<span style="font-size:0.75rem;color:#888;white-space:nowrap;">×${cant}</span>`
+            : '';
+        return `
         <div class="d-flex justify-content-between align-items-center p-2 mt-1"
              style="border:1px solid var(--border,#dee2e6);border-radius:6px;font-size:0.82rem;gap:8px;">
             <span style="flex:1;">${item.nombre}</span>
-            <span style="font-weight:600;white-space:nowrap;">${formatters.moneda(item.precio)}</span>
+            ${cantTag}
+            <span style="font-weight:600;white-space:nowrap;">${formatters.moneda(subtotal)}</span>
             <button type="button" data-idx="${idx}"
                     style="background:none;border:none;padding:2px 4px;color:#e57373;cursor:pointer;font-size:0.85rem;"
                     class="btn-item-del" title="Quitar">
                 <i class="bi bi-trash3"></i>
             </button>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 
     el.querySelectorAll('.btn-item-del').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -328,7 +341,17 @@ window.seleccionarOpcion = function (el, nombre, desc, precio, idRef) {
         nombre,
         precio: parseFloat(precio) || 0,
     };
+    _actualizarPreviewPaquete();
 };
+
+function _actualizarPreviewPaquete() {
+    const preview = document.getElementById('paquetePreviewTotal');
+    if (!preview) return;
+    if (!state.paqueteSeleccionado) { preview.textContent = ''; return; }
+    const cantidad = parseInt(document.getElementById('paqueteCantidad')?.value) || 1;
+    const total    = state.paqueteSeleccionado.precio * cantidad;
+    preview.textContent = `${cantidad} × ${formatters.moneda(state.paqueteSeleccionado.precio)} = ${formatters.moneda(total)}`;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    MODAL SERVICIOS
@@ -445,14 +468,14 @@ function _validar() {
    PAYLOAD
 ═══════════════════════════════════════════════════════════════ */
 function _buildPayload(idCliente) {
-    const total    = state.items.reduce((s, i) => s + i.precio, 0);
+    const total    = state.items.reduce((s, i) => s + i.precio * (i.cantidad ?? 1), 0);
     const detalles = state.items.map(item => ({
         tipo_item:       item.tipo,
         id_referencia:   item.idRef ?? null,
         descripcion:     item.nombre,
-        cantidad:        1,
+        cantidad:        item.cantidad ?? 1,
         precio_unitario: item.precio,
-        subtotal:        item.precio,
+        subtotal:        item.precio * (item.cantidad ?? 1),
     }));
 
     const fechaDate = document.getElementById('fechaInicio-date')?.value ?? '';
@@ -577,6 +600,10 @@ async function init() {
     document.getElementById('btn-modal-paquete')?.addEventListener('click', () => {
         state.paqueteSeleccionado = null;
         document.querySelectorAll('.paquete-option').forEach(o => o.classList.remove('selected'));
+        const cantEl = document.getElementById('paqueteCantidad');
+        if (cantEl) cantEl.value = '1';
+        const previewEl = document.getElementById('paquetePreviewTotal');
+        if (previewEl) previewEl.textContent = '';
         _modalPaquete?.show();
     });
 
@@ -593,7 +620,8 @@ async function init() {
     document.getElementById('btn-confirmar-paquetes')?.addEventListener('click', () => {
         if (!state.paqueteSeleccionado) { alerts.warning('Selecciona un paquete de la lista.'); return; }
         const { idRef, nombre, precio } = state.paqueteSeleccionado;
-        state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio });
+        const cantidad = Math.max(1, parseInt(document.getElementById('paqueteCantidad')?.value) || 1);
+        state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad });
         _renderContainers();
         _actualizarResumen();
         _saveDraft();
@@ -612,6 +640,9 @@ async function init() {
         _saveDraft();
         _modalServicio?.hide();
     });
+
+    /* 11b. Preview en tiempo real al cambiar cantidad */
+    document.getElementById('paqueteCantidad')?.addEventListener('input', _actualizarPreviewPaquete);
 
     /* 12. Auto-guardar borrador en campos de sesión/colegio */
     ['notas', 'nombreColegio'].forEach(id =>

@@ -300,6 +300,16 @@
                         <span class="po-price">S/ 320.00</span><i class="bi bi-check-circle-fill po-check"></i>
                     </div>
                 </div>
+
+                <!-- Cantidad -->
+                <div class="d-flex align-items-center gap-3 mt-3 pt-3 border-top">
+                    <label for="paqueteCantidad" class="form-label mb-0"
+                           style="font-size:0.85rem;font-weight:500;white-space:nowrap;">Cantidad:</label>
+                    <input type="number" class="form-control form-control-sm" id="paqueteCantidad"
+                           value="1" min="1" max="999" style="width:75px;">
+                    <span id="paquetePreviewTotal"
+                          style="font-size:0.82rem;color:var(--text-muted,#6c757d);"></span>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
