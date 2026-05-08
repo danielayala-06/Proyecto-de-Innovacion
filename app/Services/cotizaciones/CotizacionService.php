@@ -111,6 +111,8 @@ class CotizacionService
         ->where('id_cotizacion', $idCotizacion)
         ->findAll() ?? []; // En caso de que no haya no se enviara nada
 
+        $detalles = [];
+
         // Agregamos los productos y paquetes
         foreach ($item_detalles as $item_detalle) {
             // PRODUCTO
@@ -118,7 +120,7 @@ class CotizacionService
 
                 $producto = $this->productoModel
                     ->find($item_detalle['id_referencia']);
-
+                
                 $detalles[] = [
                     'id' => $item_detalle['id_detalle'],
                     'tipo_item' => 'producto',
@@ -177,6 +179,8 @@ class CotizacionService
      */
     public function actualizar(
         int $idCotizacion,
+        int $itemId, 
+        string $action,
         array $data
     ): array {
 
@@ -189,8 +193,7 @@ class CotizacionService
             $idCotizacion,
             [
                 'observaciones'  => $data['observaciones'] ?? null,
-                'total_estimado' => $data['total_estimado'],
-                'estado'         => $data['estado'] ?? 'BORRADOR'
+                'estado'         => $data['estado'] ?? 'PENDIENTE'
             ]
         );
 
@@ -205,21 +208,19 @@ class CotizacionService
             ->delete();
 
         /**
-         * INSERTAR NUEVOS DETALLES
+         * INSERTAR NUEVOS ITEMS
          */
         $detallesInsert = [];
 
         foreach ($data['detalles'] as $detalle) {
 
             $detallesInsert[] = [
-
                 'tipo_item'       => $detalle['tipo_item'],
                 'id_referencia'   => $detalle['id_referencia'] ?? null,
                 'descripcion'     => $detalle['descripcion'],
                 'cantidad'        => $detalle['cantidad'],
                 'precio_unitario' => $detalle['precio_unitario'],
                 'id_cotizacion'   => $idCotizacion,
-                'id_paquete'      => $detalle['id_paquete'] ?? null
             ];
         }
 
@@ -324,7 +325,6 @@ class CotizacionService
                     'observaciones' =>$cotizacion['observaciones'],
                     'total' =>(float)$cotizacion['total_estimado']
                 ],
-
                 'cliente' => [
                     'id' => $cotizacion['id_cliente'],
                     'nombre_completo' => trim(
@@ -333,12 +333,9 @@ class CotizacionService
                         $cotizacion['apellidos']
                     )
                 ],
-
                 'usuario' => [
-                    'username' =>
-                        $cotizacion['nombre_user']
+                    'username' =>$cotizacion['nombre_user']
                 ],
-
                 'detalles' => $detalles
             ];
         }

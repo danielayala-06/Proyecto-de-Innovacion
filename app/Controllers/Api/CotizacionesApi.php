@@ -159,11 +159,14 @@ class CotizacionesApi extends BaseController
     public function update($id = null)
     {
         try {
-
+            // Obtenemos los parametros enviados
             $body = $this->request->getJSON(true);
+            $itemId = $this->request->getGet('id_detalle') ?? null;
+            $action = $this->request->getGet('action') ?? null;
+
             $cotizacion = $this->service->obtenerPorId((int) $id);
 
-            if (! $cotizacion) {
+            if (!$cotizacion) {
                 return $this->response
                     ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
                     ->setJSON([
@@ -182,12 +185,12 @@ class CotizacionesApi extends BaseController
                     ->setStatusCode(ResponseInterface::HTTP_CONFLICT)
                     ->setJSON([
                         'status' => 'error',
-                        'message' =>'Solo se puede editar una cotización BORRADOR'
+                        'message' =>'Solo se puede editar una cotización PENDIENTE'
                     ]);
             }
 
             // El total se racalcula automaticamente
-            if (! empty($body['detalles'])) {
+            if (!empty($body['detalles'])) {
                 $body['total_estimado'] = array_sum(
                     array_map(
                         fn($detalle) =>
@@ -201,6 +204,8 @@ class CotizacionesApi extends BaseController
 
             $updated = $this->service->actualizar(
                 (int) $id,
+                $itemId,
+                $action,
                 $body
             );
 

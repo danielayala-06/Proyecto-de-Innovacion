@@ -19,7 +19,7 @@ class CotizacionTransformer extends BaseTransformer
             'observaciones',
             'cliente',
             'usuario',
-            'detalles'
+            'items'
         ];
     }
 
