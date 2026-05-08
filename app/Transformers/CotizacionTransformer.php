@@ -92,6 +92,7 @@ class CotizacionTransformer extends BaseTransformer
             fn($detalle) => [
                 'id' =>(int)$detalle['id'],
                 'tipo_item' =>$detalle['tipo_item'],
+                'id_referencia' =>$detalle['id_referencia'],
                 'descripcion' =>$detalle['descripcion'],
                 'referencia_nombre' =>$detalle['referencia_nombre'],
                 'cantidad' =>(int)$detalle['cantidad'],

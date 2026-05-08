@@ -124,6 +124,7 @@ class CotizacionService
                 $detalles[] = [
                     'id' => $item_detalle['id_detalle'],
                     'tipo_item' => 'producto',
+                    'id_referencia' => $item_detalle['id_referencia'],
                     'descripcion' =>$item_detalle['descripcion'],
                     'cantidad' =>$item_detalle['cantidad'],
                     'precio_unitario' =>$item_detalle['precio_unitario'],
@@ -141,6 +142,7 @@ class CotizacionService
                 $detalles[] = [
                     'id' => $item_detalle['id_detalle'],
                     'tipo_item' => 'paquete',
+                    'id_referencia' => (int)$item_detalle['id_referencia'],
                     'descripcion' =>$item_detalle['descripcion'],
                     'cantidad' =>$item_detalle['cantidad'],
                     'precio_unitario' =>$item_detalle['precio_unitario'],
@@ -189,23 +191,23 @@ class CotizacionService
         /**
          * UPDATE CABECERA
          */
-        $this->cotizacionModel->update(
+        /*$this->cotizacionModel->update(
             $idCotizacion,
             [
                 'observaciones'  => $data['observaciones'] ?? null,
                 'estado'         => $data['estado'] ?? 'PENDIENTE'
             ]
-        );
+        );*/
 
         /**
          * ELIMINAR DETALLES
          */
-        $this->detalleModel
+        /*$this->detalleModel
             ->where(
                 'id_cotizacion',
                 $idCotizacion
             )
-            ->delete();
+            ->delete();*/
 
         /**
          * INSERTAR NUEVOS ITEMS
