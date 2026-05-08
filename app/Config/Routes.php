@@ -11,8 +11,30 @@ $routes->get('/', 'Home::index');
 // ============================================================================
 // Sección VISTAS de la App
 // ============================================================================
+
+// COTIZACIONES
 $routes->get('/cotizaciones',       'CotizacionController::index');
 $routes->get('/cotizaciones/crear', 'CotizacionController::crear');
+
+// CONTRATOS
+$routes->get('/contratos',       'ContratoController::index');
+//$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
+
+// PAQUETES
+$routes->get('/paquetes',       'PaqueteController::index');
+//$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
+
+// CALENDARIO
+$routes->get('/calendario',       'CalendarioController::index');
+//$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
+
+// CLIENTES
+$routes->get('/clientes',       'ClienteController::index');
+//$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
+
+// CALENDARIO
+$routes->get('/calendario',       'CalendarioController::index');
+//$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
 
 // ============================================================================
 // Sección de rutas API REST
