@@ -89,12 +89,24 @@
 
                     <!-- ================= COLEGIO ================= -->
                     <fieldset class="mt-4">
-                        <legend class="section-divider">Colegio</legend>
+                        <legend class="section-divider">Institución</legend>
+
+                        <!-- Tipo de institución -->
+                        <div class="btn-group btn-group-sm mb-3" role="group" aria-label="Tipo de institución">
+                            <input type="radio" class="btn-check" name="tipoInstitucion" id="tipo-colegio" value="colegio" checked>
+                            <label class="btn btn-outline-secondary" for="tipo-colegio">Colegio</label>
+
+                            <input type="radio" class="btn-check" name="tipoInstitucion" id="tipo-superior" value="superior">
+                            <label class="btn btn-outline-secondary" for="tipo-superior">Grado Superior</label>
+
+                            <input type="radio" class="btn-check" name="tipoInstitucion" id="tipo-empresa" value="empresa">
+                            <label class="btn btn-outline-secondary" for="tipo-empresa">Empresas</label>
+                        </div>
 
                         <div class="row g-3">
-                            <!-- Nombre del colegio -->
+                            <!-- Nombre de la institución (label cambia según tipo) -->
                             <div class="col-12 col-md-6">
-                                <label for="nombreColegio" class="form-label">Nombre del colegio*</label>
+                                <label for="nombreColegio" class="form-label" id="labelInstitucion">Nombre del colegio*</label>
                                 <input type="text" class="form-control" id="nombreColegio"
                                        name="nombre_colegio" required minlength="3" maxlength="100"
                                        placeholder="Ej: I.E. San Marcos">
@@ -128,26 +140,26 @@
                         <legend class="section-divider">Promoción y sesión fotográfica</legend>
 
                         <div class="row g-3">
-                            <!-- Nombre de la promoción -->
+                            <!-- Nombre de la promoción / evento (label cambia según tipo) -->
                             <div class="col-12 col-md-5">
-                                <label for="nombreProm" class="form-label">Nombre de la promoción</label>
+                                <label for="nombreProm" class="form-label" id="labelPromocion">Nombre de la promoción</label>
                                 <input type="text" class="form-control" id="nombreProm"
                                        name="nombre_promocion" maxlength="100"
                                        placeholder="Ej: Promoción 2025">
                             </div>
 
-                            <!-- N.° de estudiantes -->
+                            <!-- N.° de estudiantes / participantes (label y max cambian según tipo) -->
                             <div class="col-6 col-md-3">
-                                <label for="numEstudiantes" class="form-label">N.° estudiantes</label>
+                                <label for="numEstudiantes" class="form-label" id="labelEstudiantes">N.° estudiantes</label>
                                 <input type="number" class="form-control" id="numEstudiantes"
-                                       name="num_estudiantes" min="1" max="40" placeholder="0">
-                                <div class="form-text">Máximo 40 alumnos.</div>
+                                       name="num_estudiantes" min="1" max="100" placeholder="0">
+                                <div class="form-text" id="textoMaxEstudiantes">Máximo 100 personas.</div>
                             </div>
 
-                            <!-- Grado -->
-                            <div class="col-6 col-md-4">
+                            <!-- Grado (oculto para Grado Superior y Empresas) -->
+                            <div class="col-6 col-md-4" id="wrap-grado">
                                 <label for="gradoProm" class="form-label">Grado*</label>
-                                <select class="form-select" id="gradoProm" name="grado" required>
+                                <select class="form-select" id="gradoProm" name="grado">
                                     <option value="">Seleccionar grado...</option>
                                     <option value="5 añitos">5 añitos</option>
                                     <option value="6to primaria">6to primaria</option>
@@ -155,22 +167,12 @@
                                 </select>
                             </div>
 
-                            <!-- Sección -->
-                            <div class="col-6 col-md-3">
+                            <!-- Sección (oculta para Grado Superior y Empresas) -->
+                            <div class="col-6 col-md-3" id="wrap-seccion">
                                 <label for="seccionProm" class="form-label">Sección</label>
                                 <input type="text" class="form-control" id="seccionProm"
                                        name="seccion" maxlength="10"
                                        placeholder="Ej: A, B, C…">
-                            </div>
-
-                            <!-- Tipo de sesión fotográfica -->
-                            <div class="col-6 col-md-3">
-                                <label for="tipoSesion" class="form-label">Tipo de sesión</label>
-                                <select class="form-select" id="tipoSesion" name="tipo_sesion">
-                                    <option value="colegio">En el colegio</option>
-                                    <option value="exteriores">Exteriores</option>
-                                    <option value="otro">Otro</option>
-                                </select>
                             </div>
 
                             <!-- Fecha y hora de la sesión -->
@@ -424,12 +426,82 @@
 
     /* Limpia lo que llega por paste o autocompletado */
     inputAlumnos.addEventListener('input', function () {
-        /* Elimina todo lo que no sea dígito (símbolos, letras, emojis, unicode) */
         const soloDigitos = this.value.replace(/\D/g, '');
         const numero = parseInt(soloDigitos, 10);
         if (!soloDigitos || isNaN(numero)) { this.value = ''; return; }
-        this.value = Math.min(40, Math.max(1, numero));
+        this.value = Math.min(parseInt(this.max) || 100, Math.max(1, numero));
     });
+})();
+</script>
+
+<script>
+/* ── Selector de tipo de institución ──────────────────────── */
+(function () {
+    const TIPOS = {
+        colegio: {
+            labelInstitucion: 'Nombre del colegio*',
+            placeholder:      'Ej: I.E. San Marcos',
+            labelPromocion:   'Nombre de la promoción',
+            placeholderProm:  'Ej: Promoción 2025',
+            labelEstudiantes: 'N.° estudiantes',
+            max:              100,
+            textoMax:         'Máximo 100 personas.',
+            showGrado:        true,
+            showSeccion:      true,
+        },
+        superior: {
+            labelInstitucion: 'Nombre de la institución*',
+            placeholder:      'Ej: Universidad San Marcos',
+            labelPromocion:   'Nombre de la promoción',
+            placeholderProm:  'Ej: Promoción 2025',
+            labelEstudiantes: 'N.° estudiantes',
+            max:              40,
+            textoMax:         'Máximo 40 personas.',
+            showGrado:        false,
+            showSeccion:      false,
+        },
+        empresa: {
+            labelInstitucion: 'Nombre de la empresa*',
+            placeholder:      'Ej: Empresa XYZ S.A.C.',
+            labelPromocion:   'Nombre del evento',
+            placeholderProm:  'Ej: Conferencia anual 2025',
+            labelEstudiantes: 'N.° de participantes',
+            max:              200,
+            textoMax:         'Máximo 200 participantes.',
+            showGrado:        false,
+            showSeccion:      false,
+        },
+    };
+
+    function aplicarTipo(tipo) {
+        const c = TIPOS[tipo] || TIPOS.colegio;
+
+        document.getElementById('labelInstitucion').textContent  = c.labelInstitucion;
+        document.getElementById('nombreColegio').placeholder     = c.placeholder;
+
+        document.getElementById('labelPromocion').textContent    = c.labelPromocion;
+        document.getElementById('nombreProm').placeholder        = c.placeholderProm;
+
+        document.getElementById('labelEstudiantes').textContent  = c.labelEstudiantes;
+        document.getElementById('textoMaxEstudiantes').textContent = c.textoMax;
+        const numInput = document.getElementById('numEstudiantes');
+        numInput.max = c.max;
+        if (numInput.value && parseInt(numInput.value) > c.max) numInput.value = c.max;
+
+        const show = (id, visible) => {
+            document.getElementById(id).style.display = visible ? '' : 'none';
+        };
+        show('wrap-grado',   c.showGrado);
+        show('wrap-seccion', c.showSeccion);
+
+        window.TIPO_INSTITUCION = tipo;
+    }
+
+    document.querySelectorAll('input[name="tipoInstitucion"]').forEach(radio => {
+        radio.addEventListener('change', () => aplicarTipo(radio.value));
+    });
+
+    aplicarTipo('colegio');
 })();
 </script>
 

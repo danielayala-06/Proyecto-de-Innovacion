@@ -360,6 +360,7 @@ function _saveDraft() {
             telefono:  document.getElementById('telefonoCliente')?.value  ?? '',
             correo:    document.getElementById('emailCliente')?.value     ?? '',
         } : null,
+        tipoInstitucion: document.querySelector('input[name="tipoInstitucion"]:checked')?.value ?? 'colegio',
         items: state.items,
         notas: document.getElementById('notas')?.value ?? '',
         colegio: {
@@ -372,6 +373,14 @@ function _saveDraft() {
 
 function _restoreDraft(borrador) {
     if (!borrador) return;
+
+    if (borrador.tipoInstitucion) {
+        const radio = document.getElementById(`tipo-${borrador.tipoInstitucion}`);
+        if (radio) {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change'));
+        }
+    }
 
     if (borrador.cliente) {
         _setClienteExistente(borrador.cliente);
@@ -424,7 +433,10 @@ function _validar() {
     }
 
     if (!state.items.length)  return 'Agrega al menos un paquete o servicio a la cotización.';
-    if (!document.getElementById('gradoProm')?.value) return 'Selecciona el grado de la promoción.';
+    const wrapGrado = document.getElementById('wrap-grado');
+    if (wrapGrado?.style.display !== 'none' && !document.getElementById('gradoProm')?.value) {
+        return 'Selecciona el grado de la promoción.';
+    }
 
     return null;
 }
@@ -460,11 +472,11 @@ function _buildPayload(idCliente) {
             distrito:  document.getElementById('distritoColegio')?.value          ?? null,
         },
         sesion: {
+            tipo_institucion: document.querySelector('input[name="tipoInstitucion"]:checked')?.value ?? 'colegio',
             nombre_promocion: document.getElementById('nombreProm')?.value?.trim()      ?? null,
             num_estudiantes:  parseInt(document.getElementById('numEstudiantes')?.value) || null,
             grado:            document.getElementById('gradoProm')?.value               ?? null,
             seccion:          document.getElementById('seccionProm')?.value?.trim()     ?? null,
-            tipo_sesion:      document.getElementById('tipoSesion')?.value              ?? null,
             fecha,
         },
     };
