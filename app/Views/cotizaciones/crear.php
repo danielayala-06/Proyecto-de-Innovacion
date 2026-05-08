@@ -21,7 +21,7 @@
                         <!-- Buscador -->
                         <div class="row g-3 mb-3">
                             <div class="col-12 col-md-7">
-                                <div class="input-group">
+                                <div class="input-group search-wrap">
                                     <label for="searchCliente" class="visually-hidden">Buscar cliente</label>
                                     <input type="text" class="form-control" id="searchCliente"
                                            placeholder="DNI, teléfono o nombre...">
