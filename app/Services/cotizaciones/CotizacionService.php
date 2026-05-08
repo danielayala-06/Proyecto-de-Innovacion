@@ -62,15 +62,18 @@ class CotizacionService
         }
 
         if (! empty($detallesInsert)) {
-            $this->detalleModel->insertBatch($detallesInsert);
+            $ok = $this->detalleModel->insertBatch($detallesInsert);
+            if ($ok === false) {
+                throw new \RuntimeException(
+                    'Error al insertar detalles: ' . implode(', ', $this->detalleModel->errors())
+                );
+            }
         }
 
         $this->db->transComplete();
 
         if (! $this->db->transStatus()) {
-            throw new \RuntimeException(
-                'Error al crear la cotización'
-            );
+            throw new \RuntimeException('Error al crear la cotización');
         }
 
         return $this->obtenerPorId($idCotizacion);
@@ -113,44 +116,29 @@ class CotizacionService
 
         $detalles = [];
 
-        // Agregamos los productos y paquetes
         foreach ($item_detalles as $item_detalle) {
-            // PRODUCTO
-            if ($item_detalle['tipo_item'] == 'producto') {
+            $tipo             = strtolower($item_detalle['tipo_item'] ?? '');
+            $idRef            = $item_detalle['id_referencia'] ?? null;
+            $referenciaNombre = null;
 
-                $producto = $this->productoModel
-                    ->find($item_detalle['id_referencia']);
-                
-                $detalles[] = [
-                    'id' => $item_detalle['id_detalle'],
-                    'tipo_item' => 'producto',
-                    'id_referencia' => $item_detalle['id_referencia'],
-                    'descripcion' =>$item_detalle['descripcion'],
-                    'cantidad' =>$item_detalle['cantidad'],
-                    'precio_unitario' =>$item_detalle['precio_unitario'],
-                    'referencia_nombre' =>$producto['nombre_producto']
-                ];
-                continue;
+            if ($tipo === 'producto' && $idRef) {
+                $producto         = $this->productoModel->find($idRef);
+                $referenciaNombre = $producto['nombre_producto'] ?? null;
+            } elseif ($tipo === 'paquete' && $idRef) {
+                $paquete          = $this->paqueteModel->find($idRef);
+                $referenciaNombre = $paquete['nombre_paquete'] ?? null;
             }
+            // 'personalizado' cae aquí: sin referencia, sin nombre de referencia
 
-            // PAQUETE
-            if ($item_detalle['tipo_item'] == 'paquete') {
-
-                $paquete = $this->paqueteModel
-                    ->find($item_detalle['id_referencia']);
-
-                $detalles[] = [
-                    'id' => $item_detalle['id_detalle'],
-                    'tipo_item' => 'paquete',
-                    'id_referencia' => (int)$item_detalle['id_referencia'],
-                    'descripcion' =>$item_detalle['descripcion'],
-                    'cantidad' =>$item_detalle['cantidad'],
-                    'precio_unitario' =>$item_detalle['precio_unitario'],
-                    'referencia_nombre' =>$paquete['nombre_paquete']
-                ];
-
-                continue;
-            }
+            $detalles[] = [
+                'id'                => $item_detalle['id_detalle'],
+                'tipo_item'         => $tipo,
+                'id_referencia'     => $idRef ? (int) $idRef : null,
+                'descripcion'       => $item_detalle['descripcion'],
+                'cantidad'          => $item_detalle['cantidad'],
+                'precio_unitario'   => $item_detalle['precio_unitario'],
+                'referencia_nombre' => $referenciaNombre,
+            ];
         }
 
         return [
