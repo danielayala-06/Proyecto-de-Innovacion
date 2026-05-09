@@ -15,6 +15,7 @@ const NIVEL_MAP = {
 const CAT_DB_MAP = {
     'Cuadros':  'Cuadros',
     'Anuarios': 'Anuarios',
+    'Paquetes': 'Paquetes',
 };
 
 // Maps DB ENUM → UI select value (only for known 1-to-1; 'otros' falls back to name inference)

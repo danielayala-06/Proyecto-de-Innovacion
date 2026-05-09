@@ -5,6 +5,7 @@ const CAT_BADGE_CLASS = {
     'Quinceañeros': 'cat-quinceaneros',
     'Cuadros':      'cat-cuadros',
     'Anuarios':     'cat-anuarios',
+    'Paquetes':     'cat-paquetes',
     'Matrimonios':  'cat-matrimonios',
     'Corporativo':  'cat-corporativo',
     'Otro':         'cat-otro',

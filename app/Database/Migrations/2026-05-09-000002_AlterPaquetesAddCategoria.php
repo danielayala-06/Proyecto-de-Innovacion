@@ -11,7 +11,7 @@ class AlterPaquetesAddCategoria extends Migration
         $this->forge->addColumn('paquetes', [
             'categoria' => [
                 'type'       => 'ENUM',
-                'constraint' => ['Cuadros', 'Anuarios', 'otros'],
+                'constraint' => ['Cuadros', 'Anuarios', 'Paquetes', 'otros'],
                 'null'       => true,
                 'default'    => null,
                 'after'      => 'nivel_disponible',

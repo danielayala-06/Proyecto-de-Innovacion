@@ -15,6 +15,7 @@
                 <option value="Quinceañeros">Quinceañeros</option>
                 <option value="Cuadros">Cuadros</option>
                 <option value="Anuarios">Anuarios</option>
+                <option value="Paquetes">Paquetes</option>
                 <option value="Matrimonios">Matrimonios</option>
                 <option value="Corporativo">Corporativo</option>
                 <option value="Otro">Otro</option>
@@ -75,6 +76,7 @@
                             <option value="Quinceañeros">Quinceañeros</option>
                             <option value="Cuadros">Cuadros</option>
                             <option value="Anuarios">Anuarios</option>
+                            <option value="Paquetes">Paquetes</option>
                             <option value="Matrimonios">Matrimonios</option>
                             <option value="Corporativo">Corporativo</option>
                             <option value="Otro">Otro</option>

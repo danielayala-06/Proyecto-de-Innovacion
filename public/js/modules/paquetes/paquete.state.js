@@ -24,6 +24,7 @@ export function categoriaDesdNombre(nombre) {
 export function categoriaDesPaquete(p) {
     if (p.categoria === 'Cuadros')  return 'Cuadros';
     if (p.categoria === 'Anuarios') return 'Anuarios';
+    if (p.categoria === 'Paquetes') return 'Paquetes';
     return categoriaDesdNombre(p.nombre_paquete);
 }
 
