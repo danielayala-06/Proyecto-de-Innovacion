@@ -95,19 +95,19 @@ class PaquetesController extends BaseController
     // ────────────────────────────────────────────────────────────────────────
     public function create()
     {
+        $body = $this->request->getJSON(true) ?? [];
+
         $rules = [
             'nombre_paquete'   => 'required|max_length[150]',
             'nivel_disponible' => 'required|in_list[primaria,inicial,secundaria,otro]',
             'precio'           => 'required|decimal',
         ];
 
-        if (!$this->validate($rules)) {
+        if (!$this->validateData($body, $rules)) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
                 ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
         }
-
-        $body = $this->request->getJSON(true);
 
         $this->db->transStart();
 
