@@ -7,7 +7,7 @@
         <!-- FORMULARIO -->
         <form id="form-cotizacion" class="col-12 ">
             <input type="hidden" name="id_cliente" id="idCliente">
-            <div class="d-flex justify-content-center gap-4">
+            <div class="d-flex justify-content-center gap-4 align-items-start">
                 <div class="form-card">
 
                     <header class="card-heading">
@@ -201,7 +201,7 @@
                 </div>
 
                 <!-- RESUMEN -->
-                <div class="col-md-3">
+                <div class="col-md-3 resumen-sticky">
                     <div class="resumen-card mb-3">
                         <div class="resumen-title">Resumen</div>
                         <div id="resumenItems">
@@ -261,45 +261,8 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="cat-tabs">
-                    <button class="cat-tab active" onclick="cambiarCategoria('quinceaneros', this)">Paquetes</button>
-                    <button class="cat-tab" onclick="cambiarCategoria('cuadros', this)">Cuadros</button>
-                    <button class="cat-tab" onclick="cambiarCategoria('anuarios', this)">Anuarios</button>
-                </div>
-
-                <div class="cat-panel active overflow-auto" id="panel-quinceaneros" style="max-height:20rem;">
-                    <!-- Cargado por JS desde la API -->
-                </div>
-
-                <div class="cat-panel overflow-auto" id="panel-cuadros" style="max-height:20rem;">
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Cuadro 30x40 cm','Impresión en canvas, 1 foto',80)">
-                        <div class="po-left"><div class="po-name">Cuadro 30x40 cm</div><div class="po-desc">Impresión en canvas, 1 foto</div></div>
-                        <span class="po-price">S/ 80.00</span><i class="bi bi-check-circle-fill po-check"></i>
-                    </div>
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Cuadro 50x70 cm','Impresión en canvas, 1 foto',130)">
-                        <div class="po-left"><div class="po-name">Cuadro 50x70 cm</div><div class="po-desc">Impresión en canvas, 1 foto</div></div>
-                        <span class="po-price">S/ 130.00</span><i class="bi bi-check-circle-fill po-check"></i>
-                    </div>
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Pack Cuadros x3','3 cuadros 20x30 a elección',200)">
-                        <div class="po-left"><div class="po-name">Pack Cuadros x3</div><div class="po-desc">3 cuadros 20x30 a elección</div></div>
-                        <span class="po-price">S/ 200.00</span><i class="bi bi-check-circle-fill po-check"></i>
-                    </div>
-                </div>
-
-                <div class="cat-panel overflow-auto" id="panel-anuarios" style="max-height:20rem;">
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Anuario Básico','20 páginas, tapa blanda, 30 fotos',120)">
-                        <div class="po-left"><div class="po-name">Anuario Básico</div><div class="po-desc">20 páginas, tapa blanda, 30 fotos</div></div>
-                        <span class="po-price">S/ 120.00</span><i class="bi bi-check-circle-fill po-check"></i>
-                    </div>
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Anuario Estándar','40 páginas, tapa dura, 60 fotos',200)">
-                        <div class="po-left"><div class="po-name">Anuario Estándar</div><div class="po-desc">40 páginas, tapa dura, 60 fotos</div></div>
-                        <span class="po-price">S/ 200.00</span><i class="bi bi-check-circle-fill po-check"></i>
-                    </div>
-                    <div class="paquete-option" onclick="seleccionarOpcion(this,'Anuario Premium','60 páginas, tapa dura, fotos ilimitadas + USB',320)">
-                        <div class="po-left"><div class="po-name">Anuario Premium</div><div class="po-desc">60 páginas, tapa dura, fotos ilimitadas + USB</div></div>
-                        <span class="po-price">S/ 320.00</span><i class="bi bi-check-circle-fill po-check"></i>
-                    </div>
-                </div>
+                <div class="cat-tabs" id="catTabsContainer"></div>
+                <div id="catPanelsContainer"></div>
 
                 <!-- Cantidad -->
                 <div class="d-flex align-items-center gap-3 mt-3 pt-3 border-top">

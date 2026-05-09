@@ -334,6 +334,13 @@ label {
 .servicio-item .btn-remove:hover { color: #c0392b; }
 .servicios-empty { padding: 14px; font-size: 0.8rem; color: var(--text-muted); text-align: center; }
 
+/* ── RESUMEN STICKY SIDEBAR ─────────────────────────────────────── */
+.resumen-sticky {
+    position: sticky;
+    top: 5rem;
+    align-self: flex-start;
+}
+
 /* ── RESUMEN CARD ────────────────────────────────────────────────── */
 .resumen-card {
     background: var(--bg-surface); border: 1px solid var(--border);

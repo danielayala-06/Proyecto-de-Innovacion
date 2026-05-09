@@ -301,26 +301,46 @@ function _renderContainer(containerId, tipo) {
 /* ═══════════════════════════════════════════════════════════════
    MODAL PAQUETES
 ═══════════════════════════════════════════════════════════════ */
-function _poblarQuinceaneros(paquetes) {
-    const panel = document.getElementById('panel-quinceaneros');
-    if (!panel) return;
-    if (!paquetes.length) {
-        panel.innerHTML = `<div style="padding:12px;font-size:0.82rem;color:#6c757d;text-align:center;">Sin paquetes disponibles.</div>`;
+function _poblarModalPaquetes(paquetes) {
+    const tabsEl   = document.getElementById('catTabsContainer');
+    const panelsEl = document.getElementById('catPanelsContainer');
+    if (!tabsEl || !panelsEl) return;
+
+    const CAT_LABEL = { Paquetes: 'Paquetes', Cuadros: 'Cuadros', Anuarios: 'Anuarios', otros: 'Otros' };
+    const CAT_ORDER = ['Paquetes', 'Cuadros', 'Anuarios', 'otros'];
+
+    const grupos = {};
+    paquetes.forEach(p => {
+        const cat = p.categoria || 'otros';
+        (grupos[cat] = grupos[cat] || []).push(p);
+    });
+
+    const keys = [
+        ...CAT_ORDER.filter(k => grupos[k]),
+        ...Object.keys(grupos).filter(k => !CAT_ORDER.includes(k)),
+    ];
+
+    if (!keys.length) {
+        tabsEl.innerHTML   = '';
+        panelsEl.innerHTML = `<div style="padding:12px;font-size:0.82rem;color:#6c757d;text-align:center;">Sin paquetes disponibles.</div>`;
         return;
     }
-    panel.innerHTML = paquetes.map(p => {
-        const nombre = (p.nombre_paquete || '').replace(/'/g, "\\'");
-        const desc   = (p.descripcion    || '').replace(/'/g, "\\'");
-        return `
-            <div class="paquete-option"
-                 onclick="seleccionarOpcion(this,'${nombre}','${desc}',${p.precio ?? 0},${p.id_paquete})">
-                <div class="po-left">
+
+    tabsEl.innerHTML = keys.map((cat, i) =>
+        `<button class="cat-tab${i === 0 ? ' active' : ''}" onclick="cambiarCategoria('${cat}', this)">${CAT_LABEL[cat] ?? cat}</button>`
+    ).join('');
+
+    panelsEl.innerHTML = keys.map((cat, i) => {
+        const rows = grupos[cat].map(p => {
+            const nombre = (p.nombre_paquete || '').replace(/'/g, "\\'");
+            return `
+                <div class="paquete-option" onclick="seleccionarOpcion(this,'${nombre}',${p.precio ?? 0},${p.id_paquete})">
                     <div class="po-name">${p.nombre_paquete}</div>
-                    <div class="po-desc">${p.descripcion || ''}</div>
-                </div>
-                <span class="po-price">${formatters.moneda(p.precio ?? 0)}</span>
-                <i class="bi bi-check-circle-fill po-check"></i>
-            </div>`;
+                    <span class="po-price">${formatters.moneda(p.precio ?? 0)}</span>
+                    <i class="bi bi-check-circle-fill po-check"></i>
+                </div>`;
+        }).join('');
+        return `<div class="cat-panel overflow-auto${i === 0 ? ' active' : ''}" id="cat-panel-${cat}" style="max-height:20rem;">${rows}</div>`;
     }).join('');
 }
 
@@ -328,11 +348,11 @@ window.cambiarCategoria = function (cat, tabEl) {
     document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.cat-panel').forEach(p => p.classList.remove('active'));
     tabEl.classList.add('active');
-    document.getElementById(`panel-${cat}`)?.classList.add('active');
+    document.getElementById(`cat-panel-${cat}`)?.classList.add('active');
     state.paqueteSeleccionado = null;
 };
 
-window.seleccionarOpcion = function (el, nombre, desc, precio, idRef) {
+window.seleccionarOpcion = function (el, nombre, precio, idRef) {
     el.closest('.cat-panel')?.querySelectorAll('.paquete-option')
         .forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
@@ -517,8 +537,8 @@ async function init() {
         alerts.error('Error al cargar datos iniciales. Recarga la página.');
     }
 
-    /* 2. Poblar panel Quinceañeros */
-    _poblarQuinceaneros(state.todosPaquetes);
+    /* 2. Poblar modal de paquetes agrupado por categoría */
+    _poblarModalPaquetes(state.todosPaquetes);
 
     /* 3. Inicializar modal de servicios */
     _inicializarModalServicio();
