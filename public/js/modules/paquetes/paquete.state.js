@@ -20,6 +20,13 @@ export function categoriaDesdNombre(nombre) {
     return 'Otro';
 }
 
+/** Resuelve la categoría de display desde el paquete; usa campo DB cuando está disponible */
+export function categoriaDesPaquete(p) {
+    if (p.categoria === 'Cuadros')  return 'Cuadros';
+    if (p.categoria === 'Anuarios') return 'Anuarios';
+    return categoriaDesdNombre(p.nombre_paquete);
+}
+
 export function calcularStats(paquetes) {
     const precios = paquetes.map(p => parseFloat(p.precio) || 0);
     const total   = paquetes.length;
@@ -38,13 +45,7 @@ export function filtrar(todos, { busqueda = '', categoria = '', estadoFiltro = '
         if (busqueda && !nombre.includes(busqueda.toLowerCase())) return false;
 
         if (categoria) {
-            const key = CAT_KEYS[categoria];
-            if (key) {
-                if (!nombre.includes(key)) return false;
-            } else {
-                // "Otro" → solo los que no encajan en ninguna categoría conocida
-                if (categoriaDesdNombre(p.nombre_paquete) !== 'Otro') return false;
-            }
+            if (categoriaDesPaquete(p) !== categoria) return false;
         }
 
         if (estadoFiltro && p.estado?.toLowerCase() !== estadoFiltro.toLowerCase()) return false;

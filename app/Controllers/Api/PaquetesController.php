@@ -117,6 +117,7 @@ class PaquetesController extends BaseController
             'descripcion'      => $body['descripcion'] ?? null,
             'imagen'           => $body['imagen'] ?? null,
             'precio'           => $body['precio'],
+            'categoria'        => $body['categoria'] ?? null,
             'estado'           => 'ACTIVO',
         ]);
         $idPaquete = $this->db->insertID();
@@ -164,6 +165,7 @@ class PaquetesController extends BaseController
             'nivel_disponible' => $body['nivel_disponible'] ?? null,
             'descripcion'      => $body['descripcion'] ?? null,
             'precio'           => $body['precio'] ?? null,
+            'categoria'        => $body['categoria'] ?? null,
         ], fn($v) => $v !== null);
 
         if (!empty($updateData)) {

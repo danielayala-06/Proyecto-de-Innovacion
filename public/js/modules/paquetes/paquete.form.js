@@ -11,6 +11,19 @@ const NIVEL_MAP = {
     'Otro':         'otro',
 };
 
+// Maps UI select value → DB ENUM value
+const CAT_DB_MAP = {
+    'Cuadros':  'Cuadros',
+    'Anuarios': 'Anuarios',
+};
+
+// Maps DB ENUM → UI select value (only for known 1-to-1; 'otros' falls back to name inference)
+function _uiCatFromPaquete(p) {
+    if (p.categoria === 'Cuadros')  return 'Cuadros';
+    if (p.categoria === 'Anuarios') return 'Anuarios';
+    return categoriaDesdNombre(p.nombre_paquete);
+}
+
 const _set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
 const _get = (id)    => document.getElementById(id)?.value?.trim() ?? '';
 
@@ -53,7 +66,7 @@ export const form = {
         _set('pEstado', (p.estado ?? 'ACTIVO').toLowerCase());
 
         const cat = document.getElementById('pCategoria');
-        if (cat) cat.value = categoriaDesdNombre(p.nombre_paquete);
+        if (cat) cat.value = _uiCatFromPaquete(p);
 
         const lineas = (p.descripcion || '').split('\n').filter(Boolean);
         _set('pDesc', lineas[0] ?? '');
@@ -77,6 +90,7 @@ export const form = {
             nivel_disponible: NIVEL_MAP[cat] ?? 'otro',
             descripcion:      lineas.join('\n') || null,
             precio:           parseFloat(_get('pPrecio')),
+            categoria:        CAT_DB_MAP[cat] ?? 'otros',
         };
     },
 
@@ -90,6 +104,7 @@ export const form = {
                 nivel_disponible: NIVEL_MAP[cat] ?? 'otro',
                 descripcion:      lineas.join('\n') || null,
                 precio:           parseFloat(_get('pPrecio')),
+                categoria:        CAT_DB_MAP[cat] ?? 'otros',
             },
             estado: (_get('pEstado') || 'activo').toUpperCase(),
         };

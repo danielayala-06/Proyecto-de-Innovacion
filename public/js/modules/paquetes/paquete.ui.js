@@ -1,5 +1,5 @@
-import { formatters }         from '../../utils/formatters.js';
-import { categoriaDesdNombre } from './paquete.state.js';
+import { formatters }          from '../../utils/formatters.js';
+import { categoriaDesPaquete } from './paquete.state.js';
 
 const CAT_BADGE_CLASS = {
     'Quinceañeros': 'cat-quinceaneros',
@@ -10,8 +10,8 @@ const CAT_BADGE_CLASS = {
     'Otro':         'cat-otro',
 };
 
-function _catBadge(nombre) {
-    const cat = categoriaDesdNombre(nombre);
+function _catBadge(p) {
+    const cat = categoriaDesPaquete(p);
     const cls = CAT_BADGE_CLASS[cat] ?? 'cat-otro';
     return `<span class="pc-cat-badge ${cls}">${cat}</span>`;
 }
@@ -92,7 +92,7 @@ export const ui = {
             <div class="paquete-card">
                 <div class="pc-header">
                     <div>
-                        ${_catBadge(p.nombre_paquete)}
+                        ${_catBadge(p)}
                         <div class="pc-name">${p.nombre_paquete}</div>
                         ${desc ? `<div class="pc-desc">${desc}</div>` : ''}
                     </div>
