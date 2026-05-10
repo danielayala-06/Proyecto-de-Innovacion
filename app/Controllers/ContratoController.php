@@ -16,4 +16,9 @@ class ContratoController extends BaseController
 
         return view('contratos/index', $data);
     }
+
+    public function generarPDF(int $id)
+    {
+        return view('pdf/contrato');
+    }
 }

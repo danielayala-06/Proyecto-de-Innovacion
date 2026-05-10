@@ -18,6 +18,7 @@ $routes->get('/cotizaciones/crear', 'CotizacionController::crear');
 
 // CONTRATOS
 $routes->get('/contratos',       'ContratoController::index');
+$routes->get('/contratos/(:num)',       'ContratoController::generarPDF/$1');
 //$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
 
 // PAQUETES
