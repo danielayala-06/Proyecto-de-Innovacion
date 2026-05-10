@@ -258,19 +258,7 @@ class CotizacionesApi extends BaseController
                     ]);
             }
 
-            // actualizamos el estado
-            $this->service->actualizar(
-                (int) $id,
-                [
-                    'estado' => $estado,
-                    'observaciones' =>
-                        $cotizacion['cotizacion']['observaciones'],
-                    'total_estimado' =>
-                        $cotizacion['cotizacion']['total'],
-                    'detalles' =>
-                        $cotizacion['detalles']
-                ]
-            );
+            $this->service->cambiarEstado((int) $id, $estado);
 
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_OK)
@@ -320,11 +308,8 @@ class CotizacionesApi extends BaseController
                     ]);
             }
 
-            // Una cotizaion no se elimina se rechaza!!!!
-            $this->service->actualizar(
-                (int) $id,
-                ['estado'=>'RECHAZADA']
-            );
+            // Una cotización no se elimina, se rechaza
+            $this->service->cambiarEstado((int) $id, 'RECHAZADA');
 
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_OK)

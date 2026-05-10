@@ -230,6 +230,14 @@ class CotizacionService
     }
 
     /**
+     * Cambiar solo el estado de una cotización
+     */
+    public function cambiarEstado(int $idCotizacion, string $estado): void
+    {
+        $this->cotizacionModel->update($idCotizacion, ['estado' => $estado]);
+    }
+
+    /**
      * Listado general
      */
     public function listar(array $filters = []): array
