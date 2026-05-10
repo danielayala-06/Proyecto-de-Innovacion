@@ -70,9 +70,11 @@ export const ui = {
     }
 
     tbody.innerHTML = filas.map(c => {
-      const codigo = formatters.codigo(c.id);
-      const nombre = nombreCliente(c);
-      const canDel = c.estado?.toUpperCase() === 'PENDIENTE';
+      const codigo      = formatters.codigo(c.id);
+      const nombre      = nombreCliente(c);
+      const estado      = c.estado?.toUpperCase();
+      const canDel      = estado === 'PENDIENTE';
+      const canContract = estado === 'APROBADA';
 
       return `
         <tr>
@@ -88,6 +90,12 @@ export const ui = {
                       onclick="verDetalle(${c.id})">
                 <i class="bi bi-eye"></i>
               </button>
+              ${canContract ? `
+              <button class="btn-accion" title="Generar contrato"
+                      style="color:var(--accent);"
+                      onclick="irAGenerarContrato(${c.id})">
+                <i class="bi bi-file-earmark-plus"></i>
+              </button>` : ''}
               ${canDel ? `
               <button class="btn-accion del" title="Rechazar"
                       onclick="confirmarEliminar(${c.id},'${codigo}')">
