@@ -29,7 +29,7 @@ class ContratosController extends BaseController
     public function index()
     {
         $builder = $this->db->table('contratos cn')
-            ->select('cn.id_contrato, cn.fecha_creacion, cn.fecha_emision,
+            ->select('cn.id_contrato, cn.id_cotizacion, cn.fecha_creacion, cn.fecha_emision,
                       cn.adelanto, cn.total, cn.estado,
                       CONCAT(p.nombres, " ", COALESCE(p.apellidos,"")) AS cliente,
                       p.telefono,
@@ -69,18 +69,28 @@ class ContratosController extends BaseController
                 ->setJSON(['status' => 'error', 'message' => 'Contrato no encontrado']);
         }
 
-        // Pagos asociados
-        $pagos = $this->db->table('pagos pg')
+        // Pagos adicionales registrados
+        $pagosAdicionales = $this->db->table('pagos pg')
             ->select('pg.id_pago, pg.fecha, pg.monto, pg.moneda, pg.voucher, fp.nombre_forma_pago')
             ->join('formas_pago fp', 'fp.id_form_pago = pg.id_form_pago')
             ->where('pg.id_contrato', $id)
             ->orderBy('pg.fecha', 'ASC')
             ->get()->getResultArray();
 
-        $totalPagado = array_sum(array_column($pagos, 'monto'));
-        $saldo       = $contrato['total'] - $totalPagado;
+        // El adelanto inicial se muestra como primer pago en el historial
+        $adelantoEntry = [
+            'id_pago'           => null,
+            'fecha'             => $contrato['fecha_emision'] ?? $contrato['fecha_creacion'],
+            'monto'             => $contrato['adelanto'],
+            'moneda'            => 'PEN',
+            'voucher'           => null,
+            'nombre_forma_pago' => 'Adelanto inicial',
+        ];
 
-        $contrato['pagos']        = $pagos;
+        $totalPagado = (float)$contrato['adelanto'] + array_sum(array_column($pagosAdicionales, 'monto'));
+        $saldo       = (float)$contrato['total'] - $totalPagado;
+
+        $contrato['pagos']        = array_merge([$adelantoEntry], $pagosAdicionales);
         $contrato['total_pagado'] = $totalPagado;
         $contrato['saldo']        = round($saldo, 2);
 
@@ -101,13 +111,13 @@ class ContratosController extends BaseController
             'adelanto'      => 'required|decimal',
         ];
 
-        if (!$this->validate($rules)) {
+        $body = $this->request->getJSON(true) ?? [];
+
+        if (!$this->validateData($body, $rules)) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
                 ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
         }
-
-        $body = $this->request->getJSON(true);
 
         // Verificar cotización
         $cotizacion = $this->db->table('cotizaciones')
@@ -165,6 +175,38 @@ class ContratosController extends BaseController
                 'total'       => $cotizacion['total_estimado'],
                 'saldo'       => $cotizacion['total_estimado'] - $body['adelanto'],
             ]);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PATCH /api/contratos/{id}
+    // Body: { adelanto?, fecha_emision?, observaciones? }
+    // ────────────────────────────────────────────────────────────────────────
+    public function update($id)
+    {
+        $body = $this->request->getJSON(true) ?? [];
+
+        $contrato = $this->db->table('contratos')->where('id_contrato', $id)->get()->getRowArray();
+        if (!$contrato) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
+                ->setJSON(['status' => 'error', 'message' => 'Contrato no encontrado']);
+        }
+
+        $updateData = [];
+        if (array_key_exists('adelanto', $body))
+            $updateData['adelanto']     = max(0, (float)$body['adelanto']);
+        if (array_key_exists('fecha_emision', $body))
+            $updateData['fecha_emision'] = $body['fecha_emision'] ?: null;
+        if (array_key_exists('observaciones', $body))
+            $updateData['observaciones'] = $body['observaciones'] ?: null;
+
+        if (!empty($updateData)) {
+            $this->db->table('contratos')->where('id_contrato', $id)->update($updateData);
+        }
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON(['status' => 'success', 'message' => 'Contrato actualizado']);
     }
 
     // ────────────────────────────────────────────────────────────────────────
