@@ -3,10 +3,11 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
+use App\Transformers\ContratoTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
-
+use App\Services\contratos\ContratoService;
 /**
- * ContratosController
+ * ContratosApi
  * Base URL: /api/contratos
  *
  * GET    /api/contratos              → listar con filtros
@@ -14,13 +15,15 @@ use CodeIgniter\HTTP\ResponseInterface;
  * POST   /api/contratos              → crear (requiere cotización APROBADA)
  * PATCH  /api/contratos/{id}/estado  → cambiar estado
  */
-class ContratosController extends BaseController
+class ContratosApi extends BaseController
 {
-    protected $db;
+    protected ContratoService $contratoService;
+    protected ContratoTransformer $contratoTransformer;
 
     public function __construct()
     {
-        $this->db = \Config\Database::connect();
+        $this->contratoService = new ContratoService();
+        $this->contratoTransformer = new ContratoTransformer();
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -28,65 +31,41 @@ class ContratosController extends BaseController
     // ────────────────────────────────────────────────────────────────────────
     public function index()
     {
-        $builder = $this->db->table('contratos cn')
-            ->select('cn.id_contrato, cn.fecha_creacion, cn.fecha_emision,
-                      cn.adelanto, cn.total, cn.estado,
-                      CONCAT(p.nombres, " ", COALESCE(p.apellidos,"")) AS cliente,
-                      p.telefono,
-                      ct.total_estimado, ct.estado AS estado_cotizacion')
-            ->join('cotizaciones ct', 'ct.id_cotizacion = cn.id_cotizacion')
-            ->join('clientes c',      'c.id_cliente = ct.id_cliente')
-            ->join('personas p',      'p.id_persona = c.id_persona')
-            ->orderBy('cn.fecha_creacion', 'DESC');
-
-        if ($estado = $this->request->getGet('estado')) {
-            $builder->where('cn.estado', strtoupper($estado));
-        }
+        $contratos = $this->contratoService->listar();
 
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
-            ->setJSON(['status' => 'success', 'data' => $builder->get()->getResultArray()]);
+            ->setJSON([
+                'status' => 'success',
+                'data' => $this->contratoTransformer->transformMany($contratos)]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/contratos/{id}
-    // ────────────────────────────────────────────────────────────────────────
-    public function show($id)
+    /**
+     * Busca un contrato por su ID y lo devuelve.
+     * @param (int)$id
+     * @return ResponseInterface
+     */
+    public function show(int $id)
     {
-        $contrato = $this->db->table('contratos cn')
-            ->select('cn.*, CONCAT(p.nombres, " ", COALESCE(p.apellidos,"")) AS cliente,
-                      p.telefono, p.correo, c.id_cliente,
-                      ct.total_estimado, ct.observaciones AS obs_cotizacion')
-            ->join('cotizaciones ct', 'ct.id_cotizacion = cn.id_cotizacion')
-            ->join('clientes c',      'c.id_cliente = ct.id_cliente')
-            ->join('personas p',      'p.id_persona = c.id_persona')
-            ->where('cn.id_contrato', $id)
-            ->get()->getRowArray();
+        // Si no se envia el id envia un mensaje de error
+        if(!$id) $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+
+        // Enviamos el id al service para que el lo busque :D
+        $contrato = $this->contratoService->buscarPorID($id);
 
         if (!$contrato) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
-                ->setJSON(['status' => 'error', 'message' => 'Contrato no encontrado']);
+                ->setJSON([
+                    'status' => 'error',
+                    'message' => 'Contrato no encontrado']);
         }
-
-        // Pagos asociados
-        $pagos = $this->db->table('pagos pg')
-            ->select('pg.id_pago, pg.fecha, pg.monto, pg.moneda, pg.voucher, fp.nombre_forma_pago')
-            ->join('formas_pago fp', 'fp.id_form_pago = pg.id_form_pago')
-            ->where('pg.id_contrato', $id)
-            ->orderBy('pg.fecha', 'ASC')
-            ->get()->getResultArray();
-
-        $totalPagado = array_sum(array_column($pagos, 'monto'));
-        $saldo       = $contrato['total'] - $totalPagado;
-
-        $contrato['pagos']        = $pagos;
-        $contrato['total_pagado'] = $totalPagado;
-        $contrato['saldo']        = round($saldo, 2);
 
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
-            ->setJSON(['status' => 'success', 'data' => $contrato]);
+            ->setJSON([
+                'status' => 'success',
+                'data' => $this->contratoTransformer->transform($contrato)]);
     }
 
     // ────────────────────────────────────────────────────────────────────────

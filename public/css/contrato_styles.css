@@ -1,0 +1,181 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #1a1a1a;
+    background: #d0d0d0;
+}
+
+.page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 20px auto;
+    background: #fff;
+    padding: 14mm 16mm 14mm 16mm;
+    box-shadow: 0 4px 24px rgba(0,0,0,.18);
+}
+
+/* ═══ HEADER ═══ */
+.header {
+    display: table;
+    width: 100%;
+    border-bottom: 2.5px solid #1b2d6b;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+}
+.header-left, .header-center, .header-right {
+    display: table-cell;
+    vertical-align: middle;
+}
+.header-center { text-align: center; }
+.header-right  { text-align: right; white-space: nowrap; width: 136px; }
+
+.logo-text {
+    font-size: 21px; color: #1b2d6b;
+    font-style: italic; font-weight: bold;
+    font-family: Georgia, serif; line-height: 1.1;
+}
+.logo-sub {
+    font-size: 8px; letter-spacing: 2px;
+    text-transform: lowercase; color: #1b2d6b;
+}
+
+.title-contrato {
+    font-size: 30px; font-weight: 900;
+    letter-spacing: 5px; color: #1b2d6b;
+    text-transform: uppercase;
+}
+.header-contact {
+    font-size: 8.5px; color: #444;
+    margin-top: 4px; line-height: 1.6;
+}
+
+.date-table { border-collapse: collapse; width: 126px; margin-bottom: 5px; }
+.date-table th {
+    background: #1b2d6b; color: #fff;
+    font-size: 8px; padding: 3px 6px;
+    border: 1px solid #1b2d6b; font-weight: 700;
+}
+.date-table td {
+    border: 1px solid #1b2d6b; padding: 4px 6px;
+    font-size: 13px; font-weight: 700;
+    text-align: center; color: #1b2d6b;
+}
+.numero-contrato {
+    font-size: 22px; font-weight: 900;
+    color: #c0392b; letter-spacing: 1px;
+}
+
+/* ═══ CAMPOS ═══ */
+.field-row {
+    display: table; width: 100%;
+    border-bottom: 1px solid #777;
+    margin-bottom: 7px; padding-bottom: 1px;
+}
+.field-label {
+    display: table-cell; font-weight: 700;
+    font-size: 10.5px; white-space: nowrap;
+    padding-right: 6px; width: 1%;
+}
+.field-value {
+    display: table-cell; font-size: 11px;
+    color: #1b2d6b; font-weight: 700;
+}
+.two-col { display: table; width: 100%; margin-bottom: 7px; }
+.two-col .col { display: table-cell; width: 50%; }
+.two-col .col:first-child { padding-right: 14px; }
+.two-col .col .field-row { margin-bottom: 0; }
+
+/* ═══ TIPO DE SERVICIO ═══ */
+.section-title {
+    font-weight: 700; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .5px;
+    margin-bottom: 7px; margin-top: 4px;
+}
+.services-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+.services-table td { padding: 3px 4px; font-size: 10.5px; vertical-align: middle; }
+
+.cb {
+    display: inline-block; width: 12px; height: 12px;
+    border: 1.5px solid #555; vertical-align: middle;
+    position: relative; margin-right: 4px;
+}
+.cb.checked { border-color: #1b2d6b; }
+.cb.checked::after {
+    content: '✕'; position: absolute;
+    top: -3px; left: 1px; font-size: 12px;
+    color: #1b2d6b; font-weight: 900;
+}
+.svc-line {
+    display: inline-block; border-bottom: 1px solid #888;
+    min-width: 110px; vertical-align: bottom;
+    color: #1b2d6b; font-weight: 700;
+}
+
+.sesion-row { display: table; width: 100%; margin-bottom: 6px; }
+.sesion-label { display: table-cell; font-weight: 700; font-size: 10.5px; white-space: nowrap; padding-right: 6px; }
+.sesion-value { display: table-cell; border-bottom: 1px solid #777; color: #1b2d6b; font-weight: 700; }
+
+/* ═══ POR LO SIGUIENTE ═══ */
+.desc-line {
+    border-bottom: 1px solid #aaa; min-height: 17px;
+    margin-bottom: 5px; color: #1b2d6b;
+    font-size: 10.5px; font-weight: 600; padding: 1px 2px;
+}
+
+/* ═══ CLÁUSULAS + PRECIOS ═══ */
+.bottom-grid { display: table; width: 100%; margin-top: 12px; }
+.bottom-left  { display: table-cell; vertical-align: top; padding-right: 14px; }
+.bottom-right { display: table-cell; vertical-align: middle; width: 175px; }
+
+.clausulas-box { border: 1.5px solid #888; border-radius: 5px; padding: 8px 10px; }
+.clausulas-title { text-align: center; font-weight: 700; font-size: 11px; margin-bottom: 6px; }
+.clausulas-box ol { padding-left: 13px; font-size: 8.2px; line-height: 1.55; color: #222; }
+.clausulas-box ol li { margin-bottom: 2px; }
+
+.price-block { margin-bottom: 10px; }
+.price-label { font-size: 11px; font-weight: 900; letter-spacing: 1px; color: #1b2d6b; margin-bottom: 3px; text-transform: uppercase; }
+.price-pill { background: #d4daea; border-radius: 22px; padding: 6px 16px; font-size: 16px; font-weight: 900; text-align: center; }
+
+/* ═══ FIRMAS ═══ */
+.signatures { display: table; width: 100%; margin-top: 40px; }
+.sig-col {
+    display: table-cell; text-align: center;
+    width: 50%; padding: 0 20px; vertical-align: bottom;
+}
+
+/* Espacio en blanco para firmar a mano */
+.sig-space { height: 56px; }
+
+.sig-line { border-top: 1.5px solid #333; margin-bottom: 5px; }
+
+.sig-name { font-weight: 700; font-size: 11px; }
+.sig-sub  { font-size: 9px; color: #555; margin-top: 2px; }
+
+/* Línea punteada DNI para rellenar a mano */
+.dni-row { margin-top: 7px; font-size: 10px; font-weight: 600; }
+.dni-dots {
+    display: inline-block;
+    border-bottom: 1.5px dotted #555;
+    width: 115px;
+    vertical-align: bottom;
+    height: 14px;
+    margin-left: 2px;
+}
+
+/* Botón solo visible en pantalla */
+.btn-pdf {
+    display: block; margin: 22px auto 30px;
+    padding: 10px 32px; background: #1b2d6b;
+    color: #fff; border: none; border-radius: 6px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: Arial, sans-serif; letter-spacing: 1px;
+}
+.btn-pdf:hover { background: #142255; }
+
+@media print {
+    body { background: #fff; }
+    .page { box-shadow: none; margin: 0; }
+    .btn-pdf { display: none !important; }
+}

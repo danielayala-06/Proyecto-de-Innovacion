@@ -18,6 +18,7 @@ $routes->get('/cotizaciones/crear', 'CotizacionController::crear');
 
 // CONTRATOS
 $routes->get('/contratos',       'ContratoController::index');
+$routes->get('/contratos/(:num)',       'ContratoController::generarPDF/$1');
 //$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
 
 // PAQUETES
@@ -59,10 +60,10 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
     $routes->delete('cotizaciones/(:num)',        'CotizacionesApi::delete/$1');
 
     // ── Contratos ─────────────────────────────────────────────────────────────
-    $routes->get   ('contratos',              'ContratosController::index');
-    $routes->get   ('contratos/(:num)',        'ContratosController::show/$1');
-    $routes->post  ('contratos',              'ContratosController::create');
-    $routes->patch ('contratos/(:num)/estado', 'ContratosController::cambiarEstado/$1');
+    $routes->get   ('contratos',              'ContratosApi::index');
+    $routes->get   ('contratos/(:num)',        'ContratosApi::show/$1');
+    $routes->post  ('contratos',              'ContratosApi::create');
+    $routes->patch ('contratos/(:num)/estado', 'ContratosApi::cambiarEstado/$1');
 
     // ── Pagos ─────────────────────────────────────────────────────────────────
     $routes->get   ('pagos',        'PagosController::index');       // ?contrato=1
