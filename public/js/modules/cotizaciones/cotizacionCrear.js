@@ -15,6 +15,55 @@ const state = {
     paqueteSeleccionado: null,
 };
 
+/* ── Reglas de validación por tipo de documento ───────────────── */
+const DOC_RULES = {
+    DNI:       { regex: /^\d{8}$/,              hint: '8 dígitos numéricos',            maxlen: 8  },
+    CE:        { regex: /^[A-Za-z0-9]{9}$/,     hint: '9 caracteres alfanuméricos',     maxlen: 9  },
+    PASAPORTE: { regex: /^[A-Za-z0-9]{6,12}$/,  hint: '6 a 12 caracteres alfanuméricos', maxlen: 12 },
+};
+
+function _actualizarPlaceholderDoc() {
+    const tipo = document.getElementById('tipoDocumento')?.value ?? 'DNI';
+    const inp  = document.getElementById('dniCliente');
+    if (!inp) return;
+    inp.placeholder = DOC_RULES[tipo]?.hint ?? 'Número de documento';
+    inp.maxLength   = DOC_RULES[tipo]?.maxlen ?? 12;
+}
+
+const TEL_REGEX = /^9\d{8}$/;
+
+function _validarTel() {
+    const val        = document.getElementById('telefonoCliente')?.value?.trim() ?? '';
+    const feedbackEl = document.getElementById('telFeedback');
+    if (!feedbackEl) return;
+    if (!val) { feedbackEl.textContent = ''; return; }
+    if (TEL_REGEX.test(val)) {
+        feedbackEl.style.color = 'var(--green-text)';
+        feedbackEl.textContent = '✓ Número válido';
+    } else {
+        feedbackEl.style.color = 'var(--red-text)';
+        feedbackEl.textContent = val[0] !== '9'
+            ? 'Debe empezar por 9'
+            : 'Debe tener exactamente 9 dígitos';
+    }
+}
+
+function _validarDoc() {
+    const tipo      = document.getElementById('tipoDocumento')?.value ?? 'DNI';
+    const val       = document.getElementById('dniCliente')?.value?.trim() ?? '';
+    const feedbackEl = document.getElementById('docFeedback');
+    if (!feedbackEl) return;
+    if (!val) { feedbackEl.textContent = ''; return; }
+    const rule = DOC_RULES[tipo];
+    if (rule?.regex.test(val)) {
+        feedbackEl.style.color   = 'var(--green-text)';
+        feedbackEl.textContent   = '✓ Formato válido';
+    } else {
+        feedbackEl.style.color   = 'var(--red-text)';
+        feedbackEl.textContent   = `Formato esperado: ${rule?.hint ?? ''}`;
+    }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    SECCIÓN CLIENTE
 ═══════════════════════════════════════════════════════════════ */
@@ -25,11 +74,12 @@ function _setClienteExistente(c) {
     state.esNuevoCliente = false;
 
     _llenarCamposCliente({
-        nombres:   c.nombres           ?? '',
-        apellidos: c.apellidos         ?? '',
-        dni:       c.numero_documento  ?? '',
-        telefono:  c.telefono          ?? '',
-        correo:    c.correo            ?? '',
+        nombres:   c.nombres          ?? '',
+        apellidos: c.apellidos        ?? '',
+        tipoDoc:   c.tipo_documento   ?? 'DNI',
+        dni:       c.numero_documento ?? '',
+        telefono:  c.telefono         ?? '',
+        correo:    c.correo           ?? '',
     });
     _setCamposClienteReadonly(true);
 
@@ -60,7 +110,7 @@ function _limpiarCliente() {
     state.cliente        = null;
     state.esNuevoCliente = false;
 
-    _llenarCamposCliente({ nombres: '', apellidos: '', dni: '', telefono: '', correo: '' });
+    _llenarCamposCliente({ nombres: '', apellidos: '', tipoDoc: 'DNI', dni: '', telefono: '', correo: '' });
     _setCamposClienteReadonly(false);
     document.getElementById('idCliente').value = '';
 
@@ -83,21 +133,26 @@ function _buscarPorDni(dni) {
 }
 
 /* ── Helpers de UI para el cliente ───────────────────────────── */
-function _llenarCamposCliente({ nombres, apellidos, dni, telefono, correo }) {
+function _llenarCamposCliente({ nombres, apellidos, tipoDoc = 'DNI', dni, telefono, correo }) {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
     set('nombresCliente',   nombres);
     set('apellidosCliente', apellidos);
+    set('tipoDocumento',    tipoDoc);
     set('dniCliente',       dni);
     set('telefonoCliente',  telefono);
     set('emailCliente',     correo);
+    _actualizarPlaceholderDoc();
+    _validarDoc();
 }
 
-const CAMPOS_CLIENTE_IDS = ['nombresCliente', 'apellidosCliente', 'dniCliente', 'telefonoCliente', 'emailCliente'];
+const CAMPOS_CLIENTE_IDS = ['nombresCliente', 'apellidosCliente', 'tipoDocumento', 'dniCliente', 'telefonoCliente', 'emailCliente'];
 
 function _setCamposClienteReadonly(readonly) {
     CAMPOS_CLIENTE_IDS.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.readOnly = readonly;
+        if (!el) return;
+        if (el.tagName === 'SELECT') el.disabled = readonly;
+        else                         el.readOnly  = readonly;
     });
 }
 
@@ -136,7 +191,7 @@ function _mostrarBtnCambiar(visible) {
         _btnCambiarEl = document.createElement('button');
         _btnCambiarEl.type = 'button';
         _btnCambiarEl.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Cambiar cliente';
-        _btnCambiarEl.style.cssText = 'font-size:0.78rem;border:none;background:none;color:#6c757d;cursor:pointer;text-decoration:underline;padding:2px 0;';
+        _btnCambiarEl.style.cssText = 'font-size:0.78rem;border:none;background:none;color:var(--text-muted);cursor:pointer;text-decoration:underline;padding:2px 0;';
         _btnCambiarEl.addEventListener('click', _limpiarCliente);
         _badgeEl?.after(_btnCambiarEl);
     }
@@ -158,25 +213,26 @@ function _mostrarDropdown(resultados) {
         _dropdown = document.createElement('div');
         _dropdown.style.cssText = `
             position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:1055;
-            background:#fff;border:1px solid #dee2e6;border-radius:6px;
+            background:var(--bg-elevated);border:1px solid var(--border-color);border-radius:6px;
+            color:var(--text-primary);
             max-height:220px;overflow-y:auto;
-            box-shadow:0 4px 12px rgba(0,0,0,.12);`;
+            box-shadow:0 4px 16px rgba(0,0,0,.25);`;
         const wrap = document.querySelector('.search-wrap');
         if (wrap) { wrap.style.position = 'relative'; wrap.appendChild(_dropdown); }
     }
 
     if (!resultados.length) {
-        _dropdown.innerHTML = `<div style="padding:8px 14px;font-size:0.82rem;color:#6c757d;">Sin resultados.</div>`;
+        _dropdown.innerHTML = `<div style="padding:8px 14px;font-size:0.82rem;color:var(--text-muted);">Sin resultados.</div>`;
     } else {
         _dropdown.innerHTML = resultados.map(c => `
             <div class="dd-item" data-id="${c.id_cliente}"
-                 style="padding:8px 14px;cursor:pointer;font-size:0.83rem;border-bottom:1px solid #f5f5f5;">
-                <strong>${c.nombres} ${c.apellidos ?? ''}</strong>
-                <small class="d-block" style="color:#888;">${c.numero_documento ?? ''} · ${c.telefono ?? ''}</small>
+                 style="padding:8px 14px;cursor:pointer;font-size:0.83rem;border-bottom:1px solid var(--border-color);">
+                <strong style="color:var(--text-primary);">${c.nombres} ${c.apellidos ?? ''}</strong>
+                <small class="d-block" style="color:var(--text-muted);">${c.numero_documento ?? ''} · ${c.telefono ?? ''}</small>
             </div>`).join('');
 
         _dropdown.querySelectorAll('.dd-item').forEach(el => {
-            el.addEventListener('mouseenter', () => { el.style.background = '#f8f9fa'; });
+            el.addEventListener('mouseenter', () => { el.style.background = 'var(--bg-hover)'; });
             el.addEventListener('mouseleave', () => { el.style.background = ''; });
             el.addEventListener('click', () => {
                 const cliente = state.todosClientes.find(c => c.id_cliente === parseInt(el.dataset.id));
@@ -389,6 +445,7 @@ function _saveDraft() {
         camposCliente: state.esNuevoCliente ? {
             nombres:   document.getElementById('nombresCliente')?.value   ?? '',
             apellidos: document.getElementById('apellidosCliente')?.value ?? '',
+            tipoDoc:   document.getElementById('tipoDocumento')?.value    ?? 'DNI',
             dni:       document.getElementById('dniCliente')?.value       ?? '',
             telefono:  document.getElementById('telefonoCliente')?.value  ?? '',
             correo:    document.getElementById('emailCliente')?.value     ?? '',
@@ -419,7 +476,7 @@ function _restoreDraft(borrador) {
         _setClienteExistente(borrador.cliente);
     } else if (borrador.esNuevoCliente && borrador.camposCliente) {
         const c = borrador.camposCliente;
-        _llenarCamposCliente({ nombres: c.nombres, apellidos: c.apellidos, dni: c.dni, telefono: c.telefono, correo: c.correo });
+        _llenarCamposCliente({ nombres: c.nombres, apellidos: c.apellidos, tipoDoc: c.tipoDoc ?? 'DNI', dni: c.dni, telefono: c.telefono, correo: c.correo });
         _setModoNuevoCliente();
     }
 
@@ -452,17 +509,21 @@ function _restoreDraft(borrador) {
 ═══════════════════════════════════════════════════════════════ */
 function _validar() {
     if (!state.cliente && !state.esNuevoCliente) {
-        return 'Ingresa el DNI del cliente y presiona Buscar.';
+        return 'Busca un cliente existente o ingresa sus datos para registrar uno nuevo.';
     }
 
     if (state.esNuevoCliente) {
         const nombres  = document.getElementById('nombresCliente')?.value?.trim();
+        const tipoDoc  = document.getElementById('tipoDocumento')?.value ?? 'DNI';
         const dni      = document.getElementById('dniCliente')?.value?.trim();
         const telefono = document.getElementById('telefonoCliente')?.value?.trim();
-        if (!nombres)  return 'El nombre del cliente es obligatorio.';
-        if (!dni)      return 'El DNI/documento del cliente es obligatorio.';
+        if (!nombres) return 'El nombre del cliente es obligatorio.';
+        if (!dni)     return 'El número de documento es obligatorio.';
+        const rule = DOC_RULES[tipoDoc];
+        if (rule && !rule.regex.test(dni))
+            return `Documento inválido para ${tipoDoc}: se esperan ${rule.hint}.`;
         if (!telefono) return 'El teléfono del cliente es obligatorio.';
-        if (!/^\d{9}$/.test(telefono)) return 'El teléfono debe tener exactamente 9 dígitos.';
+        if (!TEL_REGEX.test(telefono)) return 'El teléfono debe tener 9 dígitos y comenzar con 9.';
     }
 
     if (!state.items.length)  return 'Agrega al menos un paquete o servicio a la cotización.';
@@ -554,8 +615,24 @@ async function init() {
 
     /* ── SECCIÓN CLIENTE ── */
 
-    /* 6a. Campo DNI: buscar cuando tiene 6+ chars y se pierde el foco */
+    /* 6a. Teléfono: solo dígitos, feedback en tiempo real */
+    document.getElementById('telefonoCliente')?.addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 9);
+        _validarTel();
+    });
+
+    /* 6b. Inicializar placeholder y listeners de tipo de documento */
+    _actualizarPlaceholderDoc();
+    document.getElementById('tipoDocumento')?.addEventListener('change', () => {
+        _actualizarPlaceholderDoc();
+        _validarDoc();
+        document.getElementById('dniCliente').value = '';
+        document.getElementById('docFeedback').textContent = '';
+    });
+
+    /* 6b. Campo documento: buscar al perder el foco */
     const dniInput = document.getElementById('dniCliente');
+    dniInput?.addEventListener('input', () => _validarDoc());
     dniInput?.addEventListener('blur', () => {
         if (state.cliente || state.esNuevoCliente) return; // ya hay selección
         const dni = dniInput.value.trim();
@@ -569,12 +646,13 @@ async function init() {
         }
     });
 
-    /* 6b. Si el DNI ya seleccionado se edita, resetear la selección */
+    /* 6c. Si el documento ya seleccionado se edita, resetear la selección */
     dniInput?.addEventListener('input', () => {
         if (state.cliente || state.esNuevoCliente) {
             const valorActual = dniInput.value;
             _limpiarCliente();
             dniInput.value = valorActual;
+            _validarDoc();
         }
     });
 
@@ -685,7 +763,7 @@ async function init() {
                     nombres:              document.getElementById('nombresCliente')?.value?.trim(),
                     apellidos:            document.getElementById('apellidosCliente')?.value?.trim() || null,
                     numero_documento:     document.getElementById('dniCliente')?.value?.trim(),
-                    tipo_documento:       'DNI',
+                    tipo_documento:       document.getElementById('tipoDocumento')?.value ?? 'DNI',
                     telefono:             document.getElementById('telefonoCliente')?.value?.trim(),
                     correo:               document.getElementById('emailCliente')?.value?.trim() || null,
                     metodo_comunicacion:  'whatsapp',

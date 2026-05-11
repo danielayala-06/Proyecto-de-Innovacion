@@ -46,13 +46,26 @@
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label for="dniCliente" class="form-label">DNI*</label>
-                                <input type="text" class="form-control" id="dniCliente" name="dni">
+                                <label class="form-label">Documento*</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="tipoDocumento" name="tipo_documento"
+                                            style="max-width:175px;flex-shrink:0;">
+                                        <option value="DNI">DNI</option>
+                                        <option value="CE">Carnet de Extranjería</option>
+                                        <option value="PASAPORTE">Pasaporte</option>
+                                    </select>
+                                    <input type="text" class="form-control" id="dniCliente"
+                                           name="dni" placeholder="8 dígitos numéricos"
+                                           maxlength="12">
+                                </div>
+                                <div id="docFeedback" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
                             </div>
 
                             <div class="col-12 col-md-6">
                                 <label for="telefonoCliente" class="form-label">Teléfono*</label>
-                                <input type="text" class="form-control" id="telefonoCliente" name="telefono">
+                                <input type="text" class="form-control" id="telefonoCliente"
+                                       name="telefono" placeholder="9XXXXXXXX" maxlength="9">
+                                <div id="telFeedback" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
                             </div>
 
                             <div class="col-12 col-md-6">

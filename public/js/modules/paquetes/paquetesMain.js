@@ -16,7 +16,7 @@ async function cargarPaquetes() {
     try {
         const res       = await paqueteApi.listar();
         state.todos     = res.data ?? [];
-        state.filtrados = [...state.todos];
+        state.filtrados = filtrar(state.todos, {});
         ui.renderStats(calcularStats(state.todos));
         ui.renderGrid(state.filtrados);
     } catch {

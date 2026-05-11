@@ -40,7 +40,7 @@ export function calcularStats(paquetes) {
 }
 
 export function filtrar(todos, { busqueda = '', categoria = '', estadoFiltro = '' }) {
-    return todos.filter(p => {
+    const resultado = todos.filter(p => {
         const nombre = (p.nombre_paquete || '').toLowerCase();
 
         if (busqueda && !nombre.includes(busqueda.toLowerCase())) return false;
@@ -53,4 +53,9 @@ export function filtrar(todos, { busqueda = '', categoria = '', estadoFiltro = '
 
         return true;
     });
+
+    // Activos primero, inactivos al final (mantiene orden por precio dentro de cada grupo)
+    return resultado.sort((a, b) =>
+        (a.estado === 'ACTIVO' ? 0 : 1) - (b.estado === 'ACTIVO' ? 0 : 1)
+    );
 }
