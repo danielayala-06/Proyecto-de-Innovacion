@@ -119,20 +119,26 @@ class ContratoService
                 ->first();
         if (!$contrato) return null;
 
-        $pagos = $this->db
+        $pagosAdicionales = $this->db
             ->table('pagos pg')
             ->select('pg.fecha, pg.monto, fp.nombre_forma_pago')
-            ->join('formas_pago fp', 'fp.id_form_pago = pg.id_form_pago')
+            ->join('formas_pago fp', 'fp.id_form_pago = pg.id_form_pago', 'left')
             ->where('pg.id_contrato', $id)
             ->orderBy('pg.fecha', 'ASC')
             ->get()->getResultArray();
 
-        $sumPagos    = array_sum(array_column($pagos, 'monto'));
         $adelanto    = (float) $contrato['adelanto'];
         $total       = (float) $contrato['total'];
+        $sumPagos    = array_sum(array_column($pagosAdicionales, 'monto'));
         $totalPagado = $adelanto + $sumPagos;
 
-        $contrato['pagos']        = $pagos;
+        $adelantoEntry = [
+            'fecha'             => $contrato['fecha_creacion'],
+            'monto'             => $adelanto,
+            'nombre_forma_pago' => 'Adelanto inicial',
+        ];
+
+        $contrato['pagos']        = array_merge([$adelantoEntry], $pagosAdicionales);
         $contrato['total_pagado'] = round($totalPagado, 2);
         $contrato['saldo']        = round($total - $totalPagado, 2);
 
