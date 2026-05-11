@@ -63,18 +63,18 @@ export const ui = {
     }
 
     tbody.innerHTML = filas.map(c => {
-      const cod      = formatters.codigo(c.id_contrato);
+      const cod      = formatters.codigo(c.id);
       const cotCod   = c.id_cotizacion ? formatters.codigo(c.id_cotizacion) : '—';
       const isActivo = c.estado?.toUpperCase() === 'ACTIVO';
       const editAttr = isActivo
-        ? `onclick="event.stopPropagation();editarContrato(${c.id_contrato})"  title="Corregir contrato"`
+        ? `onclick="event.stopPropagation();editarContrato(${c.id})"  title="Corregir contrato"`
         : `disabled title="Solo se puede editar un contrato vigente"`;
 
       return `
-        <tr onclick="verDetalleContrato(${c.id_contrato})">
+        <tr onclick="verDetalleContrato(${c.id})">
           <td><span class="con-codigo">${cod}</span></td>
           <td><span class="con-cot-ref-small">${cotCod}</span></td>
-          <td>${c.cliente ?? '—'}</td>
+          <td>${c.cliente?.nombre ?? '—'}</td>
           <td style="color:var(--text-muted);">—</td>
           <td>${formatters.moneda(c.total)}</td>
           <td>${badgeEstado(c.estado)}</td>
@@ -82,7 +82,7 @@ export const ui = {
           <td>
             <div class="con-actions">
               <button class="btn btn-sm btn-outline-secondary" title="Ver detalle"
-                      onclick="event.stopPropagation();verDetalleContrato(${c.id_contrato})">
+                      onclick="event.stopPropagation();verDetalleContrato(${c.id})">
                 <i class="bi bi-eye"></i>
               </button>
               <button class="btn btn-sm btn-outline-warning" ${editAttr}>
@@ -180,7 +180,7 @@ export const ui = {
       <div class="row g-2 mb-3" style="font-size:.84rem;">
         <div class="col-6">
           <span style="color:var(--text-muted);">Código contrato</span><br>
-          <span class="con-codigo">${formatters.codigo(data.id_contrato)}</span>
+          <span class="con-codigo">${formatters.codigo(data.id)}</span>
         </div>
         <div class="col-6">
           <span style="color:var(--text-muted);">Estado</span><br>
@@ -188,11 +188,11 @@ export const ui = {
         </div>
         <div class="col-6">
           <span style="color:var(--text-muted);">Cliente</span><br>
-          <strong>${data.cliente ?? '—'}</strong>
+          <strong>${data.cliente?.nombre ?? '—'}</strong>
         </div>
         <div class="col-6">
           <span style="color:var(--text-muted);">Teléfono</span><br>
-          ${data.telefono ?? '—'}
+          ${data.cliente?.telefono ?? '—'}
         </div>
         <div class="col-6">
           <span style="color:var(--text-muted);">Total contrato</span><br>

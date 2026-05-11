@@ -63,6 +63,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
     $routes->get   ('contratos',              'ContratosApi::index');
     $routes->get   ('contratos/(:num)',        'ContratosApi::show/$1');
     $routes->post  ('contratos',              'ContratosApi::create');
+    $routes->patch ('contratos/(:num)',        'ContratosApi::update/$1');
     $routes->patch ('contratos/(:num)/estado', 'ContratosApi::cambiarEstado/$1');
 
     // ── Pagos ─────────────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Transformers\ContratoTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Services\contratos\ContratoService;
+use Config\Database;
 /**
  * ContratosApi
  * Base URL: /api/contratos
@@ -19,11 +20,13 @@ class ContratosApi extends BaseController
 {
     protected ContratoService $contratoService;
     protected ContratoTransformer $contratoTransformer;
+    protected $db;
 
     public function __construct()
     {
-        $this->contratoService = new ContratoService();
+        $this->contratoService     = new ContratoService();
         $this->contratoTransformer = new ContratoTransformer();
+        $this->db                  = Database::connect();
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -75,18 +78,19 @@ class ContratosApi extends BaseController
     // ────────────────────────────────────────────────────────────────────────
     public function create()
     {
+        $body = $this->request->getJSON(true) ?? [];
+
         $rules = [
             'id_cotizacion' => 'required|integer',
             'adelanto'      => 'required|decimal',
         ];
 
-        if (!$this->validate($rules)) {
+        $validation = \Config\Services::validation();
+        if (!$validation->setRules($rules)->run($body)) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
-                ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
+                ->setJSON(['status' => 'error', 'errors' => $validation->getErrors()]);
         }
-
-        $body = $this->request->getJSON(true);
 
         // Verificar cotización
         $cotizacion = $this->db->table('cotizaciones')
@@ -180,5 +184,52 @@ class ContratosApi extends BaseController
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON(['status' => 'success', 'message' => "Estado del contrato cambiado a {$estado}"]);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // PATCH /api/contratos/{id}
+    // Body: { adelanto?, fecha_emision?, observaciones? }
+    // ────────────────────────────────────────────────────────────────────────
+    public function update(int $id)
+    {
+        $contrato = $this->db->table('contratos')->where('id_contrato', $id)->get()->getRowArray();
+
+        if (!$contrato) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
+                ->setJSON(['status' => 'error', 'message' => 'Contrato no encontrado']);
+        }
+
+        if ($contrato['estado'] !== 'ACTIVO') {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_CONFLICT)
+                ->setJSON(['status' => 'error', 'message' => 'Solo se puede editar contratos ACTIVOS']);
+        }
+
+        $body       = $this->request->getJSON(true) ?? [];
+        $updateData = [];
+
+        if (isset($body['adelanto'])) {
+            $cot = $this->db->table('cotizaciones')
+                ->where('id_cotizacion', $contrato['id_cotizacion'])
+                ->get()->getRowArray();
+            if ((float)$body['adelanto'] > (float)$cot['total_estimado']) {
+                return $this->response
+                    ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                    ->setJSON(['status' => 'error', 'message' => 'El adelanto no puede superar el total de la cotización']);
+            }
+            $updateData['adelanto'] = $body['adelanto'];
+        }
+
+        if (array_key_exists('fecha_emision', $body)) $updateData['fecha_emision'] = $body['fecha_emision'];
+        if (array_key_exists('observaciones', $body))  $updateData['observaciones']  = $body['observaciones'];
+
+        if (!empty($updateData)) {
+            $this->db->table('contratos')->where('id_contrato', $id)->update($updateData);
+        }
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON(['status' => 'success', 'message' => 'Contrato actualizado']);
     }
 }

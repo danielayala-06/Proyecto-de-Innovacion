@@ -23,8 +23,8 @@ function _filtrar() {
   const estadoMap = { vigente: 'ACTIVO', completado: 'COMPLETADO', cancelado: 'CANCELADO' };
 
   state.filtradas = state.filas.filter(c => {
-    const nombre   = (c.cliente ?? '').toLowerCase();
-    const cod      = String(c.id_contrato);
+    const nombre   = (c.cliente?.nombre ?? '').toLowerCase();
+    const cod      = String(c.id);
     const okSearch = !search || nombre.includes(search) || cod.includes(search);
     const okEstado = !estado || c.estado?.toUpperCase() === (estadoMap[estado] ?? estado.toUpperCase());
     return okSearch && okEstado;
@@ -98,7 +98,7 @@ window.sortBy = function (key) {
 
   const dir = state.sortDir === 'asc' ? 1 : -1;
   const keyMap = {
-    codigo:       'id_contrato',
+    codigo:       'id',
     cotizacionCod:'id_cotizacion',
     cliente:      'cliente',
     tipoEvento:   'tipo_evento',
@@ -268,7 +268,7 @@ window.editarContrato = async function (id) {
           <div style="flex:1;">
             <span>Contrato seleccionado</span>
             <div style="display:flex;gap:10px;align-items:center;margin-top:3px;">
-              <strong style="font-size:.9rem;">${data.cliente ?? '—'}</strong>
+              <strong style="font-size:.9rem;">${data.cliente?.nombre ?? '—'}</strong>
               <span class="con-codigo">${formatters.codigo(id)}</span>
             </div>
           </div>
@@ -331,7 +331,7 @@ window.cambiarEstadoContrato = async function (id, estado) {
     _modalDet?.hide();
     alerts.ok(estado === 'COMPLETADO' ? 'Contrato completado.' : 'Estado actualizado.');
 
-    const row = state.filas.find(c => c.id_contrato == id);
+    const row = state.filas.find(c => c.id == id);
     if (row) row.estado = estado;
     ui.renderStats(calcularStats(state.filas));
     _renderPagina();
@@ -360,7 +360,7 @@ window.eliminarContrato = async function () {
     _modalDet?.hide();
     alerts.ok('Contrato cancelado.');
 
-    const row = state.filas.find(c => c.id_contrato == _pendingId);
+    const row = state.filas.find(c => c.id == _pendingId);
     if (row) row.estado = 'CANCELADO';
     _pendingId = null;
 
