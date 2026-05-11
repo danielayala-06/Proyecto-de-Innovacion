@@ -16,11 +16,17 @@ class Paquetes extends Migration
                 ['type'=>'VARCHAR','constraint'=>150
                 ],
             'nivel_disponible'=>
-                ['type'=>'ENUM','constraint'=>['primaria', 'inicial', 'secundaria', 'otro'],'default'=>'otro','null'=>false,
-                ],
+                ['type'=>'ENUM','constraint'=>['primaria', 'inicial', 'secundaria', 'otro'],'default'=>'otro','null'=>false,],
             'descripcion'=>
                 ['type'=>'TEXT','null'=>true
                 ],
+            'categoria' => [
+                'type'       => 'ENUM',
+                'constraint' => ['Cuadros', 'Anuarios', 'Paquetes', 'otros'],
+                'null'       => true,
+                'default'    => null,
+                'after'      => 'nivel_disponible',
+            ],
             'imagen'=>
                 ['type'=>'VARCHAR','constraint'=>255,'null'=>true
                 ],

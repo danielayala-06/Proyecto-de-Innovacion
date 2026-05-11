@@ -39,11 +39,11 @@ class Cotizaciones extends Migration
                 'unsigned'=>true,
                 'null'=>false
             ],
-            'estado'=>[
-                'type'=>'ENUM',
-                'constraint'=>['APROBADA', 'RECHAZADA', 'PENDIENTE'],
-                'default'=>'PENDIENTE',
-                'null'=>false
+            'estado' => [
+                'type'       => 'ENUM',
+                'constraint' => ['PENDIENTE', 'APROBADA', 'RECHAZADA'],
+                'default'    => 'PENDIENTE',
+                'null'       => false,
             ],
         ]);
         $this->forge->addKey('id_cotizacion', true);
