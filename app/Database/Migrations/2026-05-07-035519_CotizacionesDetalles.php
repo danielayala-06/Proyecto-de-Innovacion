@@ -21,7 +21,7 @@ class CotizacionesDetalles extends Migration
             ],
             'tipo_item' => [
                 'type'=>'ENUM',
-                'constraint'=>['paquete','producto'],
+                'constraint'=>['paquete','producto', 'personalizado'],
                 'default'=>'paquete',
                 'null'=>false
             ],
@@ -29,6 +29,7 @@ class CotizacionesDetalles extends Migration
                 'type'=>'TINYINT',
                 'null'=>false,
                 'unsigned'=>true,
+                'default'=> null
             ],
             'descripcion' => [
                 'type'=>'TEXT',
