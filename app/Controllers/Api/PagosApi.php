@@ -94,13 +94,14 @@ class PagosApi extends BaseController
             'moneda'       => 'permit_empty|in_list[PEN,USD,EUR]',
         ];
 
-        if (!$this->validate($rules)) {
+        $body = $this->request->getJSON(true) ?? [];
+
+        $validation = \Config\Services::validation();
+        if (!$validation->setRules($rules)->run($body)) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
-                ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
+                ->setJSON(['status' => 'error', 'errors' => $validation->getErrors()]);
         }
-
-        $body = $this->request->getJSON(true);
 
         // Verificar contrato activo
         $contrato = $this->db->table('contratos')
@@ -119,22 +120,44 @@ class PagosApi extends BaseController
                 ->setJSON(['status' => 'error', 'message' => 'Solo se pueden registrar pagos en contratos ACTIVOS']);
         }
 
-        // Calcular saldo disponible
-        $totalPagado = (float) $this->db->table('pagos')
+        // Calcular saldo disponible (total - adelanto - pagos ya registrados)
+        $sumPagos = (float) $this->db->table('pagos')
             ->selectSum('monto')
             ->where('id_contrato', $body['id_contrato'])
             ->get()->getRow()->monto;
 
-        $saldo = (float)$contrato['total'] - $totalPagado;
+        $saldo = (float)$contrato['total'] - (float)$contrato['adelanto'] - $sumPagos;
 
-        if ((float)$body['monto'] > $saldo) {
+        if ((float)$body['monto'] > $saldo + 0.001) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_CONFLICT)
                 ->setJSON([
                     'status'  => 'error',
-                    'message' => "El monto excede el saldo pendiente",
+                    'message' => 'El monto excede el saldo pendiente',
                     'saldo'   => round($saldo, 2),
                 ]);
+        }
+
+        // Validar fecha de pago
+        $fechaStr  = $body['fecha'] ?? date('Y-m-d');
+        $fechaPago = \DateTime::createFromFormat('Y-m-d', $fechaStr);
+        if (!$fechaPago) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'Formato de fecha inválido. Use YYYY-MM-DD.']);
+        }
+        $hoy      = new \DateTime('today');
+        $minFecha = (clone $hoy)->modify('-3 days');
+        $fechaPago->setTime(0, 0, 0);
+        if ($fechaPago > $hoy) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'La fecha de pago no puede ser en el futuro.']);
+        }
+        if ($fechaPago < $minFecha) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'La fecha de pago no puede ser anterior a 3 días de hoy.']);
         }
 
         $this->db->table('pagos')->insert([
@@ -143,12 +166,12 @@ class PagosApi extends BaseController
             'monto'        => $body['monto'],
             'moneda'       => $body['moneda'] ?? 'PEN',
             'voucher'      => $body['voucher'] ?? null,
-            'fecha'        => $body['fecha'] ?? date('Y-m-d'),
+            'fecha'        => $fechaStr,
         ]);
 
-        $idPago       = $this->db->insertID();
-        $nuevoTotalPagado = $totalPagado + (float)$body['monto'];
-        $nuevoSaldo   = (float)$contrato['total'] - $nuevoTotalPagado;
+        $idPago           = $this->db->insertID();
+        $nuevoTotalPagado = (float)$contrato['adelanto'] + $sumPagos + (float)$body['monto'];
+        $nuevoSaldo       = (float)$contrato['total'] - $nuevoTotalPagado;
 
         // Marcar contrato como COMPLETADO si el saldo llega a 0
         if ($nuevoSaldo <= 0) {
@@ -198,5 +221,20 @@ class PagosApi extends BaseController
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON(['status' => 'success', 'message' => 'Pago anulado']);
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // GET /api/formas-pago
+    // ────────────────────────────────────────────────────────────────────────
+    public function formasPago()
+    {
+        $formas = $this->db->table('formas_pago')
+            ->select('id_form_pago, nombre_forma_pago, tipo_pago')
+            ->orderBy('nombre_forma_pago', 'ASC')
+            ->get()->getResultArray();
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON(['status' => 'success', 'data' => $formas]);
     }
 }

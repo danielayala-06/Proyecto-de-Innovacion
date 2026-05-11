@@ -54,7 +54,10 @@ function _setModoModal2(modo) {
 }
 
 function _isoDate(d) {
-  return d.toISOString().slice(0, 10);
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
 }
 
 function _limpiarFormContrato() {
@@ -309,15 +312,24 @@ window.verDetalleContrato = async function (id) {
 
     if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(data);
 
-    if (accsEl && data.estado?.toUpperCase() === 'ACTIVO') {
+    if (accsEl) {
+      const isActivo = data.estado?.toUpperCase() === 'ACTIVO';
       accsEl.innerHTML = `
+        <a href="${BASE_URL}contratos/${id}" target="_blank"
+           class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-printer me-1"></i>Imprimir contrato
+        </a>
+        ${isActivo ? `
+        <button class="btn btn-sm btn-outline-success" onclick="abrirModalPago(${id})">
+          <i class="bi bi-cash-coin me-1"></i>Añadir pago
+        </button>
         <button class="btn btn-sm btn-success" onclick="cambiarEstadoContrato(${id},'COMPLETADO')">
           <i class="bi bi-check-circle me-1"></i>Completar
         </button>
         <button class="btn btn-sm btn-outline-danger"
                 onclick="confirmarEliminar(${id},'${formatters.codigo(id)}')">
           <i class="bi bi-x-circle me-1"></i>Cancelar
-        </button>`;
+        </button>` : ''}`;
     }
   } catch (e) {
     if (bodyEl) bodyEl.innerHTML =
@@ -344,6 +356,10 @@ window.cambiarEstadoContrato = async function (id, estado) {
 let _pendingId = null;
 let _modalDel  = null;
 
+let _modalPago        = null;
+let _pagoContratoId   = null;
+let _pagoContratoData = null;
+
 window.confirmarEliminar = function (id, codigo) {
   _pendingId = id;
   const span = document.getElementById('confirmCod');
@@ -368,6 +384,179 @@ window.eliminarContrato = async function () {
     _renderPagina();
   } catch (e) {
     alerts.error(e.message || 'No se pudo cancelar el contrato.');
+  }
+};
+
+/* ── Modal 5: Registrar pago ────────────────────────────────── */
+function _setResumenPago(data) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  if (!data) {
+    set('pagoTotal', '…'); set('pagoPagado', '…'); set('pagoSaldo', '…');
+    return;
+  }
+  set('pagoTotal',  formatters.moneda(data.total));
+  set('pagoPagado', formatters.moneda(data.total_pagado));
+  set('pagoSaldo',  formatters.moneda(data.saldo));
+}
+
+function _renderHistorialPago(pagos) {
+  const el = document.getElementById('pagoHistorial');
+  if (!el) return;
+  if (!pagos.length) {
+    el.innerHTML = '<p style="font-size:.78rem;color:var(--text-muted);text-align:center;padding:8px 0;margin:0;">Sin pagos registrados</p>';
+    return;
+  }
+  const rows = pagos.map(p => `
+    <tr style="border-top:1px solid var(--border-color);">
+      <td style="padding:4px 8px;">${formatters.fecha(p.fecha)}</td>
+      <td style="padding:4px 8px;">${p.nombre_forma_pago ?? '—'}</td>
+      <td style="padding:4px 8px;text-align:right;">${formatters.moneda(p.monto)}</td>
+    </tr>`).join('');
+  el.innerHTML = `
+    <table style="width:100%;font-size:.78rem;border-collapse:collapse;">
+      <thead>
+        <tr style="background:var(--bg-hover);">
+          <th style="padding:4px 8px;color:var(--text-muted);font-weight:600;text-align:left;">Fecha</th>
+          <th style="padding:4px 8px;color:var(--text-muted);font-weight:600;text-align:left;">Método</th>
+          <th style="padding:4px 8px;color:var(--text-muted);font-weight:600;text-align:right;">Monto</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+window.abrirModalPago = async function (id) {
+  _pagoContratoId   = id;
+  _pagoContratoData = null;
+
+  if (!_modalPago) _modalPago = new bootstrap.Modal(document.getElementById('modalPago'));
+
+  // Set title
+  const titleEl = document.getElementById('pagoTitle');
+  if (titleEl) titleEl.innerHTML =
+    `<i class="bi bi-cash-coin me-2" style="color:var(--green-text);"></i>Registrar pago · ${formatters.codigo(id)}`;
+
+  // Fecha: hoy por defecto, máximo hoy, mínimo hace 3 días
+  const fechaInput = document.getElementById('pagoFecha');
+  if (fechaInput) {
+    const hoy  = new Date();
+    const min3 = new Date(hoy);
+    min3.setDate(hoy.getDate() - 3);
+    fechaInput.value = _isoDate(hoy);
+    fechaInput.max   = _isoDate(hoy);
+    fechaInput.min   = _isoDate(min3);
+  }
+
+  // Reset form
+  ['pagoMonto', 'pagoVoucher'].forEach(fid => { const el = document.getElementById(fid); if (el) el.value = ''; });
+  const selectForma = document.getElementById('pagoFormaPago');
+  if (selectForma) selectForma.innerHTML = '<option value="">— Cargando... —</option>';
+
+  _setResumenPago(null);
+  document.getElementById('pagoHistorial').innerHTML =
+    '<p style="font-size:.78rem;color:var(--text-muted);text-align:center;padding:8px 0;margin:0;">Cargando...</p>';
+
+  _modalPago.show();
+
+  try {
+    const [resContrato, resFormas] = await Promise.all([
+      contratoApi.obtener(id),
+      contratoApi.formasPago(),
+    ]);
+
+    _pagoContratoData = resContrato.data;
+
+    if (selectForma) {
+      const formas = resFormas.data ?? [];
+      selectForma.innerHTML = '<option value="">— Seleccionar —</option>' +
+        formas.map(f => `<option value="${f.id_form_pago}">${f.nombre_forma_pago}</option>`).join('');
+    }
+
+    _setResumenPago(_pagoContratoData);
+    _renderHistorialPago(_pagoContratoData.pagos ?? []);
+  } catch (e) {
+    alerts.error(e.message || 'No se pudo cargar los datos del contrato.');
+  }
+};
+
+window.confirmarPago = async function () {
+  const monto   = parseFloat(document.getElementById('pagoMonto')?.value) || 0;
+  const forma   = document.getElementById('pagoFormaPago')?.value ?? '';
+  const fecha   = document.getElementById('pagoFecha')?.value ?? '';
+  const voucher = document.getElementById('pagoVoucher')?.value.trim() || null;
+
+  // ── Validaciones ────────────────────────────────────────────
+  if (!monto || monto <= 0) {
+    alerts.warning('Ingresa un monto válido mayor a cero.');
+    return;
+  }
+  const saldo = _pagoContratoData?.saldo ?? 0;
+  if (monto > saldo + 0.001) {
+    alerts.warning(`El monto (${formatters.moneda(monto)}) supera el saldo pendiente (${formatters.moneda(saldo)}).`);
+    return;
+  }
+  if (!forma) {
+    alerts.warning('Selecciona una forma de pago.');
+    return;
+  }
+  if (!fecha) {
+    alerts.warning('Selecciona la fecha de pago.');
+    return;
+  }
+  const hoy      = new Date(); hoy.setHours(0, 0, 0, 0);
+  const minFecha = new Date(hoy); minFecha.setDate(hoy.getDate() - 3);
+  const selDate  = new Date(fecha + 'T00:00:00');
+  if (selDate > hoy) {
+    alerts.warning('La fecha de pago no puede ser en el futuro.');
+    return;
+  }
+  if (selDate < minFecha) {
+    alerts.warning('La fecha de pago no puede ser anterior a 3 días de hoy.');
+    return;
+  }
+
+  try {
+    await contratoApi.registrarPago({
+      id_contrato:  _pagoContratoId,
+      id_form_pago: parseInt(forma),
+      monto,
+      fecha,
+      voucher,
+      moneda: 'PEN',
+    });
+
+    alerts.ok('Pago registrado correctamente.');
+
+    // Reset campos
+    document.getElementById('pagoMonto').value = '';
+    if (document.getElementById('pagoVoucher')) document.getElementById('pagoVoucher').value = '';
+
+    // Refrescar datos del contrato
+    const resContrato = await contratoApi.obtener(_pagoContratoId);
+    _pagoContratoData = resContrato.data;
+
+    // Actualizar pago modal
+    _setResumenPago(_pagoContratoData);
+    _renderHistorialPago(_pagoContratoData.pagos ?? []);
+
+    // Actualizar cuerpo del modal detalle (sigue abierto detrás)
+    const bodyEl = document.getElementById('detalleBody');
+    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(_pagoContratoData);
+
+    // Si el contrato quedó COMPLETADO, cerrar modal pago y limpiar botones de detalle
+    if (_pagoContratoData.estado?.toUpperCase() !== 'ACTIVO') {
+      _modalPago?.hide();
+      const accsEl = document.getElementById('detalleAcciones');
+      if (accsEl) accsEl.innerHTML = '';
+    }
+
+    // Refrescar tabla principal
+    const resLista = await contratoApi.listar();
+    state.filas = resLista.data ?? [];
+    ui.renderStats(calcularStats(state.filas));
+    _filtrar();
+  } catch (e) {
+    alerts.error(e.message || 'No se pudo registrar el pago.');
   }
 };
 

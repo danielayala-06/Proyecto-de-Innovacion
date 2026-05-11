@@ -100,9 +100,8 @@ function fmtFechaCot(?string $f): string {
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body" id="detalleBody"></div>
-                        <div class="modal-footer d-flex justify-content-between">
+                        <div class="modal-footer">
                             <div class="d-flex gap-2" id="detalleAcciones"></div>
-                            <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
                         </div>
                     </div>
                 </div>

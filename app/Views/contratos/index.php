@@ -163,9 +163,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="detalleBody"></div>
-                <div class="modal-footer d-flex justify-content-between">
+                <div class="modal-footer">
                     <div class="d-flex gap-2" id="detalleAcciones"></div>
-                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -192,6 +191,79 @@
             </div>
         </div>
     </div>
+    <!-- MODAL 5: REGISTRAR PAGO -->
+    <div class="modal fade" id="modalPago" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="pagoTitle">
+                        <i class="bi bi-cash-coin me-2" style="color:var(--green-text);"></i>
+                        Registrar pago
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Resumen financiero -->
+                    <div class="row g-0 mb-3" style="text-align:center;font-size:.82rem;background:var(--bg-hover);border-radius:8px;padding:10px 0;border:1px solid var(--border-color);">
+                        <div class="col-4" style="border-right:1px solid var(--border-color);">
+                            <div style="color:var(--text-muted);margin-bottom:2px;">Total</div>
+                            <strong id="pagoTotal">—</strong>
+                        </div>
+                        <div class="col-4" style="border-right:1px solid var(--border-color);">
+                            <div style="color:var(--text-muted);margin-bottom:2px;">Pagado</div>
+                            <strong id="pagoPagado" style="color:var(--green-text);">—</strong>
+                        </div>
+                        <div class="col-4">
+                            <div style="color:var(--text-muted);margin-bottom:2px;">Saldo</div>
+                            <strong id="pagoSaldo" style="color:var(--amber-text);">—</strong>
+                        </div>
+                    </div>
+
+                    <!-- Historial de pagos compacto -->
+                    <div style="font-size:.73rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">
+                        Historial de pagos
+                    </div>
+                    <div id="pagoHistorial"
+                         style="max-height:140px;overflow-y:auto;margin-bottom:14px;border:1px solid var(--border-color);border-radius:6px;"></div>
+
+                    <!-- Formulario nuevo pago -->
+                    <hr style="border-color:var(--border-color);margin:0 0 12px;">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label style="font-size:.8rem;margin-bottom:3px;">Monto a pagar (S/)</label>
+                            <input type="number" class="form-control form-control-sm" id="pagoMonto"
+                                   placeholder="0.00" min="0.01" step="0.01">
+                        </div>
+                        <div class="col-6">
+                            <label style="font-size:.8rem;margin-bottom:3px;">Fecha de pago</label>
+                            <input type="date" class="form-control form-control-sm" id="pagoFecha">
+                        </div>
+                        <div class="col-12">
+                            <label style="font-size:.8rem;margin-bottom:3px;">Forma de pago</label>
+                            <select class="form-select form-select-sm" id="pagoFormaPago">
+                                <option value="">— Seleccionar —</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label style="font-size:.8rem;margin-bottom:3px;">
+                                Voucher / referencia
+                                <span style="color:var(--text-muted);font-weight:400;">(opcional)</span>
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="pagoVoucher"
+                                   placeholder="N° operación, referencia...">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                    <button class="btn btn-success btn-sm" onclick="confirmarPago()">
+                        <i class="bi bi-check-circle me-1"></i>Registrar pago
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <script>
     const BASE_URL       = "<?= base_url('') ?>";
 </script>
