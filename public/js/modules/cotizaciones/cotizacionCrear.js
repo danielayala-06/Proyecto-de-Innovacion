@@ -234,8 +234,9 @@ function _mostrarDropdown(resultados) {
         _dropdown.querySelectorAll('.dd-item').forEach(el => {
             el.addEventListener('mouseenter', () => { el.style.background = 'var(--bg-hover)'; });
             el.addEventListener('mouseleave', () => { el.style.background = ''; });
-            el.addEventListener('click', () => {
-                const cliente = state.todosClientes.find(c => c.id_cliente === parseInt(el.dataset.id));
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // evitar blur en searchCliente antes de completar selección
+                const cliente = state.todosClientes.find(c => Number(c.id_cliente) === parseInt(el.dataset.id));
                 if (cliente) _setClienteExistente(cliente);
                 _ocultarDropdown();
                 const inp = document.getElementById('searchCliente');
@@ -630,29 +631,52 @@ async function init() {
         document.getElementById('docFeedback').textContent = '';
     });
 
-    /* 6b. Campo documento: buscar al perder el foco */
+    /* 6c. Campo documento: filtrar caracteres, validar y resetear si cliente ya seleccionado */
     const dniInput = document.getElementById('dniCliente');
-    dniInput?.addEventListener('input', () => _validarDoc());
-    dniInput?.addEventListener('blur', () => {
-        if (state.cliente || state.esNuevoCliente) return; // ya hay selección
-        const dni = dniInput.value.trim();
+    dniInput?.addEventListener('input', function () {
+        const tipo   = document.getElementById('tipoDocumento')?.value ?? 'DNI';
+        const maxlen = DOC_RULES[tipo]?.maxlen ?? 12;
+        this.value   = tipo === 'DNI'
+            ? this.value.replace(/\D/g, '').slice(0, maxlen)
+            : this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, maxlen);
+        _validarDoc();
+
+        if (state.cliente || state.esNuevoCliente) {
+            const valorActual = this.value;
+            _limpiarCliente();
+            this.value = valorActual;
+            _validarDoc();
+        }
+    });
+    dniInput?.addEventListener('blur', async () => {
+        if (state.cliente || state.esNuevoCliente) return;
+        const dni  = dniInput.value.trim();
+        const tipo = document.getElementById('tipoDocumento')?.value ?? 'DNI';
         if (!dni) return;
-        _mostrarBadgeCliente('searching', 'Buscando...');
+
+        // 1. Buscar en BD local primero
+        _mostrarBadgeCliente('searching', 'Buscando en registros...');
         const encontrado = _buscarPorDni(dni);
         if (encontrado) {
             _setClienteExistente(encontrado);
+            return;
+        }
+
+        // 2. Si es DNI con formato válido → consultar RENIEC vía Decolecta
+        if (tipo === 'DNI' && /^\d{8}$/.test(dni)) {
+            _mostrarBadgeCliente('searching', 'Consultando RENIEC...');
+            try {
+                const res = await clienteApi.reniecDni(dni);
+                const d   = res.data;
+                _setModoNuevoCliente();
+                document.getElementById('nombresCliente').value   = d.nombres   ?? '';
+                document.getElementById('apellidosCliente').value = d.apellidos ?? '';
+                _mostrarBadgeCliente('new', 'Datos obtenidos del RENIEC — completa los campos restantes.');
+            } catch {
+                _setModoNuevoCliente();
+            }
         } else {
             _setModoNuevoCliente();
-        }
-    });
-
-    /* 6c. Si el documento ya seleccionado se edita, resetear la selección */
-    dniInput?.addEventListener('input', () => {
-        if (state.cliente || state.esNuevoCliente) {
-            const valorActual = dniInput.value;
-            _limpiarCliente();
-            dniInput.value = valorActual;
-            _validarDoc();
         }
     });
 
