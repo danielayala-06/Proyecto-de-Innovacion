@@ -18,7 +18,7 @@ $routes->get('/cotizaciones/crear', 'CotizacionController::crear');
 
 // CONTRATOS
 $routes->get('/contratos',       'ContratoController::index');
-$routes->get('/contratos/(:num)',       'ContratoController::generarPDF/$1');
+$routes->get('/contratos/(:num)','ContratoController::generarContrato/$1');
 //$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
 
 // PAQUETES
@@ -45,11 +45,11 @@ $routes->get('/calendario',       'CalendarioController::index');
 $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes) {
 
     // ── Clientes ─────────────────────────────────────────────────────────────
-    $routes->get   ('clientes',     'ClientesController::index');
-    $routes->get   ('clientes/(:num)', 'ClientesController::show/$1');
-    $routes->post  ('clientes',     'ClientesController::create');
-    $routes->put   ('clientes/(:num)', 'ClientesController::update/$1');
-    $routes->delete('clientes/(:num)', 'ClientesController::delete/$1');
+    $routes->get   ('clientes',     'ClientesApi::index');
+    $routes->get   ('clientes/(:num)', 'ClientesApi::show/$1');
+    $routes->post  ('clientes',     'ClientesApi::create');
+    $routes->put   ('clientes/(:num)', 'ClientesApi::update/$1');
+    $routes->delete('clientes/(:num)', 'ClientesApi::delete/$1');
 
     // ── Cotizaciones ──────────────────────────────────────────────────────────
     $routes->get   ('cotizaciones',              'CotizacionesApi::index');
@@ -66,25 +66,25 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
     $routes->patch ('contratos/(:num)/estado', 'ContratosApi::cambiarEstado/$1');
 
     // ── Pagos ─────────────────────────────────────────────────────────────────
-    $routes->get   ('pagos',        'PagosController::index');       // ?contrato=1
-    $routes->get   ('pagos/(:num)', 'PagosController::show/$1');
-    $routes->post  ('pagos',        'PagosController::create');
-    $routes->delete('pagos/(:num)', 'PagosController::delete/$1');
+    $routes->get   ('pagos',        'PagosApi::index');       // ?contrato=1
+    $routes->get   ('pagos/(:num)', 'PagosApi::show/$1');
+    $routes->post  ('pagos',        'PagosApi::create');
+    $routes->delete('pagos/(:num)', 'PagosApi::delete/$1');
 
     // ── Paquetes ──────────────────────────────────────────────────────────────
-    $routes->get   ('paquetes',              'PaquetesController::index');
-    $routes->get   ('paquetes/(:num)',        'PaquetesController::show/$1');
-    $routes->post  ('paquetes',              'PaquetesController::create');
-    $routes->put   ('paquetes/(:num)',        'PaquetesController::update/$1');
-    $routes->patch ('paquetes/(:num)/estado', 'PaquetesController::cambiarEstado/$1');
+    $routes->get   ('paquetes',              'PaquetesApi::index');
+    $routes->get   ('paquetes/(:num)',        'PaquetesApi::show/$1');
+    $routes->post  ('paquetes',              'PaquetesApi::create');
+    $routes->put   ('paquetes/(:num)',        'PaquetesApi::update/$1');
+    $routes->patch ('paquetes/(:num)/estado', 'PaquetesApi::cambiarEstado/$1');
     // Gestión de productos dentro del paquete
-    $routes->post  ('paquetes/(:num)/productos',         'PaquetesController::agregarProducto/$1');
-    $routes->delete('paquetes/(:num)/productos/(:num)',   'PaquetesController::quitarProducto/$1/$2');
+    $routes->post  ('paquetes/(:num)/productos',         'PaquetesApi::agregarProducto/$1');
+    $routes->delete('paquetes/(:num)/productos/(:num)',   'PaquetesApi::quitarProducto/$1/$2');
 
     // ── Promociones Escolares ─────────────────────────────────────────────────
-    $routes->get   ('promociones',              'PromocionesController::index');
-    $routes->get   ('promociones/(:num)',        'PromocionesController::show/$1');
-    $routes->post  ('promociones',              'PromocionesController::create');
-    $routes->put   ('promociones/(:num)',        'PromocionesController::update/$1');
-    $routes->patch ('promociones/(:num)/activar','PromocionesController::toggleActiva/$1');
+    $routes->get   ('promociones',              'PromocionesApi::index');
+    $routes->get   ('promociones/(:num)',        'PromocionesApi::show/$1');
+    $routes->post  ('promociones',              'PromocionesApi::create');
+    $routes->put   ('promociones/(:num)',        'PromocionesApi::update/$1');
+    $routes->patch ('promociones/(:num)/activar','PromocionesApi::toggleActiva/$1');
 });

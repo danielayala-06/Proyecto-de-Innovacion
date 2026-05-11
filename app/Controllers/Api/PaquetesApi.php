@@ -6,7 +6,7 @@ use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * PaquetesController
+ * PaquetesApi
  * Base URL: /api/paquetes
  *
  * GET    /api/paquetes                      → listar paquetes con sus productos
@@ -17,7 +17,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  * POST   /api/paquetes/{id}/productos       → agregar producto al paquete
  * DELETE /api/paquetes/{id}/productos/{pid} → quitar producto del paquete
  */
-class PaquetesController extends BaseController
+class PaquetesApi extends BaseController
 {
     protected $db;
 

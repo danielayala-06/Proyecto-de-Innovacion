@@ -6,7 +6,7 @@ use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * PagosController
+ * PagosApi
  * Base URL: /api/pagos
  *
  * GET    /api/pagos?contrato={id}   → listar pagos de un contrato
@@ -14,7 +14,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  * POST   /api/pagos                 → registrar nuevo pago
  * DELETE /api/pagos/{id}            → anular pago
  */
-class PagosController extends BaseController
+class PagosApi extends BaseController
 {
     protected $db;
 

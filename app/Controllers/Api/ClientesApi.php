@@ -6,7 +6,7 @@ use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * ClientesController
+ * ClientesApi
  * Base URL: /api/clientes
  *
  * GET    /api/clientes              → listar todos
@@ -15,7 +15,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  * PUT    /api/clientes/{id}         → actualizar
  * DELETE /api/clientes/{id}         → eliminar (soft delete)
  */
-class ClientesController extends BaseController
+class ClientesApi extends BaseController
 {
     protected $db;
 

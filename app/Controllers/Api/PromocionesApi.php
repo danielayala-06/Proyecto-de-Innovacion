@@ -6,7 +6,7 @@ use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * PromocionesController
+ * PromocionesApi
  * Base URL: /api/promociones
  *
  * GET    /api/promociones                  → listar con filtros
@@ -15,7 +15,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  * PUT    /api/promociones/{id}             → actualizar
  * PATCH  /api/promociones/{id}/activar     → activar / desactivar
  */
-class PromocionesController extends BaseController
+class PromocionesApi extends BaseController
 {
     protected $db;
 
