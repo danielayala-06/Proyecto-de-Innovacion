@@ -108,21 +108,68 @@ window.verDetalle = async function (id) {
 
   const bodyEl  = document.getElementById('detalleBody');
   const titleEl = document.getElementById('detalleTitle');
+  const accsEl  = document.getElementById('detalleAcciones');
 
   if (titleEl) titleEl.textContent = `Cotización #${String(id).padStart(4, '0')}`;
   if (bodyEl)  bodyEl.innerHTML = `
     <div class="text-center py-3">
       <div class="spinner-border spinner-border-sm" role="status"></div>
     </div>`;
+  if (accsEl) accsEl.innerHTML = '';
   _modalDet.show();
 
   try {
-    const res = await cotizacionApi.obtener(id);
-    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(res.data);
+    const res  = await cotizacionApi.obtener(id);
+    const data = res.data;
+    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(data);
+
+    const estado = (data.estado ?? data.cotizacion?.estado ?? '').toUpperCase();
+    if (accsEl) {
+      if (estado === 'PENDIENTE') {
+        accsEl.innerHTML = `
+          <button class="btn btn-sm btn-success" onclick="aprobarCotizacion(${id})">
+            <i class="bi bi-check-circle me-1"></i>Aprobar
+          </button>`;
+      } else if (estado === 'APROBADA') {
+        accsEl.innerHTML = `
+          <button class="btn btn-sm btn-primary" onclick="irAGenerarContrato(${id})">
+            <i class="bi bi-file-earmark-plus me-1"></i>Generar contrato
+          </button>`;
+      }
+    }
   } catch (e) {
     if (bodyEl) bodyEl.innerHTML =
       `<p class="text-danger text-center py-2">${e.message}</p>`;
   }
+};
+
+/* ── Aprobar cotización ──────────────────────────────────────── */
+window.aprobarCotizacion = async function (id) {
+  try {
+    await cotizacionApi.cambiarEstado(id, 'APROBADA');
+    alerts.ok('Cotización aprobada.');
+
+    const row = state.filas.find(c => c.id === id);
+    if (row) row.estado = 'APROBADA';
+
+    const accsEl = document.getElementById('detalleAcciones');
+    if (accsEl) {
+      accsEl.innerHTML = `
+        <button class="btn btn-sm btn-primary" onclick="irAGenerarContrato(${id})">
+          <i class="bi bi-file-earmark-plus me-1"></i>Generar contrato
+        </button>`;
+    }
+
+    ui.renderStats(calcularResumenes(state.filas));
+    _renderPagina();
+  } catch (e) {
+    alerts.error(e.message || 'No se pudo aprobar la cotización.');
+  }
+};
+
+/* ── Ir al modal de generar contrato ────────────────────────── */
+window.irAGenerarContrato = function (id) {
+  window.location.href = (window.BASE_URL || '/') + 'contratos?cot_id=' + id;
 };
 
 /* ── Inicializa los listeners del index ──────────────────────── */
