@@ -36,14 +36,6 @@
                     <option value="completado">Completado</option>
                     <option value="cancelado">Cancelado</option>
                 </select>
-                <select class="filter-select" id="filterTipo">
-                    <option value="">Todos los tipos</option>
-                    <option value="Matrimonio">Matrimonio</option>
-                    <option value="Quinceañero">Quinceañero</option>
-                    <option value="Retrato">Retrato</option>
-                    <option value="Corporativo">Corporativo</option>
-                    <option value="Otro">Otro</option>
-                </select>
             </div>
             <button class="btn-nuevo-paquete" onclick="abrirModalCotizaciones()">
                 <i class="bi bi-plus-circle"></i> Generar contrato
@@ -58,12 +50,11 @@
                     <th onclick="sortBy('codigo')">Código <i class="bi bi-arrow-down-up sort-icon" id="sort-codigo"></i></th>
                     <th onclick="sortBy('cotizacionCod')">Cotización <i class="bi bi-arrow-down-up sort-icon" id="sort-cotizacionCod"></i></th>
                     <th onclick="sortBy('cliente')">Cliente <i class="bi bi-arrow-down-up sort-icon" id="sort-cliente"></i></th>
-                    <th onclick="sortBy('tipoEvento')">Tipo evento <i class="bi bi-arrow-down-up sort-icon" id="sort-tipoEvento"></i></th>
-                    <th onclick="sortBy('fechaEvento')">Fecha evento <i class="bi bi-arrow-down-up sort-icon" id="sort-fechaEvento"></i></th>
+                    <th onclick="sortBy('fechaEvento')">Fecha Sesión <i class="bi bi-arrow-down-up sort-icon" id="sort-fechaEvento"></i></th>
                     <th onclick="sortBy('total')">Total <i class="bi bi-arrow-down-up sort-icon" id="sort-total"></i></th>
                     <th onclick="sortBy('estado')">Estado <i class="bi bi-arrow-down-up sort-icon" id="sort-estado"></i></th>
                     <th onclick="sortBy('creado')">Generado <i class="bi bi-arrow-down-up sort-icon" id="sort-creado"></i></th>
-                    <th style="width:100px;text-align:center;">Acciones</th>
+                    <th style="width:120px;text-align:center;">Acciones</th>
                 </tr>
                 </thead>
                 <tbody id="tablaBody"></tbody>
@@ -110,9 +101,9 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h6 class="modal-title">
+                    <h6 class="modal-title" id="modal2Title">
                         <i class="bi bi-file-earmark-text me-2" style="color:var(--accent);"></i>
-                        Generar contrato
+                        <span id="modal2TitleText">Generar contrato</span>
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -123,7 +114,7 @@
                     <!-- Datos del contrato -->
                     <div class="row g-3 mt-1">
                         <div class="col-md-6">
-                            <label>Fecha de firma del contrato</label>
+                            <label>Fecha pago de adelanto</label>
                             <input type="date" class="form-control" id="contratoFechaFirma">
                         </div>
                         <div class="col-md-6">
@@ -139,10 +130,6 @@
                                 <option value="Mixto">Mixto</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label>Fecha límite de pago del saldo</label>
-                            <input type="date" class="form-control" id="contratoFechaSaldo">
-                        </div>
                         <div class="col-12">
                             <label>Cláusulas / condiciones adicionales</label>
                             <textarea class="form-control" id="contratoClausulas" rows="3"
@@ -156,11 +143,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary btn-sm" onclick="volverACotizaciones()">
+                    <button class="btn btn-secondary btn-sm" id="btnVolverCot" onclick="volverACotizaciones()">
                         <i class="bi bi-arrow-left me-1"></i>Volver
                     </button>
-                    <button class="btn btn-primary btn-sm" onclick="confirmarContrato()">
-                        <i class="bi bi-check-circle me-1"></i>Generar contrato
+                    <button class="btn btn-primary btn-sm" id="btnSubmitContrato" onclick="confirmarContrato()">
+                        <i class="bi bi-check-circle me-1"></i><span id="btnSubmitText">Generar contrato</span>
                     </button>
                 </div>
             </div>
