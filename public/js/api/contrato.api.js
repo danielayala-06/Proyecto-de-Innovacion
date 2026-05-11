@@ -6,4 +6,7 @@ export const contratoApi = {
   crear:         (data)        => http.post('api/contratos', data),
   actualizar:    (id, data)    => http.patch(`api/contratos/${id}`, data),
   cambiarEstado: (id, estado)  => http.patch(`api/contratos/${id}/estado`, { estado }),
+  listarPagos:   (contratoId)  => http.get('api/pagos', { contrato: contratoId }),
+  registrarPago: (data)        => http.post('api/pagos', data),
+  formasPago:    ()            => http.get('api/formas-pago'),
 };
