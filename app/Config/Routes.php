@@ -67,10 +67,11 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes)
     $routes->patch ('contratos/(:num)/estado', 'ContratosApi::cambiarEstado/$1');
 
     // ── Pagos ─────────────────────────────────────────────────────────────────
-    $routes->get   ('pagos',        'PagosApi::index');       // ?contrato=1
-    $routes->get   ('pagos/(:num)', 'PagosApi::show/$1');
-    $routes->post  ('pagos',        'PagosApi::create');
-    $routes->delete('pagos/(:num)', 'PagosApi::delete/$1');
+    $routes->get   ('pagos',         'PagosApi::index');       // ?contrato=1
+    $routes->get   ('pagos/(:num)',  'PagosApi::show/$1');
+    $routes->post  ('pagos',         'PagosApi::create');
+    $routes->delete('pagos/(:num)',  'PagosApi::delete/$1');
+    $routes->get   ('formas-pago',   'PagosApi::formasPago');
 
     // ── Paquetes ──────────────────────────────────────────────────────────────
     $routes->get   ('paquetes',              'PaquetesApi::index');
