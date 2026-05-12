@@ -596,6 +596,9 @@ function _validar() {
             return `Documento inválido para ${tipoDoc}: se esperan ${rule.hint}.`;
         if (!telefono) return 'El teléfono del cliente es obligatorio.';
         if (!TEL_REGEX.test(telefono)) return 'El teléfono debe tener 9 dígitos y comenzar con 9.';
+        const correo = document.getElementById('emailCliente')?.value?.trim();
+        if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo))
+            return 'El correo electrónico no tiene un formato válido.';
     }
 
     if (!state.items.length)  return 'Agrega al menos un paquete o servicio a la cotización.';

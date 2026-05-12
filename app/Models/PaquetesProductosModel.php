@@ -22,8 +22,16 @@ class PaquetesProductosModel extends Model
     protected bool $updateOnlyChanged = true;
 
     // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
+    protected $validationRules = [
+        'id_paquete'  => 'required|integer',
+        'id_producto' => 'required|integer',
+        'cantidad'    => 'required|integer|greater_than[0]',
+    ];
+    protected $validationMessages = [
+        'id_paquete'  => ['required' => 'El paquete es obligatorio.'],
+        'id_producto' => ['required' => 'El producto es obligatorio.'],
+        'cantidad'    => ['required' => 'La cantidad es obligatoria.', 'greater_than' => 'La cantidad debe ser mayor a 0.'],
+    ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 }
