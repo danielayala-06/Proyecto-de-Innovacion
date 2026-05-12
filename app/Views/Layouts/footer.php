@@ -1,9 +1,46 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    document.getElementById('toggleSidebar').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.toggle('hidden');
-        document.getElementById('main-content').classList.toggle('expanded');
-    });
+    // ── RESPONSIVE SIDEBAR ──
+    (function () {
+        const sidebar = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        const toggleBtn = document.getElementById('toggleSidebar');
+        const isMobile = () => window.innerWidth < 768;
+
+        function closeSidebar() {
+            if (isMobile()) {
+                sidebar.classList.remove('show');
+                backdrop.classList.remove('show');
+            }
+        }
+
+        function openSidebar() {
+            if (isMobile()) {
+                sidebar.classList.add('show');
+                backdrop.classList.add('show');
+            }
+        }
+
+        function handleResize() {
+            if (!isMobile()) {
+                sidebar.classList.remove('show');
+                backdrop.classList.remove('show');
+            }
+        }
+
+        toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (isMobile()) {
+                sidebar.classList.toggle('show');
+                backdrop.classList.toggle('show');
+            }
+        });
+
+        backdrop.addEventListener('click', closeSidebar);
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+    })();
 
     // ── TOGGLE TEMA OSCURO / CLARO ──
     (function () {

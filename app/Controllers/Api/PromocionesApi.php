@@ -27,10 +27,11 @@ class PromocionesApi extends BaseController
         $this->promocionService     = new PromocionService();
         $this->promocionTransformer = new PromocionTransformer();
     }
+    /**
+     *  GET /api/promociones[?colegio=1&anio=2026&activa=1]
+      * @return ResponseInterface: 
+     */
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/promociones[?colegio=1&anio=2026&activa=1]
-    // ────────────────────────────────────────────────────────────────────────
     public function index()
     {
         $filters = array_filter([
@@ -49,9 +50,15 @@ class PromocionesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/promociones/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/promociones/{id}
+     * Respuesta incluye:
+     *  - Promoción: id, nombre, grado, seccion, num_estudiantes, is_active
+     *  - Colegio: id, nombre
+     *  - Cotización: id, fecha_cotizacion
+     *  - Estudiantes: [ { id, nombre_completo } ]
+     *  - Sesiones: [ { id, fecha_sesion } ]
+     */
     public function show($id)
     {
         $promocion = $this->promocionService->obtenerPorId((int) $id);
@@ -70,10 +77,10 @@ class PromocionesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // POST /api/promociones
-    // Body: { id_colegio, id_cotizacion, nombre, grado, seccion?, num_estudiantes, anio? }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * POST /api/promociones
+     * Body: { id_colegio, id_cotizacion, nombre, grado, seccion?, num_estudiantes, anio? }
+     */
     public function create()
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -103,9 +110,10 @@ class PromocionesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Promoción creada', 'id_promocion' => $idPromocion]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PUT /api/promociones/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PUT /api/promociones/{id}
+     * Body: { grado?, seccion?, num_estudiantes? }
+     */
     public function update($id)
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -132,10 +140,10 @@ class PromocionesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Promoción actualizada']);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PATCH /api/promociones/{id}/activar
-    // Body: { is_active: true | false }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PATCH /api/promociones/{id}/activar
+     * Body: { is_active: true | false }
+     */
     public function toggleActiva($id)
     {
         $body     = $this->request->getJSON(true) ?? [];

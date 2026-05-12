@@ -14,24 +14,36 @@ function _fmtFecha(?string $f): string {
     <div class="row g-3 mb-4">
         <div class="col-6 col-lg-3">
             <div class="stat-card">
+                <div class="stat-icon gold">
+                    <i class="bi bi-camera-fill"></i>
+                </div>
                 <div class="stat-label">Sesiones este mes</div>
                 <div class="stat-value"><?= $sesionesEstesMes??0 ?></div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="bi bi-file-earmark-check-fill"></i>
+                </div>
                 <div class="stat-label">Contratos activos</div>
                 <div class="stat-value"><?= $contratosActivos??0 ?></div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="bi bi-people-fill"></i>
+                </div>
                 <div class="stat-label">Clientes totales</div>
                 <div class="stat-value"><?= $totalClientes??0 ?></div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="stat-card">
+                <div class="stat-icon amber">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
                 <div class="stat-label">Ingresos (S/)</div>
                 <div class="stat-value"><?= number_format($ingresos??0, 0, '.', ',') ?></div>
             </div>
