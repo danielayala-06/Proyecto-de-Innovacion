@@ -719,54 +719,68 @@ async function init() {
             _validarDoc();
         }
     });
-    dniInput?.addEventListener('blur', async () => {
+    dniInput?.addEventListener('blur', () => {
         if (state.cliente || state.esNuevoCliente) return;
-        const dni  = dniInput.value.trim();
-        const tipo = document.getElementById('tipoDocumento')?.value ?? 'DNI';
+        const dni = dniInput.value.trim();
         if (!dni) return;
-
-        // 1. Buscar en BD local primero
-        _mostrarBadgeCliente('searching', 'Buscando en registros...');
         const encontrado = _buscarPorDni(dni);
-        if (encontrado) {
-            _setClienteExistente(encontrado);
-            return;
-        }
-
-        // 2. Si es DNI con formato válido → consultar RENIEC vía Decolecta
-        if (tipo === 'DNI' && /^\d{8}$/.test(dni)) {
-            _mostrarBadgeCliente('searching', 'Consultando RENIEC...');
-            try {
-                const res = await clienteApi.reniecDni(dni);
-                const d   = res.data;
-                _setModoNuevoCliente();
-                document.getElementById('nombresCliente').value   = d.nombres   ?? '';
-                document.getElementById('apellidosCliente').value = d.apellidos ?? '';
-                _mostrarBadgeCliente('new', 'Datos obtenidos del RENIEC — completa los campos restantes.');
-            } catch {
-                _setModoNuevoCliente();
-            }
-        } else {
-            _setModoNuevoCliente();
-        }
+        if (encontrado) { _setClienteExistente(encontrado); return; }
+        _setModoNuevoCliente();
     });
 
     /* 7. Barra de búsqueda general */
     const searchInput = document.getElementById('searchCliente');
     const searchBtn   = document.getElementById('btnBuscar');
 
-    const _doSearch = () => {
+    const _setSearchFeedback = (msg, color = 'var(--text-muted)') => {
+        const el = document.getElementById('searchFeedback');
+        if (el) { el.textContent = msg; el.style.color = color; }
+    };
+
+    const _doSearch = async () => {
         const q = searchInput?.value?.trim();
         if (!q) { _ocultarDropdown(); return; }
-        // Búsqueda exacta por DNI primero
+
+        // 1. Búsqueda exacta por DNI en clientes locales
         const exactoDni = _buscarPorDni(q);
         if (exactoDni) {
             _setClienteExistente(exactoDni);
             searchInput.value = '';
             _ocultarDropdown();
+            _setSearchFeedback('');
             return;
         }
-        // Búsqueda general (nombre/teléfono)
+
+        // 2. Si es DNI de 8 dígitos → consultar RENIEC vía Decolecta
+        if (/^\d{8}$/.test(q)) {
+            _ocultarDropdown();
+            _setSearchFeedback('Consultando RENIEC...', 'var(--text-muted)');
+            try {
+                const res = await clienteApi.reniecDni(q);
+                const d   = res.data;
+                _llenarCamposCliente({
+                    nombres:   d.nombres   ?? '',
+                    apellidos: d.apellidos ?? '',
+                    tipoDoc:   'DNI',
+                    dni:       q,
+                    telefono:  '',
+                    correo:    '',
+                });
+                _setModoNuevoCliente();
+                _mostrarBadgeCliente('new', 'Datos obtenidos del RENIEC — completa los campos restantes.');
+                _setSearchFeedback('');
+                searchInput.value = '';
+            } catch {
+                _setSearchFeedback('No se encontró el DNI en RENIEC.', 'var(--red-text, #e57373)');
+                _llenarCamposCliente({ nombres: '', apellidos: '', tipoDoc: 'DNI', dni: q, telefono: '', correo: '' });
+                _setModoNuevoCliente();
+                searchInput.value = '';
+            }
+            return;
+        }
+
+        // 3. Búsqueda general (nombre / teléfono) → dropdown
+        _setSearchFeedback('');
         _filtrarClientes(q);
     };
 
