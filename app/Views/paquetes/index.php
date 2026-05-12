@@ -32,20 +32,32 @@
     <!-- STATS -->
     <div class="stats-bar">
         <div class="stat-box">
-            <div class="sb-label">Total paquetes</div>
-            <div class="sb-val" id="statTotal">0</div>
+            <div class="stat-icon blue"><i class="bi bi-box-seam-fill"></i></div>
+            <div>
+                <div class="sb-label">Total paquetes</div>
+                <div class="sb-val" id="statTotal">0</div>
+            </div>
         </div>
         <div class="stat-box">
-            <div class="sb-label">Activos</div>
-            <div class="sb-val" id="statActivos" style="color:#4caf82;">0</div>
+            <div class="stat-icon green"><i class="bi bi-toggle-on"></i></div>
+            <div>
+                <div class="sb-label">Activos</div>
+                <div class="sb-val" id="statActivos" style="color:var(--green-text);">0</div>
+            </div>
         </div>
         <div class="stat-box">
-            <div class="sb-label">Precio promedio</div>
-            <div class="sb-val" id="statPromedio" style="color:#7db8f0;font-size:1.1rem;">S/ 0</div>
+            <div class="stat-icon amber"><i class="bi bi-tag-fill"></i></div>
+            <div>
+                <div class="sb-label">Precio promedio</div>
+                <div class="sb-val" id="statPromedio" style="color:var(--amber-text);font-size:1.1rem;">S/ 0</div>
+            </div>
         </div>
         <div class="stat-box">
-            <div class="sb-label">Precio más alto</div>
-            <div class="sb-val" id="statMax" style="color:#d4a017;font-size:1.1rem;">S/ 0</div>
+            <div class="stat-icon gold"><i class="bi bi-graph-up"></i></div>
+            <div>
+                <div class="sb-label">Precio más alto</div>
+                <div class="sb-val" id="statMax" style="color:var(--accent);font-size:1.1rem;">S/ 0</div>
+            </div>
         </div>
     </div>
 

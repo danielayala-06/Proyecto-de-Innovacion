@@ -20,16 +20,25 @@
         <!-- STATS -->
         <div class="stats-bar">
             <div class="stat-box">
-                <div class="sb-label">Total clientes</div>
-                <div class="sb-val" id="statTotal">0</div>
+                <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+                <div>
+                    <div class="sb-label">Total clientes</div>
+                    <div class="sb-val" id="statTotal">0</div>
+                </div>
             </div>
             <div class="stat-box">
-                <div class="sb-label">Resultado búsqueda</div>
-                <div class="sb-val" id="statFiltro" style="color:#7db8f0;">0</div>
+                <div class="stat-icon gold"><i class="bi bi-search"></i></div>
+                <div>
+                    <div class="sb-label">Resultado búsqueda</div>
+                    <div class="sb-val" id="statFiltro" style="color:var(--blue-text);">0</div>
+                </div>
             </div>
             <div class="stat-box">
-                <div class="sb-label">Esta página</div>
-                <div class="sb-val" id="statPagina">0</div>
+                <div class="stat-icon amber"><i class="bi bi-card-list"></i></div>
+                <div>
+                    <div class="sb-label">Esta página</div>
+                    <div class="sb-val" id="statPagina">0</div>
+                </div>
             </div>
         </div>
 

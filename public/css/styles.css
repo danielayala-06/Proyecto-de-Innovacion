@@ -366,7 +366,7 @@ label {
 }
 .stats-bar {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 10px; margin-bottom: 1.35rem;
 }
 
@@ -869,7 +869,7 @@ label {
 
 /* ── COTIZACIONES ────────────────────────────────────────────────── */
 .cot-stats-bar {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
     gap: 10px; margin-bottom: 1.35rem;
 }
 .cot-table-card {
@@ -923,7 +923,7 @@ label {
 .cot-items-list li:last-child { border-bottom: none; }
 
 /* ── CONTRATOS ───────────────────────────────────────────────────── */
-.con-stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 1.35rem; }
+.con-stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; margin-bottom: 1.35rem; }
 .con-table-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
 .con-table-card table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
 .con-table-card thead th {

@@ -27,24 +27,39 @@ function fmtFechaCot(?string $f): string {
             <!-- STATS -->
             <div class="cot-stats-bar">
                 <div class="stat-card">
-                    <div class="stat-label">Total</div>
-                    <div class="stat-value" id="statTotal"><!-- TOTAL COTIZACIONES --></div>
+                    <div class="stat-icon blue"><i class="bi bi-file-earmark-text-fill"></i></div>
+                    <div>
+                        <div class="stat-label">Total</div>
+                        <div class="stat-value" id="statTotal">0</div>
+                    </div>
                 </div>
-                <div class="stat-card" style="border-left-color:var(--amber-text);">
-                    <div class="stat-label">Pendientes</div>
-                    <div class="stat-value" id="statPend" style="color:var(--amber-text);"><!-- COTIZACIONES PENDIENTE --></div>
+                <div class="stat-card">
+                    <div class="stat-icon amber"><i class="bi bi-clock-history"></i></div>
+                    <div>
+                        <div class="stat-label">Pendientes</div>
+                        <div class="stat-value" id="statPend" style="color:var(--amber-text);">0</div>
+                    </div>
                 </div>
-                <div class="stat-card" style="border-left-color:var(--green-text);">
-                    <div class="stat-label">Aprobadas</div>
-                    <div class="stat-value" id="statAprobadas" style="color:var(--green-text);"><!-- COTIZACIONES APROBADAS--></div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+                    <div>
+                        <div class="stat-label">Aprobadas</div>
+                        <div class="stat-value" id="statAprobadas" style="color:var(--green-text);">0</div>
+                    </div>
                 </div>
-                <div class="stat-card" style="border-left-color:var(--red-text);">
-                    <div class="stat-label">Rechazadas</div>
-                    <div class="stat-value" id="statRechazadas" style="color:var(--red-text);"> <!-- COTIZACIONES RECHAZADAS --></div>
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="bi bi-x-circle-fill"></i></div>
+                    <div>
+                        <div class="stat-label">Rechazadas</div>
+                        <div class="stat-value" id="statRechazadas" style="color:var(--red-text);">0</div>
+                    </div>
                 </div>
-                <div class="stat-card" style="border-left-color:var(--accent);">
-                    <div class="stat-label">Monto total</div>
-                    <div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.2rem;"> <!--MONTO TOTAL DE COTIZACIONES--> </div>
+                <div class="stat-card">
+                    <div class="stat-icon gold"><i class="bi bi-cash-coin"></i></div>
+                    <div>
+                        <div class="stat-label">Monto total</div>
+                        <div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.2rem;">S/ 0</div>
+                    </div>
                 </div>
             </div>
 

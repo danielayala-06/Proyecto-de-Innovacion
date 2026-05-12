@@ -2,44 +2,62 @@
 <script>
     // ── RESPONSIVE SIDEBAR ──
     (function () {
-        const sidebar = document.getElementById('sidebar');
-        const backdrop = document.getElementById('sidebar-backdrop');
+        const sidebar   = document.getElementById('sidebar');
+        const backdrop  = document.getElementById('sidebar-backdrop');
         const toggleBtn = document.getElementById('toggleSidebar');
-        const isMobile = () => window.innerWidth < 768;
+        const mainContent = document.getElementById('main-content');
+        const isMobile  = () => window.innerWidth < 768;
 
-        function closeSidebar() {
-            if (isMobile()) {
-                sidebar.classList.remove('show');
-                backdrop.classList.remove('show');
-            }
+        function closeMobileSidebar() {
+            sidebar.classList.remove('show');
+            backdrop.classList.remove('active');
         }
 
-        function openSidebar() {
-            if (isMobile()) {
-                sidebar.classList.add('show');
-                backdrop.classList.add('show');
-            }
+        function openMobileSidebar() {
+            sidebar.classList.add('show');
+            backdrop.classList.add('active');
         }
 
-        function handleResize() {
-            if (!isMobile()) {
-                sidebar.classList.remove('show');
-                backdrop.classList.remove('show');
+        function toggleDesktopSidebar() {
+            const collapsed = sidebar.classList.toggle('hidden');
+            if (mainContent) mainContent.classList.toggle('expanded', collapsed);
+            localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0');
+        }
+
+        // Restaurar estado de sidebar en desktop al cargar
+        if (!isMobile()) {
+            if (localStorage.getItem('sidebarCollapsed') === '1') {
+                sidebar.classList.add('hidden');
+                if (mainContent) mainContent.classList.add('expanded');
             }
         }
 
         toggleBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (isMobile()) {
-                sidebar.classList.toggle('show');
-                backdrop.classList.toggle('show');
+                sidebar.classList.contains('show') ? closeMobileSidebar() : openMobileSidebar();
+            } else {
+                toggleDesktopSidebar();
             }
         });
 
-        backdrop.addEventListener('click', closeSidebar);
+        backdrop.addEventListener('click', closeMobileSidebar);
 
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', handleResize);
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                // Al pasar a desktop, limpiar estado mobile
+                sidebar.classList.remove('show');
+                backdrop.classList.remove('active');
+                // Restaurar preferencia guardada
+                const collapsed = localStorage.getItem('sidebarCollapsed') === '1';
+                sidebar.classList.toggle('hidden', collapsed);
+                if (mainContent) mainContent.classList.toggle('expanded', collapsed);
+            } else {
+                // Al pasar a mobile, limpiar estado desktop
+                sidebar.classList.remove('hidden');
+                if (mainContent) mainContent.classList.remove('expanded');
+            }
+        });
     })();
 
     // ── TOGGLE TEMA OSCURO / CLARO ──
