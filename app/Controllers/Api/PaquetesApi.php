@@ -99,7 +99,7 @@ class PaquetesApi extends BaseController
 
         $rules = [
             'nombre_paquete'   => 'required|max_length[150]',
-            'nivel_disponible' => 'required|in_list[primaria,inicial,secundaria,otro]',
+            'nivel_disponible' => 'required|in_list[inicial-primaria,secundaria,postgrado,otro]',
             'precio'           => 'required|decimal',
         ];
 
@@ -159,6 +159,14 @@ class PaquetesApi extends BaseController
         }
 
         $body = $this->request->getJSON(true);
+
+        $nivelesValidos = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
+
+        if (isset($body['nivel_disponible']) && !in_array($body['nivel_disponible'], $nivelesValidos)) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'Nivel disponible inválido. Valores permitidos: ' . implode(', ', $nivelesValidos)]);
+        }
 
         $updateData = array_filter([
             'nombre_paquete'   => $body['nombre_paquete'] ?? null,

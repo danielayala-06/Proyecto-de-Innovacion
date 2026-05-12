@@ -90,16 +90,15 @@
                         <label>Precio (S/)</label>
                         <input type="number" class="form-control" id="pPrecio" placeholder="0.00" min="0" step="0.01">
                     </div>
-                    <div class="col-6 col-md-4">
-                        <label>Estado</label>
-                        <select class="form-select" id="pEstado">
-                            <option value="activo">Activo</option>
-                            <option value="inactivo">Inactivo</option>
+                    <div class="col-6 col-md-8">
+                        <label>Nivel disponible *</label>
+                        <select class="form-select" id="pNivel">
+                            <option value="">Seleccionar nivel...</option>
+                            <option value="inicial-primaria">Inicial / Primaria</option>
+                            <option value="secundaria">Secundaria</option>
+                            <option value="postgrado">Postgrado</option>
+                            <option value="otro">Otro</option>
                         </select>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <label>Duración estimada</label>
-                        <input type="text" class="form-control" id="pDuracion" placeholder="Ej: 3 horas">
                     </div>
                 </div>
 

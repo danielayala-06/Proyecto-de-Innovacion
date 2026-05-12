@@ -27,7 +27,7 @@ class PaquetesModel extends Model
     // Validation
     protected $validationRules = [
         'nombre_paquete' => 'required|max_length[150]',
-        'nivel_disponible' => 'required|in_list[primaria,secundaria,inicial, otro]',
+        'nivel_disponible' => 'required|in_list[inicial-primaria,secundaria,postgrado,otro]',
         'precio' => 'required|decimal|greater_than_equal_to[0]',
         'estado' => 'required|in_list[ACTIVO,INACTIVO]'
     ];
