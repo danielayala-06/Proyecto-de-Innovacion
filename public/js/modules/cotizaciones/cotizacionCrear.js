@@ -6,6 +6,8 @@ import { formatters }    from '../../utils/formatters.js';
 import { alerts }        from '../../utils/alerts.js';
 
 /* ── Estado en memoria ────────────────────────────────────────── */
+let _nivelFiltro = 'todos';
+
 const state = {
     cliente:             null,   // objeto cliente existente seleccionado
     esNuevoCliente:      false,  // true = no existe en BD, se creará al guardar
@@ -300,11 +302,24 @@ function _actualizarResumen() {
     el.querySelectorAll('.btn-res-del').forEach(btn => {
         btn.addEventListener('click', () => {
             state.items.splice(parseInt(btn.dataset.idx), 1);
+            _sincronizarNumEstudiantes();
             _renderContainers();
             _actualizarResumen();
             _saveDraft();
         });
     });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SINCRONIZAR N.° ESTUDIANTES
+═══════════════════════════════════════════════════════════════ */
+function _sincronizarNumEstudiantes() {
+    const el = document.getElementById('numEstudiantes');
+    if (!el) return;
+    const total = state.items
+        .filter(i => i.tipo === 'paquete')
+        .reduce((s, i) => s + (i.cantidad ?? 1), 0);
+    el.value = total > 0 ? Math.min(parseInt(el.max) || 100, total) : '';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -348,6 +363,7 @@ function _renderContainer(containerId, tipo) {
     el.querySelectorAll('.btn-item-del').forEach(btn => {
         btn.addEventListener('click', () => {
             state.items.splice(parseInt(btn.dataset.idx), 1);
+            _sincronizarNumEstudiantes();
             _renderContainers();
             _actualizarResumen();
             _saveDraft();
@@ -358,11 +374,31 @@ function _renderContainer(containerId, tipo) {
 /* ═══════════════════════════════════════════════════════════════
    MODAL PAQUETES
 ═══════════════════════════════════════════════════════════════ */
+const NIVEL_LABEL = { primaria: 'Primaria', inicial: 'Inicial', secundaria: 'Secundaria', otro: 'Otro' };
+const NIVEL_ORDER = ['primaria', 'inicial', 'secundaria', 'otro'];
+
 function _poblarModalPaquetes(paquetes) {
+    const nivelEl  = document.getElementById('nivelFiltrosContainer');
     const tabsEl   = document.getElementById('catTabsContainer');
     const panelsEl = document.getElementById('catPanelsContainer');
     if (!tabsEl || !panelsEl) return;
 
+    /* ── Botones de filtro por nivel ── */
+    const nivelesPresentes = [...new Set(paquetes.map(p => p.nivel_disponible || 'otro'))];
+    const nivelesOrdenados = [
+        ...NIVEL_ORDER.filter(n => nivelesPresentes.includes(n)),
+        ...nivelesPresentes.filter(n => !NIVEL_ORDER.includes(n)),
+    ];
+    if (nivelEl) {
+        nivelEl.innerHTML = [
+            `<button class="nivel-filtro-btn active" onclick="filtrarPorNivel('todos',this)">Todos</button>`,
+            ...nivelesOrdenados.map(n =>
+                `<button class="nivel-filtro-btn" onclick="filtrarPorNivel('${n}',this)">${NIVEL_LABEL[n] ?? n}</button>`
+            ),
+        ].join('');
+    }
+
+    /* ── Tabs por categoría ── */
     const CAT_LABEL = { Paquetes: 'Paquetes', Cuadros: 'Cuadros', Anuarios: 'Anuarios', otros: 'Otros' };
     const CAT_ORDER = ['Paquetes', 'Cuadros', 'Anuarios', 'otros'];
 
@@ -384,15 +420,22 @@ function _poblarModalPaquetes(paquetes) {
     }
 
     tabsEl.innerHTML = keys.map((cat, i) =>
-        `<button class="cat-tab${i === 0 ? ' active' : ''}" onclick="cambiarCategoria('${cat}', this)">${CAT_LABEL[cat] ?? cat}</button>`
+        `<button class="cat-tab${i === 0 ? ' active' : ''}" onclick="cambiarCategoria('${cat}',this)">${CAT_LABEL[cat] ?? cat}</button>`
     ).join('');
 
     panelsEl.innerHTML = keys.map((cat, i) => {
         const rows = grupos[cat].map(p => {
             const nombre = (p.nombre_paquete || '').replace(/'/g, "\\'");
+            const nivel  = p.nivel_disponible || 'otro';
+            const cat_label = CAT_LABEL[p.categoria] ?? p.categoria ?? '';
             return `
-                <div class="paquete-option" onclick="seleccionarOpcion(this,'${nombre}',${p.precio ?? 0},${p.id_paquete})">
-                    <div class="po-name">${p.nombre_paquete}</div>
+                <div class="paquete-option" data-nivel="${nivel}"
+                     onclick="seleccionarOpcion(this,'${nombre}',${p.precio ?? 0},${p.id_paquete})">
+                    <div>
+                        <div class="po-name">${p.nombre_paquete}</div>
+                        <span class="nivel-badge ${nivel}">${NIVEL_LABEL[nivel] ?? nivel}</span>
+                        
+                    </div>
                     <span class="po-price">${formatters.moneda(p.precio ?? 0)}</span>
                     <i class="bi bi-check-circle-fill po-check"></i>
                 </div>`;
@@ -407,6 +450,15 @@ window.cambiarCategoria = function (cat, tabEl) {
     tabEl.classList.add('active');
     document.getElementById(`cat-panel-${cat}`)?.classList.add('active');
     state.paqueteSeleccionado = null;
+};
+
+window.filtrarPorNivel = function (nivel, btn) {
+    _nivelFiltro = nivel;
+    document.querySelectorAll('.nivel-filtro-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.paquete-option').forEach(opt => {
+        opt.style.display = (nivel === 'todos' || (opt.dataset.nivel || 'otro') === nivel) ? '' : 'none';
+    });
 };
 
 window.seleccionarOpcion = function (el, nombre, precio, idRef) {
@@ -711,7 +763,12 @@ async function init() {
     /* 8. Abrir modal paquete */
     document.getElementById('btn-modal-paquete')?.addEventListener('click', () => {
         state.paqueteSeleccionado = null;
-        document.querySelectorAll('.paquete-option').forEach(o => o.classList.remove('selected'));
+        _nivelFiltro = 'todos';
+        document.querySelectorAll('.nivel-filtro-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+        document.querySelectorAll('.paquete-option').forEach(o => {
+            o.classList.remove('selected');
+            o.style.display = '';
+        });
         const cantEl = document.getElementById('paqueteCantidad');
         if (cantEl) cantEl.value = '1';
         _modalPaquete?.show();
@@ -732,6 +789,7 @@ async function init() {
         const { idRef, nombre, precio } = state.paqueteSeleccionado;
         const cantidad = Math.max(1, parseInt(document.getElementById('paqueteCantidad')?.value) || 1);
         state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad });
+        _sincronizarNumEstudiantes();
         _renderContainers();
         _actualizarResumen();
         _saveDraft();

@@ -274,6 +274,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <div class="nivel-filtro-wrap" id="nivelFiltrosContainer"></div>
                 <div class="cat-tabs" id="catTabsContainer"></div>
                 <div id="catPanelsContainer"></div>
 

@@ -384,6 +384,25 @@ label {
 }
 .modal-body .form-control::placeholder { color: var(--text-placeholder) !important; }
 
+/* ── FILTRO NIVEL PAQUETES ───────────────────────────────────────── */
+.nivel-filtro-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.9rem; }
+.nivel-filtro-btn {
+    background: var(--bg-input); border: 1px solid var(--border); border-radius: 20px;
+    color: var(--text-muted); font-size: 0.78rem; padding: 3px 13px; cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.nivel-filtro-btn:hover  { background: var(--bg-hover); border-color: var(--accent); color: var(--text-secondary); }
+.nivel-filtro-btn.active { background: var(--accent);   border-color: var(--accent); color: #fff; font-weight: 600; }
+
+.nivel-badge {
+    display: inline-block; font-size: 0.7rem; font-weight: 500;
+    padding: 1px 8px; border-radius: 10px; margin-top: 3px;
+}
+.nivel-badge.primaria   { background: #e3f2fd; color: #1565c0; }
+.nivel-badge.inicial    { background: #e8f5e9; color: #2e7d32; }
+.nivel-badge.secundaria { background: #f3e5f5; color: #6a1b9a; }
+.nivel-badge.otro       { background: #fff3e0; color: #e65100; }
+
 /* ── TABS PAQUETES ───────────────────────────────────────────────── */
 .cat-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.1rem; }
 .cat-tab {
