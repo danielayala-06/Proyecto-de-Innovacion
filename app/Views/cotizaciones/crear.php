@@ -90,14 +90,14 @@
                         </fieldset>
 
                         <!-- SERVICIOS -->
-                        <fieldset class="col-12 col-md-7">
+                        <!-- <fieldset class="col-12 col-md-7">
                             <legend class="section-divider">Servicios</legend>
                             <button type="button" class="btn-paquete mt-2" id="btn-modal-servicio">
                                 <i class="bi bi-plus-circle me-1"></i> Agregar servicio
                             </button>
                             <div id="serviciosContainer" class="d-flex flex-column gap-2"></div>
 
-                        </fieldset>
+                        </fieldset> -->
                     </div>
 
                     <!-- ================= COLEGIO ================= -->
