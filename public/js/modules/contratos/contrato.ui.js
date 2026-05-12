@@ -74,7 +74,7 @@ export const ui = {
         <tr onclick="verDetalleContrato(${c.id})">
           <td><span class="con-codigo">${cod}</span></td>
           <td><span class="con-cot-ref-small">${cotCod}</span></td>
-          <td>${c.cliente?.nombre ?? '—'}</td>
+          <td class="text-uppercase">${c.cliente?.nombre ?? '—'}</td>
           <td style="color:var(--text-muted);">—</td>
           <td>${formatters.moneda(c.total)}</td>
           <td>${badgeEstado(c.estado)}</td>

@@ -2,61 +2,79 @@
 <script>
     // ── RESPONSIVE SIDEBAR ──
     (function () {
-        const sidebar   = document.getElementById('sidebar');
-        const backdrop  = document.getElementById('sidebar-backdrop');
-        const toggleBtn = document.getElementById('toggleSidebar');
+        const sidebar     = document.getElementById('sidebar');
+        const backdrop    = document.getElementById('sidebar-backdrop');
+        const toggleBtn   = document.getElementById('toggleSidebar');
         const mainContent = document.getElementById('main-content');
-        const isMobile  = () => window.innerWidth < 768;
 
-        function closeMobileSidebar() {
+        const isMobile = () => window.innerWidth < 768;
+        const isTablet = () => window.innerWidth >= 768 && window.innerWidth < 1024;
+
+        // ── Mobile: overlay con clase .show ──
+        function closeMobile() {
             sidebar.classList.remove('show');
             backdrop.classList.remove('active');
         }
-
-        function openMobileSidebar() {
+        function openMobile() {
             sidebar.classList.add('show');
             backdrop.classList.add('active');
         }
 
-        function toggleDesktopSidebar() {
+        // ── Desktop/tablet: colapsar con clase .hidden + .expanded en main ──
+        function collapseDesktop() {
+            sidebar.classList.add('hidden');
+            if (mainContent) mainContent.classList.add('expanded');
+        }
+        function expandDesktop() {
+            sidebar.classList.remove('hidden');
+            if (mainContent) mainContent.classList.remove('expanded');
+        }
+        function toggleDesktop() {
             const collapsed = sidebar.classList.toggle('hidden');
             if (mainContent) mainContent.classList.toggle('expanded', collapsed);
             localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0');
         }
 
-        // Restaurar estado de sidebar en desktop al cargar
-        if (!isMobile()) {
-            if (localStorage.getItem('sidebarCollapsed') === '1') {
-                sidebar.classList.add('hidden');
-                if (mainContent) mainContent.classList.add('expanded');
+        // ── Inicialización ──
+        function initSidebar() {
+            if (isMobile()) {
+                // Mobile: limpiar estado desktop, sidebar cerrado por defecto
+                sidebar.classList.remove('hidden', 'show');
+                backdrop.classList.remove('active');
+                if (mainContent) mainContent.classList.remove('expanded');
+            } else {
+                // Desktop/tablet: limpiar estado mobile
+                sidebar.classList.remove('show');
+                backdrop.classList.remove('active');
+                const saved = localStorage.getItem('sidebarCollapsed');
+                // Tablet sin preferencia guardada → colapsado por defecto
+                const defaultCollapsed = isTablet() && saved === null;
+                if (saved === '1' || defaultCollapsed) {
+                    collapseDesktop();
+                } else if (saved === '0' || (!isTablet() && saved === null)) {
+                    expandDesktop();
+                }
             }
         }
+
+        initSidebar();
 
         toggleBtn.addEventListener('click', (e) => {
             e.preventDefault();
             if (isMobile()) {
-                sidebar.classList.contains('show') ? closeMobileSidebar() : openMobileSidebar();
+                sidebar.classList.contains('show') ? closeMobile() : openMobile();
             } else {
-                toggleDesktopSidebar();
+                toggleDesktop();
             }
         });
 
-        backdrop.addEventListener('click', closeMobileSidebar);
+        backdrop.addEventListener('click', closeMobile);
 
+        // Reubicar al cambiar tamaño de ventana
+        let resizeTimer;
         window.addEventListener('resize', () => {
-            if (!isMobile()) {
-                // Al pasar a desktop, limpiar estado mobile
-                sidebar.classList.remove('show');
-                backdrop.classList.remove('active');
-                // Restaurar preferencia guardada
-                const collapsed = localStorage.getItem('sidebarCollapsed') === '1';
-                sidebar.classList.toggle('hidden', collapsed);
-                if (mainContent) mainContent.classList.toggle('expanded', collapsed);
-            } else {
-                // Al pasar a mobile, limpiar estado desktop
-                sidebar.classList.remove('hidden');
-                if (mainContent) mainContent.classList.remove('expanded');
-            }
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(initSidebar, 80);
         });
     })();
 

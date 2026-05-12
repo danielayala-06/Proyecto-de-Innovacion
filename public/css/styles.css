@@ -237,7 +237,7 @@ body, .stat-card, .stat-box, .table-card, .table-card-clientes,
 }
 .page-title i { font-size: 0.82rem; }
 
-/* ── TARJETAS STAT (con soporte de ícono) ────────────────────────── */
+/* ── TARJETAS STAT — layout horizontal (ícono izq + texto der) ────── */
 .stat-card, .stat-box {
     background: var(--bg-surface);
     border: 1px solid var(--border);
@@ -254,22 +254,49 @@ body, .stat-card, .stat-box, .table-card, .table-card-clientes,
     display: flex; align-items: center; justify-content: center;
     font-size: 1.2rem; flex-shrink: 0;
 }
-.stat-icon.gold    { background: var(--accent-light);  color: var(--accent); }
-.stat-icon.green   { background: var(--green-bg);  color: var(--green-text); }
-.stat-icon.blue    { background: var(--blue-bg);   color: var(--blue-text); }
-.stat-icon.amber   { background: var(--amber-bg);  color: var(--amber-text); }
-.stat-icon.red     { background: var(--red-bg);    color: var(--red-text); }
-
-.stat-body { min-width: 0; }
+.stat-icon.gold  { background: var(--accent-light); color: var(--accent); }
+.stat-icon.green { background: var(--green-bg);  color: var(--green-text); }
+.stat-icon.blue  { background: var(--blue-bg);   color: var(--blue-text); }
+.stat-icon.amber { background: var(--amber-bg);  color: var(--amber-text); }
+.stat-icon.red   { background: var(--red-bg);    color: var(--red-text); }
 
 .stat-card .stat-label, .stat-box .sb-label {
     font-size: 0.69rem; color: var(--text-muted);
     text-transform: uppercase; letter-spacing: 0.5px;
-    margin-bottom: 3px; white-space: nowrap;
+    margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .stat-card .stat-value, .stat-box .sb-val {
     font-size: 1.65rem; font-weight: 700; color: var(--text-primary);
     line-height: 1.1;
+}
+
+/* ── TARJETAS STAT — layout vertical para el dashboard (inicio) ───── */
+.stat-card-v {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem 1rem 1.25rem;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; gap: 0.55rem;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s;
+    min-height: 140px;
+}
+.stat-card-v:hover { box-shadow: var(--shadow-md); }
+.stat-card-v .stat-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    font-size: 1.5rem;
+}
+.stat-card-v .stat-label {
+    font-size: 0.7rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    line-height: 1.35; white-space: normal;
+}
+.stat-card-v .stat-value {
+    font-size: 1.9rem; font-weight: 700; color: var(--text-primary);
+    line-height: 1;
 }
 
 /* ── TABLE CARD ──────────────────────────────────────────────────── */
@@ -1057,41 +1084,42 @@ label {
 
 /* ── RESPONSIVE ──────────────────────────────────────────────────── */
 
-/* Tablet: sidebar puede estar visible pero el contenido se ajusta */
+/* Evita desbordamiento horizontal global */
+body { overflow-x: hidden; }
+
+/* Tablet (768–1023px): sidebar colapsado por defecto — JS lo gestiona.
+   Solo ajustamos padding del contenido. */
 @media (max-width: 1023.98px) {
     #main-content { padding: 1.35rem 1.5rem; }
 }
 
-/* Mobile: sidebar como overlay, contenido full width */
-@media (max-width: 767.98px) {
-    #main-content,
-    #main-content.expanded {
-        margin-left: 0 !important;
-        padding: 1rem 1rem;
-    }
-
-    /* Sidebar empieza oculto en mobile, overlay cuando se abre */
-    #sidebar {
-        transform: translateX(calc(-1 * var(--sidebar-width)));
-        z-index: 1025;
-        top: 58px;
-        box-shadow: none;
-    }
-    #sidebar:not(.hidden) {
-        transform: translateX(0);
-        box-shadow: var(--shadow-lg);
-    }
-    /* Anular el .hidden por transform en desktop cuando estamos en mobile */
-    #sidebar.hidden {
-        transform: translateX(calc(-1 * var(--sidebar-width)));
-    }
-
-    /* Tablas con scroll horizontal en mobile */
+/* Tablet + mobile: tablas con scroll horizontal */
+@media (max-width: 1023.98px) {
     .cot-table-card,
     .con-table-card,
     .table-card-clientes,
     .table-card {
         overflow-x: auto;
+    }
+}
+
+/* Mobile (< 768px): sidebar como overlay, contenido full width */
+@media (max-width: 767.98px) {
+    #main-content,
+    #main-content.expanded {
+        margin-left: 0 !important;
+        padding: 1rem;
+    }
+
+    /* Sidebar oculto por defecto; se muestra solo con clase .show */
+    #sidebar {
+        transform: translateX(calc(-1 * var(--sidebar-width)));
+        z-index: 1025;
+        box-shadow: none;
+    }
+    #sidebar.show {
+        transform: translateX(0);
+        box-shadow: var(--shadow-lg);
     }
 
     /* Stat bars: 2 columnas en mobile */
@@ -1112,28 +1140,23 @@ label {
         align-items: stretch;
     }
     .toolbar .search-wrap,
-    .toolbar .search-box {
-        max-width: 100%;
-    }
+    .toolbar .search-box { max-width: 100%; }
     .toolbar .btn-add,
     .toolbar .btn-nuevo,
-    .toolbar .btn-nuevo-paquete {
-        width: 100%; justify-content: center;
-    }
+    .toolbar .btn-nuevo-paquete { width: 100%; justify-content: center; }
 
-    /* Calendario: columnas más estrechas */
+    /* Calendario */
     .cal-cell { min-height: 60px; }
     .cal-month-label { font-size: 0.85rem; min-width: auto; }
 }
 
-/* Extra small */
+/* Extra small (< 480px) */
 @media (max-width: 479.98px) {
     #main-content { padding: 0.85rem 0.75rem; }
-    .stat-card, .stat-box {
-        padding: 0.85rem 1rem;
-    }
-    .stat-card .stat-value, .stat-box .sb-val {
-        font-size: 1.4rem;
-    }
+    .stat-card, .stat-box { padding: 0.85rem 1rem; }
+    .stat-card .stat-value, .stat-box .sb-val { font-size: 1.4rem; }
     .stat-icon { width: 38px; height: 38px; font-size: 1rem; }
+    .cot-stats-bar,
+    .con-stats-bar,
+    .stats-bar { grid-template-columns: 1fr; }
 }

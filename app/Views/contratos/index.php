@@ -1,79 +1,70 @@
 <?= $header ?>
     <!-- MAIN -->
     <main id="main-content">
-        <p class="page-title"><i class="bi bi-file-earmark-text"></i> Contratos</p>
+        <div class="container">
+            
+            <p class="page-title">Contratos</p>
 
-        <!-- STATS -->
-        <div class="con-stats-bar">
-            <div class="stat-card">
-                <div class="stat-icon blue"><i class="bi bi-file-earmark-text-fill"></i></div>
-                <div>
-                    <div class="stat-label">Total contratos</div>
-                    <div class="stat-value" id="statTotal">0</div>
+            <!-- STATS -->
+            <div class="con-stats-bar">
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="bi bi-file-earmark-text-fill"></i></div>
+                    <div><div class="stat-label">Total contratos</div><div class="stat-value" id="statTotal">0</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+                    <div><div class="stat-label">Vigentes</div><div class="stat-value" id="statVigentes" style="color:var(--amber-text);">0</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="bi bi-check2-all"></i></div>
+                    <div><div class="stat-label">Completados</div><div class="stat-value" id="statCompletados" style="color:var(--green-text);">0</div></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon gold"><i class="bi bi-cash-coin"></i></div>
+                    <div><div class="stat-label">Monto total</div><div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.15rem;">S/ 0</div></div>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
-                <div>
-                    <div class="stat-label">Vigentes</div>
-                    <div class="stat-value" id="statVigentes" style="color:var(--amber-text);">0</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon green"><i class="bi bi-check2-all"></i></div>
-                <div>
-                    <div class="stat-label">Completados</div>
-                    <div class="stat-value" id="statCompletados" style="color:var(--green-text);">0</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon gold"><i class="bi bi-cash-coin"></i></div>
-                <div>
-                    <div class="stat-label">Monto total</div>
-                    <div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.15rem;">S/ 0</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- TOOLBAR -->
-        <div class="toolbar mb-3">
-            <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;">
-                <div class="search-wrap" style="max-width:300px;">
-                    <input type="text" id="searchInput" placeholder="Buscar cliente, código o tipo...">
-                    <button><i class="bi bi-search"></i></button>
+            <!-- TOOLBAR -->
+            <div class="toolbar mb-3">
+                <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;">
+                    <div class="search-wrap" style="max-width:300px;">
+                        <input type="text" id="searchInput" placeholder="Buscar cliente, código o tipo...">
+                        <button><i class="bi bi-search"></i></button>
+                    </div>
+                    <select class="filter-select" id="filterEstado">
+                        <option value="">Todos los estados</option>
+                        <option value="vigente">Vigente</option>
+                        <option value="completado">Completado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
                 </div>
-                <select class="filter-select" id="filterEstado">
-                    <option value="">Todos los estados</option>
-                    <option value="vigente">Vigente</option>
-                    <option value="completado">Completado</option>
-                    <option value="cancelado">Cancelado</option>
-                </select>
+                <button class="btn-nuevo-paquete" onclick="abrirModalCotizaciones()">
+                    <i class="bi bi-plus-circle"></i> Generar contrato
+                </button>
             </div>
-            <button class="btn-nuevo-paquete" onclick="abrirModalCotizaciones()">
-                <i class="bi bi-plus-circle"></i> Generar contrato
-            </button>
-        </div>
 
-        <!-- TABLA CONTRATOS -->
-        <div class="con-table-card">
-            <table>
-                <thead>
-                <tr>
-                    <th onclick="sortBy('codigo')">Código <i class="bi bi-arrow-down-up sort-icon" id="sort-codigo"></i></th>
-                    <th onclick="sortBy('cotizacionCod')">Cotización <i class="bi bi-arrow-down-up sort-icon" id="sort-cotizacionCod"></i></th>
-                    <th onclick="sortBy('cliente')">Cliente <i class="bi bi-arrow-down-up sort-icon" id="sort-cliente"></i></th>
-                    <th onclick="sortBy('fechaEvento')">Fecha Sesión <i class="bi bi-arrow-down-up sort-icon" id="sort-fechaEvento"></i></th>
-                    <th onclick="sortBy('total')">Total <i class="bi bi-arrow-down-up sort-icon" id="sort-total"></i></th>
-                    <th onclick="sortBy('estado')">Estado <i class="bi bi-arrow-down-up sort-icon" id="sort-estado"></i></th>
-                    <th onclick="sortBy('creado')">Generado <i class="bi bi-arrow-down-up sort-icon" id="sort-creado"></i></th>
-                    <th style="width:120px;text-align:center;">Acciones</th>
-                </tr>
-                </thead>
-                <tbody id="tablaBody"></tbody>
-            </table>
-            <div class="con-pagination">
-                <span id="paginaInfo" style="font-size:0.78rem;color:var(--text-muted);"></span>
-                <div class="pag-btns" id="paginaBtns"></div>
+            <!-- TABLA CONTRATOS -->
+            <div class="con-table-card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th class="text-uppercase" onclick="sortBy('codigo')">Código <i class="bi bi-arrow-down-up sort-icon" id="sort-codigo"></i></th>
+                        <th class="text-uppercase" onclick="sortBy('cotizacionCod')">Cotización <i class="bi bi-arrow-down-up sort-icon" id="sort-cotizacionCod"></i></th>
+                        <th class="text-uppercase" onclick="sortBy('cliente')">Cliente <i class="bi bi-arrow-down-up sort-icon" id="sort-cliente"></i></th>
+                        <th class="text-uppercase" onclick="sortBy('fechaEvento')">Fecha Sesión <i class="bi bi-arrow-down-up sort-icon" id="sort-fechaEvento"></i></th>
+                        <th class="text-uppercase" onclick="sortBy('total')">Total <i class="bi bi-arrow-down-up sort-icon" id="sort-total"></i></th>
+                        <th class="text-uppercase" onclick="sortBy('estado')">Estado <i class="bi bi-arrow-down-up sort-icon" id="sort-estado"></i></th>
+                        <th class="text-uppercase" onclick="sortBy('creado')">Generado <i class="bi bi-arrow-down-up sort-icon" id="sort-creado"></i></th>
+                        <th class="text-uppercase" style="width:120px;text-align:center;">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tablaBody"></tbody>
+                </table>
+                <div class="con-pagination">
+                    <span id="paginaInfo" style="font-size:0.78rem;color:var(--text-muted);"></span>
+                    <div class="pag-btns" id="paginaBtns"></div>
+                </div>
             </div>
         </div>
     </main>

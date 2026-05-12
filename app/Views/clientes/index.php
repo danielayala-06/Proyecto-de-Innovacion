@@ -1,74 +1,69 @@
 <?= $header ?>
     <!-- MAIN -->
     <main id="main-content">
-        <p class="section-label">Clientes</p>
+        <div class="container">
+        
+            <p class="section-label">Clientes</p>
 
-        <!-- TOOLBAR -->
-        <div class="toolbar">
-            <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;">
-                <div class="search-wrap">
-                    <input type="text" id="searchInput" placeholder="Buscar por nombre, DNI o teléfono...">
-                    <button><i class="bi bi-search"></i></button>
+            <!-- TOOLBAR -->
+            <div class="toolbar">
+                <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;">
+                    <div class="search-wrap">
+                        <input type="text" id="searchInput" placeholder="Buscar por nombre, DNI o teléfono...">
+                        <button><i class="bi bi-search"></i></button>
+                    </div>
+
                 </div>
-
+                <button class="btn-add" onclick="abrirNuevo()">
+                    <i class="bi bi-person-plus"></i> Nuevo cliente
+                </button>
             </div>
-            <button class="btn-add" onclick="abrirNuevo()">
-                <i class="bi bi-person-plus"></i> Nuevo cliente
-            </button>
+
+            <!-- STATS -->
+            <div class="stats-bar">
+                <div class="stat-box">
+                    <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+                    <div><div class="sb-label">Total clientes</div><div class="sb-val" id="statTotal">0</div></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon gold"><i class="bi bi-search"></i></div>
+                    <div><div class="sb-label">Resultado búsqueda</div><div class="sb-val" id="statFiltro" style="color:var(--blue-text);">0</div></div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon amber"><i class="bi bi-card-list"></i></div>
+                    <div><div class="sb-label">Esta página</div><div class="sb-val" id="statPagina">0</div></div>
+                </div>
+            </div>
+
+            <!-- TABLA -->
+            <div class="table-card-clientes">
+                <table>
+                    <thead>
+                    <tr>
+                        <th style="width:40px;"></th>
+                        <th class="text-uppercase" onclick="sortBy('nombre')">
+                            Nombre <i class="bi bi-arrow-down-up sort-icon" id="sort-nombre"></i>
+                        </th>
+                        <th class="text-uppercase" onclick="sortBy('apellido')">
+                            Apellido <i class="bi bi-arrow-down-up sort-icon" id="sort-apellido"></i>
+                        </th>
+                        <th class="text-uppercase" onclick="sortBy('dni')">
+                            DNI <i class="bi bi-arrow-down-up sort-icon" id="sort-dni"></i>
+                        </th>
+                        <th class="text-uppercase">Teléfono</th>
+                        <th class="text-uppercase">Correo</th>
+                        <th class="text-uppercase" style="width:90px;text-align:center;">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tablaBody"></tbody>
+                </table>
+                <div class="pagination-bar">
+                    <span id="paginaInfo"></span>
+                    <div class="pag-btns" id="paginaBtns"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- STATS -->
-        <div class="stats-bar">
-            <div class="stat-box">
-                <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
-                <div>
-                    <div class="sb-label">Total clientes</div>
-                    <div class="sb-val" id="statTotal">0</div>
-                </div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-icon gold"><i class="bi bi-search"></i></div>
-                <div>
-                    <div class="sb-label">Resultado búsqueda</div>
-                    <div class="sb-val" id="statFiltro" style="color:var(--blue-text);">0</div>
-                </div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-icon amber"><i class="bi bi-card-list"></i></div>
-                <div>
-                    <div class="sb-label">Esta página</div>
-                    <div class="sb-val" id="statPagina">0</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TABLA -->
-        <div class="table-card-clientes">
-            <table>
-                <thead>
-                <tr>
-                    <th style="width:40px;"></th>
-                    <th onclick="sortBy('nombre')">
-                        Nombre <i class="bi bi-arrow-down-up sort-icon" id="sort-nombre"></i>
-                    </th>
-                    <th onclick="sortBy('apellido')">
-                        Apellido <i class="bi bi-arrow-down-up sort-icon" id="sort-apellido"></i>
-                    </th>
-                    <th onclick="sortBy('dni')">
-                        DNI <i class="bi bi-arrow-down-up sort-icon" id="sort-dni"></i>
-                    </th>
-                    <th>Teléfono</th>
-                    <th>Correo</th>
-                    <th style="width:90px;text-align:center;">Acciones</th>
-                </tr>
-                </thead>
-                <tbody id="tablaBody"></tbody>
-            </table>
-            <div class="pagination-bar">
-                <span id="paginaInfo"></span>
-                <div class="pag-btns" id="paginaBtns"></div>
-            </div>
-        </div>
     </main>
 
     <!-- MODAL NUEVO / EDITAR -->
