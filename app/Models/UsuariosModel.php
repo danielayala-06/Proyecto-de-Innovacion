@@ -15,7 +15,7 @@ class UsuariosModel extends Model
     protected $allowedFields    = [
         'id_persona',
         'id_rol',
-        'nom_user',
+        'nombre_user',
         'password_hash',
         'estado',
     ];
@@ -23,28 +23,49 @@ class UsuariosModel extends Model
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
-    // Validation
+    protected $beforeInsert = ['hashPassword'];
+    protected $beforeUpdate = ['hashPassword'];
+
     protected $validationRules = [
-        'id_persona' => 'required|is_natural_no_zero',
-        'id_rol' => 'required|is_natural_no_zero',
-        'nom_user' => 'required|min_length[4]|max_length[50]|is_unique[usuarios.nom_user,id_usuario,{id_usuario}]',
+        'id_persona'    => 'required|is_natural_no_zero',
+        'id_rol'        => 'required|is_natural_no_zero',
+        'nombre_user'   => 'required|min_length[4]|max_length[50]|is_unique[usuarios.nombre_user,id_usuario,{id_usuario}]',
         'password_hash' => 'required|min_length[8]',
-        'estado' => 'required|in_list[ACTIVO,INACTIVO]'
+        'estado'        => 'required|in_list[ACTIVO,INACTIVO]',
     ];
+
     protected $validationMessages = [
-        'nom_user' => [
-            'required' => 'El nombre de usuario es obligatorio.',
-            'is_unique' => 'El nombre de usuario ya existe.'
+        'nombre_user' => [
+            'required'    => 'El nombre de usuario es obligatorio.',
+            'is_unique'   => 'El nombre de usuario ya existe.',
+            'min_length'  => 'El usuario debe tener mínimo 4 caracteres.',
+            'max_length'  => 'El usuario no puede superar 50 caracteres.',
         ],
         'password_hash' => [
-            'min_length' => 'La contraseña debe tener mínimo 8 caracteres.'
-        ]
+            'min_length' => 'La contraseña debe tener mínimo 8 caracteres.',
+        ],
     ];
+
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
-    protected function hashPassword(array $data)
+
+    /**
+     * Busca un usuario por nombre_user haciendo join con personas y roles.
+     * Retorna null si no existe.
+     */
+    public function findByUsername(string $username): ?array
     {
-        if (! isset($data['data']['password_hash'])) {
+        return $this
+            ->select('usuarios.id_usuario, usuarios.nombre_user, usuarios.password_hash, usuarios.estado, usuarios.id_rol, personas.nombres, personas.apellidos, roles.rol')
+            ->join('personas', 'personas.id_persona = usuarios.id_persona')
+            ->join('roles',    'roles.id_rol = usuarios.id_rol')
+            ->where('usuarios.nombre_user', $username)
+            ->first();
+    }
+
+    protected function hashPassword(array $data): array
+    {
+        if (!isset($data['data']['password_hash'])) {
             return $data;
         }
 

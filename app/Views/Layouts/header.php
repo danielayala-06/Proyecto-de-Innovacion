@@ -37,7 +37,19 @@
         <button class="header-icon-btn" id="btn-theme" aria-label="Cambiar tema" title="Cambiar tema">
             <i id="theme-icon" class="bi bi-moon-fill"></i>
         </button>
-        <div class="avatar-btn">QR</div>
+        <?php
+            $initials = 'U';
+            if (session()->get('nombres')) {
+                $parts    = array_filter(explode(' ', trim(session()->get('nombres') . ' ' . session()->get('apellidos'))));
+                $initials = '';
+                foreach (array_slice($parts, 0, 2) as $p) {
+                    $initials .= mb_strtoupper(mb_substr($p, 0, 1));
+                }
+            }
+        ?>
+        <div class="avatar-btn" title="<?= esc(session()->get('nombres') . ' ' . session()->get('apellidos')) ?> — <?= esc(session()->get('rol') ?? '') ?>">
+            <?= esc($initials) ?>
+        </div>
     </div>
 </header>
 

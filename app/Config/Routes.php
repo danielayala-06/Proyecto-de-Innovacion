@@ -6,29 +6,36 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 
-$routes->get('/', 'Home::index');
-
 // ============================================================================
-// Vistas
+// Autenticación (públicas — sin filtro auth)
 // ============================================================================
 
-$routes->get('/cotizaciones',       'CotizacionController::index');
-$routes->get('/cotizaciones/crear', 'CotizacionController::crear');
-
-$routes->get('/contratos',          'ContratoController::index');
-$routes->get('/contratos/(:num)',   'ContratoController::generarContrato/$1');
-
-$routes->get('/paquetes',           'PaqueteController::index');
-
-$routes->get('/clientes',           'ClienteController::index');
-
-$routes->get('/calendario',         'CalendarioController::index');
+$routes->get ('/login',  'AuthController::login');
+$routes->post('/login',  'AuthController::authenticate');
+$routes->get ('/logout', 'AuthController::logout');
 
 // ============================================================================
-// API REST
+// Vistas protegidas (requieren sesión activa)
 // ============================================================================
 
-$routes->group('api', ['namespace' => 'App\Controllers\Api'], function ($routes) {
+$routes->group('', ['filter' => 'auth'], function ($routes) {
+
+    $routes->get('/',                      'Home::index');
+    $routes->get('/cotizaciones',          'CotizacionController::index');
+    $routes->get('/cotizaciones/crear',    'CotizacionController::crear');
+    $routes->get('/contratos',             'ContratoController::index');
+    $routes->get('/contratos/(:num)',      'ContratoController::generarContrato/$1');
+    $routes->get('/paquetes',              'PaqueteController::index');
+    $routes->get('/clientes',              'ClienteController::index');
+    $routes->get('/calendario',            'CalendarioController::index');
+
+});
+
+// ============================================================================
+// API REST (protegidas — devuelven 401 JSON si no hay sesión)
+// ============================================================================
+
+$routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth'], function ($routes) {
 
     // ── Clientes ─────────────────────────────────────────────────────────────
     $routes->get   ('clientes',        'ClientesApi::index');
