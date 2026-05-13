@@ -24,7 +24,7 @@ class PaquetesSeeder extends Seeder
             // ── ANUARIOS ─────────────────────────────────────────────────────
             [
                 'nombre_paquete'   => 'Anuario Small',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Anuarios',
                 'precio'           => 135.00,
                 'estado'           => 'ACTIVO',
@@ -42,7 +42,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Anuario Medium',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Anuarios',
                 'precio'           => 145.00,
                 'estado'           => 'ACTIVO',
@@ -60,7 +60,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Anuario Big',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Anuarios',
                 'precio'           => 150.00,
                 'estado'           => 'ACTIVO',
@@ -79,7 +79,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Anuario Big Premium',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Anuarios',
                 'precio'           => 210.00,
                 'estado'           => 'ACTIVO',
@@ -102,7 +102,7 @@ class PaquetesSeeder extends Seeder
             // ── CUADROS ──────────────────────────────────────────────────────
             [
                 'nombre_paquete'   => 'Maravillas del Mundo Basic',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Cuadros',
                 'precio'           => 110.00,
                 'estado'           => 'ACTIVO',
@@ -118,7 +118,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Maravillas del Mundo',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Cuadros',
                 'precio'           => 110.00,
                 'estado'           => 'ACTIVO',
@@ -134,7 +134,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Academico',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Cuadros',
                 'precio'           => 145.00,
                 'estado'           => 'ACTIVO',
@@ -151,7 +151,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Blanco Premium Brillante',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Cuadros',
                 'precio'           => 150.00,
                 'estado'           => 'ACTIVO',
@@ -167,7 +167,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Cuadros Brillante',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Cuadros',
                 'precio'           => 150.00,
                 'estado'           => 'ACTIVO',
@@ -184,7 +184,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Cuadros Encajoados',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Cuadros',
                 'precio'           => 160.00,
                 'estado'           => 'ACTIVO',
@@ -203,7 +203,7 @@ class PaquetesSeeder extends Seeder
             // ── PAQUETES COMBINADOS ───────────────────────────────────────────
             [
                 'nombre_paquete'   => 'Pack Adios Primaria',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Paquetes',
                 'precio'           => 240.00,
                 'estado'           => 'ACTIVO',
@@ -233,7 +233,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Pack Mis Recuerdos',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Paquetes',
                 'precio'           => 310.00,
                 'estado'           => 'ACTIVO',
@@ -263,7 +263,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Pack Premium',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Paquetes',
                 'precio'           => 350.00,
                 'estado'           => 'ACTIVO',
@@ -293,7 +293,7 @@ class PaquetesSeeder extends Seeder
             ],
             [
                 'nombre_paquete'   => 'Pack Premium Gold',
-                'nivel_disponible' => 'primaria',
+                'nivel_disponible' => 'inicial-primaria',
                 'categoria'        => 'Paquetes',
                 'precio'           => 420.00,
                 'estado'           => 'ACTIVO',

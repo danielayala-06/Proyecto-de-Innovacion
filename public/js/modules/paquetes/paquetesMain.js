@@ -69,9 +69,7 @@ window.guardarPaquete = async function () {
 
     try {
         if (_idEditando) {
-            const { datos, estado } = form.datosActualizar();
-            await paqueteApi.actualizar(_idEditando, datos);
-            await paqueteApi.cambiarEstado(_idEditando, estado);
+            await paqueteApi.actualizar(_idEditando, form.datosActualizar());
         } else {
             await paqueteApi.crear(form.datosCrear());
         }

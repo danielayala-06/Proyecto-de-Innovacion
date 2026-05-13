@@ -2,14 +2,7 @@ import { categoriaDesdNombre } from './paquete.state.js';
 
 let _items = [];
 
-const NIVEL_MAP = {
-    'Quinceañeros': 'secundaria',
-    'Cuadros':      'otro',
-    'Anuarios':     'primaria',
-    'Matrimonios':  'otro',
-    'Corporativo':  'otro',
-    'Otro':         'otro',
-};
+const NIVELES_VALIDOS = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
 
 // Maps UI select value → DB ENUM value
 const CAT_DB_MAP = {
@@ -51,23 +44,25 @@ function _renderItems() {
 
 export const form = {
     limpiar() {
-        ['pId', 'pNombre', 'pDesc', 'pPrecio', 'pDuracion'].forEach(id => _set(id, ''));
-        const cat = document.getElementById('pCategoria');
-        if (cat) cat.value = 'Quinceañeros';
-        const est = document.getElementById('pEstado');
-        if (est) est.value = 'activo';
+        ['pId', 'pNombre', 'pDesc', 'pPrecio'].forEach(id => _set(id, ''));
+        const cat  = document.getElementById('pCategoria');
+        if (cat)  cat.value  = 'Quinceañeros';
+        const niv  = document.getElementById('pNivel');
+        if (niv)  niv.value  = '';
         _items = [];
         _renderItems();
     },
 
     poblar(p) {
-        _set('pId',    p.id_paquete);
+        _set('pId',     p.id_paquete);
         _set('pNombre', p.nombre_paquete);
         _set('pPrecio', p.precio);
-        _set('pEstado', (p.estado ?? 'ACTIVO').toLowerCase());
 
         const cat = document.getElementById('pCategoria');
         if (cat) cat.value = _uiCatFromPaquete(p);
+
+        const niv = document.getElementById('pNivel');
+        if (niv) niv.value = NIVELES_VALIDOS.includes(p.nivel_disponible) ? p.nivel_disponible : '';
 
         const lineas = (p.descripcion || '').split('\n').filter(Boolean);
         _set('pDesc', lineas[0] ?? '');
@@ -76,9 +71,10 @@ export const form = {
     },
 
     validar() {
-        if (!_get('pNombre'))         return 'El nombre del paquete es obligatorio.';
+        if (!_get('pNombre'))                          return 'El nombre del paquete es obligatorio.';
         const precio = parseFloat(_get('pPrecio'));
-        if (!precio || precio <= 0)   return 'El precio debe ser mayor a 0.';
+        if (!precio || precio <= 0)                    return 'El precio debe ser mayor a 0.';
+        if (!NIVELES_VALIDOS.includes(_get('pNivel'))) return 'Selecciona el nivel disponible del paquete.';
         return null;
     },
 
@@ -88,7 +84,7 @@ export const form = {
         const lineas = [desc, ..._items].filter(Boolean);
         return {
             nombre_paquete:   _get('pNombre'),
-            nivel_disponible: NIVEL_MAP[cat] ?? 'otro',
+            nivel_disponible: _get('pNivel'),
             descripcion:      lineas.join('\n') || null,
             precio:           parseFloat(_get('pPrecio')),
             categoria:        CAT_DB_MAP[cat] ?? 'otros',
@@ -100,14 +96,11 @@ export const form = {
         const desc   = _get('pDesc');
         const lineas = [desc, ..._items].filter(Boolean);
         return {
-            datos: {
-                nombre_paquete:   _get('pNombre'),
-                nivel_disponible: NIVEL_MAP[cat] ?? 'otro',
-                descripcion:      lineas.join('\n') || null,
-                precio:           parseFloat(_get('pPrecio')),
-                categoria:        CAT_DB_MAP[cat] ?? 'otros',
-            },
-            estado: (_get('pEstado') || 'activo').toUpperCase(),
+            nombre_paquete:   _get('pNombre'),
+            nivel_disponible: _get('pNivel'),
+            descripcion:      lineas.join('\n') || null,
+            precio:           parseFloat(_get('pPrecio')),
+            categoria:        CAT_DB_MAP[cat] ?? 'otros',
         };
     },
 

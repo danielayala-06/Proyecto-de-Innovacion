@@ -22,9 +22,13 @@ async function request(method, endpoint, body = null, params = {}) {
   const json = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
 
   if (!res.ok) {
-    const err = new Error(json.message || `Error ${res.status}`);
+    let message = json.message;
+    if (!message && json.errors) {
+      message = Object.values(json.errors).flat().join(' | ');
+    }
+    const err = new Error(message || `Error ${res.status}`);
     err.status = res.status;
-    err.data = json;
+    err.data   = json;
     throw err;
   }
 

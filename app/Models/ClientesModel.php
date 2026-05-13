@@ -16,7 +16,7 @@ class ClientesModel extends Model
         'id_persona',
         'red_social',
         'metodo_comunicacion',
-        'aceptar_promociones',
+        'acepta_promociones',
         'estado',
     ];
 
@@ -27,7 +27,7 @@ class ClientesModel extends Model
     protected $validationRules = [
         'id_persona' => 'required|is_natural_no_zero',
         'metodo_comunicacion' => 'required|in_list[whatsapp,llamada,correo,otro]',
-        'aceptar_promociones' => 'required|in_list[0,1]',
+        'acepta_promociones' => 'permit_empty|in_list[0,1]',
         'estado' => 'required|in_list[ACTIVO,INACTIVO]'
     ];
     protected $validationMessages = [

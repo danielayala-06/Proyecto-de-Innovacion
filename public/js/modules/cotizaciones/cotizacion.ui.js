@@ -79,8 +79,7 @@ export const ui = {
       return `
         <tr>
           <td><code style="font-size:.78rem;">${codigo}</code></td>
-          <td>${nombre}</td>
-          <td>${formatters.fecha(c.fecha)}</td>
+          <td class= "text-uppercase">${nombre}</td>
           <td>${formatters.moneda(c.total)}</td>
           <td>${badgeEstado(c.estado)}</td>
           <td>${formatters.fecha(c.fecha)}</td>

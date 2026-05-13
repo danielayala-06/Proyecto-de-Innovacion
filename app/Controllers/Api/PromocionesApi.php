@@ -3,6 +3,8 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
+use App\Services\Promociones\PromocionService;
+use App\Transformers\PromocionTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
@@ -17,57 +19,49 @@ use CodeIgniter\HTTP\ResponseInterface;
  */
 class PromocionesApi extends BaseController
 {
-    protected $db;
+    protected PromocionService     $promocionService;
+    protected PromocionTransformer $promocionTransformer;
 
     public function __construct()
     {
-        $this->db = \Config\Database::connect();
+        $this->promocionService     = new PromocionService();
+        $this->promocionTransformer = new PromocionTransformer();
     }
+    /**
+     *  GET /api/promociones[?colegio=1&anio=2026&activa=1]
+      * @return ResponseInterface: 
+     */
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/promociones[?colegio=1&anio=2026&activa=1]
-    // ────────────────────────────────────────────────────────────────────────
     public function index()
     {
-        $builder = $this->db->table('promociones_escolares pe')
-            ->select('pe.*, col.nombre_colegio, col.distrito,
-                      ct.total_estimado, ct.estado AS estado_cotizacion')
-            ->join('colegios col',     'col.id_colegio = pe.id_colegio')
-            ->join('cotizaciones ct',  'ct.id_cotizacion = pe.id_cotizacion')
-            ->orderBy('pe.anio', 'DESC')
-            ->orderBy('col.nombre_colegio', 'ASC');
-
-        if ($idColegio = $this->request->getGet('colegio')) {
-            $builder->where('pe.id_colegio', $idColegio);
-        }
-        if ($anio = $this->request->getGet('anio')) {
-            $builder->where('pe.anio', $anio);
-        }
-        if ($this->request->getGet('activa') !== null) {
-            $builder->where('pe.is_active', (bool)$this->request->getGet('activa'));
-        }
+        $filters = array_filter([
+            'colegio' => $this->request->getGet('colegio'),
+            'anio'    => $this->request->getGet('anio'),
+            'activa'  => $this->request->getGet('activa'),
+        ], fn($v) => $v !== null);
 
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
-            ->setJSON(['status' => 'success', 'data' => $builder->get()->getResultArray()]);
+            ->setJSON([
+                'status' => 'success',
+                'data'   => $this->promocionTransformer->transformMany(
+                    $this->promocionService->listar($filters)
+                ),
+            ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/promociones/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/promociones/{id}
+     * Respuesta incluye:
+     *  - Promoción: id, nombre, grado, seccion, num_estudiantes, is_active
+     *  - Colegio: id, nombre
+     *  - Cotización: id, fecha_cotizacion
+     *  - Estudiantes: [ { id, nombre_completo } ]
+     *  - Sesiones: [ { id, fecha_sesion } ]
+     */
     public function show($id)
     {
-        $promocion = $this->db->table('promociones_escolares pe')
-            ->select('pe.*, col.nombre_colegio, col.distrito, col.provincia,
-                      ct.total_estimado, ct.estado AS estado_cotizacion,
-                      CONCAT(p.nombres, " ", COALESCE(p.apellidos,"")) AS cliente,
-                      p.telefono')
-            ->join('colegios col',    'col.id_colegio = pe.id_colegio')
-            ->join('cotizaciones ct', 'ct.id_cotizacion = pe.id_cotizacion')
-            ->join('clientes c',      'c.id_cliente = ct.id_cliente')
-            ->join('personas p',      'p.id_persona = c.id_persona')
-            ->where('pe.id_promocion', $id)
-            ->get()->getRowArray();
+        $promocion = $this->promocionService->obtenerPorId((int) $id);
 
         if (!$promocion) {
             return $this->response
@@ -75,39 +69,22 @@ class PromocionesApi extends BaseController
                 ->setJSON(['status' => 'error', 'message' => 'Promoción no encontrada']);
         }
 
-        // Estudiantes de la promoción
-        $estudiantes = $this->db->table('estudiantes e')
-            ->select('e.id_estudiante, e.nombres, e.apellidos, e.fecha_nacimiento,
-                      e.color_fav, e.profesion_futura,
-                      a.tipo_relacion,
-                      CONCAT(pa.nombres, " ", COALESCE(pa.apellidos,"")) AS apoderado,
-                      pa.telefono AS tel_apoderado')
-            ->join('apoderados a',   'a.id_apoderado = e.id_apoderado')
-            ->join('personas pa',    'pa.id_persona = a.id_persona')
-            ->where('e.id_promocion', $id)
-            ->orderBy('e.apellidos', 'ASC')
-            ->get()->getResultArray();
-
-        // Sesiones fotográficas
-        $sesiones = $this->db->table('sesiones_fotograficas')
-            ->where('id_promocion', $id)
-            ->orderBy('fecha_hora_sesion', 'ASC')
-            ->get()->getResultArray();
-
-        $promocion['estudiantes']         = $estudiantes;
-        $promocion['sesiones_fotograficas'] = $sesiones;
-
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
-            ->setJSON(['status' => 'success', 'data' => $promocion]);
+            ->setJSON([
+                'status' => 'success',
+                'data'   => $this->promocionTransformer->transform($promocion),
+            ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // POST /api/promociones
-    // Body: { id_colegio, id_cotizacion, nombre, grado, seccion, num_estudiantes, anio }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * POST /api/promociones
+     * Body: { id_colegio, id_cotizacion, nombre, grado, seccion?, num_estudiantes, anio? }
+     */
     public function create()
     {
+        $body = $this->request->getJSON(true) ?? [];
+
         $rules = [
             'id_colegio'      => 'required|integer',
             'id_cotizacion'   => 'required|integer',
@@ -116,70 +93,46 @@ class PromocionesApi extends BaseController
             'num_estudiantes' => 'required|integer|greater_than[0]',
         ];
 
-        if (!$this->validate($rules)) {
+        if (!$this->validateData($body, $rules)) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
                 ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
         }
 
-        $body = $this->request->getJSON(true);
-
-        // Verificar que la cotización esté APROBADA
-        $cotizacion = $this->db->table('cotizaciones')
-            ->where('id_cotizacion', $body['id_cotizacion'])
-            ->get()->getRowArray();
-
-        if (!$cotizacion || $cotizacion['estado'] !== 'APROBADA') {
-            return $this->response
-                ->setStatusCode(ResponseInterface::HTTP_CONFLICT)
-                ->setJSON(['status' => 'error', 'message' => 'La cotización debe estar APROBADA para crear una promoción']);
+        try {
+            $idPromocion = $this->promocionService->crear($body);
+        } catch (\RuntimeException $e) {
+            return $this->_serviceError($e);
         }
-
-        $this->db->table('promociones_escolares')->insert([
-            'id_colegio'      => $body['id_colegio'],
-            'id_cotizacion'   => $body['id_cotizacion'],
-            'nombre'          => $body['nombre'],
-            'grado'           => $body['grado'],
-            'seccion'         => $body['seccion'] ?? null,
-            'num_estudiantes' => $body['num_estudiantes'],
-            'anio'            => $body['anio'] ?? date('Y'),
-            'is_active'       => true,
-        ]);
-
-        $idPromocion = $this->db->insertID();
 
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_CREATED)
             ->setJSON(['status' => 'success', 'message' => 'Promoción creada', 'id_promocion' => $idPromocion]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PUT /api/promociones/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PUT /api/promociones/{id}
+     * Body: { grado?, seccion?, num_estudiantes? }
+     */
     public function update($id)
     {
-        $promocion = $this->db->table('promociones_escolares')
-            ->where('id_promocion', $id)->get()->getRowArray();
+        $body = $this->request->getJSON(true) ?? [];
 
-        if (!$promocion) {
+        $rules = [
+            'grado'           => 'permit_empty|max_length[10]',
+            'num_estudiantes' => 'permit_empty|integer|greater_than[0]',
+        ];
+
+        if (!$this->validateData($body, $rules)) {
             return $this->response
-                ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
-                ->setJSON(['status' => 'error', 'message' => 'Promoción no encontrada']);
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
         }
 
-        $body = $this->request->getJSON(true);
-
-        $updateData = array_filter([
-            'nombre'          => $body['nombre'] ?? null,
-            'grado'           => $body['grado'] ?? null,
-            'seccion'         => $body['seccion'] ?? null,
-            'num_estudiantes' => $body['num_estudiantes'] ?? null,
-        ], fn($v) => $v !== null);
-
-        if (!empty($updateData)) {
-            $this->db->table('promociones_escolares')
-                ->where('id_promocion', $id)
-                ->update($updateData);
+        try {
+            $this->promocionService->actualizar((int) $id, $body);
+        } catch (\RuntimeException $e) {
+            return $this->_serviceError($e);
         }
 
         return $this->response
@@ -187,34 +140,47 @@ class PromocionesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Promoción actualizada']);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PATCH /api/promociones/{id}/activar
-    // Body: { is_active: true | false }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PATCH /api/promociones/{id}/activar
+     * Body: { is_active: true | false }
+     */
     public function toggleActiva($id)
     {
-        $promocion = $this->db->table('promociones_escolares')
-            ->where('id_promocion', $id)->get()->getRowArray();
+        $body     = $this->request->getJSON(true) ?? [];
+        $isActive = isset($body['is_active']) ? (bool) $body['is_active'] : null;
 
-        if (!$promocion) {
-            return $this->response
-                ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
-                ->setJSON(['status' => 'error', 'message' => 'Promoción no encontrada']);
+        try {
+            $nuevo = $this->promocionService->toggleActiva((int) $id, $isActive);
+        } catch (\RuntimeException $e) {
+            return $this->_serviceError($e);
         }
-
-        $body     = $this->request->getJSON(true);
-        $isActive = $body['is_active'] ?? !$promocion['is_active'];
-
-        $this->db->table('promociones_escolares')
-            ->where('id_promocion', $id)
-            ->update(['is_active' => (bool)$isActive]);
 
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON([
                 'status'    => 'success',
-                'message'   => 'Promoción ' . ($isActive ? 'activada' : 'desactivada'),
-                'is_active' => (bool)$isActive,
+                'message'   => 'Promoción ' . ($nuevo ? 'activada' : 'desactivada'),
+                'is_active' => $nuevo,
             ]);
+    }
+
+    private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
+    {
+        $code   = (int) $e->getCode() ?: 500;
+        $errors = ($code === 422) ? json_decode($e->getMessage(), true) : null;
+
+        $httpStatus = match ($code) {
+            404     => ResponseInterface::HTTP_NOT_FOUND,
+            409     => ResponseInterface::HTTP_CONFLICT,
+            422     => ResponseInterface::HTTP_UNPROCESSABLE_ENTITY,
+            default => ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
+        };
+
+        return $this->response
+            ->setStatusCode($httpStatus)
+            ->setJSON(is_array($errors)
+                ? ['status' => 'error', 'errors'  => $errors]
+                : ['status' => 'error', 'message' => $e->getMessage()]
+            );
     }
 }

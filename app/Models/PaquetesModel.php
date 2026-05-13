@@ -18,7 +18,8 @@ class PaquetesModel extends Model
         'descripcion',
         'imagen',
         'precio',
-        'estado'
+        'categoria',
+        'estado',
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -26,16 +27,22 @@ class PaquetesModel extends Model
 
     // Validation
     protected $validationRules = [
-        'nombre_paquete' => 'required|max_length[150]',
-        'nivel_disponible' => 'required|in_list[primaria,secundaria,inicial, otro]',
-        'precio' => 'required|decimal|greater_than_equal_to[0]',
-        'estado' => 'required|in_list[ACTIVO,INACTIVO]'
+        'nombre_paquete'   => 'required|max_length[150]',
+        'nivel_disponible' => 'required|in_list[inicial-primaria,secundaria,postgrado,otro]',
+        'precio'           => 'required|decimal|greater_than_equal_to[0]',
+        'categoria'        => 'permit_empty|in_list[Cuadros,Anuarios,Paquetes,otros]',
+        'estado'           => 'permit_empty|in_list[ACTIVO,INACTIVO]',
     ];
     protected $validationMessages = [
-        'precio' => [
-            'decimal' => 'El precio debe ser numérico.',
-            'greater_than_equal_to' => 'El precio no puede ser negativo.'
-        ]
+        'nombre_paquete'   => ['required' => 'El nombre del paquete es obligatorio.'],
+        'nivel_disponible' => ['required' => 'El nivel es obligatorio.', 'in_list' => 'Nivel inválido.'],
+        'precio'           => [
+            'required'              => 'El precio es obligatorio.',
+            'decimal'               => 'El precio debe ser numérico.',
+            'greater_than_equal_to' => 'El precio no puede ser negativo.',
+        ],
+        'categoria'        => ['in_list' => 'Categoría inválida. Use: Cuadros, Anuarios, Paquetes, otros.'],
+        'estado'           => ['in_list' => 'Estado inválido. Use: ACTIVO o INACTIVO.'],
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;

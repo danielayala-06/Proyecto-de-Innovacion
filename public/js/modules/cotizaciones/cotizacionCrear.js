@@ -6,6 +6,8 @@ import { formatters }    from '../../utils/formatters.js';
 import { alerts }        from '../../utils/alerts.js';
 
 /* ── Estado en memoria ────────────────────────────────────────── */
+let _nivelFiltro = 'todos';
+
 const state = {
     cliente:             null,   // objeto cliente existente seleccionado
     esNuevoCliente:      false,  // true = no existe en BD, se creará al guardar
@@ -300,11 +302,24 @@ function _actualizarResumen() {
     el.querySelectorAll('.btn-res-del').forEach(btn => {
         btn.addEventListener('click', () => {
             state.items.splice(parseInt(btn.dataset.idx), 1);
+            _sincronizarNumEstudiantes();
             _renderContainers();
             _actualizarResumen();
             _saveDraft();
         });
     });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SINCRONIZAR N.° ESTUDIANTES
+═══════════════════════════════════════════════════════════════ */
+function _sincronizarNumEstudiantes() {
+    const el = document.getElementById('numEstudiantes');
+    if (!el) return;
+    const total = state.items
+        .filter(i => i.tipo === 'paquete')
+        .reduce((s, i) => s + (i.cantidad ?? 1), 0);
+    el.value = total > 0 ? Math.min(parseInt(el.max) || 100, total) : '';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -348,6 +363,7 @@ function _renderContainer(containerId, tipo) {
     el.querySelectorAll('.btn-item-del').forEach(btn => {
         btn.addEventListener('click', () => {
             state.items.splice(parseInt(btn.dataset.idx), 1);
+            _sincronizarNumEstudiantes();
             _renderContainers();
             _actualizarResumen();
             _saveDraft();
@@ -358,11 +374,51 @@ function _renderContainer(containerId, tipo) {
 /* ═══════════════════════════════════════════════════════════════
    MODAL PAQUETES
 ═══════════════════════════════════════════════════════════════ */
+const NIVEL_LABEL = {
+    'inicial-primaria': 'Inicial / Primaria',
+    primaria:           'Inicial / Primaria',
+    inicial:            'Inicial / Primaria',
+    secundaria:         'Secundaria',
+    postgrado:          'Postgrado',
+    otro:               'Otro',
+};
+const NIVEL_ORDER = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
+
+const NIVEL_STYLE = {
+    'inicial-primaria': 'background:#e3f2fd;color:#1565c0',
+    primaria:           'background:#e3f2fd;color:#1565c0',
+    inicial:            'background:#e3f2fd;color:#1565c0',
+    secundaria:         'background:#f3e5f5;color:#6a1b9a',
+    postgrado:          'background:#fce4ec;color:#c62828',
+    otro:               'background:#fff3e0;color:#e65100',
+};
+
+const NIVEL_NORMALIZE = { primaria: 'inicial-primaria', inicial: 'inicial-primaria' };
+
 function _poblarModalPaquetes(paquetes) {
+    const nivelEl  = document.getElementById('nivelFiltrosContainer');
     const tabsEl   = document.getElementById('catTabsContainer');
     const panelsEl = document.getElementById('catPanelsContainer');
     if (!tabsEl || !panelsEl) return;
 
+    /* ── Botones de filtro por nivel ── */
+    const nivelesPresentes = [...new Set(
+        paquetes.map(p => NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro')
+    )];
+    const nivelesOrdenados = [
+        ...NIVEL_ORDER.filter(n => nivelesPresentes.includes(n)),
+        ...nivelesPresentes.filter(n => !NIVEL_ORDER.includes(n)),
+    ];
+    if (nivelEl) {
+        nivelEl.innerHTML = [
+            `<button class="nivel-filtro-btn active" onclick="filtrarPorNivel('todos',this)">Todos</button>`,
+            ...nivelesOrdenados.map(n =>
+                `<button class="nivel-filtro-btn" onclick="filtrarPorNivel('${n}',this)">${NIVEL_LABEL[n] ?? n}</button>`
+            ),
+        ].join('');
+    }
+
+    /* ── Tabs por categoría ── */
     const CAT_LABEL = { Paquetes: 'Paquetes', Cuadros: 'Cuadros', Anuarios: 'Anuarios', otros: 'Otros' };
     const CAT_ORDER = ['Paquetes', 'Cuadros', 'Anuarios', 'otros'];
 
@@ -384,15 +440,21 @@ function _poblarModalPaquetes(paquetes) {
     }
 
     tabsEl.innerHTML = keys.map((cat, i) =>
-        `<button class="cat-tab${i === 0 ? ' active' : ''}" onclick="cambiarCategoria('${cat}', this)">${CAT_LABEL[cat] ?? cat}</button>`
+        `<button class="cat-tab${i === 0 ? ' active' : ''}" onclick="cambiarCategoria('${cat}',this)">${CAT_LABEL[cat] ?? cat}</button>`
     ).join('');
 
     panelsEl.innerHTML = keys.map((cat, i) => {
         const rows = grupos[cat].map(p => {
-            const nombre = (p.nombre_paquete || '').replace(/'/g, "\\'");
+            const nombre    = (p.nombre_paquete || '').replace(/'/g, "\\'");
+            const nivel     = NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro';
+            const badgeStyle = NIVEL_STYLE[nivel] ?? NIVEL_STYLE.otro;
             return `
-                <div class="paquete-option" onclick="seleccionarOpcion(this,'${nombre}',${p.precio ?? 0},${p.id_paquete})">
-                    <div class="po-name">${p.nombre_paquete}</div>
+                <div class="paquete-option" data-nivel="${nivel}"
+                     onclick="seleccionarOpcion(this,'${nombre}',${p.precio ?? 0},${p.id_paquete})">
+                    <div>
+                        <div class="po-name">${p.nombre_paquete}</div>
+                        <span class="nivel-badge" style="${badgeStyle}">${NIVEL_LABEL[nivel] ?? nivel}</span>
+                    </div>
                     <span class="po-price">${formatters.moneda(p.precio ?? 0)}</span>
                     <i class="bi bi-check-circle-fill po-check"></i>
                 </div>`;
@@ -407,6 +469,15 @@ window.cambiarCategoria = function (cat, tabEl) {
     tabEl.classList.add('active');
     document.getElementById(`cat-panel-${cat}`)?.classList.add('active');
     state.paqueteSeleccionado = null;
+};
+
+window.filtrarPorNivel = function (nivel, btn) {
+    _nivelFiltro = nivel;
+    document.querySelectorAll('.nivel-filtro-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.paquete-option').forEach(opt => {
+        opt.style.display = (nivel === 'todos' || (opt.dataset.nivel || 'otro') === nivel) ? '' : 'none';
+    });
 };
 
 window.seleccionarOpcion = function (el, nombre, precio, idRef) {
@@ -525,6 +596,9 @@ function _validar() {
             return `Documento inválido para ${tipoDoc}: se esperan ${rule.hint}.`;
         if (!telefono) return 'El teléfono del cliente es obligatorio.';
         if (!TEL_REGEX.test(telefono)) return 'El teléfono debe tener 9 dígitos y comenzar con 9.';
+        const correo = document.getElementById('emailCliente')?.value?.trim();
+        if (correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo))
+            return 'El correo electrónico no tiene un formato válido.';
     }
 
     if (!state.items.length)  return 'Agrega al menos un paquete o servicio a la cotización.';
@@ -666,6 +740,11 @@ async function init() {
     const searchInput = document.getElementById('searchCliente');
     const searchBtn   = document.getElementById('btnBuscar');
 
+    const _setSearchFeedback = (msg, color = 'var(--text-muted)') => {
+        const el = document.getElementById('searchFeedback');
+        if (el) { el.textContent = msg; el.style.color = color; }
+    };
+
     const _doSearch = async () => {
         const q = searchInput?.value?.trim();
         if (!q) { _ocultarDropdown(); return; }
@@ -676,33 +755,40 @@ async function init() {
             _setClienteExistente(exactoDni);
             searchInput.value = '';
             _ocultarDropdown();
+            _setSearchFeedback('');
             return;
         }
 
-        // 2. Si es DNI de 8 dígitos y no existe en BD → consultar RENIEC
+        // 2. Si es DNI de 8 dígitos → consultar RENIEC vía Decolecta
         if (/^\d{8}$/.test(q)) {
             _ocultarDropdown();
-            _mostrarBadgeCliente('searching', 'Consultando RENIEC...');
+            _setSearchFeedback('Consultando RENIEC...', 'var(--text-muted)');
             try {
                 const res = await clienteApi.reniecDni(q);
                 const d   = res.data;
+                _llenarCamposCliente({
+                    nombres:   d.nombres   ?? '',
+                    apellidos: d.apellidos ?? '',
+                    tipoDoc:   'DNI',
+                    dni:       q,
+                    telefono:  '',
+                    correo:    '',
+                });
                 _setModoNuevoCliente();
-                document.getElementById('tipoDocumento').value    = 'DNI';
-                document.getElementById('dniCliente').value       = q;
-                document.getElementById('nombresCliente').value   = d.nombres   ?? '';
-                document.getElementById('apellidosCliente').value = d.apellidos ?? '';
-                _actualizarPlaceholderDoc();
-                _validarDoc();
                 _mostrarBadgeCliente('new', 'Datos obtenidos del RENIEC — completa los campos restantes.');
+                _setSearchFeedback('');
+                searchInput.value = '';
             } catch {
-                _mostrarBadgeCliente('', '');
-                _filtrarClientes(q);
+                _setSearchFeedback('No se encontró el DNI en RENIEC.', 'var(--red-text, #e57373)');
+                _llenarCamposCliente({ nombres: '', apellidos: '', tipoDoc: 'DNI', dni: q, telefono: '', correo: '' });
+                _setModoNuevoCliente();
+                searchInput.value = '';
             }
-            searchInput.value = '';
             return;
         }
 
-        // 3. Búsqueda general por nombre / teléfono
+        // 3. Búsqueda general (nombre / teléfono) → dropdown
+        _setSearchFeedback('');
         _filtrarClientes(q);
     };
 
@@ -718,7 +804,12 @@ async function init() {
     /* 8. Abrir modal paquete */
     document.getElementById('btn-modal-paquete')?.addEventListener('click', () => {
         state.paqueteSeleccionado = null;
-        document.querySelectorAll('.paquete-option').forEach(o => o.classList.remove('selected'));
+        _nivelFiltro = 'todos';
+        document.querySelectorAll('.nivel-filtro-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+        document.querySelectorAll('.paquete-option').forEach(o => {
+            o.classList.remove('selected');
+            o.style.display = '';
+        });
         const cantEl = document.getElementById('paqueteCantidad');
         if (cantEl) cantEl.value = '1';
         _modalPaquete?.show();
@@ -739,6 +830,7 @@ async function init() {
         const { idRef, nombre, precio } = state.paqueteSeleccionado;
         const cantidad = Math.max(1, parseInt(document.getElementById('paqueteCantidad')?.value) || 1);
         state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad });
+        _sincronizarNumEstudiantes();
         _renderContainers();
         _actualizarResumen();
         _saveDraft();

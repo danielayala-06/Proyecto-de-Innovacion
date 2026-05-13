@@ -29,9 +29,8 @@ class PagosModel extends Model
         'id_contrato' => 'required|is_natural_no_zero',
         'id_form_pago' => 'required|is_natural_no_zero',
         'monto' => 'required|decimal|greater_than[0]',
-        'moneda' => 'required|in_list[PEN,USD]',
+        'moneda' => 'required|in_list[PEN,USD,EUR]',
         'fecha' => 'required|valid_date',
-        'estado' => 'required|in_list[PENDIENTE,PAGADO,ANULADO]'
     ];
     protected $validationMessages = [
         'monto' => [

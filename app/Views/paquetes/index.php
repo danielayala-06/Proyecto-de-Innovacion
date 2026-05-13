@@ -1,56 +1,59 @@
 <?= $header ?>
 <!-- MAIN -->
 <main id="main-content">
-    <p class="section-label">Paquetes</p>
+    <div class="container">
 
-    <!-- TOOLBAR -->
-    <div class="toolbar">
-        <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Buscar paquete...">
-                <button class="search-btn"><i class="bi bi-search"></i></button>
+        <p class="section-label">Paquetes</p>
+
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar paquete...">
+                    <button class="search-btn"><i class="bi bi-search"></i></button>
+                </div>
+                <select class="filter-select" id="filterCat">
+                    <option value="">Todas las categorías</option>
+                    <option value="Cuadros">Cuadros</option>
+                    <option value="Anuarios">Anuarios</option>
+                    <option value="Paquetes">Paquetes</option>
+                    <option value="Corporativo">Corporativo</option>
+                    <option value="Otro">Otro</option>
+                </select>
+                <select class="filter-select" id="filterEstado">
+                    <option value="">Todos los estados</option>
+                    <option value="activo">Activos</option>
+                    <option value="inactivo">Inactivos</option>
+                </select>
             </div>
-            <select class="filter-select" id="filterCat">
-                <option value="">Todas las categorías</option>
-                <option value="Cuadros">Cuadros</option>
-                <option value="Anuarios">Anuarios</option>
-                <option value="Paquetes">Paquetes</option>
-                <option value="Corporativo">Corporativo</option>
-                <option value="Otro">Otro</option>
-            </select>
-            <select class="filter-select" id="filterEstado">
-                <option value="">Todos los estados</option>
-                <option value="activo">Activos</option>
-                <option value="inactivo">Inactivos</option>
-            </select>
+            <button class="btn-nuevo-paquete" onclick="abrirNuevo()">
+                <i class="bi bi-plus-circle"></i> Nuevo paquete
+            </button>
         </div>
-        <button class="btn-nuevo-paquete" onclick="abrirNuevo()">
-            <i class="bi bi-plus-circle"></i> Nuevo paquete
-        </button>
-    </div>
 
-    <!-- STATS -->
-    <div class="stats-bar">
-        <div class="stat-box">
-            <div class="sb-label">Total paquetes</div>
-            <div class="sb-val" id="statTotal">0</div>
+        <!-- STATS -->
+        <div class="stats-bar">
+            <div class="stat-box">
+                <div class="stat-icon blue"><i class="bi bi-box-seam-fill"></i></div>
+                <div><div class="sb-label">Total paquetes</div><div class="sb-val" id="statTotal">0</div></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon green"><i class="bi bi-toggle-on"></i></div>
+                <div><div class="sb-label">Activos</div><div class="sb-val" id="statActivos" style="color:var(--green-text);">0</div></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon amber"><i class="bi bi-tag-fill"></i></div>
+                <div><div class="sb-label">Precio promedio</div><div class="sb-val" id="statPromedio" style="color:var(--amber-text);font-size:1.1rem;">S/ 0</div></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon gold"><i class="bi bi-graph-up"></i></div>
+                <div><div class="sb-label">Precio más alto</div><div class="sb-val" id="statMax" style="color:var(--accent);font-size:1.1rem;">S/ 0</div></div>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="sb-label">Activos</div>
-            <div class="sb-val" id="statActivos" style="color:#4caf82;">0</div>
-        </div>
-        <div class="stat-box">
-            <div class="sb-label">Precio promedio</div>
-            <div class="sb-val" id="statPromedio" style="color:#7db8f0;font-size:1.1rem;">S/ 0</div>
-        </div>
-        <div class="stat-box">
-            <div class="sb-label">Precio más alto</div>
-            <div class="sb-val" id="statMax" style="color:#d4a017;font-size:1.1rem;">S/ 0</div>
-        </div>
-    </div>
 
-    <!-- GRID -->
-    <div class="paquetes-grid" id="paquetesGrid"></div>
+        <!-- GRID -->
+        <div class="paquetes-grid" id="paquetesGrid"></div>
+    </div>
 </main>
 
 <!-- MODAL NUEVO / EDITAR -->
@@ -90,16 +93,15 @@
                         <label>Precio (S/)</label>
                         <input type="number" class="form-control" id="pPrecio" placeholder="0.00" min="0" step="0.01">
                     </div>
-                    <div class="col-6 col-md-4">
-                        <label>Estado</label>
-                        <select class="form-select" id="pEstado">
-                            <option value="activo">Activo</option>
-                            <option value="inactivo">Inactivo</option>
+                    <div class="col-6 col-md-8">
+                        <label>Nivel disponible *</label>
+                        <select class="form-select" id="pNivel">
+                            <option value="">Seleccionar nivel...</option>
+                            <option value="inicial-primaria">Inicial / Primaria</option>
+                            <option value="secundaria">Secundaria</option>
+                            <option value="postgrado">Postgrado</option>
+                            <option value="otro">Otro</option>
                         </select>
-                    </div>
-                    <div class="col-12 col-md-4">
-                        <label>Duración estimada</label>
-                        <input type="text" class="form-control" id="pDuracion" placeholder="Ej: 3 horas">
                     </div>
                 </div>
 
