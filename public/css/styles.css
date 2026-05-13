@@ -633,9 +633,7 @@ label {
 
 /* ── PAQUETES GRID ───────────────────────────────────────────────── */
 .paquetes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
-    gap: 14px;
+    display: block;
 }
 .paquete-card {
     background: var(--bg-surface); border: 1px solid var(--border);
@@ -701,6 +699,28 @@ label {
 .empty-state i {
     font-size: 2.8rem; display: block; margin-bottom: 0.75rem;
     color: var(--border-strong); opacity: 0.6;
+}
+
+.nivel-section { margin-bottom: 2rem; }
+.nivel-heading {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+}
+.nivel-heading span {
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+    color: var(--text-muted); white-space: nowrap;
+}
+.nivel-heading::before, .nivel-heading::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.nivel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+    gap: 14px;
+}
+.pc-inactivo {
+    opacity: 0.55;
+    filter: grayscale(0.35);
 }
 
 /* ── TABLA DE CLIENTES ───────────────────────────────────────────── */
@@ -1130,7 +1150,7 @@ body { overflow-x: hidden; }
     }
 
     /* Paquetes: 1 columna en mobile */
-    .paquetes-grid {
+    .nivel-grid {
         grid-template-columns: 1fr;
     }
 

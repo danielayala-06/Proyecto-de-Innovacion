@@ -20,10 +20,12 @@
                     <option value="Corporativo">Corporativo</option>
                     <option value="Otro">Otro</option>
                 </select>
-                <select class="filter-select" id="filterEstado">
-                    <option value="">Todos los estados</option>
-                    <option value="activo">Activos</option>
-                    <option value="inactivo">Inactivos</option>
+                <select class="filter-select" id="filterNivel">
+                    <option value="">Todos los niveles</option>
+                    <option value="inicial-primaria">Inicial / Primaria</option>
+                    <option value="secundaria">Secundaria</option>
+                    <option value="postgrado">Postgrado</option>
+                    <option value="otro">Otro</option>
                 </select>
             </div>
             <button class="btn-nuevo-paquete" onclick="abrirNuevo()">
@@ -35,11 +37,15 @@
         <div class="stats-bar">
             <div class="stat-box">
                 <div class="stat-icon blue"><i class="bi bi-box-seam-fill"></i></div>
-                <div><div class="sb-label">Total paquetes</div><div class="sb-val" id="statTotal">0</div></div>
+                <div><div class="sb-label">Encontrados</div><div class="sb-val" id="statTotal">0</div></div>
             </div>
             <div class="stat-box">
                 <div class="stat-icon green"><i class="bi bi-toggle-on"></i></div>
                 <div><div class="sb-label">Activos</div><div class="sb-val" id="statActivos" style="color:var(--green-text);">0</div></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-icon red"><i class="bi bi-toggle-off"></i></div>
+                <div><div class="sb-label">Inactivos</div><div class="sb-val" id="statInactivos" style="color:var(--red-text);">0</div></div>
             </div>
             <div class="stat-box">
                 <div class="stat-icon amber"><i class="bi bi-tag-fill"></i></div>

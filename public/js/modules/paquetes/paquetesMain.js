@@ -17,7 +17,7 @@ async function cargarPaquetes() {
         const res       = await paqueteApi.listar();
         state.todos     = res.data ?? [];
         state.filtrados = filtrar(state.todos, {});
-        ui.renderStats(calcularStats(state.todos));
+        ui.renderStats(calcularStats(state.filtrados));
         ui.renderGrid(state.filtrados);
     } catch {
         ui.renderError('No se pudieron cargar los paquetes.');
@@ -28,10 +28,11 @@ async function cargarPaquetes() {
    FILTRADO (estado)
 ═══════════════════════════════════════════════════════════ */
 function _aplicarFiltros() {
-    const busqueda     = document.getElementById('searchInput')?.value    ?? '';
-    const categoria    = document.getElementById('filterCat')?.value      ?? '';
-    const estadoFiltro = document.getElementById('filterEstado')?.value   ?? '';
-    state.filtrados = filtrar(state.todos, { busqueda, categoria, estadoFiltro });
+    const busqueda   = document.getElementById('searchInput')?.value  ?? '';
+    const categoria  = document.getElementById('filterCat')?.value    ?? '';
+    const nivelFiltro = document.getElementById('filterNivel')?.value ?? '';
+    state.filtrados = filtrar(state.todos, { busqueda, categoria, nivelFiltro });
+    ui.renderStats(calcularStats(state.filtrados));
     ui.renderGrid(state.filtrados);
 }
 
@@ -130,7 +131,7 @@ function init() {
 
     document.getElementById('searchInput')?.addEventListener('input',  _aplicarFiltros);
     document.getElementById('filterCat')?.addEventListener('change',   _aplicarFiltros);
-    document.getElementById('filterEstado')?.addEventListener('change', _aplicarFiltros);
+    document.getElementById('filterNivel')?.addEventListener('change', _aplicarFiltros);
 
     cargarPaquetes();
 }

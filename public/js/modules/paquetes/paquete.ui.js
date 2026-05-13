@@ -1,5 +1,5 @@
-import { formatters }          from '../../utils/formatters.js';
-import { categoriaDesPaquete } from './paquete.state.js';
+import { formatters }                        from '../../utils/formatters.js';
+import { categoriaDesPaquete, agruparPorNivel, NIVEL_LABEL } from './paquete.state.js';
 
 const CAT_BADGE_CLASS = {
     'Quinceañeros': 'cat-quinceaneros',
@@ -62,10 +62,11 @@ export const ui = {
             </div>`;
     },
 
-    renderStats({ total, activos, promedio, maximo }) {
+    renderStats({ total, activos, inactivos, promedio, maximo }) {
         const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-        set('statTotal',   total);
-        set('statActivos', activos);
+        set('statTotal',    total);
+        set('statActivos',  activos);
+        set('statInactivos', inactivos);
         set('statPromedio', formatters.moneda(promedio));
         set('statMax',      formatters.moneda(maximo));
     },
@@ -83,47 +84,61 @@ export const ui = {
             return;
         }
 
-        grid.innerHTML = paquetes.map(p => {
-            const lineas  = (p.descripcion || '').split('\n').filter(Boolean);
-            const desc    = lineas[0] ?? '';
-            const items   = lineas.slice(1);
-            const esActivo = p.estado === 'ACTIVO';
+        const grupos = agruparPorNivel(paquetes);
+        const sections = [];
 
-            return `
-            <div class="paquete-card">
-                <div class="pc-header">
-                    <div>
-                        ${_catBadge(p)}
-                        <div class="pc-name">${p.nombre_paquete}</div>
-                        ${desc ? `<div class="pc-desc">${desc}</div>` : ''}
+        for (const [nivel, lista] of grupos) {
+            const label = NIVEL_LABEL[nivel] ?? nivel;
+            const cards = lista.map(p => {
+                const lineas   = (p.descripcion || '').split('\n').filter(Boolean);
+                const desc     = lineas[0] ?? '';
+                const items    = lineas.slice(1);
+                const esActivo = p.estado === 'ACTIVO';
+
+                return `
+                <div class="paquete-card${esActivo ? '' : ' pc-inactivo'}">
+                    <div class="pc-header">
+                        <div>
+                            ${_catBadge(p)}
+                            <div class="pc-name">${p.nombre_paquete}</div>
+                            ${desc ? `<div class="pc-desc">${desc}</div>` : ''}
+                        </div>
+                        ${_estadoBadge(p.estado)}
                     </div>
-                    ${_estadoBadge(p.estado)}
-                </div>
 
-                ${items.length ? `
-                <div class="pc-items">
-                    <div class="pc-items-title">Incluye</div>
-                    ${items.map(l => `
-                        <div class="pc-item-row">
-                            <i class="bi bi-check2"></i>
-                            <span>${l}</span>
-                        </div>`).join('')}
-                </div>` : ''}
+                    ${items.length ? `
+                    <div class="pc-items">
+                        <div class="pc-items-title">Incluye</div>
+                        ${items.map(l => `
+                            <div class="pc-item-row">
+                                <i class="bi bi-check2"></i>
+                                <span>${l}</span>
+                            </div>`).join('')}
+                    </div>` : ''}
 
-                <div class="pc-footer">
-                    <div class="pc-price">${formatters.moneda(p.precio)}</div>
-                    <div class="pc-actions">
-                        <button class="btn-icon" onclick="editarPaquete(${p.id_paquete})" title="Editar">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn-icon danger"
-                                onclick="toggleEstado(${p.id_paquete},'${p.estado}')"
-                                title="${esActivo ? 'Desactivar' : 'Activar'}">
-                            <i class="bi bi-${esActivo ? 'slash-circle' : 'play-circle'}"></i>
-                        </button>
+                    <div class="pc-footer">
+                        <div class="pc-price">${formatters.moneda(p.precio)}</div>
+                        <div class="pc-actions">
+                            <button class="btn-icon" onclick="editarPaquete(${p.id_paquete})" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn-icon danger"
+                                    onclick="toggleEstado(${p.id_paquete},'${p.estado}')"
+                                    title="${esActivo ? 'Desactivar' : 'Activar'}">
+                                <i class="bi bi-${esActivo ? 'slash-circle' : 'play-circle'}"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </div>`;
-        }).join('');
+                </div>`;
+            }).join('');
+
+            sections.push(`
+                <div class="nivel-section">
+                    <div class="nivel-heading"><span>${label}</span></div>
+                    <div class="nivel-grid">${cards}</div>
+                </div>`);
+        }
+
+        grid.innerHTML = sections.join('');
     },
 };
