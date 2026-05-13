@@ -726,9 +726,14 @@ async function init() {
         if (state.cliente || state.esNuevoCliente) return;
         const dni = dniInput.value.trim();
         if (!dni) return;
+
+        _mostrarBadgeCliente('searching', 'Buscando en registros...');
         const encontrado = _buscarPorDni(dni);
-        if (encontrado) { _setClienteExistente(encontrado); return; }
-        _setModoNuevoCliente();
+        if (encontrado) {
+            _setClienteExistente(encontrado);
+        } else {
+            _setModoNuevoCliente();
+        }
     });
 
     /* 7. Barra de búsqueda general */
@@ -744,7 +749,7 @@ async function init() {
         const q = searchInput?.value?.trim();
         if (!q) { _ocultarDropdown(); return; }
 
-        // 1. Búsqueda exacta por DNI en clientes locales
+        // 1. Coincidencia exacta por número de documento en BD
         const exactoDni = _buscarPorDni(q);
         if (exactoDni) {
             _setClienteExistente(exactoDni);
