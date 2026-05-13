@@ -648,33 +648,15 @@ async function init() {
             _validarDoc();
         }
     });
-    dniInput?.addEventListener('blur', async () => {
+    dniInput?.addEventListener('blur', () => {
         if (state.cliente || state.esNuevoCliente) return;
-        const dni  = dniInput.value.trim();
-        const tipo = document.getElementById('tipoDocumento')?.value ?? 'DNI';
+        const dni = dniInput.value.trim();
         if (!dni) return;
 
-        // 1. Buscar en BD local primero
         _mostrarBadgeCliente('searching', 'Buscando en registros...');
         const encontrado = _buscarPorDni(dni);
         if (encontrado) {
             _setClienteExistente(encontrado);
-            return;
-        }
-
-        // 2. Si es DNI con formato válido → consultar RENIEC vía Decolecta
-        if (tipo === 'DNI' && /^\d{8}$/.test(dni)) {
-            _mostrarBadgeCliente('searching', 'Consultando RENIEC...');
-            try {
-                const res = await clienteApi.reniecDni(dni);
-                const d   = res.data;
-                _setModoNuevoCliente();
-                document.getElementById('nombresCliente').value   = d.nombres   ?? '';
-                document.getElementById('apellidosCliente').value = d.apellidos ?? '';
-                _mostrarBadgeCliente('new', 'Datos obtenidos del RENIEC — completa los campos restantes.');
-            } catch {
-                _setModoNuevoCliente();
-            }
         } else {
             _setModoNuevoCliente();
         }
@@ -684,10 +666,11 @@ async function init() {
     const searchInput = document.getElementById('searchCliente');
     const searchBtn   = document.getElementById('btnBuscar');
 
-    const _doSearch = () => {
+    const _doSearch = async () => {
         const q = searchInput?.value?.trim();
         if (!q) { _ocultarDropdown(); return; }
-        // Búsqueda exacta por DNI primero
+
+        // 1. Coincidencia exacta por número de documento en BD
         const exactoDni = _buscarPorDni(q);
         if (exactoDni) {
             _setClienteExistente(exactoDni);
@@ -695,7 +678,31 @@ async function init() {
             _ocultarDropdown();
             return;
         }
-        // Búsqueda general (nombre/teléfono)
+
+        // 2. Si es DNI de 8 dígitos y no existe en BD → consultar RENIEC
+        if (/^\d{8}$/.test(q)) {
+            _ocultarDropdown();
+            _mostrarBadgeCliente('searching', 'Consultando RENIEC...');
+            try {
+                const res = await clienteApi.reniecDni(q);
+                const d   = res.data;
+                _setModoNuevoCliente();
+                document.getElementById('tipoDocumento').value    = 'DNI';
+                document.getElementById('dniCliente').value       = q;
+                document.getElementById('nombresCliente').value   = d.nombres   ?? '';
+                document.getElementById('apellidosCliente').value = d.apellidos ?? '';
+                _actualizarPlaceholderDoc();
+                _validarDoc();
+                _mostrarBadgeCliente('new', 'Datos obtenidos del RENIEC — completa los campos restantes.');
+            } catch {
+                _mostrarBadgeCliente('', '');
+                _filtrarClientes(q);
+            }
+            searchInput.value = '';
+            return;
+        }
+
+        // 3. Búsqueda general por nombre / teléfono
         _filtrarClientes(q);
     };
 
