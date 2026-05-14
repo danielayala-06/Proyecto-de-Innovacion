@@ -137,9 +137,8 @@ window.abrirModalCotizaciones = async function () {
 
   if (!state.todasCotizaciones.length) {
     try {
-      const res = await cotizacionApi.listar();
-      const todas = res.data ?? [];
-      state.todasCotizaciones = todas.filter(c => c.estado?.toUpperCase() === 'APROBADA');
+      const res = await cotizacionApi.listar({ sin_contrato: 1 });
+      state.todasCotizaciones = res.data ?? [];
     } catch {
       if (cotEl) cotEl.innerHTML =
         `<p class="text-danger text-center py-2">No se pudieron cargar las cotizaciones.</p>`;
@@ -564,8 +563,8 @@ export { _filtrar, _renderPagina };
 export async function abrirConCotizacionId(cotId) {
   if (!state.todasCotizaciones.length) {
     try {
-      const res = await cotizacionApi.listar();
-      state.todasCotizaciones = (res.data ?? []).filter(c => c.estado?.toUpperCase() === 'APROBADA');
+      const res = await cotizacionApi.listar({ sin_contrato: 1 });
+      state.todasCotizaciones = res.data ?? [];
     } catch {
       alerts.error('No se pudieron cargar las cotizaciones.');
       return;

@@ -150,6 +150,27 @@ class CotizacionService
         return $cotizaciones;
     }
 
+    // Cotizaciones APROBADAS sin contrato activo (para el selector de generar contrato)
+    public function listarDisponibles(): array
+    {
+        $rows = $this->cotizacionModel->listarAprobadasSinContrato();
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        $ids            = array_column($rows, 'id_cotizacion');
+        $detallesPorCot = $this->_cargarDetalles($ids);
+        $cotizaciones   = [];
+
+        foreach ($rows as $row) {
+            $id             = $row['id_cotizacion'];
+            $cotizaciones[] = $this->_formatearCotizacion($row, $detallesPorCot[$id] ?? []);
+        }
+
+        return $cotizaciones;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Detalle de una cotización — sin N+1
     // ─────────────────────────────────────────────────────────────────────────

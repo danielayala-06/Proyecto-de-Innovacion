@@ -34,11 +34,14 @@ class CotizacionesApi extends BaseController
     // ────────────────────────────────────────────────────────────────────────
     public function index()
     {
+        $sinContrato = $this->request->getGet('sin_contrato');
+        $datos       = $sinContrato ? $this->service->listarDisponibles() : $this->service->listar();
+
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON([
                 'status' => 'success',
-                'data'   => $this->transformer->transformMany($this->service->listar()),
+                'data'   => $this->transformer->transformMany($datos),
             ]);
     }
 
