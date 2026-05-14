@@ -23,8 +23,10 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/',                      'Home::index');
     $routes->get('/cotizaciones',          'CotizacionController::index');
     $routes->get('/cotizaciones/crear',    'CotizacionController::crear');
-    $routes->get('/contratos',             'ContratoController::index');
-    $routes->get('/contratos/(:num)',      'ContratoController::generarContrato/$1');
+    $routes->get('/contratos',                      'ContratoController::index');
+    $routes->get('/contratos/(:num)',              'ContratoController::generarContrato/$1');
+    $routes->get('/sesiones',                       'SesionController::lista');
+    $routes->get('/contratos/(:num)/sesiones',     'SesionController::index/$1');
     $routes->get('/paquetes',              'PaqueteController::index');
     $routes->get('/clientes',              'ClienteController::index');
     $routes->get('/calendario',            'CalendarioController::index');
@@ -82,4 +84,21 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth']
     $routes->post  ('promociones',               'PromocionesApi::create');
     $routes->put   ('promociones/(:num)',         'PromocionesApi::update/$1');
     $routes->patch ('promociones/(:num)/activar', 'PromocionesApi::toggleActiva/$1');
+
+    // ── Sesiones Fotográficas ─────────────────────────────────────────────────
+    $routes->get   ('sesiones',                                   'SesionesApi::index');
+    $routes->get   ('sesiones/(:num)',                            'SesionesApi::show/$1');
+    $routes->post  ('sesiones',                                   'SesionesApi::create');
+    $routes->put   ('sesiones/(:num)',                            'SesionesApi::update/$1');
+    $routes->patch ('sesiones/(:num)/estado',                     'SesionesApi::cambiarEstado/$1');
+    $routes->get   ('sesiones/limite/(:num)',                     'SesionesApi::limite/$1');
+    $routes->post  ('sesiones/(:num)/asistencia',                 'SesionesApi::agregarEstudiante/$1');
+    $routes->delete('sesiones/(:num)/asistencia/(:num)',          'SesionesApi::quitarEstudiante/$1/$2');
+    $routes->patch ('sesiones/(:num)/asistencia/(:num)',          'SesionesApi::marcarAsistencia/$1/$2');
+
+    // ── Estudiantes ───────────────────────────────────────────────────────────
+    $routes->get   ('estudiantes',        'EstudiantesApi::index');
+    $routes->post  ('estudiantes',        'EstudiantesApi::create');
+    $routes->put   ('estudiantes/(:num)', 'EstudiantesApi::update/$1');
+    $routes->delete('estudiantes/(:num)', 'EstudiantesApi::delete/$1');
 });

@@ -723,6 +723,182 @@ label {
     filter: grayscale(0.35);
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   SESIONES
+══════════════════════════════════════════════════════════════════ */
+
+/* Header de la página */
+.sesiones-header {
+    display: flex; align-items: flex-start; gap: 16px; margin-bottom: 1.25rem;
+}
+.btn-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.82rem; color: var(--text-muted); text-decoration: none;
+    padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-surface); white-space: nowrap; margin-top: 2px;
+    transition: border-color .18s, color .18s;
+}
+.btn-back:hover { border-color: var(--accent); color: var(--accent); }
+
+.sesiones-contrato-info {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    font-size: 0.83rem; color: var(--text-secondary); margin-top: 4px;
+}
+
+/* Layout dos columnas */
+.sesiones-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 16px;
+    align-items: start;
+    min-height: 60vh;
+}
+
+/* Sidebar izquierdo */
+.sesiones-sidebar {
+    display: flex; flex-direction: column; gap: 12px;
+    position: sticky; top: 80px; max-height: calc(100vh - 120px);
+}
+.sesiones-sidebar-section {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; overflow: hidden;
+    display: flex; flex-direction: column;
+}
+.sesiones-sidebar-title {
+    font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--text-muted); margin-bottom: 8px;
+}
+
+/* Tabs de promociones */
+.promo-tabs-list { display: flex; flex-direction: column; gap: 4px; }
+.promo-tab {
+    display: flex; flex-direction: column; align-items: flex-start;
+    padding: 8px 10px; border-radius: 8px; border: 1px solid transparent;
+    background: none; cursor: pointer; text-align: left; width: 100%;
+    transition: background .15s, border-color .15s;
+}
+.promo-tab i { font-size: .8rem; color: var(--text-muted); margin-bottom: 2px; }
+.promo-tab span { font-size: .83rem; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
+.promo-tab small { font-size: .72rem; color: var(--text-muted); }
+.promo-tab:hover  { background: var(--bg-hover); border-color: var(--border); }
+.promo-tab.active { background: rgba(var(--accent-rgb, 180,144,64),.12); border-color: var(--accent); }
+.promo-tab.active span { color: var(--accent); }
+
+/* Lista de estudiantes */
+.estudiantes-lista { display: flex; flex-direction: column; gap: 6px; }
+.estudiante-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 4px; border-radius: 8px;
+    transition: background .12s;
+}
+.estudiante-row:hover { background: var(--bg-hover); }
+.estudiante-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; font-weight: 700; flex-shrink: 0;
+}
+.estudiante-avatar.sm { width: 26px; height: 26px; font-size: .62rem; }
+.estudiante-nombre { font-size: .8rem; font-weight: 600; color: var(--text-primary); }
+.estudiante-apoderado { font-size: .7rem; color: var(--text-muted); line-height: 1.3; }
+.estudiante-info { flex: 1; min-width: 0; }
+
+/* Columna principal - sesiones */
+.sesiones-main { display: flex; flex-direction: column; gap: 16px; }
+
+/* Barras de límite por tipo */
+.limite-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.limite-bar {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px;
+}
+.limite-info {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;
+}
+.limite-count { font-size: .78rem; color: var(--text-muted); }
+.limite-agotado { font-size: .75rem; color: var(--red-text); display: flex; align-items: center; gap: 4px; }
+.limite-progress {
+    height: 5px; background: var(--border); border-radius: 10px; overflow: hidden;
+}
+.limite-progress.full .limite-fill { background: var(--red-text); }
+.limite-fill { height: 100%; background: var(--accent); border-radius: 10px; transition: width .3s; }
+
+/* Tipo badges */
+.tipo-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .3px;
+    padding: 3px 8px; border-radius: 20px;
+}
+.tipo-colegio    { background: #e3f2fd; color: #1565c0; }
+.tipo-exteriores { background: #e8f5e9; color: #1b5e20; }
+.tipo-estudio    { background: #f3e5f5; color: #4a148c; }
+.tipo-otro       { background: var(--bg-hover); color: var(--text-muted); border: 1px solid var(--border); }
+
+/* Tarjetas de sesión */
+.sesiones-lista { display: flex; flex-direction: column; gap: 10px; }
+.sesion-card {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; transition: border-color .18s;
+}
+.sesion-card:hover { border-color: var(--accent); }
+.sesion-card.estado-cancelado { opacity: .55; }
+.sesion-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .75rem 1rem; border-bottom: 1px solid var(--border);
+    gap: 8px;
+}
+.sesion-card-body { padding: .65rem 1rem; }
+.sesion-fecha {
+    display: flex; align-items: center; gap: 6px;
+    font-size: .82rem; color: var(--text-secondary);
+}
+.sesion-hora { font-size: .75rem; color: var(--text-muted); }
+.sesion-obs { font-size: .77rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+.sesion-actions { display: flex; gap: 4px; }
+
+/* Offcanvas asistencia */
+.asistencia-section-title {
+    font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--text-muted); margin: 10px 0 6px;
+}
+.asistencia-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 2px; border-radius: 8px;
+    transition: background .12s;
+}
+.asistencia-row:hover { background: var(--bg-hover); }
+.asistencia-row.dim { opacity: .7; }
+.asistencia-btns { display: flex; gap: 4px; }
+.btn-asistencia {
+    width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+    background: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; color: var(--text-muted); transition: background .12s, color .12s;
+}
+.btn-asistencia:hover    { background: var(--bg-hover); }
+.btn-asistencia.active-ok { background: rgba(76,175,80,.15); color: var(--green-text); border-color: var(--green-text); }
+.btn-asistencia.active-no { background: rgba(229,115,115,.15); color: var(--red-text);  border-color: var(--red-text); }
+.btn-icon.success { color: var(--green-text); }
+.btn-icon.sm      { width: 26px; height: 26px; font-size: .78rem; }
+
+/* Formulario - separador de secciones */
+.form-section-label {
+    font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--accent); margin: 0 0 10px; display: flex; align-items: center; gap: 6px;
+}
+
+/* Dark mode tipos */
+[data-theme="dark"] .tipo-colegio    { background: #0d1a2e; color: #5aafff; }
+[data-theme="dark"] .tipo-exteriores { background: #0d1e0d; color: #5acd5a; }
+[data-theme="dark"] .tipo-estudio    { background: #1e0d2e; color: #c05aff; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sesiones-layout { grid-template-columns: 1fr; }
+    .sesiones-sidebar { position: static; max-height: none; }
+    .promo-tabs-list { flex-direction: row; overflow-x: auto; gap: 6px; }
+    .promo-tab { min-width: 120px; }
+}
+
 /* ── TABLA DE CLIENTES ───────────────────────────────────────────── */
 .table-card-clientes {
     background: var(--bg-surface); border: 1px solid var(--border);

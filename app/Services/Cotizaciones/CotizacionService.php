@@ -4,20 +4,26 @@ namespace App\Services\Cotizaciones;
 
 use App\Models\CotizacionesModel;
 use App\Models\CotizacionesDetallesModel;
+use App\Models\ColegiosModel;
+use App\Models\PromocionesEscolaresModel;
 use App\Models\PaquetesModel;
 use App\Models\ProductosModel;
 
 class CotizacionService
 {
-    protected CotizacionesModel        $cotizacionModel;
+    protected CotizacionesModel         $cotizacionModel;
     protected CotizacionesDetallesModel $detalleModel;
-    protected ProductosModel           $productoModel;
-    protected PaquetesModel            $paqueteModel;
+    protected ColegiosModel             $colegioModel;
+    protected PromocionesEscolaresModel $promocionModel;
+    protected ProductosModel            $productoModel;
+    protected PaquetesModel             $paqueteModel;
 
     public function __construct()
     {
         $this->cotizacionModel = new CotizacionesModel();
         $this->detalleModel    = new CotizacionesDetallesModel();
+        $this->colegioModel    = new ColegiosModel();
+        $this->promocionModel  = new PromocionesEscolaresModel();
         $this->productoModel   = new ProductosModel();
         $this->paqueteModel    = new PaquetesModel();
     }
@@ -222,7 +228,66 @@ class CotizacionService
             throw new \RuntimeException('Error al crear la cotización', 500);
         }
 
+        // Auto-crear promoción a partir de los datos de sesión/colegio (best-effort)
+        $this->_crearPromocionDesde($idCotizacion, $data);
+
         return $this->obtenerPorId($idCotizacion);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Crea automáticamente una promoción escolar al generar una cotización.
+    // Si faltan datos o ocurre cualquier error, se ignora silenciosamente.
+    // ─────────────────────────────────────────────────────────────────────────
+    private function _crearPromocionDesde(int $idCotizacion, array $data): void
+    {
+        $sesion  = $data['sesion']  ?? [];
+        $colegio = $data['colegio'] ?? [];
+
+        $grado          = $sesion['grado']           ?? null;
+        $numEstudiantes = (int) ($sesion['num_estudiantes'] ?? 0);
+        $nombreColegio  = trim($colegio['nombre']    ?? '');
+
+        if (!$grado || $numEstudiantes <= 0 || $nombreColegio === '') {
+            return;
+        }
+
+        try {
+            // Buscar colegio existente por nombre (case-insensitive)
+            $colegioRow = $this->colegioModel
+                ->where('LOWER(nombre_colegio)', strtolower($nombreColegio))
+                ->first();
+
+            if ($colegioRow) {
+                $idColegio = $colegioRow['id_colegio'];
+            } else {
+                $idColegio = $this->colegioModel->insert([
+                    'nombre_colegio' => $nombreColegio,
+                    'provincia'      => $colegio['provincia'] ?? null,
+                    'distrito'       => $colegio['distrito']  ?? null,
+                    'estado'         => 'ACTIVO',
+                ]);
+                if ($idColegio === false) return;
+            }
+
+            $anio   = !empty($sesion['fecha']) ? (int) date('Y', strtotime($sesion['fecha'])) : (int) date('Y');
+            $seccion = $sesion['seccion'] ?? null;
+            $nombre  = !empty($sesion['nombre_promocion'])
+                ? $sesion['nombre_promocion']
+                : ($grado . ($seccion ? ' ' . $seccion : '') . ' · ' . $anio);
+
+            $this->promocionModel->insert([
+                'id_colegio'      => $idColegio,
+                'id_cotizacion'   => $idCotizacion,
+                'nombre'          => $nombre,
+                'grado'           => $grado,
+                'seccion'         => $seccion,
+                'num_estudiantes' => $numEstudiantes,
+                'anio'            => $anio,
+                'is_active'       => true,
+            ]);
+        } catch (\Throwable) {
+            // Silently ignore: the cotización is already committed
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

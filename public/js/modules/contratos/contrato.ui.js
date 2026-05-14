@@ -88,7 +88,11 @@ export const ui = {
               <button class="btn btn-sm btn-outline-warning" ${editAttr}>
                 <i class="bi bi-pencil-square"></i>
               </button>
-              
+              <a class="btn btn-sm btn-outline-info" title="Gestionar sesiones"
+                 href="/contratos/${c.id}/sesiones"
+                 onclick="event.stopPropagation()">
+                <i class="bi bi-camera"></i>
+              </a>
             </div>
           </td>
         </tr>`;

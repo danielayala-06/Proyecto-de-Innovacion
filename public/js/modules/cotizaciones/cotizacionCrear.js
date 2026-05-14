@@ -634,7 +634,6 @@ function _buildPayload(idCliente) {
         observaciones:  document.getElementById('notas')?.value?.trim() ?? null,
         total_estimado: total,
         detalles,
-        // TODO: backend pendiente para guardar colegio y sesión
         colegio: {
             nombre:    document.getElementById('nombreColegio')?.value?.trim()    ?? null,
             provincia: document.getElementById('provinciaColegio')?.value         ?? null,

@@ -25,8 +25,8 @@ class ColegiosModel extends Model
     // Validation
     protected $validationRules = [
         'nombre_colegio' => 'required|max_length[100]',
-        'distrito'       => 'required|max_length[100]',
-        'provincia'      => 'required|max_length[100]',
+        'distrito'       => 'permit_empty|max_length[100]',
+        'provincia'      => 'permit_empty|max_length[100]',
         'estado'         => 'permit_empty|in_list[ACTIVO,INACTIVO]',
     ];
     protected $validationMessages = [
