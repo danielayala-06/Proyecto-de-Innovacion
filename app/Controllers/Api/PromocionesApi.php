@@ -35,9 +35,10 @@ class PromocionesApi extends BaseController
     public function index()
     {
         $filters = array_filter([
-            'colegio' => $this->request->getGet('colegio'),
-            'anio'    => $this->request->getGet('anio'),
-            'activa'  => $this->request->getGet('activa'),
+            'id_cotizacion' => $this->request->getGet('id_cotizacion'),
+            'colegio'       => $this->request->getGet('colegio'),
+            'anio'          => $this->request->getGet('anio'),
+            'activa'        => $this->request->getGet('activa'),
         ], fn($v) => $v !== null);
 
         return $this->response

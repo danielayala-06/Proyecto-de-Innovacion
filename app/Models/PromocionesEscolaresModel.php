@@ -53,6 +53,15 @@ class PromocionesEscolaresModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    public function porCotizacion(int $idCotizacion): ?array
+    {
+        return $this
+            ->select('promociones_escolares.*, colegios.nombre_colegio')
+            ->join('colegios', 'colegios.id_colegio = promociones_escolares.id_colegio', 'left')
+            ->where('promociones_escolares.id_cotizacion', $idCotizacion)
+            ->first() ?: null;
+    }
+
     public function obtenerConRelaciones(int $id): ?array
     {
         $promocion = $this

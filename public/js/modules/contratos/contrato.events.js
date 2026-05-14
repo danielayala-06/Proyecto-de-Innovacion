@@ -152,19 +152,8 @@ window.abrirModalCotizaciones = async function () {
 };
 
 window.seleccionarCotizacion = function (id) {
-  const cot = state.todasCotizaciones.find(c => c.id === id || c.id === parseInt(id));
-  if (!cot) return;
-  state.cotizacionSeleccionada = cot;
-
-  const el1 = document.getElementById('modalCotizaciones');
-  el1.addEventListener('hidden.bs.modal', () => {
-    _limpiarFormContrato();
-    ui.renderResumenCotizacion(cot);
-    if (!_modal2) _modal2 = new bootstrap.Modal(document.getElementById('modalGenerarContrato'));
-    _modal2.show();
-  }, { once: true });
-
   _modal1?.hide();
+  window.location.href = BASE_URL + 'contratos/crear?cot=' + id;
 };
 
 window.volverACotizaciones = function () {

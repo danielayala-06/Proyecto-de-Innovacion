@@ -169,7 +169,7 @@ window.aprobarCotizacion = async function (id) {
 
 /* ── Ir al modal de generar contrato ────────────────────────── */
 window.irAGenerarContrato = function (id) {
-  window.location.href = (window.BASE_URL || '/') + 'contratos?cot_id=' + id;
+  window.location.href = (window.BASE_URL || '/') + 'contratos/crear?cot=' + id;
 };
 
 /* ── Inicializa los listeners del index ──────────────────────── */

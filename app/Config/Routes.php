@@ -24,6 +24,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/cotizaciones',          'CotizacionController::index');
     $routes->get('/cotizaciones/crear',    'CotizacionController::crear');
     $routes->get('/contratos',                      'ContratoController::index');
+    $routes->get('/contratos/crear',               'ContratoController::crear');
     $routes->get('/contratos/(:num)',              'ContratoController::generarContrato/$1');
     $routes->get('/sesiones',                       'SesionController::lista');
     $routes->get('/contratos/(:num)/sesiones',     'SesionController::index/$1');

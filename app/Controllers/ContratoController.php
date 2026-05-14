@@ -20,6 +20,15 @@ class ContratoController extends BaseController
         return view('contratos/index', $data);
     }
 
+    public function crear()
+    {
+        $data = [
+            'header' => view('Layouts/header'),
+            'footer' => view('Layouts/footer'),
+        ];
+        return view('contratos/crear', $data);
+    }
+
     public function generarContrato(int $id)
     {
         $contratoService  = new ContratoService();

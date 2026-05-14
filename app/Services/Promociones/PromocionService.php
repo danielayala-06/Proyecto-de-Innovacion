@@ -32,6 +32,9 @@ class PromocionService
             ->orderBy('promociones_escolares.anio', 'DESC')
             ->orderBy('colegios.nombre_colegio', 'ASC');
 
+        if (!empty($filters['id_cotizacion'])) {
+            $q->where('promociones_escolares.id_cotizacion', (int) $filters['id_cotizacion']);
+        }
         if (!empty($filters['colegio'])) {
             $q->where('promociones_escolares.id_colegio', $filters['colegio']);
         }
