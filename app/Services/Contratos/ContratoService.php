@@ -5,78 +5,26 @@ namespace App\Services\Contratos;
 use App\Models\ContratosModel;
 use App\Models\CotizacionesModel;
 use App\Models\PagosModel;
-use Config\Database;
 
 class ContratoService
 {
     protected ContratosModel $contratoModel;
     protected CotizacionesModel $cotizacionModel;
     protected PagosModel $pagoModel;
-    protected $db;
 
     public function __construct()
     {
         $this->contratoModel   = new ContratosModel();
         $this->cotizacionModel = new CotizacionesModel();
         $this->pagoModel       = new PagosModel();
-
-        $this->db = Database::connect();
     }
 
     /**
      * LISTAR CONTRATOS
      */
-    public function listar(
-        array $filters = []
-    ): array {
-
-        $builder =
-            $this->contratoModel
-                ->select([
-                    'contratos.id_contrato',
-                    'contratos.id_cotizacion',
-                    'contratos.fecha_creacion',
-                    'contratos.fecha_emision',
-                    'contratos.adelanto',
-                    'contratos.total',
-                    'contratos.estado',
-                    'contratos.observaciones',
-                    "CONCAT(
-                        personas.nombres,
-                        ' ',
-                        COALESCE(personas.apellidos, '')
-                    ) AS cliente",
-                    'personas.telefono',
-                    'cotizaciones.total_estimado',
-                    'cotizaciones.estado AS estado_cotizacion'
-                ])
-                ->join(
-                    'cotizaciones',
-                    'cotizaciones.id_cotizacion = contratos.id_cotizacion'
-                )
-                ->join(
-                    'clientes',
-                    'clientes.id_cliente = cotizaciones.id_cliente'
-                )
-                ->join(
-                    'personas',
-                    'personas.id_persona = clientes.id_persona'
-                );
-
-        /**
-         * FILTRO ESTADO
-         */
-        if (!empty($filters['estado'])) {
-            $builder->where(
-                'contratos.estado',
-                strtoupper($filters['estado'])
-            );
-        }
-        return $builder->orderBy(
-                'contratos.fecha_creacion',
-                'DESC'
-            )
-            ->findAll();
+    public function listar(array $filters = []): array
+    {
+        return $this->contratoModel->listarCompleto($filters);
     }
 
     /**
@@ -195,48 +143,10 @@ class ContratoService
      */
     public function buscarPorID(int $id): ?array
     {
-        $contrato =
-            $this->contratoModel
-                ->select([
-                    'contratos.id_contrato',
-                    'contratos.id_cotizacion',
-                    'contratos.fecha_creacion',
-                    'contratos.fecha_emision',
-                    'contratos.adelanto',
-                    'contratos.total',
-                    'contratos.estado',
-                    'contratos.observaciones',
-                    "CONCAT(
-                        personas.nombres,
-                        ' ',
-                        COALESCE(personas.apellidos, '')
-                    ) AS cliente",
-                    'personas.telefono',
-                    'cotizaciones.total_estimado',
-                ])
-                ->join(
-                    'cotizaciones',
-                    'cotizaciones.id_cotizacion = contratos.id_cotizacion'
-                )
-                ->join(
-                    'clientes',
-                    'clientes.id_cliente = cotizaciones.id_cliente'
-                )
-                ->join(
-                    'personas',
-                    'personas.id_persona = clientes.id_persona'
-                )
-                ->where('contratos.id_contrato', $id)
-                ->first();
+        $contrato = $this->contratoModel->obtenerConCliente($id);
         if (!$contrato) return null;
 
-        $pagosAdicionales = $this->db
-            ->table('pagos pg')
-            ->select('pg.fecha, pg.monto, fp.nombre_forma_pago')
-            ->join('formas_pago fp', 'fp.id_form_pago = pg.id_form_pago', 'left')
-            ->where('pg.id_contrato', $id)
-            ->orderBy('pg.fecha', 'ASC')
-            ->get()->getResultArray();
+        $pagosAdicionales = $this->pagoModel->historialPorContrato($id);
 
         $adelanto    = (float) $contrato['adelanto'];
         $total       = (float) $contrato['total'];
@@ -255,6 +165,4 @@ class ContratoService
 
         return $contrato;
     }
-
-
 }

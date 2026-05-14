@@ -130,15 +130,9 @@ class CotizacionService
     // ─────────────────────────────────────────────────────────────────────────
     // Listado general — sin N+1
     // ─────────────────────────────────────────────────────────────────────────
-    public function listar(array $filters = []): array
+    public function listar(): array
     {
-        $rows = $this->cotizacionModel
-            ->select(['cotizaciones.*', 'clientes.id_cliente',
-                      'personas.nombres', 'personas.apellidos', 'usuarios.nombre_user'])
-            ->join('clientes', 'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas', 'personas.id_persona = clientes.id_persona')
-            ->join('usuarios', 'usuarios.id_usuario = cotizaciones.id_usuario')
-            ->paginate();
+        $rows = $this->cotizacionModel->listarConCliente();
 
         if (empty($rows)) {
             return [];
@@ -161,13 +155,7 @@ class CotizacionService
     // ─────────────────────────────────────────────────────────────────────────
     public function obtenerPorId(int $idCotizacion): ?array
     {
-        $row = $this->cotizacionModel
-            ->select(['cotizaciones.*', 'clientes.id_cliente',
-                      'personas.nombres', 'personas.apellidos', 'usuarios.nombre_user'])
-            ->join('clientes', 'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas', 'personas.id_persona = clientes.id_persona')
-            ->join('usuarios', 'usuarios.id_usuario = cotizaciones.id_usuario')
-            ->find($idCotizacion);
+        $row = $this->cotizacionModel->obtenerConCliente($idCotizacion);
 
         if (!$row) {
             return null;

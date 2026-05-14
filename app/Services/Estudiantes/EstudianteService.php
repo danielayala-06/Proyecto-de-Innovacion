@@ -5,21 +5,21 @@ namespace App\Services\Estudiantes;
 use App\Models\EstudiantesModel;
 use App\Models\PersonasModel;
 use App\Models\PromocionesEscolaresModel;
-use Config\Database;
+use App\Models\ApoderadosModel;
 
 class EstudianteService
 {
     protected EstudiantesModel          $estudianteModel;
     protected PersonasModel             $personaModel;
     protected PromocionesEscolaresModel $promocionModel;
-    protected $db;
+    protected ApoderadosModel           $apoderadoModel;
 
     public function __construct()
     {
         $this->estudianteModel = new EstudiantesModel();
         $this->personaModel    = new PersonasModel();
         $this->promocionModel  = new PromocionesEscolaresModel();
-        $this->db              = Database::connect();
+        $this->apoderadoModel  = new ApoderadosModel();
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -27,16 +27,7 @@ class EstudianteService
     // ────────────────────────────────────────────────────────────────────────
     public function listarPorPromocion(int $idPromocion): array
     {
-        return $this->db->table('estudiantes e')
-            ->select('e.id_estudiante, e.nombres, e.apellidos, e.fecha_nacimiento,
-                      e.color_fav, e.profesion_futura, e.id_apoderado,
-                      p.nombres AS apoderado_nombres, p.apellidos AS apoderado_apellidos,
-                      p.telefono AS apoderado_telefono, a.tipo_relacion')
-            ->join('apoderados a', 'a.id_apoderado = e.id_apoderado')
-            ->join('personas p',   'p.id_persona = a.id_persona')
-            ->where('e.id_promocion', $idPromocion)
-            ->orderBy('e.apellidos', 'ASC')
-            ->get()->getResultArray();
+        return $this->estudianteModel->listarConApoderado($idPromocion);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -62,7 +53,8 @@ class EstudianteService
             throw new \RuntimeException('Datos del apoderado y del estudiante son requeridos', 422);
         }
 
-        $this->db->transStart();
+        $db = $this->personaModel->db;
+        $db->transStart();
 
         // 1. Persona del apoderado
         $idPersona = $this->personaModel->insert([
@@ -75,22 +67,20 @@ class EstudianteService
         ]);
 
         if ($idPersona === false) {
-            $this->db->transRollback();
+            $db->transRollback();
             throw new \RuntimeException(json_encode($this->personaModel->errors()), 422);
         }
 
         // 2. Apoderado
-        $idApoderado = $this->db->table('apoderados')->insert([
+        $idApoderado = $this->apoderadoModel->insert([
             'id_persona'    => $idPersona,
             'tipo_relacion' => $apData['tipo_relacion'] ?? 'otro',
         ]);
 
-        if (!$this->db->affectedRows()) {
-            $this->db->transRollback();
+        if ($idApoderado === false) {
+            $db->transRollback();
             throw new \RuntimeException('Error al crear el apoderado', 500);
         }
-
-        $idApoderado = $this->db->insertID();
 
         // 3. Estudiante
         $idEstudiante = $this->estudianteModel->insert([
@@ -104,13 +94,13 @@ class EstudianteService
         ]);
 
         if ($idEstudiante === false) {
-            $this->db->transRollback();
+            $db->transRollback();
             throw new \RuntimeException(json_encode($this->estudianteModel->errors()), 422);
         }
 
-        $this->db->transComplete();
+        $db->transComplete();
 
-        if (!$this->db->transStatus()) {
+        if (!$db->transStatus()) {
             throw new \RuntimeException('Error al registrar el estudiante', 500);
         }
 

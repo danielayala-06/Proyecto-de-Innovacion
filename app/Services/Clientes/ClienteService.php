@@ -18,26 +18,12 @@ class ClienteService
 
     public function listar(): array
     {
-        return $this->clienteModel
-            ->select('clientes.id_cliente, personas.nombres, personas.apellidos,
-                      personas.telefono, personas.correo,
-                      personas.numero_documento, personas.tipo_documento,
-                      clientes.red_social, clientes.metodo_comunicacion,
-                      clientes.acepta_promociones, clientes.estado')
-            ->join('personas', 'personas.id_persona = clientes.id_persona')
-            ->orderBy('clientes.id_cliente', 'DESC')
-            ->findAll();
+        return $this->clienteModel->listarCompleto();
     }
 
     public function obtenerPorId(int $id): ?array
     {
-        return $this->clienteModel
-            ->select('clientes.id_cliente, clientes.red_social,
-                      clientes.metodo_comunicacion, clientes.acepta_promociones, clientes.estado,
-                      personas.nombres, personas.apellidos, personas.telefono, personas.correo,
-                      personas.tel_alternativo, personas.numero_documento, personas.tipo_documento')
-            ->join('personas', 'personas.id_persona = clientes.id_persona')
-            ->find($id) ?: null;
+        return $this->clienteModel->obtenerCompleto($id);
     }
 
     public function crear(array $data): int
@@ -137,15 +123,6 @@ class ClienteService
 
     public function existeDocumento(string $numero, string $tipo, ?int $excludeClienteId = null): bool
     {
-        $q = $this->clienteModel
-            ->join('personas', 'personas.id_persona = clientes.id_persona')
-            ->where('personas.numero_documento', $numero)
-            ->where('personas.tipo_documento', $tipo);
-
-        if ($excludeClienteId !== null) {
-            $q->where('clientes.id_cliente !=', $excludeClienteId);
-        }
-
-        return (bool) $q->countAllResults();
+        return $this->clienteModel->existePorDocumento($numero, $tipo, $excludeClienteId);
     }
 }

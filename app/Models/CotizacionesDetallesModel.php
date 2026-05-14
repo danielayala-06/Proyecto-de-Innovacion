@@ -44,4 +44,11 @@ class CotizacionesDetallesModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    public function listarPaquetes(int $idCotizacion): array
+    {
+        return $this
+            ->where('id_cotizacion', $idCotizacion)
+            ->where('tipo_item', 'paquete')
+            ->findAll();
+    }
 }

@@ -37,4 +37,12 @@ class PaquetesSesionesModel extends Model
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
+
+    public function configuracionesPorTipo(array $idsPaquetes, string $tipo): array
+    {
+        return $this
+            ->whereIn('id_paquete', $idsPaquetes)
+            ->where('tipo_sesion', $tipo)
+            ->findAll();
+    }
 }

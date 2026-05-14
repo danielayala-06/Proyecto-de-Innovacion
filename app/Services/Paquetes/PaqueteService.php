@@ -4,16 +4,19 @@ namespace App\Services\Paquetes;
 
 use App\Models\PaquetesModel;
 use App\Models\PaquetesProductosModel;
+use App\Models\ReglasPaquetesModel;
 
 class PaqueteService
 {
-    protected PaquetesModel         $paqueteModel;
+    protected PaquetesModel          $paqueteModel;
     protected PaquetesProductosModel $paqueteProductoModel;
+    protected ReglasPaquetesModel    $reglasPaquetesModel;
 
     public function __construct()
     {
         $this->paqueteModel         = new PaquetesModel();
         $this->paqueteProductoModel = new PaquetesProductosModel();
+        $this->reglasPaquetesModel  = new ReglasPaquetesModel();
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -21,36 +24,7 @@ class PaqueteService
     // ────────────────────────────────────────────────────────────────────────
     public function listar(array $filters = []): array
     {
-        $query = $this->paqueteModel->orderBy('precio', 'ASC');
-
-        if (!empty($filters['nivel'])) {
-            $query->where('nivel_disponible', strtolower($filters['nivel']));
-        }
-        if (!empty($filters['estado'])) {
-            $query->where('estado', strtoupper($filters['estado']));
-        }
-
-        $paquetes = $query->findAll();
-
-        if (empty($paquetes)) {
-            return [];
-        }
-
-        $ids    = array_column($paquetes, 'id_paquete');
-        $counts = $this->paqueteModel->db
-            ->table('paquetes_productos')
-            ->select('id_paquete, COUNT(*) AS num_productos')
-            ->whereIn('id_paquete', $ids)
-            ->groupBy('id_paquete')
-            ->get()->getResultArray();
-
-        $countMap = array_column($counts, 'num_productos', 'id_paquete');
-
-        foreach ($paquetes as &$p) {
-            $p['num_productos'] = (int) ($countMap[$p['id_paquete']] ?? 0);
-        }
-
-        return $paquetes;
+        return $this->paqueteModel->listarConConteo($filters);
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -64,18 +38,8 @@ class PaqueteService
             return null;
         }
 
-        $db = $this->paqueteModel->db;
-
-        $paquete['productos'] = $db->table('paquetes_productos pp')
-            ->select('pp.id_paquete_prod, pp.cantidad, pr.id_producto,
-                      pr.nombre_producto, pr.categoria, pr.tamanio, pr.estado')
-            ->join('productos pr', 'pr.id_producto = pp.id_producto')
-            ->where('pp.id_paquete', $id)
-            ->get()->getResultArray();
-
-        $paquete['reglas'] = $db->table('reglas_paquetes')
-            ->where('id_paquete', $id)
-            ->get()->getResultArray();
+        $paquete['productos'] = $this->paqueteProductoModel->listarConProductos($id);
+        $paquete['reglas']    = $this->reglasPaquetesModel->where('id_paquete', $id)->findAll();
 
         return $paquete;
     }

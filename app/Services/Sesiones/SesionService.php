@@ -6,7 +6,9 @@ use App\Models\SesionesFotograficasModel;
 use App\Models\SesionAsistenciaModel;
 use App\Models\PromocionesEscolaresModel;
 use App\Models\EstudiantesModel;
-use Config\Database;
+use App\Models\ReglasPaquetesModel;
+use App\Models\CotizacionesDetallesModel;
+use App\Models\PaquetesSesionesModel;
 
 class SesionService
 {
@@ -14,15 +16,19 @@ class SesionService
     protected SesionAsistenciaModel     $asistenciaModel;
     protected PromocionesEscolaresModel $promocionModel;
     protected EstudiantesModel          $estudianteModel;
-    protected $db;
+    protected ReglasPaquetesModel       $reglasPaquetesModel;
+    protected CotizacionesDetallesModel $detalleModel;
+    protected PaquetesSesionesModel     $paquetesSesionesModel;
 
     public function __construct()
     {
-        $this->sesionModel     = new SesionesFotograficasModel();
-        $this->asistenciaModel = new SesionAsistenciaModel();
-        $this->promocionModel  = new PromocionesEscolaresModel();
-        $this->estudianteModel = new EstudiantesModel();
-        $this->db              = Database::connect();
+        $this->sesionModel           = new SesionesFotograficasModel();
+        $this->asistenciaModel       = new SesionAsistenciaModel();
+        $this->promocionModel        = new PromocionesEscolaresModel();
+        $this->estudianteModel       = new EstudiantesModel();
+        $this->reglasPaquetesModel   = new ReglasPaquetesModel();
+        $this->detalleModel          = new CotizacionesDetallesModel();
+        $this->paquetesSesionesModel = new PaquetesSesionesModel();
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -73,13 +79,7 @@ class SesionService
 
         if (!$sesion) return null;
 
-        $sesion['asistencia'] = $this->db->table('sesion_asistencia sa')
-            ->select('sa.id_asistencia, sa.id_estudiante, sa.asistio,
-                      e.nombres, e.apellidos')
-            ->join('estudiantes e', 'e.id_estudiante = sa.id_estudiante')
-            ->where('sa.id_sesion', $id)
-            ->orderBy('e.apellidos', 'ASC')
-            ->get()->getResultArray();
+        $sesion['asistencia'] = $this->asistenciaModel->listarConEstudiante($id);
 
         return $sesion;
     }
@@ -95,37 +95,24 @@ class SesionService
             throw new \RuntimeException('Promoción no encontrada', 404);
         }
 
-        // Paquetes en los detalles de la cotización asociada a la promoción
-        $detalles = $this->db->table('cotizaciones_detalles')
-            ->where('id_cotizacion', $promocion['id_cotizacion'])
-            ->where('tipo_item', 'paquete')
-            ->get()->getResultArray();
-
+        $detalles    = $this->detalleModel->listarPaquetes($promocion['id_cotizacion']);
         $idsPaquetes = array_column($detalles, 'id_referencia');
         $cantidades  = array_column($detalles, 'cantidad', 'id_referencia');
 
         $permitidas = 0;
 
         if (!empty($idsPaquetes)) {
-            // Máximo de sesiones del tipo solicitado entre todos los paquetes contratados
-            $configs = $this->db->table('paquetes_sesiones')
-                ->whereIn('id_paquete', $idsPaquetes)
-                ->where('tipo_sesion', $tipo)
-                ->get()->getResultArray();
+            $configs = $this->paquetesSesionesModel->configuracionesPorTipo($idsPaquetes, $tipo);
 
             foreach ($configs as $cfg) {
                 $permitidas = max($permitidas, (int) $cfg['num_sesiones']);
             }
 
-            // Bonus por reglas de paquete (tipo_beneficio = sesion_unica)
             foreach ($detalles as $det) {
                 $idPaq = $det['id_referencia'];
                 $cant  = (int) ($cantidades[$idPaq] ?? 0);
 
-                $reglas = $this->db->table('reglas_paquetes')
-                    ->where('id_paquete', $idPaq)
-                    ->where('tipo_beneficio', 'sesion_unica')
-                    ->get()->getResultArray();
+                $reglas = $this->reglasPaquetesModel->porPaqueteTipo((int) $idPaq, 'sesion_unica');
 
                 foreach ($reglas as $regla) {
                     $cumple = match ($regla['tipo_condicion']) {

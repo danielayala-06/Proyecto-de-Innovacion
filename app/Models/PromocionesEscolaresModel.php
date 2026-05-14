@@ -52,4 +52,19 @@ class PromocionesEscolaresModel extends Model
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
+
+    public function obtenerConRelaciones(int $id): ?array
+    {
+        $promocion = $this
+            ->select('promociones_escolares.*, colegios.nombre_colegio, colegios.distrito, colegios.provincia,
+                      cotizaciones.total_estimado, cotizaciones.estado AS estado_cotizacion,
+                      CONCAT(personas.nombres," ",COALESCE(personas.apellidos,"")) AS cliente,
+                      personas.telefono')
+            ->join('colegios',    'colegios.id_colegio = promociones_escolares.id_colegio')
+            ->join('cotizaciones','cotizaciones.id_cotizacion = promociones_escolares.id_cotizacion')
+            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
+            ->join('personas',    'personas.id_persona = clientes.id_persona')
+            ->find($id);
+        return $promocion ?: null;
+    }
 }

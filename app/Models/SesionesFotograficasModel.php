@@ -46,4 +46,12 @@ class SesionesFotograficasModel extends Model
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
+
+    public function listarPorPromocion(int $idPromocion): array
+    {
+        return $this
+            ->where('id_promocion', $idPromocion)
+            ->orderBy('fecha_hora_sesion', 'ASC')
+            ->findAll();
+    }
 }

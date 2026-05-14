@@ -43,4 +43,19 @@ class EstudiantesModel extends Model
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
+
+    public function listarConApoderado(int $idPromocion): array
+    {
+        return $this
+            ->select('estudiantes.id_estudiante, estudiantes.nombres, estudiantes.apellidos,
+                      estudiantes.fecha_nacimiento, estudiantes.color_fav,
+                      estudiantes.profesion_futura, estudiantes.id_apoderado,
+                      p.nombres AS apoderado_nombres, p.apellidos AS apoderado_apellidos,
+                      p.telefono AS apoderado_telefono, a.tipo_relacion')
+            ->join('apoderados a', 'a.id_apoderado = estudiantes.id_apoderado')
+            ->join('personas p',   'p.id_persona = a.id_persona')
+            ->where('estudiantes.id_promocion', $idPromocion)
+            ->orderBy('estudiantes.apellidos', 'ASC')
+            ->findAll();
+    }
 }

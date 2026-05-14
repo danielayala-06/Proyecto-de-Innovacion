@@ -27,4 +27,15 @@ class SesionAsistenciaModel extends Model
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
+
+    public function listarConEstudiante(int $idSesion): array
+    {
+        return $this
+            ->select('sesion_asistencia.id_asistencia, sesion_asistencia.id_estudiante,
+                      sesion_asistencia.asistio, e.nombres, e.apellidos')
+            ->join('estudiantes e', 'e.id_estudiante = sesion_asistencia.id_estudiante')
+            ->where('sesion_asistencia.id_sesion', $idSesion)
+            ->orderBy('e.apellidos', 'ASC')
+            ->findAll();
+    }
 }

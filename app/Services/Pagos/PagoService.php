@@ -4,51 +4,29 @@ namespace App\Services\Pagos;
 
 use App\Models\PagosModel;
 use App\Models\ContratosModel;
+use App\Models\FormasPagoModel;
 
 class PagoService
 {
-    protected PagosModel     $pagoModel;
-    protected ContratosModel $contratoModel;
+    protected PagosModel      $pagoModel;
+    protected ContratosModel  $contratoModel;
+    protected FormasPagoModel $formasPagoModel;
 
     public function __construct()
     {
-        $this->pagoModel     = new PagosModel();
-        $this->contratoModel = new ContratosModel();
+        $this->pagoModel       = new PagosModel();
+        $this->contratoModel   = new ContratosModel();
+        $this->formasPagoModel = new FormasPagoModel();
     }
 
     public function listar(?int $idContrato = null): array
     {
-        $q = $this->pagoModel
-            ->select('pagos.id_pago, pagos.fecha, pagos.monto, pagos.moneda,
-                      pagos.voucher, pagos.id_contrato,
-                      formas_pago.nombre_forma_pago, formas_pago.tipo_pago,
-                      CONCAT(personas.nombres, " ", COALESCE(personas.apellidos,"")) AS cliente')
-            ->join('formas_pago', 'formas_pago.id_form_pago = pagos.id_form_pago')
-            ->join('contratos',   'contratos.id_contrato = pagos.id_contrato')
-            ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion')
-            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas',    'personas.id_persona = clientes.id_persona')
-            ->orderBy('pagos.fecha', 'DESC');
-
-        if ($idContrato !== null) {
-            $q->where('pagos.id_contrato', $idContrato);
-        }
-
-        return $q->findAll();
+        return $this->pagoModel->listarConDetalles($idContrato);
     }
 
     public function obtenerPorId(int $id): ?array
     {
-        return $this->pagoModel
-            ->select('pagos.*, formas_pago.nombre_forma_pago, formas_pago.tipo_pago,
-                      contratos.total, contratos.estado AS estado_contrato,
-                      CONCAT(personas.nombres, " ", COALESCE(personas.apellidos,"")) AS cliente')
-            ->join('formas_pago', 'formas_pago.id_form_pago = pagos.id_form_pago')
-            ->join('contratos',   'contratos.id_contrato = pagos.id_contrato')
-            ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion')
-            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas',    'personas.id_persona = clientes.id_persona')
-            ->find($id) ?: null;
+        return $this->pagoModel->obtenerConDetalle($id);
     }
 
     public function registrar(array $data): array
@@ -63,11 +41,7 @@ class PagoService
             throw new \RuntimeException('Solo se pueden registrar pagos en contratos ACTIVOS', 409);
         }
 
-        $sumResult = $this->pagoModel
-            ->selectSum('monto', 'total_pagado')
-            ->where('id_contrato', $data['id_contrato'])
-            ->first();
-        $sumPagos = (float) ($sumResult['total_pagado'] ?? 0);
+        $sumPagos = $this->pagoModel->sumarPorContrato((int) $data['id_contrato']);
 
         $saldo = (float) $contrato['total'] - (float) $contrato['adelanto'] - $sumPagos;
 
@@ -144,10 +118,6 @@ class PagoService
 
     public function formasPago(): array
     {
-        return $this->pagoModel->db
-            ->table('formas_pago')
-            ->select('id_form_pago, nombre_forma_pago, tipo_pago')
-            ->orderBy('nombre_forma_pago', 'ASC')
-            ->get()->getResultArray();
+        return $this->formasPagoModel->listarTodos();
     }
 }

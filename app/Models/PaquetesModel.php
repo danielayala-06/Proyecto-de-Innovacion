@@ -47,4 +47,23 @@ class PaquetesModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    public function listarConConteo(array $filters = []): array
+    {
+        $q = $this->orderBy('precio', 'ASC');
+        if (!empty($filters['nivel'])) {
+            $q->where('nivel_disponible', strtolower($filters['nivel']));
+        }
+        if (!empty($filters['estado'])) {
+            $q->where('estado', strtoupper($filters['estado']));
+        }
+        $paquetes = $q->findAll();
+        if (empty($paquetes)) return [];
+        $ids    = array_column($paquetes, 'id_paquete');
+        $counts = (new \App\Models\PaquetesProductosModel())->contarPorPaquetes($ids);
+        $map    = array_column($counts, 'num_productos', 'id_paquete');
+        foreach ($paquetes as &$p) {
+            $p['num_productos'] = (int) ($map[$p['id_paquete']] ?? 0);
+        }
+        return $paquetes;
+    }
 }

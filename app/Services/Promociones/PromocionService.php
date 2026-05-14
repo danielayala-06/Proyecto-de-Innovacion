@@ -4,16 +4,22 @@ namespace App\Services\Promociones;
 
 use App\Models\PromocionesEscolaresModel;
 use App\Models\CotizacionesModel;
+use App\Models\EstudiantesModel;
+use App\Models\SesionesFotograficasModel;
 
 class PromocionService
 {
     protected PromocionesEscolaresModel $promocionModel;
     protected CotizacionesModel         $cotizacionModel;
+    protected EstudiantesModel          $estudianteModel;
+    protected SesionesFotograficasModel $sesionModel;
 
     public function __construct()
     {
         $this->promocionModel  = new PromocionesEscolaresModel();
         $this->cotizacionModel = new CotizacionesModel();
+        $this->estudianteModel = new EstudiantesModel();
+        $this->sesionModel     = new SesionesFotograficasModel();
     }
 
     public function listar(array $filters = []): array
@@ -41,37 +47,12 @@ class PromocionService
 
     public function obtenerPorId(int $id): ?array
     {
-        $promocion = $this->promocionModel
-            ->select('promociones_escolares.*, colegios.nombre_colegio, colegios.distrito, colegios.provincia,
-                      cotizaciones.total_estimado, cotizaciones.estado AS estado_cotizacion,
-                      CONCAT(personas.nombres, " ", COALESCE(personas.apellidos,"")) AS cliente,
-                      personas.telefono')
-            ->join('colegios',    'colegios.id_colegio = promociones_escolares.id_colegio')
-            ->join('cotizaciones', 'cotizaciones.id_cotizacion = promociones_escolares.id_cotizacion')
-            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas',    'personas.id_persona = clientes.id_persona')
-            ->find($id);
+        $promocion = $this->promocionModel->obtenerConRelaciones($id);
 
         if (!$promocion) return null;
 
-        $db = $this->promocionModel->db;
-
-        $promocion['estudiantes'] = $db->table('estudiantes e')
-            ->select('e.id_estudiante, e.nombres, e.apellidos, e.fecha_nacimiento,
-                      e.color_fav, e.profesion_futura,
-                      a.tipo_relacion,
-                      CONCAT(pa.nombres, " ", COALESCE(pa.apellidos,"")) AS apoderado,
-                      pa.telefono AS tel_apoderado')
-            ->join('apoderados a', 'a.id_apoderado = e.id_apoderado')
-            ->join('personas pa',  'pa.id_persona = a.id_persona')
-            ->where('e.id_promocion', $id)
-            ->orderBy('e.apellidos', 'ASC')
-            ->get()->getResultArray();
-
-        $promocion['sesiones_fotograficas'] = $db->table('sesiones_fotograficas')
-            ->where('id_promocion', $id)
-            ->orderBy('fecha_hora_sesion', 'ASC')
-            ->get()->getResultArray();
+        $promocion['estudiantes']          = $this->estudianteModel->listarConApoderado($id);
+        $promocion['sesiones_fotograficas'] = $this->sesionModel->listarPorPromocion($id);
 
         return $promocion;
     }
