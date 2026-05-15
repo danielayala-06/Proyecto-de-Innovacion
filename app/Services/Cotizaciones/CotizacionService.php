@@ -106,15 +106,16 @@ class CotizacionService
     // ─────────────────────────────────────────────────────────────────────────
     // Construye el array de salida estándar de una cotización
     // ─────────────────────────────────────────────────────────────────────────
-    private function _formatearCotizacion(array $row, array $detalles): array
+    private function _formatearCotizacion(array $row, array $detalles, bool $tieneContrato = false): array
     {
         return [
             'cotizacion' => [
-                'id'           => (int) $row['id_cotizacion'],
-                'fecha'        => $row['fecha_registro'],
-                'estado'       => $row['estado'],
-                'observaciones'=> $row['observaciones'],
-                'total'        => (float) $row['total_estimado'],
+                'id'             => (int) $row['id_cotizacion'],
+                'fecha'          => $row['fecha_registro'],
+                'estado'         => $row['estado'],
+                'observaciones'  => $row['observaciones'],
+                'total'          => (float) $row['total_estimado'],
+                'tiene_contrato' => $tieneContrato,
             ],
             'cliente' => [
                 'id'             => (int) $row['id_cliente'],
@@ -132,6 +133,7 @@ class CotizacionService
     // ─────────────────────────────────────────────────────────────────────────
     public function listar(): array
     {
+        $this->cotizacionModel->expirarAntiguas();
         $rows = $this->cotizacionModel->listarConCliente();
 
         if (empty($rows)) {
@@ -140,11 +142,16 @@ class CotizacionService
 
         $ids               = array_column($rows, 'id_cotizacion');
         $detallesPorCot    = $this->_cargarDetalles($ids);
+        $conContrato       = array_flip($this->cotizacionModel->idsCotizacionesConContrato($ids));
         $cotizaciones      = [];
 
         foreach ($rows as $row) {
             $id             = $row['id_cotizacion'];
-            $cotizaciones[] = $this->_formatearCotizacion($row, $detallesPorCot[$id] ?? []);
+            $cotizaciones[] = $this->_formatearCotizacion(
+                $row,
+                $detallesPorCot[$id] ?? [],
+                isset($conContrato[$id])
+            );
         }
 
         return $cotizaciones;
@@ -176,6 +183,10 @@ class CotizacionService
     // ─────────────────────────────────────────────────────────────────────────
     public function obtenerPorId(int $idCotizacion): ?array
     {
+        // Verificar expiración puntual antes de devolver el dato,
+        // para que el estado siempre refleje la realidad aunque no se haya listado antes.
+        $this->cotizacionModel->verificarExpiracion($idCotizacion);
+
         $row = $this->cotizacionModel->obtenerConCliente($idCotizacion);
 
         if (!$row) {
@@ -183,8 +194,13 @@ class CotizacionService
         }
 
         $detallesPorCot = $this->_cargarDetalles([$idCotizacion]);
+        $conContrato    = $this->cotizacionModel->idsCotizacionesConContrato([$idCotizacion]);
 
-        return $this->_formatearCotizacion($row, $detallesPorCot[$idCotizacion] ?? []);
+        return $this->_formatearCotizacion(
+            $row,
+            $detallesPorCot[$idCotizacion] ?? [],
+            !empty($conContrato)
+        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────

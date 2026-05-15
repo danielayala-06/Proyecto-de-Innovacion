@@ -43,6 +43,10 @@ function fmtFechaCot(?string $f): string {
                     <div><div class="stat-label">Rechazadas</div><div class="stat-value" id="statRechazadas" style="color:var(--red-text);">0</div></div>
                 </div>
                 <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--bg-hover);"><i class="bi bi-hourglass-split" style="color:var(--text-muted);"></i></div>
+                    <div><div class="stat-label">Expiradas</div><div class="stat-value" id="statExpiradas" style="color:var(--text-muted);">0</div></div>
+                </div>
+                <div class="stat-card">
                     <div class="stat-icon gold"><i class="bi bi-cash-coin"></i></div>
                     <div><div class="stat-label">Monto total</div><div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.2rem;">S/ 0</div></div>
                 </div>
@@ -60,7 +64,7 @@ function fmtFechaCot(?string $f): string {
                         <option value="pendiente">Pendiente</option>
                         <option value="aprobada">Aprobada</option>
                         <option value="rechazada">Rechazada</option>
-                        <option value="completada">Completada</option>
+                        <option value="expirada">Expirada</option>
                     </select>
                 </div>
                 <a href="<?= base_url('cotizaciones/crear') ?>" class="btn-nuevo-paquete" style="text-decoration:none;">

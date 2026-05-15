@@ -4,6 +4,7 @@ const BADGE_MAP = {
   PENDIENTE:         ['badge-pendiente',  'Pendiente'],
   APROBADA:          ['badge-aprobada',   'Aprobada'],
   RECHAZADA:         ['badge-rechazada',  'Rechazada'],
+  EXPIRADA:          ['badge-inactivo',   'Expirada'],
   CONTRATO_GENERADO: ['badge-completada', 'Contrato'],
 };
 
@@ -50,6 +51,7 @@ export const ui = {
     set('statPend',       r.borrador   ?? r.pendientes ?? 0);
     set('statAprobadas',  r.aprobadas  ?? 0);
     set('statRechazadas', r.rechazadas ?? 0);
+    set('statExpiradas',  r.expiradas  ?? 0);
     set('statMonto',      formatters.moneda(r.monto_total ?? 0));
   },
 
@@ -74,7 +76,7 @@ export const ui = {
       const nombre      = nombreCliente(c);
       const estado      = c.estado?.toUpperCase();
       const canDel      = estado === 'PENDIENTE';
-      const canContract = estado === 'APROBADA';
+      const canContract = estado === 'APROBADA' && !c.tiene_contrato;
 
       return `
         <tr>

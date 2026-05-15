@@ -38,9 +38,22 @@ class ContratoService
             throw new \RuntimeException('Cotización no encontrada', 404);
         }
 
+        if ($cotizacion['estado'] === 'EXPIRADA') {
+            throw new \RuntimeException(
+                'La cotización ha expirado (más de 30 días). Ya no puede convertirse en contrato', 409
+            );
+        }
+
         if ($cotizacion['estado'] !== 'APROBADA') {
             throw new \RuntimeException(
                 'La cotización debe estar APROBADA para generar un contrato', 409
+            );
+        }
+
+        $fechaCot = strtotime($cotizacion['fecha_registro']);
+        if ($fechaCot && (time() - $fechaCot) > 30 * 86400) {
+            throw new \RuntimeException(
+                'La cotización tiene más de 30 días y no puede convertirse en contrato', 409
             );
         }
 

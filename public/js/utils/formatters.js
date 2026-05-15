@@ -16,10 +16,11 @@ export const formatters = {
 
   estado(e) {
     const map = {
+      PENDIENTE:         'Pendiente',
       APROBADA:          'Aprobada',
       RECHAZADA:         'Rechazada',
+      EXPIRADA:          'Expirada',
       CONTRATO_GENERADO: 'Contrato generado',
-      PENDIENTE:         'Pendiente',
     };
     return map[e?.toUpperCase()] ?? (e || '—');
   },

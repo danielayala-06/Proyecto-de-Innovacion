@@ -14,11 +14,12 @@ export function calcularResumenes(filas) {
       acc.total++;
       acc.monto_total += parseFloat(c.total) || 0;
       const e = c.estado?.toUpperCase();
-      if (e === 'PENDIENTE') acc.borrador++;
+      if (e === 'PENDIENTE')      acc.borrador++;
       else if (e === 'APROBADA')  acc.aprobadas++;
       else if (e === 'RECHAZADA') acc.rechazadas++;
+      else if (e === 'EXPIRADA')  acc.expiradas++;
       return acc;
     },
-    { total: 0, borrador: 0, aprobadas: 0, rechazadas: 0, monto_total: 0 }
+    { total: 0, borrador: 0, aprobadas: 0, rechazadas: 0, expiradas: 0, monto_total: 0 }
   );
 }

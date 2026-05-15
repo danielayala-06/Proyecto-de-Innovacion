@@ -123,18 +123,24 @@ window.verDetalle = async function (id) {
     const data = res.data;
     if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(data);
 
-    const estado = (data.estado ?? data.cotizacion?.estado ?? '').toUpperCase();
+    const estado        = (data.estado ?? '').toUpperCase();
+    const tieneContrato = !!data.tiene_contrato;
     if (accsEl) {
       if (estado === 'PENDIENTE') {
         accsEl.innerHTML = `
           <button class="btn btn-sm btn-success" onclick="aprobarCotizacion(${id})">
             <i class="bi bi-check-circle me-1"></i>Aprobar
           </button>`;
-      } else if (estado === 'APROBADA') {
+      } else if (estado === 'APROBADA' && !tieneContrato) {
         accsEl.innerHTML = `
           <button class="btn btn-sm btn-primary" onclick="irAGenerarContrato(${id})">
             <i class="bi bi-file-earmark-plus me-1"></i>Generar contrato
           </button>`;
+      } else if (estado === 'APROBADA' && tieneContrato) {
+        accsEl.innerHTML = `
+          <span class="badge bg-success" style="font-size:.8rem;">
+            <i class="bi bi-check-circle me-1"></i>Contrato generado
+          </span>`;
       }
     }
   } catch (e) {

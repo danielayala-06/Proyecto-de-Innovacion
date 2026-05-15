@@ -95,6 +95,30 @@ function _renderPreviewPromocion(prom, el) {
     <div class="cc-row"><span>Año</span><strong>${prom.anio}</strong></div>`;
 }
 
+// ── bloqueo de formulario ─────────────────────────────────────────────────────
+
+function _bloquearFormulario(mensaje) {
+  const formCol = document.querySelector('.cc-card:last-child');
+  const btn     = document.getElementById('btnGenerar');
+
+  if (btn) {
+    btn.disabled  = true;
+    btn.style.opacity = '0.5';
+    btn.style.cursor  = 'not-allowed';
+  }
+
+  const aviso = document.createElement('div');
+  aviso.style.cssText = 'background:var(--red-bg,#fff0f0);border:1px solid var(--red-text,#c0392b);border-radius:8px;padding:12px 16px;font-size:.83rem;color:var(--red-text,#c0392b);display:flex;align-items:center;gap:8px;margin-bottom:16px;';
+  aviso.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i><span>${mensaje}</span>`;
+
+  const fieldsets = document.querySelectorAll('.cc-fieldset');
+  if (fieldsets.length) {
+    fieldsets[0].before(aviso);
+  } else if (formCol) {
+    formCol.prepend(aviso);
+  }
+}
+
 // ── form ──────────────────────────────────────────────────────────────────────
 
 function _initForm(cotId, total) {
@@ -229,6 +253,16 @@ async function init() {
     // Título de la página
     const titleEl = document.getElementById('pageTitleCot');
     if (titleEl) titleEl.textContent = formatters.codigo(cot.id) + ' — ' + (cot.cliente?.nombre_completo ?? '');
+
+    // Bloquear formulario si la cotización ya expiró o no está APROBADA
+    if (cot.estado?.toUpperCase() === 'EXPIRADA') {
+      _bloquearFormulario('Esta cotización ha expirado (más de 30 días). Ya no puede convertirse en contrato.');
+      return;
+    }
+    if (cot.estado?.toUpperCase() !== 'APROBADA') {
+      _bloquearFormulario(`Esta cotización está en estado "${cot.estado}" y no puede convertirse en contrato.`);
+      return;
+    }
 
     _initForm(cotId, cot.total);
   } catch (e) {
