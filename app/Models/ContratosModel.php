@@ -64,7 +64,8 @@ class ContratosModel extends Model
             ])
             ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion')
             ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas',    'personas.id_persona = clientes.id_persona');
+            ->join('personas',    'personas.id_persona = clientes.id_persona')
+            ->orderBy('id_contrato', 'DESC');
         if (!empty($filters['estado'])) {
             $q->where('contratos.estado', strtoupper($filters['estado']));
         }

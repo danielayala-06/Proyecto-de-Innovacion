@@ -49,7 +49,7 @@ class PaquetesModel extends Model
 
     public function listarConConteo(array $filters = []): array
     {
-        $q = $this->orderBy('precio', 'ASC');
+        $q = $this->orderBy('id_paquete', 'DESC');
         if (!empty($filters['nivel'])) {
             $q->where('nivel_disponible', strtolower($filters['nivel']));
         }
