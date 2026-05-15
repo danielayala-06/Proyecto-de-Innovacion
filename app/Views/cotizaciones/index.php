@@ -46,10 +46,6 @@ function fmtFechaCot(?string $f): string {
                     <div class="stat-icon" style="background:var(--bg-hover);"><i class="bi bi-hourglass-split" style="color:var(--text-muted);"></i></div>
                     <div><div class="stat-label">Expiradas</div><div class="stat-value" id="statExpiradas" style="color:var(--text-muted);">0</div></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon gold"><i class="bi bi-cash-coin"></i></div>
-                    <div><div class="stat-label">Monto total</div><div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.2rem;">S/ 0</div></div>
-                </div>
             </div>
 
             <!-- TOOLBAR -->

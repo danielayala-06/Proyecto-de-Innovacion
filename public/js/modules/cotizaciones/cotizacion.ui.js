@@ -52,7 +52,6 @@ export const ui = {
     set('statAprobadas',  r.aprobadas  ?? 0);
     set('statRechazadas', r.rechazadas ?? 0);
     set('statExpiradas',  r.expiradas  ?? 0);
-    set('statMonto',      formatters.moneda(r.monto_total ?? 0));
   },
 
   /* ── Tabla ───────────────────────────────────────────────────── */
