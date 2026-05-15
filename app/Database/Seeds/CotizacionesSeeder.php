@@ -8,7 +8,6 @@ class CotizacionesSeeder extends Seeder
 {
     public function run()
     {
-        $this->db->table('cotizaciones')->truncate();
 
         // Estados posibles: PENDIENTE | APROBADA | RECHAZADA | EXPIRADA
         // EXPIRADA = aprobada pero no convertida a contrato dentro de los 30 días
