@@ -41,7 +41,7 @@ class Cotizaciones extends Migration
             ],
             'estado' => [
                 'type'       => 'ENUM',
-                'constraint' => ['PENDIENTE', 'APROBADA', 'RECHAZADA'],
+                'constraint' => ['PENDIENTE', 'APROBADA', 'RECHAZADA','EXPIRADA'],
                 'default'    => 'PENDIENTE',
                 'null'       => false,
             ],

@@ -44,24 +44,6 @@ class PagosSeeder extends Seeder
                 'id_form_pago'=> 3,
                 'id_contrato' => 2,
             ],
-            // Pago del Contrato 3 (completado)
-            [
-                'fecha'       => '2025-03-10',
-                'monto'       => 9000.00,
-                'moneda'      => 'PEN',
-                'voucher'     => 'BCP-2025031055555',
-                'id_form_pago'=> 2,
-                'id_contrato' => 3,
-            ],
-            // Pago parcial del Contrato 4 (cancelado)
-            [
-                'fecha'       => '2025-05-01',
-                'monto'       => 1500.00,
-                'moneda'      => 'PEN',
-                'voucher'     => null,
-                'id_form_pago'=> 1,
-                'id_contrato' => 4,
-            ],
         ];
 
         $this->db->table('pagos')->insertBatch($data);

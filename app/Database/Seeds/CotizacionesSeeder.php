@@ -8,7 +8,10 @@ class CotizacionesSeeder extends Seeder
 {
     public function run()
     {
-        // Clientes: 1-4, Usuarios: 1-4
+        $this->db->table('cotizaciones')->truncate();
+
+        // Estados posibles: PENDIENTE | APROBADA | RECHAZADA | EXPIRADA
+        // EXPIRADA = aprobada pero no convertida a contrato dentro de los 30 días
         $data = [
             [
                 'id_cliente'      => 1,
@@ -41,6 +44,14 @@ class CotizacionesSeeder extends Seeder
                 'observaciones'   => 'Cliente solicitó descuento por pago adelantado.',
                 'total_estimado'  => 3200.00,
                 'estado'          => 'RECHAZADA',
+            ],
+            [
+                'id_cliente'      => 4,
+                'id_usuario'      => 1,
+                'fecha_registro'  => '2026-01-20',
+                'observaciones'   => 'Cotización aprobada pero no convertida a contrato a tiempo.',
+                'total_estimado'  => 2850.00,
+                'estado'          => 'EXPIRADA',
             ],
         ];
 
