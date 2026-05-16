@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * @file    ClientesApi.php
+ * @package App\Controllers\Api
+ *
+ * Controlador REST para la gestión de clientes.
+ * Delega toda la lógica de negocio en ClienteService y formatea
+ * las respuestas con ClienteTransformer.
+ *
+ * Endpoints:
+ *   GET    /api/clientes          → listar todos
+ *   GET    /api/clientes/{id}     → obtener detalle
+ *   POST   /api/clientes          → crear (persona + cliente)
+ *   PUT    /api/clientes/{id}     → actualizar
+ *   DELETE /api/clientes/{id}     → desactivar (soft delete)
+ */
+
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
@@ -8,18 +24,17 @@ use App\Transformers\ClienteTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * ClientesApi
- * Base URL: /api/clientes
+ * API de Clientes.
  *
- * GET    /api/clientes              → listar todos
- * GET    /api/clientes/{id}         → obtener uno
- * POST   /api/clientes              → crear (persona + cliente)
- * PUT    /api/clientes/{id}         → actualizar
- * DELETE /api/clientes/{id}         → desactivar
+ * Todas las respuestas siguen el formato:
+ * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
 class ClientesApi extends BaseController
 {
-    protected ClienteService     $clienteService;
+    /** @var ClienteService Servicio con la lógica de negocio de clientes. */
+    protected ClienteService $clienteService;
+
+    /** @var ClienteTransformer Formateador de respuestas JSON. */
     protected ClienteTransformer $clienteTransformer;
 
     public function __construct()
@@ -28,9 +43,11 @@ class ClientesApi extends BaseController
         $this->clienteTransformer = new ClienteTransformer();
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/clientes
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/clientes
+     *
+     * @return ResponseInterface 200 con la lista de clientes.
+     */
     public function index()
     {
         return $this->response
@@ -43,9 +60,12 @@ class ClientesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/clientes/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/clientes/{id}
+     *
+     * @param  mixed $id ID del cliente.
+     * @return ResponseInterface 200 con el detalle | 404 si no existe.
+     */
     public function show($id)
     {
         $cliente = $this->clienteService->obtenerPorId((int) $id);
@@ -64,11 +84,14 @@ class ClientesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // POST /api/clientes
-    // Body: { nombres, apellidos?, telefono, correo?, numero_documento,
-    //         tipo_documento, red_social?, metodo_comunicacion?, acepta_promociones? }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * POST /api/clientes
+     *
+     * Body: { nombres, apellidos?, telefono, correo?, numero_documento,
+     *         tipo_documento, red_social?, metodo_comunicacion?, acepta_promociones? }
+     *
+     * @return ResponseInterface 201 con id_cliente | 409 si ya existe el documento | 422 si falla validación.
+     */
     public function create()
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -106,9 +129,14 @@ class ClientesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Cliente creado', 'id_cliente' => $idCliente]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PUT /api/clientes/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PUT /api/clientes/{id}
+     *
+     * Body: { telefono?, correo?, tipo_documento?, metodo_comunicacion?, estado? }
+     *
+     * @param  mixed $id ID del cliente.
+     * @return ResponseInterface 200 | 404 | 422.
+     */
     public function update($id)
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -138,9 +166,14 @@ class ClientesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Cliente actualizado']);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // DELETE /api/clientes/{id}  → soft delete
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * DELETE /api/clientes/{id}
+     *
+     * Desactiva el cliente sin eliminarlo físicamente.
+     *
+     * @param  mixed $id ID del cliente.
+     * @return ResponseInterface 200 | 404.
+     */
     public function delete($id)
     {
         try {
@@ -154,11 +187,15 @@ class ClientesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Cliente desactivado']);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Convierte RuntimeException del servicio en respuesta JSON.
-    // Código 422 con JSON → devuelve 'errors' (errores del modelo).
-    // Otros códigos → devuelve 'message'.
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
+     *
+     * Si el código es 422 y el mensaje es JSON, devuelve el array de errores del modelo.
+     * En cualquier otro caso devuelve solo el mensaje de texto.
+     *
+     * @param  \RuntimeException $e Excepción lanzada por el servicio.
+     * @return ResponseInterface
+     */
     private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
     {
         $code   = (int) $e->getCode() ?: 500;

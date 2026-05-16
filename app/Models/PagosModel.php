@@ -1,9 +1,25 @@
 <?php
 
+/**
+ * @file    PagosModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `pagos`.
+ * Registra los abonos posteriores al adelanto inicial de un contrato.
+ * Cada pago referencia una forma de pago y puede incluir un comprobante (voucher).
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Pagos.
+ *
+ * Tabla: `pagos` (PK: id_pago).
+ * Relaciones: id_contrato → contratos, id_form_pago → formas_pago.
+ * Monedas admitidas: PEN | USD | EUR.
+ */
 class PagosModel extends Model
 {
     protected $table            = 'pagos';
@@ -24,22 +40,27 @@ class PagosModel extends Model
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
-    // Validation
     protected $validationRules = [
-        'id_contrato' => 'required|is_natural_no_zero',
+        'id_contrato'  => 'required|is_natural_no_zero',
         'id_form_pago' => 'required|is_natural_no_zero',
-        'monto' => 'required|decimal|greater_than[0]',
-        'moneda' => 'required|in_list[PEN,USD,EUR]',
-        'fecha' => 'required|valid_date',
+        'monto'        => 'required|decimal|greater_than[0]',
+        'moneda'       => 'required|in_list[PEN,USD,EUR]',
+        'fecha'        => 'required|valid_date',
     ];
     protected $validationMessages = [
         'monto' => [
-            'greater_than' => 'El monto debe ser mayor a cero.'
-        ]
+            'greater_than' => 'El monto debe ser mayor a cero.',
+        ],
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    /**
+     * Lista pagos con datos del cliente, contrato y forma de pago.
+     *
+     * @param  int|null                 $idContrato Filtrar por contrato (null = todos).
+     * @return array<int, array<string, mixed>>
+     */
     public function listarConDetalles(?int $idContrato = null): array
     {
         $q = $this
@@ -53,12 +74,20 @@ class PagosModel extends Model
             ->join('clientes',     'clientes.id_cliente = cotizaciones.id_cliente')
             ->join('personas',     'personas.id_persona = clientes.id_persona')
             ->orderBy('pagos.fecha', 'DESC');
+
         if ($idContrato !== null) {
             $q->where('pagos.id_contrato', $idContrato);
         }
+
         return $q->findAll();
     }
 
+    /**
+     * Retorna el detalle de un pago con datos del contrato y la forma de pago.
+     *
+     * @param  int                       $id ID del pago.
+     * @return array<string, mixed>|null     null si no existe.
+     */
     public function obtenerConDetalle(int $id): ?array
     {
         return $this
@@ -73,12 +102,26 @@ class PagosModel extends Model
             ->find($id) ?: null;
     }
 
+    /**
+     * Suma todos los montos de pagos registrados para un contrato.
+     *
+     * No incluye el adelanto inicial (que se gestiona directamente en `contratos.adelanto`).
+     *
+     * @param  int   $idContrato ID del contrato.
+     * @return float             Total acumulado de pagos adicionales.
+     */
     public function sumarPorContrato(int $idContrato): float
     {
         $r = $this->selectSum('monto', 'total_pagado')->where('id_contrato', $idContrato)->first();
         return (float) ($r['total_pagado'] ?? 0);
     }
 
+    /**
+     * Retorna el historial de pagos de un contrato para mostrar en el detalle.
+     *
+     * @param  int                      $idContrato ID del contrato.
+     * @return array<int, array<string, mixed>>
+     */
     public function historialPorContrato(int $idContrato): array
     {
         return $this

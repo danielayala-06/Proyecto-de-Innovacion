@@ -1,3 +1,25 @@
+/**
+ * @file    contrato.events.js
+ * @module  modules/contratos/events
+ *
+ * Lógica de interacción del módulo de contratos del index.
+ * Gestiona todos los modales y flujos de acción:
+ *
+ *  - Modal 1 : Seleccionar cotización aprobada para generar contrato.
+ *  - Modal 2 : Formulario de generación / corrección de contrato.
+ *  - Modal 3 : Detalle completo de un contrato (con pagos).
+ *  - Modal 4 : Confirmación de cancelación de contrato.
+ *  - Modal 5 : Registro de un nuevo pago.
+ *
+ * Expone funciones globales en `window.*` para ser invocadas desde
+ * los atributos `onclick` generados dinámicamente en el HTML.
+ *
+ * @exports initEvents          - Inicializa los listeners de búsqueda y filtro del index.
+ * @exports _filtrar            - Aplica filtros activos y re-renderiza la tabla.
+ * @exports _renderPagina       - Renderiza la página activa de la tabla.
+ * @exports abrirConCotizacionId - Abre el modal 2 pre-seleccionando una cotización por ID.
+ */
+
 import { state, calcularStats }  from './contrato.state.js';
 import { ui }                     from './contrato.ui.js';
 import { manager }                from './contrato.manager.js';
@@ -6,7 +28,14 @@ import { cotizacionApi }          from '../../api/cotizacion.api.js';
 import { alerts }                 from '../../utils/alerts.js';
 import { formatters }             from '../../utils/formatters.js';
 
-/* ── Helpers internos ───────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS INTERNOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Renderiza la página activa de la tabla usando el slice de `state.filtradas`.
+ * @returns {void}
+ */
 function _renderPagina() {
   const { filtradas, pagina, porPagina } = state;
   const desde = (pagina - 1) * porPagina;
@@ -14,6 +43,11 @@ function _renderPagina() {
   ui.renderPaginacion(filtradas.length, pagina, porPagina);
 }
 
+/**
+ * Aplica los filtros de búsqueda y estado, persiste las preferencias y
+ * vuelve a la página 1.
+ * @returns {void}
+ */
 function _filtrar() {
   const search = (document.getElementById('searchInput')?.value  || '').toLowerCase().trim();
   const estado = (document.getElementById('filterEstado')?.value || '').toLowerCase().trim();
@@ -34,9 +68,19 @@ function _filtrar() {
   _renderPagina();
 }
 
-/* ── Helpers para modo crear / editar en Modal 2 ────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS DEL MODAL 2 (crear / editar)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {number|null} ID del contrato en edición, o `null` si se está creando. */
 let _editContratoId = null;
 
+/**
+ * Ajusta los textos del modal 2 según el modo de operación.
+ *
+ * @param {'crear'|'editar'} modo
+ * @returns {void}
+ */
 function _setModoModal2(modo) {
   const titulo  = document.getElementById('modal2TitleText');
   const btnVolver = document.getElementById('btnVolverCot');
@@ -53,6 +97,12 @@ function _setModoModal2(modo) {
   }
 }
 
+/**
+ * Serializa un objeto `Date` en formato `YYYY-MM-DD`.
+ *
+ * @param {Date} d
+ * @returns {string}
+ */
 function _isoDate(d) {
   const y  = d.getFullYear();
   const m  = String(d.getMonth() + 1).padStart(2, '0');
@@ -60,6 +110,12 @@ function _isoDate(d) {
   return `${y}-${m}-${dd}`;
 }
 
+/**
+ * Limpia el formulario del modal 2 y lo posiciona en modo creación.
+ * Establece restricciones de fecha: máximo hoy, mínimo 2 días atrás.
+ *
+ * @returns {void}
+ */
 function _limpiarFormContrato() {
   _editContratoId = null;
   ['contratoFechaFirma', 'contratoClausulas', 'contratoObservaciones']
@@ -69,7 +125,6 @@ function _limpiarFormContrato() {
   if (adelanto)  adelanto.value  = '';
   if (formaPago) formaPago.value = 'Efectivo';
 
-  // Fecha pago de adelanto: máximo hoy, mínimo hace 2 días
   const fechaInput = document.getElementById('contratoFechaFirma');
   if (fechaInput) {
     const hoy  = new Date();
@@ -81,12 +136,25 @@ function _limpiarFormContrato() {
   _setModoModal2('crear');
 }
 
-/* ── Paginación y sort ──────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGINACIÓN Y ORDEN (window.*)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Cambia la página activa en la tabla.
+ *
+ * @param {number} n - Número de página destino (base 1).
+ */
 window.irPagina = function (n) {
   state.pagina = n;
   _renderPagina();
 };
 
+/**
+ * Ordena la tabla por la columna indicada, alternando asc/desc.
+ *
+ * @param {string} key - Clave de la columna (ej: `'cliente'`, `'total'`, `'estado'`).
+ */
 window.sortBy = function (key) {
   if (state.sortKey === key) {
     state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
@@ -121,10 +189,19 @@ window.sortBy = function (key) {
   _renderPagina();
 };
 
-/* ── Modal 1: Seleccionar cotización ────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL 1: Seleccionar cotización
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {bootstrap.Modal|null} */
 let _modal1 = null;
+/** @type {bootstrap.Modal|null} */
 let _modal2 = null;
 
+/**
+ * Abre el modal de selección de cotizaciones aprobadas.
+ * Carga la lista desde la API solo si aún no está en caché.
+ */
 window.abrirModalCotizaciones = async function () {
   if (!_modal1) _modal1 = new bootstrap.Modal(document.getElementById('modalCotizaciones'));
   _modal1.show();
@@ -150,11 +227,17 @@ window.abrirModalCotizaciones = async function () {
   ui.renderCotizacionesDisponibles(state.todasCotizaciones, filtroActual);
 };
 
+/**
+ * Redirige a la vista de creación de contrato con la cotización pre-seleccionada.
+ *
+ * @param {number} id - ID de la cotización seleccionada.
+ */
 window.seleccionarCotizacion = function (id) {
   _modal1?.hide();
   window.location.href = BASE_URL + 'contratos/crear?cot=' + id;
 };
 
+/** Cierra el modal 2 y reabre el modal 1 (navegación entre pasos). */
 window.volverACotizaciones = function () {
   const el2 = document.getElementById('modalGenerarContrato');
   el2.addEventListener('hidden.bs.modal', () => {
@@ -164,6 +247,10 @@ window.volverACotizaciones = function () {
   _modal2?.hide();
 };
 
+/**
+ * Valida y envía el formulario del modal 2 para crear o actualizar un contrato.
+ * En modo creación, también invalida el caché de cotizaciones disponibles.
+ */
 window.confirmarContrato = async function () {
   const adelanto = parseFloat(document.getElementById('contratoAdelanto')?.value) || 0;
   if (!adelanto || adelanto <= 0) {
@@ -198,7 +285,6 @@ window.confirmarContrato = async function () {
 
   try {
     if (_editContratoId !== null) {
-      // ── Modo editar ──────────────────────────────────────────
       await contratoApi.actualizar(_editContratoId, {
         adelanto,
         fecha_emision: fechaFirma,
@@ -207,7 +293,6 @@ window.confirmarContrato = async function () {
       _modal2?.hide();
       alerts.ok('Contrato actualizado correctamente.');
     } else {
-      // ── Modo crear ───────────────────────────────────────────
       const cot = state.cotizacionSeleccionada;
       if (!cot) return;
       await contratoApi.crear({
@@ -232,25 +317,31 @@ window.confirmarContrato = async function () {
   }
 };
 
-/* ── Editar contrato existente ──────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// EDITAR CONTRATO EXISTENTE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Carga un contrato existente y abre el modal 2 en modo edición.
+ *
+ * @param {number} id - ID del contrato a editar.
+ */
 window.editarContrato = async function (id) {
   try {
     const res    = await contratoApi.obtener(id);
     const data   = res.data;
     _editContratoId = id;
 
-    // Poblar form con datos actuales
-    const fechaInput = document.getElementById('contratoFechaFirma');
+    const fechaInput    = document.getElementById('contratoFechaFirma');
     const adelantoInput = document.getElementById('contratoAdelanto');
-    const obsInput   = document.getElementById('contratoObservaciones');
-    if (fechaInput)   fechaInput.value  = data.fecha_emision ?? '';
-    if (adelantoInput) adelantoInput.value = data.adelanto ?? '';
-    if (obsInput)     obsInput.value    = data.observaciones ?? '';
+    const obsInput      = document.getElementById('contratoObservaciones');
+    if (fechaInput)    fechaInput.value    = data.fecha_emision ?? '';
+    if (adelantoInput) adelantoInput.value = data.adelanto      ?? '';
+    if (obsInput)      obsInput.value      = data.observaciones ?? '';
 
-    // Quitar restricción de fechas en modo edición
+    // Sin restricción de fechas en modo edición
     if (fechaInput) { fechaInput.min = ''; fechaInput.max = ''; }
 
-    // Resumen del contrato en lugar del resumen de cotización
     const cotResumen = document.getElementById('cotResumen');
     if (cotResumen) {
       cotResumen.innerHTML = `
@@ -275,9 +366,19 @@ window.editarContrato = async function (id) {
   }
 };
 
-/* ── Modal 3: Detalle ───────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL 3: Detalle del contrato
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {bootstrap.Modal|null} */
 let _modalDet = null;
 
+/**
+ * Abre el modal de detalle del contrato especificado.
+ * Muestra un spinner mientras carga; luego renderiza datos y acciones.
+ *
+ * @param {number} id - ID del contrato.
+ */
 window.verDetalleContrato = async function (id) {
   if (!_modalDet) _modalDet = new bootstrap.Modal(document.getElementById('modalDetalle'));
 
@@ -325,6 +426,12 @@ window.verDetalleContrato = async function (id) {
   }
 };
 
+/**
+ * Cambia el estado de un contrato y actualiza la tabla localmente.
+ *
+ * @param {number} id     - ID del contrato.
+ * @param {string} estado - Nuevo estado (COMPLETADO | CANCELADO).
+ */
 window.cambiarEstadoContrato = async function (id, estado) {
   try {
     await contratoApi.cambiarEstado(id, estado);
@@ -340,14 +447,28 @@ window.cambiarEstadoContrato = async function (id, estado) {
   }
 };
 
-/* ── Modal 4: Confirmar cancelar ────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL 4: Confirmar cancelación
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {number|null} ID del contrato pendiente de cancelar. */
 let _pendingId = null;
+/** @type {bootstrap.Modal|null} */
 let _modalDel  = null;
 
+/** @type {bootstrap.Modal|null} */
 let _modalPago        = null;
+/** @type {number|null} ID del contrato para el que se está registrando el pago. */
 let _pagoContratoId   = null;
+/** @type {Object|null} Datos del contrato activo en el modal de pago. */
 let _pagoContratoData = null;
 
+/**
+ * Abre el modal de confirmación de cancelación de contrato.
+ *
+ * @param {number} id     - ID del contrato.
+ * @param {string} codigo - Código formateado del contrato para mostrarlo en el mensaje.
+ */
 window.confirmarEliminar = function (id, codigo) {
   _pendingId = id;
   const span = document.getElementById('confirmCod');
@@ -356,6 +477,9 @@ window.confirmarEliminar = function (id, codigo) {
   _modalDel.show();
 };
 
+/**
+ * Cancela el contrato pendiente y actualiza la tabla localmente.
+ */
 window.eliminarContrato = async function () {
   if (!_pendingId) return;
   try {
@@ -375,7 +499,16 @@ window.eliminarContrato = async function () {
   }
 };
 
-/* ── Modal 5: Registrar pago ────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL 5: Registrar pago
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Actualiza el resumen de totales dentro del modal de pago.
+ *
+ * @param {Object|null} data - Datos del contrato con `total`, `total_pagado` y `saldo`.
+ * @returns {void}
+ */
 function _setResumenPago(data) {
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   if (!data) {
@@ -387,6 +520,12 @@ function _setResumenPago(data) {
   set('pagoSaldo',  formatters.moneda(data.saldo));
 }
 
+/**
+ * Renderiza el historial de pagos dentro del modal de pago.
+ *
+ * @param {Array<Object>} pagos - Lista de pagos del contrato.
+ * @returns {void}
+ */
 function _renderHistorialPago(pagos) {
   const el = document.getElementById('pagoHistorial');
   if (!el) return;
@@ -413,18 +552,22 @@ function _renderHistorialPago(pagos) {
     </table>`;
 }
 
+/**
+ * Abre el modal de registro de pago para el contrato especificado.
+ * Carga en paralelo los datos del contrato y el catálogo de formas de pago.
+ *
+ * @param {number} id - ID del contrato al que se añadirá el pago.
+ */
 window.abrirModalPago = async function (id) {
   _pagoContratoId   = id;
   _pagoContratoData = null;
 
   if (!_modalPago) _modalPago = new bootstrap.Modal(document.getElementById('modalPago'));
 
-  // Set title
   const titleEl = document.getElementById('pagoTitle');
   if (titleEl) titleEl.innerHTML =
     `<i class="bi bi-cash-coin me-2" style="color:var(--green-text);"></i>Registrar pago · ${formatters.codigo(id)}`;
 
-  // Fecha: hoy por defecto, máximo hoy, mínimo hace 3 días
   const fechaInput = document.getElementById('pagoFecha');
   if (fechaInput) {
     const hoy  = new Date();
@@ -435,7 +578,6 @@ window.abrirModalPago = async function (id) {
     fechaInput.min   = _isoDate(min3);
   }
 
-  // Reset form
   ['pagoMonto', 'pagoVoucher'].forEach(fid => { const el = document.getElementById(fid); if (el) el.value = ''; });
   const selectForma = document.getElementById('pagoFormaPago');
   if (selectForma) selectForma.innerHTML = '<option value="">— Cargando... —</option>';
@@ -467,13 +609,16 @@ window.abrirModalPago = async function (id) {
   }
 };
 
+/**
+ * Valida y envía el formulario de pago. Si el contrato queda saldado,
+ * cierra el modal de pago automáticamente y limpia las acciones del detalle.
+ */
 window.confirmarPago = async function () {
   const monto   = parseFloat(document.getElementById('pagoMonto')?.value) || 0;
   const forma   = document.getElementById('pagoFormaPago')?.value ?? '';
   const fecha   = document.getElementById('pagoFecha')?.value ?? '';
   const voucher = document.getElementById('pagoVoucher')?.value.trim() || null;
 
-  // ── Validaciones ────────────────────────────────────────────
   if (!monto || monto <= 0) {
     alerts.warning('Ingresa un monto válido mayor a cero.');
     return;
@@ -515,30 +660,24 @@ window.confirmarPago = async function () {
 
     alerts.ok('Pago registrado correctamente.');
 
-    // Reset campos
     document.getElementById('pagoMonto').value = '';
     if (document.getElementById('pagoVoucher')) document.getElementById('pagoVoucher').value = '';
 
-    // Refrescar datos del contrato
     const resContrato = await contratoApi.obtener(_pagoContratoId);
     _pagoContratoData = resContrato.data;
 
-    // Actualizar pago modal
     _setResumenPago(_pagoContratoData);
     _renderHistorialPago(_pagoContratoData.pagos ?? []);
 
-    // Actualizar cuerpo del modal detalle (sigue abierto detrás)
     const bodyEl = document.getElementById('detalleBody');
     if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(_pagoContratoData);
 
-    // Si el contrato quedó COMPLETADO, cerrar modal pago y limpiar botones de detalle
     if (_pagoContratoData.estado?.toUpperCase() !== 'ACTIVO') {
       _modalPago?.hide();
       const accsEl = document.getElementById('detalleAcciones');
       if (accsEl) accsEl.innerHTML = '';
     }
 
-    // Refrescar tabla principal
     const resLista = await contratoApi.listar();
     state.filas = resLista.data ?? [];
     ui.renderStats(calcularStats(state.filas));
@@ -548,7 +687,16 @@ window.confirmarPago = async function () {
   }
 };
 
-/* ── Inicializar listeners del DOM ──────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// INICIALIZACIÓN PÚBLICA
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Registra los listeners de búsqueda, filtro y modal de cotizaciones.
+ * Debe llamarse una vez en el punto de entrada del módulo.
+ *
+ * @returns {void}
+ */
 export function initEvents() {
   document.getElementById('searchInput') ?.addEventListener('input',  _filtrar);
   document.getElementById('filterEstado')?.addEventListener('change', _filtrar);
@@ -559,7 +707,14 @@ export function initEvents() {
 
 export { _filtrar, _renderPagina };
 
-/* ── Abrir directamente Modal 2 con una cotización pre-seleccionada ── */
+/**
+ * Carga las cotizaciones (si no están en caché), encuentra la cotización
+ * por su ID y abre directamente el modal 2 con ella pre-seleccionada.
+ * Útil cuando se navega desde la vista de cotizaciones con `?cot_id=N`.
+ *
+ * @param {number|string} cotId - ID de la cotización a pre-seleccionar.
+ * @returns {Promise<void>}
+ */
 export async function abrirConCotizacionId(cotId) {
   if (!state.todasCotizaciones.length) {
     try {

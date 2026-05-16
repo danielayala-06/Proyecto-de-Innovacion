@@ -1,9 +1,25 @@
 <?php
 
+/**
+ * @file    ContratosModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `contratos`.
+ * Un contrato formaliza una cotización APROBADA, registra el adelanto inicial
+ * y controla el ciclo de vida de los pagos (ACTIVO → COMPLETADO | CANCELADO).
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Contratos.
+ *
+ * Tabla: `contratos` (PK: id_contrato).
+ * Relación: contratos.id_cotizacion → cotizaciones.id_cotizacion.
+ * Estados válidos: ACTIVO | COMPLETADO | CANCELADO.
+ */
 class ContratosModel extends Model
 {
     protected $table            = 'contratos';
@@ -49,6 +65,14 @@ class ContratosModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    /**
+     * Lista todos los contratos con datos del cliente y de la cotización vinculada.
+     *
+     * Filtros admitidos: estado (ACTIVO | COMPLETADO | CANCELADO).
+     *
+     * @param  array<string, mixed>     $filters
+     * @return array<int, array<string, mixed>>
+     */
     public function listarCompleto(array $filters = []): array
     {
         $q = $this
@@ -65,13 +89,21 @@ class ContratosModel extends Model
             ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion')
             ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
             ->join('personas',    'personas.id_persona = clientes.id_persona')
-            ->orderBy('id_contrato', 'DESC');
+            ->orderBy('contratos.id_contrato', 'DESC');
+
         if (!empty($filters['estado'])) {
             $q->where('contratos.estado', strtoupper($filters['estado']));
         }
+
         return $q->orderBy('contratos.fecha_creacion', 'DESC')->findAll();
     }
 
+    /**
+     * Retorna el detalle de un contrato con los datos del cliente y la cotización.
+     *
+     * @param  int                       $id ID del contrato.
+     * @return array<string, mixed>|null     null si no existe.
+     */
     public function obtenerConCliente(int $id): ?array
     {
         return $this

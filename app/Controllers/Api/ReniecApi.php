@@ -1,16 +1,40 @@
 <?php
 
+/**
+ * @file    ReniecApi.php
+ * @package App\Controllers\Api
+ *
+ * Proxy seguro hacia la API de Decolecta para consulta de DNI en RENIEC.
+ * Expone un único endpoint GET que recibe el número de DNI, valida su formato,
+ * realiza la llamada al servicio externo y normaliza la respuesta.
+ *
+ * La clave de API se lee de .env (DECOLECTA.KEY) y nunca se expone al cliente.
+ *
+ * Endpoint:
+ *   GET /api/reniec/dni?numero=XXXXXXXX
+ */
+
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * ReniecApi — proxy seguro hacia Decolecta
- * GET /api/reniec/dni?numero=XXXXXXXX
+ * Proxy RENIEC.
+ *
+ * Normaliza la respuesta de Decolecta al formato interno:
+ * { nombres, apellidos, numero_documento }.
  */
 class ReniecApi extends BaseController
 {
+    /**
+     * GET /api/reniec/dni?numero={dni}
+     *
+     * @return ResponseInterface 200 con { nombres, apellidos, numero_documento }
+     *                         | 404 si el DNI no existe en RENIEC
+     *                         | 422 si el formato es inválido
+     *                         | 503 si el servicio externo no responde.
+     */
     public function dni()
     {
         $numero = $this->request->getGet('numero');
@@ -49,15 +73,15 @@ class ReniecApi extends BaseController
                 ->setJSON([
                     'status' => 'success',
                     'data'   => [
-                        'nombres'   => $body['first_name']       ?? '',
-                        'apellidos' => trim(
+                        'nombres'          => $body['first_name']       ?? '',
+                        'apellidos'        => trim(
                             ($body['first_last_name']  ?? '') . ' ' .
                             ($body['second_last_name'] ?? '')
                         ),
                         'numero_documento' => $body['document_number'] ?? $numero,
                     ],
                 ]);
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_SERVICE_UNAVAILABLE)
                 ->setJSON(['status' => 'error', 'message' => 'No se pudo conectar con RENIEC.']);

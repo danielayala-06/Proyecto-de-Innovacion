@@ -1,56 +1,72 @@
 <?php
 
+/**
+ * @file    ContratoTransformer.php
+ * @package App\Transformers
+ *
+ * Formateador de respuestas JSON para la entidad Contrato.
+ * Los campos opcionales (pagos, total_pagado, saldo) solo se incluyen
+ * cuando el detalle completo es solicitado (GET /api/contratos/{id}).
+ */
+
 namespace App\Transformers;
 
 use CodeIgniter\API\BaseTransformer;
 
+/**
+ * Transformer de Contratos.
+ *
+ * Entrada: array del modelo con JOIN de cotización y persona del cliente.
+ * Puede incluir opcionalmente: pagos[], total_pagado, saldo.
+ */
 class ContratoTransformer extends BaseTransformer
 {
+    /**
+     * Convierte un registro de contrato en su representación JSON.
+     *
+     * @param  mixed                $resource Datos del contrato (con o sin historial de pagos).
+     * @return array<string, mixed>           Datos normalizados.
+     */
     public function toArray(mixed $resource): array
     {
-        if (!$resource) return [];
+        if (!$resource) {
+            return [];
+        }
 
         $result = [
-            'id'             => (int)$resource['id_contrato'],
-            'id_cotizacion'  => (int)$resource['id_cotizacion'],
-            'fecha_creacion' => $resource['fecha_creacion'],
-            'fecha_emision'  => $resource['fecha_emision'],
-            'adelanto'       => (float)$resource['adelanto'],
-            'total'          => (float)$resource['total'],
-            'estado'         => $resource['estado'],
-            'observaciones'  => $resource['observaciones'] ?? null,
-            'cliente' => [
+            'id'             => (int)   $resource['id_contrato'],
+            'id_cotizacion'  => (int)   $resource['id_cotizacion'],
+            'fecha_creacion' =>         $resource['fecha_creacion'],
+            'fecha_emision'  =>         $resource['fecha_emision'],
+            'adelanto'       => (float) $resource['adelanto'],
+            'total'          => (float) $resource['total'],
+            'estado'         =>         $resource['estado'],
+            'observaciones'  =>         $resource['observaciones'] ?? null,
+            'cliente'        => [
                 'nombre'   => $resource['cliente'],
                 'telefono' => $resource['telefono'],
             ],
-            'cotizacion' => [
-                'total_estimado' => (float)$resource['total_estimado'],
+            'cotizacion'     => [
+                'total_estimado' => (float) $resource['total_estimado'],
             ],
         ];
 
         if (isset($resource['pagos']))        $result['pagos']        = $resource['pagos'];
-        if (isset($resource['total_pagado'])) $result['total_pagado'] = (float)$resource['total_pagado'];
-        if (isset($resource['saldo']))        $result['saldo']        = (float)$resource['saldo'];
+        if (isset($resource['total_pagado'])) $result['total_pagado'] = (float) $resource['total_pagado'];
+        if (isset($resource['saldo']))        $result['saldo']        = (float) $resource['saldo'];
 
         return $result;
     }
 
+    /**
+     * @return string[]|null Campos permitidos en la respuesta.
+     */
     protected function getAllowedFields(): ?array
     {
         return [
-            'id',
-            'id_cotizacion',
-            'fecha_creacion',
-            'fecha_emision',
-            'adelanto',
-            'total',
-            'estado',
-            'observaciones',
-            'cliente',
-            'cotizacion',
-            'pagos',
-            'total_pagado',
-            'saldo',
+            'id', 'id_cotizacion', 'fecha_creacion', 'fecha_emision',
+            'adelanto', 'total', 'estado', 'observaciones',
+            'cliente', 'cotizacion', 'pagos', 'total_pagado', 'saldo',
         ];
     }
 }

@@ -1,32 +1,99 @@
-import { sesionApi }                                      from '../../api/sesion.api.js';
-import { formatters }                                      from '../../utils/formatters.js';
-import { TIPO_LABEL, TIPO_ICON, ESTADO_LABEL, ESTADO_CLASS } from './sesion.state.js';
+/**
+ * @file    sesionesLista.js
+ * @module  modules/sesiones/lista
+ *
+ * Punto de entrada del módulo de listado global de sesiones (`/sesiones`).
+ * Vista de solo lectura: muestra todas las sesiones del sistema con filtros
+ * por estado, tipo y búsqueda de texto.
+ *
+ * A diferencia de `sesionesMain.js`, este módulo es autónomo (no depende de
+ * un contrato específico ni usa el estado compartido de `sesion.state.js`).
+ *
+ * Flujo de inicialización (`init`):
+ *  1. Muestra skeleton de carga.
+ *  2. Carga todas las sesiones desde `GET /api/sesiones`.
+ *  3. Aplica los filtros iniciales (todos vacíos) y renderiza tabla + stats.
+ *  4. Registra listeners de búsqueda (`#searchInput`), estado (`#filterEstado`)
+ *     y tipo (`#filterTipo`).
+ */
 
+import { sesionApi }                                          from '../../api/sesion.api.js';
+import { formatters }                                         from '../../utils/formatters.js';
+import { TIPO_LABEL, TIPO_ICON, ESTADO_LABEL, ESTADO_CLASS }  from './sesion.state.js';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ESTADO INTERNO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lista completa de sesiones cargadas desde la API.
+ * @type {Array<Object>}
+ */
 let _sesiones = [];
+
+/**
+ * Subconjunto de `_sesiones` después de aplicar los filtros activos.
+ * @type {Array<Object>}
+ */
 let _filtrado = [];
 
-// ─── Render ───────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS PRIVADOS DE BADGE
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Genera el HTML del badge de tipo de sesión con icono Bootstrap Icons.
+ *
+ * @param {string} tipo - Tipo de sesión.
+ * @returns {string} HTML del `<span class="tipo-badge">`.
+ */
 function _tipoBadge(tipo) {
     const icon  = TIPO_ICON[tipo]  ?? 'bi-calendar';
     const label = TIPO_LABEL[tipo] ?? tipo;
     return `<span class="tipo-badge tipo-${tipo}"><i class="bi ${icon}"></i> ${label}</span>`;
 }
 
+/**
+ * Genera el HTML del badge de estado de sesión.
+ *
+ * @param {string} estado - Estado de la sesión.
+ * @returns {string} HTML del `<span>` con clase CSS de estado.
+ */
 function _estadoBadge(estado) {
     const cls   = ESTADO_CLASS[estado] ?? 'badge-pendiente';
     const label = ESTADO_LABEL[estado] ?? estado;
     return `<span class="${cls}">${label}</span>`;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDERIZADO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Actualiza las tarjetas de estadísticas con los conteos del array `_filtrado`.
+ *
+ * Elementos DOM actualizados (IDs):
+ *  `statTotal`, `statPendientes`, `statFinalizadas`, `statCanceladas`.
+ *
+ * @returns {void}
+ */
 function _renderStats() {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    set('statTotal',      _filtrado.length);
-    set('statPendientes', _filtrado.filter(s => s.estado === 'pendiente').length);
+    set('statTotal',       _filtrado.length);
+    set('statPendientes',  _filtrado.filter(s => s.estado === 'pendiente').length);
     set('statFinalizadas', _filtrado.filter(s => s.estado === 'finalizado').length);
-    set('statCanceladas', _filtrado.filter(s => s.estado === 'cancelado').length);
+    set('statCanceladas',  _filtrado.filter(s => s.estado === 'cancelado').length);
 }
 
+/**
+ * Renderiza las filas de `_filtrado` en el `<tbody id="tablaBody">`.
+ * Actualiza el texto de `#paginaInfo` con el total de resultados.
+ *
+ * Cada fila muestra: tipo (badge), nombre de promoción + grado, colegio,
+ * fecha/hora, estado y un enlace al detalle del contrato (si `id_contrato` existe).
+ *
+ * @returns {void}
+ */
 function _render() {
     const tbody = document.getElementById('tablaBody');
     const info  = document.getElementById('paginaInfo');
@@ -76,8 +143,21 @@ function _render() {
     if (info) info.textContent = `${_filtrado.length} sesión${_filtrado.length !== 1 ? 'es' : ''}`;
 }
 
-// ─── Filtros ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTRADO
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Lee los controles de filtro activos y aplica el filtro sobre `_sesiones`.
+ * Actualiza `_filtrado`, re-renderiza la tabla y las estadísticas.
+ *
+ * Filtros disponibles:
+ *  - `#searchInput`   : búsqueda de texto en `nombre_promocion`, `nombre_colegio`, `grado`.
+ *  - `#filterEstado`  : filtro exacto por campo `estado`.
+ *  - `#filterTipo`    : filtro exacto por campo `tipo`.
+ *
+ * @returns {void}
+ */
 function _aplicarFiltros() {
     const q      = document.getElementById('searchInput')?.value.toLowerCase().trim() ?? '';
     const estado = document.getElementById('filterEstado')?.value ?? '';
@@ -98,8 +178,15 @@ function _aplicarFiltros() {
     _renderStats();
 }
 
-// ─── Error / loading helpers ──────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ESTADO DE CARGA Y ERROR
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Muestra un skeleton de carga en el `<tbody>` (5 filas semitransparentes).
+ *
+ * @returns {void}
+ */
 function _renderLoading() {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
@@ -109,6 +196,11 @@ function _renderLoading() {
     ).join('');
 }
 
+/**
+ * Muestra un mensaje de error en el `<tbody>`.
+ *
+ * @returns {void}
+ */
 function _renderError() {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
@@ -120,8 +212,16 @@ function _renderError() {
         </tr>`;
 }
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// INICIALIZACIÓN
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Inicializa el módulo: muestra el skeleton, carga las sesiones desde la API,
+ * aplica el filtro inicial y registra los listeners de filtrado.
+ *
+ * @returns {Promise<void>}
+ */
 async function init() {
     _renderLoading();
 
@@ -135,9 +235,9 @@ async function init() {
 
     _aplicarFiltros();
 
-    document.getElementById('searchInput')?.addEventListener('input', _aplicarFiltros);
+    document.getElementById('searchInput')?.addEventListener('input',  _aplicarFiltros);
     document.getElementById('filterEstado')?.addEventListener('change', _aplicarFiltros);
-    document.getElementById('filterTipo')?.addEventListener('change', _aplicarFiltros);
+    document.getElementById('filterTipo')?.addEventListener('change',   _aplicarFiltros);
 }
 
 init();

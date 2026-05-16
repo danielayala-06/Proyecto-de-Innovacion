@@ -1,15 +1,39 @@
 <?php
 
+/**
+ * @file    PagoService.php
+ * @package App\Services\Pagos
+ *
+ * Capa de negocio para el registro y anulación de pagos en contratos.
+ * Controla el saldo pendiente, valida fechas y marca automáticamente
+ * el contrato como COMPLETADO cuando el saldo llega a cero.
+ */
+
 namespace App\Services\Pagos;
 
 use App\Models\PagosModel;
 use App\Models\ContratosModel;
 use App\Models\FormasPagoModel;
 
+/**
+ * Servicio de Pagos.
+ *
+ * Responsabilidades:
+ * - Listar pagos globales o filtrados por contrato.
+ * - Registrar un pago validando saldo disponible y rango de fecha permitido.
+ * - Marcar automáticamente el contrato como COMPLETADO al saldar la deuda.
+ * - Anular pagos (solo en contratos ACTIVOS).
+ * - Proveer el catálogo de formas de pago habilitadas.
+ */
 class PagoService
 {
-    protected PagosModel      $pagoModel;
-    protected ContratosModel  $contratoModel;
+    /** @var PagosModel Acceso a la tabla `pagos`. */
+    protected PagosModel $pagoModel;
+
+    /** @var ContratosModel Acceso a la tabla `contratos`. */
+    protected ContratosModel $contratoModel;
+
+    /** @var FormasPagoModel Acceso al catálogo de formas de pago. */
     protected FormasPagoModel $formasPagoModel;
 
     public function __construct()
@@ -19,16 +43,64 @@ class PagoService
         $this->formasPagoModel = new FormasPagoModel();
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONSULTAS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Lista pagos, opcionalmente filtrados por contrato.
+     *
+     * @param  int|null $idContrato Filtrar por contrato (null = todos).
+     * @return array<int, array<string, mixed>>
+     */
     public function listar(?int $idContrato = null): array
     {
         return $this->pagoModel->listarConDetalles($idContrato);
     }
 
+    /**
+     * Retorna el detalle de un pago con datos del contrato y la forma de pago.
+     *
+     * @param  int                       $id ID del pago.
+     * @return array<string, mixed>|null     null si no existe.
+     */
     public function obtenerPorId(int $id): ?array
     {
         return $this->pagoModel->obtenerConDetalle($id);
     }
 
+    /**
+     * Retorna el catálogo de formas de pago ordenadas alfabéticamente.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function formasPago(): array
+    {
+        return $this->formasPagoModel->listarTodos();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ESCRITURA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Registra un pago sobre un contrato ACTIVO.
+     *
+     * Reglas de negocio aplicadas:
+     * 1. El contrato debe existir y estar en estado ACTIVO.
+     * 2. El monto no puede superar el saldo pendiente.
+     * 3. La fecha debe estar entre hoy y 3 días atrás (no se admiten fechas futuras).
+     * 4. Si el saldo resultante es ≤ 0, el contrato pasa a COMPLETADO automáticamente.
+     *
+     * @param  array<string, mixed> $data Campos requeridos:
+     *                                    id_contrato, id_form_pago, monto, fecha?,
+     *                                    moneda?, voucher?
+     * @return array{id_pago: int, total_pagado: float, saldo: float, completado: bool}
+     *
+     * @throws \RuntimeException 404 si el contrato no existe.
+     * @throws \RuntimeException 409 si el contrato no está ACTIVO o el monto supera el saldo.
+     * @throws \RuntimeException 422 si la fecha es inválida o falla validación del modelo.
+     */
     public function registrar(array $data): array
     {
         $contrato = $this->contratoModel->find((int) $data['id_contrato']);
@@ -42,8 +114,7 @@ class PagoService
         }
 
         $sumPagos = $this->pagoModel->sumarPorContrato((int) $data['id_contrato']);
-
-        $saldo = (float) $contrato['total'] - (float) $contrato['adelanto'] - $sumPagos;
+        $saldo    = (float) $contrato['total'] - (float) $contrato['adelanto'] - $sumPagos;
 
         if ((float) $data['monto'] > $saldo + 0.001) {
             throw new \RuntimeException(
@@ -87,6 +158,7 @@ class PagoService
         $nuevoTotalPagado = (float) $contrato['adelanto'] + $sumPagos + (float) $data['monto'];
         $nuevoSaldo       = (float) $contrato['total'] - $nuevoTotalPagado;
 
+        // Cierre automático del contrato al saldar la deuda
         if ($nuevoSaldo <= 0) {
             $this->contratoModel->update((int) $data['id_contrato'], ['estado' => 'COMPLETADO']);
         }
@@ -99,6 +171,18 @@ class PagoService
         ];
     }
 
+    /**
+     * Anula (elimina) un pago de un contrato ACTIVO.
+     *
+     * No se permite anular pagos de contratos COMPLETADOS o CANCELADOS
+     * para preservar la integridad del historial financiero.
+     *
+     * @param  int  $id ID del pago a anular.
+     * @return void
+     *
+     * @throws \RuntimeException 404 si el pago no existe.
+     * @throws \RuntimeException 409 si el contrato no está ACTIVO.
+     */
     public function anular(int $id): void
     {
         $pago = $this->pagoModel->find($id);
@@ -114,10 +198,5 @@ class PagoService
         }
 
         $this->pagoModel->delete($id);
-    }
-
-    public function formasPago(): array
-    {
-        return $this->formasPagoModel->listarTodos();
     }
 }

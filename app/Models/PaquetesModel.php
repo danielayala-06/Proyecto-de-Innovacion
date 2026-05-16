@@ -1,9 +1,25 @@
 <?php
 
+/**
+ * @file    PaquetesModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `paquetes`.
+ * Un paquete agrupa productos fotográficos y define las sesiones incluidas
+ * según el nivel educativo (inicial-primaria, secundaria, postgrado, otro).
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Paquetes.
+ *
+ * Tabla: `paquetes` (PK: id_paquete).
+ * Niveles disponibles: inicial-primaria | secundaria | postgrado | otro.
+ * Estados: ACTIVO | INACTIVO.
+ */
 class PaquetesModel extends Model
 {
     protected $table            = 'paquetes';
@@ -25,7 +41,6 @@ class PaquetesModel extends Model
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
-    // Validation
     protected $validationRules = [
         'nombre_paquete'   => 'required|max_length[150]',
         'nivel_disponible' => 'required|in_list[inicial-primaria,secundaria,postgrado,otro]',
@@ -35,35 +50,56 @@ class PaquetesModel extends Model
     ];
     protected $validationMessages = [
         'nombre_paquete'   => ['required' => 'El nombre del paquete es obligatorio.'],
-        'nivel_disponible' => ['required' => 'El nivel es obligatorio.', 'in_list' => 'Nivel inválido.'],
-        'precio'           => [
+        'nivel_disponible' => [
+            'required' => 'El nivel es obligatorio.',
+            'in_list'  => 'Nivel inválido.',
+        ],
+        'precio' => [
             'required'              => 'El precio es obligatorio.',
             'decimal'               => 'El precio debe ser numérico.',
             'greater_than_equal_to' => 'El precio no puede ser negativo.',
         ],
-        'categoria'        => ['in_list' => 'Categoría inválida. Use: Cuadros, Anuarios, Paquetes, otros.'],
-        'estado'           => ['in_list' => 'Estado inválido. Use: ACTIVO o INACTIVO.'],
+        'categoria' => ['in_list' => 'Categoría inválida. Use: Cuadros, Anuarios, Paquetes, otros.'],
+        'estado'    => ['in_list' => 'Estado inválido. Use: ACTIVO o INACTIVO.'],
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    /**
+     * Lista los paquetes enriquecidos con el conteo de productos incluidos.
+     *
+     * Evita N+1 cargando los conteos en un batch separado via PaquetesProductosModel.
+     *
+     * Filtros admitidos: nivel (nivel_disponible), estado.
+     *
+     * @param  array<string, mixed>     $filters
+     * @return array<int, array<string, mixed>>
+     */
     public function listarConConteo(array $filters = []): array
     {
         $q = $this->orderBy('id_paquete', 'DESC');
+
         if (!empty($filters['nivel'])) {
             $q->where('nivel_disponible', strtolower($filters['nivel']));
         }
         if (!empty($filters['estado'])) {
             $q->where('estado', strtoupper($filters['estado']));
         }
+
         $paquetes = $q->findAll();
-        if (empty($paquetes)) return [];
+
+        if (empty($paquetes)) {
+            return [];
+        }
+
         $ids    = array_column($paquetes, 'id_paquete');
         $counts = (new \App\Models\PaquetesProductosModel())->contarPorPaquetes($ids);
         $map    = array_column($counts, 'num_productos', 'id_paquete');
+
         foreach ($paquetes as &$p) {
             $p['num_productos'] = (int) ($map[$p['id_paquete']] ?? 0);
         }
+
         return $paquetes;
     }
 }

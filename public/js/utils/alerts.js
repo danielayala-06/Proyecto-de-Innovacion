@@ -1,3 +1,21 @@
+/**
+ * @file    alerts.js
+ * @module  utils/alerts
+ *
+ * Sistema de notificaciones toast para la interfaz.
+ * Las notificaciones se muestran en la esquina inferior derecha, se apilan
+ * automáticamente y se autodestruyen a los 4,5 segundos.
+ *
+ * Los estilos se inyectan dinámicamente en el DOM la primera vez que se llama
+ * a cualquier función de este módulo (no requieren CSS externo).
+ *
+ * @example
+ * import { alerts } from '../utils/alerts.js';
+ * alerts.ok('Guardado correctamente.');
+ * alerts.error('No se pudo conectar con el servidor.');
+ */
+
+/** @type {Object<string,string>} Colores por tipo de notificación (referencias a CSS custom properties). */
 const COLORES = {
   success: 'var(--green-text,  #4caf50)',
   error:   'var(--red-text,    #e57373)',
@@ -5,6 +23,7 @@ const COLORES = {
   info:    'var(--accent,      #7c9cbf)',
 };
 
+/** @type {Object<string,string>} Clases de icono Bootstrap Icons por tipo de notificación. */
 const ICONOS = {
   success: 'bi-check-circle-fill',
   error:   'bi-x-circle-fill',
@@ -12,6 +31,12 @@ const ICONOS = {
   info:    'bi-info-circle-fill',
 };
 
+/**
+ * Inyecta el bloque de estilos CSS del toast en el <head> del documento.
+ * Solo se ejecuta una vez; las llamadas posteriores son no-op.
+ *
+ * @returns {void}
+ */
 function inyectarEstilo() {
   if (document.getElementById('_toast-css')) return;
   const s = document.createElement('style');
@@ -31,6 +56,14 @@ function inyectarEstilo() {
   document.head.appendChild(s);
 }
 
+/**
+ * Crea y muestra un toast con el mensaje e icono correspondiente al tipo.
+ * Se elimina del DOM automáticamente tras 4 500 ms.
+ *
+ * @param {string} mensaje - Texto a mostrar en la notificación.
+ * @param {'success'|'error'|'warning'|'info'} [tipo='info'] - Tipo de notificación.
+ * @returns {void}
+ */
 function mostrar(mensaje, tipo = 'info') {
   inyectarEstilo();
   const div = document.createElement('div');
@@ -45,6 +78,15 @@ function mostrar(mensaje, tipo = 'info') {
   setTimeout(() => div.remove(), 4500);
 }
 
+/**
+ * Interfaz pública del sistema de notificaciones toast.
+ *
+ * @namespace alerts
+ * @property {function(string): void} ok      - Muestra una notificación de éxito (verde).
+ * @property {function(string): void} error   - Muestra una notificación de error (rojo).
+ * @property {function(string): void} warning - Muestra una notificación de advertencia (naranja).
+ * @property {function(string): void} info    - Muestra una notificación informativa (azul).
+ */
 export const alerts = {
   ok:      (msg) => mostrar(msg, 'success'),
   error:   (msg) => mostrar(msg, 'error'),

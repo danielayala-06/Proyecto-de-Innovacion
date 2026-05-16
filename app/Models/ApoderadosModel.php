@@ -1,9 +1,24 @@
 <?php
 
+/**
+ * @file    ApoderadosModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `apoderados`.
+ * Vincula un registro de `personas` con su rol de apoderado
+ * y el tipo de relación con el estudiante.
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Apoderados.
+ *
+ * Tabla: `apoderados` (PK: id_apoderado).
+ * Campos permitidos: id_persona, tipo_relacion.
+ */
 class ApoderadosModel extends Model
 {
     protected $table            = 'apoderados';

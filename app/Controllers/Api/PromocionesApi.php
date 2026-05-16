@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * @file    PromocionesApi.php
+ * @package App\Controllers\Api
+ *
+ * Controlador REST para la gestión de promociones escolares.
+ * Delega la lógica de negocio en PromocionService y formatea
+ * las respuestas con PromocionTransformer.
+ *
+ * Endpoints:
+ *   GET    /api/promociones                → listar con filtros
+ *   GET    /api/promociones/{id}           → detalle + estudiantes + sesiones
+ *   POST   /api/promociones                → crear
+ *   PUT    /api/promociones/{id}           → actualizar
+ *   PATCH  /api/promociones/{id}/activar   → activar / desactivar
+ */
+
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
@@ -8,18 +24,17 @@ use App\Transformers\PromocionTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * PromocionesApi
- * Base URL: /api/promociones
+ * API de Promociones Escolares.
  *
- * GET    /api/promociones                  → listar con filtros
- * GET    /api/promociones/{id}             → detalle + estudiantes + sesiones
- * POST   /api/promociones                  → crear
- * PUT    /api/promociones/{id}             → actualizar
- * PATCH  /api/promociones/{id}/activar     → activar / desactivar
+ * Todas las respuestas siguen el formato:
+ * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
 class PromocionesApi extends BaseController
 {
-    protected PromocionService     $promocionService;
+    /** @var PromocionService Servicio con la lógica de negocio de promociones. */
+    protected PromocionService $promocionService;
+
+    /** @var PromocionTransformer Formateador de respuestas JSON. */
     protected PromocionTransformer $promocionTransformer;
 
     public function __construct()
@@ -27,11 +42,12 @@ class PromocionesApi extends BaseController
         $this->promocionService     = new PromocionService();
         $this->promocionTransformer = new PromocionTransformer();
     }
-    /**
-     *  GET /api/promociones[?colegio=1&anio=2026&activa=1]
-      * @return ResponseInterface: 
-     */
 
+    /**
+     * GET /api/promociones[?id_cotizacion=X&colegio=X&anio=X&activa=1]
+     *
+     * @return ResponseInterface 200 con la lista de promociones.
+     */
     public function index()
     {
         $filters = array_filter([
@@ -53,12 +69,11 @@ class PromocionesApi extends BaseController
 
     /**
      * GET /api/promociones/{id}
-     * Respuesta incluye:
-     *  - Promoción: id, nombre, grado, seccion, num_estudiantes, is_active
-     *  - Colegio: id, nombre
-     *  - Cotización: id, fecha_cotizacion
-     *  - Estudiantes: [ { id, nombre_completo } ]
-     *  - Sesiones: [ { id, fecha_sesion } ]
+     *
+     * La respuesta incluye: colegio, cotización, lista de estudiantes y sesiones fotográficas.
+     *
+     * @param  mixed $id ID de la promoción.
+     * @return ResponseInterface 200 con detalle | 404 si no existe.
      */
     public function show($id)
     {
@@ -80,7 +95,12 @@ class PromocionesApi extends BaseController
 
     /**
      * POST /api/promociones
-     * Body: { id_colegio, id_cotizacion, nombre, grado, seccion?, num_estudiantes, anio? }
+     *
+     * Body: { id_colegio, id_cotizacion, nombre, grado, num_estudiantes, seccion?, anio? }
+     *
+     * La cotización debe estar en estado APROBADA.
+     *
+     * @return ResponseInterface 201 con id_promocion | 404 | 409 | 422.
      */
     public function create()
     {
@@ -113,7 +133,11 @@ class PromocionesApi extends BaseController
 
     /**
      * PUT /api/promociones/{id}
-     * Body: { grado?, seccion?, num_estudiantes? }
+     *
+     * Body: { nombre?, grado?, seccion?, num_estudiantes? }
+     *
+     * @param  mixed $id ID de la promoción.
+     * @return ResponseInterface 200 | 404 | 422.
      */
     public function update($id)
     {
@@ -143,7 +167,12 @@ class PromocionesApi extends BaseController
 
     /**
      * PATCH /api/promociones/{id}/activar
+     *
      * Body: { is_active: true | false }
+     * Si is_active no se envía, invierte el estado actual (toggle).
+     *
+     * @param  mixed $id ID de la promoción.
+     * @return ResponseInterface 200 con is_active | 404.
      */
     public function toggleActiva($id)
     {
@@ -165,6 +194,12 @@ class PromocionesApi extends BaseController
             ]);
     }
 
+    /**
+     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
+     *
+     * @param  \RuntimeException $e Excepción lanzada por el servicio.
+     * @return ResponseInterface
+     */
     private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
     {
         $code   = (int) $e->getCode() ?: 500;

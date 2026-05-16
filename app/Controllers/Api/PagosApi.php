@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * @file    PagosApi.php
+ * @package App\Controllers\Api
+ *
+ * Controlador REST para el registro y anulación de pagos.
+ * Delega la lógica de negocio en PagoService y formatea
+ * las respuestas con PagoTransformer.
+ *
+ * Endpoints:
+ *   GET    /api/pagos?contrato={id}  → listar pagos (todos o filtrados por contrato)
+ *   GET    /api/pagos/{id}           → detalle de un pago
+ *   POST   /api/pagos                → registrar nuevo pago
+ *   DELETE /api/pagos/{id}           → anular pago
+ *   GET    /api/formas-pago          → catálogo de formas de pago
+ */
+
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
@@ -8,18 +24,17 @@ use App\Transformers\PagoTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * PagosApi
- * Base URL: /api/pagos
+ * API de Pagos.
  *
- * GET    /api/pagos?contrato={id}   → listar pagos de un contrato
- * GET    /api/pagos/{id}            → detalle de un pago
- * POST   /api/pagos                 → registrar nuevo pago
- * DELETE /api/pagos/{id}            → anular pago
- * GET    /api/formas-pago           → listar formas de pago
+ * Todas las respuestas siguen el formato:
+ * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
 class PagosApi extends BaseController
 {
-    protected PagoService    $pagoService;
+    /** @var PagoService Servicio con la lógica de negocio de pagos. */
+    protected PagoService $pagoService;
+
+    /** @var PagoTransformer Formateador de respuestas JSON. */
     protected PagoTransformer $pagoTransformer;
 
     public function __construct()
@@ -28,9 +43,11 @@ class PagosApi extends BaseController
         $this->pagoTransformer = new PagoTransformer();
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/pagos?contrato={id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/pagos[?contrato={id}]
+     *
+     * @return ResponseInterface 200 con la lista de pagos.
+     */
     public function index()
     {
         $idContrato = $this->request->getGet('contrato');
@@ -45,9 +62,12 @@ class PagosApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/pagos/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/pagos/{id}
+     *
+     * @param  mixed $id ID del pago.
+     * @return ResponseInterface 200 con detalle | 404 si no existe.
+     */
     public function show($id)
     {
         $pago = $this->pagoService->obtenerPorId((int) $id);
@@ -66,10 +86,15 @@ class PagosApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // POST /api/pagos
-    // Body: { id_contrato, id_form_pago, monto, moneda?, voucher?, fecha? }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * POST /api/pagos
+     *
+     * Body: { id_contrato, id_form_pago, monto, moneda?, voucher?, fecha? }
+     *
+     * Cuando el monto excede el saldo, el 409 incluye el campo `saldo` para informar al cliente.
+     *
+     * @return ResponseInterface 201 con id_pago, total_pagado, saldo, completado | 409 | 422.
+     */
     public function create()
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -90,7 +115,6 @@ class PagosApi extends BaseController
         try {
             $result = $this->pagoService->registrar($body);
         } catch (\RuntimeException $e) {
-            // Caso especial: saldo excedido devuelve JSON con 'saldo' adicional
             $extra = ($e->getCode() === 409) ? json_decode($e->getMessage(), true) : null;
             if (is_array($extra) && isset($extra['message'])) {
                 return $this->response
@@ -105,9 +129,14 @@ class PagosApi extends BaseController
             ->setJSON(array_merge(['status' => 'success', 'message' => 'Pago registrado'], $result));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // DELETE /api/pagos/{id}  → anulación
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * DELETE /api/pagos/{id}
+     *
+     * Anula un pago. Solo se puede anular pagos de contratos ACTIVOS.
+     *
+     * @param  mixed $id ID del pago.
+     * @return ResponseInterface 200 | 404 | 409.
+     */
     public function delete($id)
     {
         try {
@@ -121,9 +150,11 @@ class PagosApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Pago anulado']);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/formas-pago
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/formas-pago
+     *
+     * @return ResponseInterface 200 con la lista de formas de pago ordenadas alfabéticamente.
+     */
     public function formasPago()
     {
         return $this->response
@@ -131,6 +162,12 @@ class PagosApi extends BaseController
             ->setJSON(['status' => 'success', 'data' => $this->pagoService->formasPago()]);
     }
 
+    /**
+     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
+     *
+     * @param  \RuntimeException $e Excepción lanzada por el servicio.
+     * @return ResponseInterface
+     */
     private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
     {
         $code   = (int) $e->getCode() ?: 500;

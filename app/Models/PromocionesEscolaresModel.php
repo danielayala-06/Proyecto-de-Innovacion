@@ -1,9 +1,24 @@
 <?php
 
+/**
+ * @file    PromocionesEscolaresModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `promociones_escolares`.
+ * Una promoción representa al grupo de estudiantes (grado/sección/año)
+ * de un colegio que contrató el servicio fotográfico mediante una cotización.
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Promociones Escolares.
+ *
+ * Tabla: `promociones_escolares` (PK: id_promocion).
+ * Relaciones: id_colegio → colegios, id_cotizacion → cotizaciones.
+ */
 class PromocionesEscolaresModel extends Model
 {
     protected $table            = 'promociones_escolares';
@@ -53,6 +68,12 @@ class PromocionesEscolaresModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    /**
+     * Retorna la promoción vinculada a una cotización con el nombre del colegio.
+     *
+     * @param  int                       $idCotizacion ID de la cotización.
+     * @return array<string, mixed>|null               null si no existe.
+     */
     public function porCotizacion(int $idCotizacion): ?array
     {
         return $this
@@ -62,6 +83,13 @@ class PromocionesEscolaresModel extends Model
             ->first() ?: null;
     }
 
+    /**
+     * Retorna una promoción con todos sus datos relacionados:
+     * colegio, cotización, cliente y teléfono de contacto.
+     *
+     * @param  int                       $id ID de la promoción.
+     * @return array<string, mixed>|null     null si no existe.
+     */
     public function obtenerConRelaciones(int $id): ?array
     {
         $promocion = $this
@@ -69,11 +97,12 @@ class PromocionesEscolaresModel extends Model
                       cotizaciones.total_estimado, cotizaciones.estado AS estado_cotizacion,
                       CONCAT(personas.nombres," ",COALESCE(personas.apellidos,"")) AS cliente,
                       personas.telefono')
-            ->join('colegios',    'colegios.id_colegio = promociones_escolares.id_colegio')
-            ->join('cotizaciones','cotizaciones.id_cotizacion = promociones_escolares.id_cotizacion')
-            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas',    'personas.id_persona = clientes.id_persona')
+            ->join('colegios',     'colegios.id_colegio = promociones_escolares.id_colegio')
+            ->join('cotizaciones', 'cotizaciones.id_cotizacion = promociones_escolares.id_cotizacion')
+            ->join('clientes',     'clientes.id_cliente = cotizaciones.id_cliente')
+            ->join('personas',     'personas.id_persona = clientes.id_persona')
             ->find($id);
+
         return $promocion ?: null;
     }
 }

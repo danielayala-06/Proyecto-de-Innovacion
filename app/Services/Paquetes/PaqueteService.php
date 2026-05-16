@@ -1,16 +1,42 @@
 <?php
 
+/**
+ * @file    PaqueteService.php
+ * @package App\Services\Paquetes
+ *
+ * Capa de negocio para la gestión del catálogo de paquetes fotográficos.
+ * Controla la creación con productos iniciales, actualización de datos,
+ * cambio de estado y la gestión de los productos que componen cada paquete.
+ */
+
 namespace App\Services\Paquetes;
 
 use App\Models\PaquetesModel;
 use App\Models\PaquetesProductosModel;
 use App\Models\ReglasPaquetesModel;
 
+/**
+ * Servicio de Paquetes.
+ *
+ * Responsabilidades:
+ * - Listar paquetes con conteo de productos (sin N+1) y filtros opcionales.
+ * - Obtener el detalle de un paquete con sus productos y reglas de bonificación.
+ * - Crear un paquete con su lista inicial de productos en transacción.
+ * - Actualizar datos editables del paquete (nombre, nivel, precio, etc.).
+ * - Activar o desactivar un paquete cambiando su campo `estado`.
+ * - Agregar un producto al paquete o actualizar su cantidad si ya existe.
+ * - Quitar un producto del paquete.
+ */
 class PaqueteService
 {
-    protected PaquetesModel          $paqueteModel;
+    /** @var PaquetesModel Acceso a la tabla `paquetes`. */
+    protected PaquetesModel $paqueteModel;
+
+    /** @var PaquetesProductosModel Acceso a la tabla `paquetes_productos`. */
     protected PaquetesProductosModel $paqueteProductoModel;
-    protected ReglasPaquetesModel    $reglasPaquetesModel;
+
+    /** @var ReglasPaquetesModel Acceso a las reglas de bonificación por cantidad. */
+    protected ReglasPaquetesModel $reglasPaquetesModel;
 
     public function __construct()
     {
@@ -19,17 +45,31 @@ class PaqueteService
         $this->reglasPaquetesModel  = new ReglasPaquetesModel();
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Listar paquetes con conteo de productos (sin N+1)
-    // ────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONSULTAS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Lista paquetes con el conteo de productos incluido.
+     *
+     * Filtros admitidos (pasados directamente al model):
+     * - estado:            ACTIVO | INACTIVO.
+     * - nivel_disponible:  inicial-primaria | secundaria | postgrado | otro.
+     *
+     * @param  array<string, mixed>     $filters
+     * @return array<int, array<string, mixed>>
+     */
     public function listar(array $filters = []): array
     {
         return $this->paqueteModel->listarConConteo($filters);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Detalle de un paquete con sus productos y reglas
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * Retorna el detalle completo de un paquete con sus productos y reglas.
+     *
+     * @param  int                       $id ID del paquete.
+     * @return array<string, mixed>|null     null si no existe.
+     */
     public function obtenerPorId(int $id): ?array
     {
         $paquete = $this->paqueteModel->find($id);
@@ -44,9 +84,24 @@ class PaqueteService
         return $paquete;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Crear paquete con sus productos iniciales
-    // ────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // ESCRITURA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Crea un paquete con su lista inicial de productos en una sola transacción.
+     *
+     * Estructura esperada en $data:
+     * - nombre_paquete, nivel_disponible, precio (requeridos)
+     * - descripcion?, imagen?, categoria?
+     * - productos[]: { id_producto, cantidad? }
+     *
+     * @param  array<string, mixed> $data Payload del formulario de creación.
+     * @return int                        ID del paquete creado.
+     *
+     * @throws \RuntimeException 422 si falla la validación del modelo de paquete.
+     * @throws \RuntimeException 500 si falla la asociación de productos o la transacción.
+     */
     public function crear(array $data): int
     {
         $db = $this->paqueteModel->db;
@@ -56,9 +111,9 @@ class PaqueteService
             'nombre_paquete'   => $data['nombre_paquete'],
             'nivel_disponible' => $data['nivel_disponible'],
             'descripcion'      => $data['descripcion'] ?? null,
-            'imagen'           => $data['imagen'] ?? null,
+            'imagen'           => $data['imagen']       ?? null,
             'precio'           => $data['precio'],
-            'categoria'        => $data['categoria'] ?? null,
+            'categoria'        => $data['categoria']    ?? null,
             'estado'           => 'ACTIVO',
         ]);
 
@@ -89,9 +144,19 @@ class PaqueteService
         return $idPaquete;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Actualizar datos del paquete
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * Actualiza campos editables de un paquete (actualización parcial).
+     *
+     * Solo modifica los campos presentes en $data (se ignoran los null).
+     *
+     * @param  int                  $id   ID del paquete.
+     * @param  array<string, mixed> $data Campos a actualizar: nombre_paquete, nivel_disponible,
+     *                                    descripcion, precio, categoria.
+     * @return void
+     *
+     * @throws \RuntimeException 404 si el paquete no existe.
+     * @throws \RuntimeException 422 si falla la validación del modelo.
+     */
     public function actualizar(int $id, array $data): void
     {
         if (!$this->paqueteModel->find($id)) {
@@ -111,9 +176,15 @@ class PaqueteService
         }
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Activar / desactivar paquete
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * Cambia el estado de visibilidad de un paquete (ACTIVO | INACTIVO).
+     *
+     * @param  int    $id     ID del paquete.
+     * @param  string $estado Nuevo estado: 'ACTIVO' | 'INACTIVO'.
+     * @return void
+     *
+     * @throws \RuntimeException 404 si el paquete no existe.
+     */
     public function cambiarEstado(int $id, string $estado): void
     {
         if (!$this->paqueteModel->find($id)) {
@@ -123,10 +194,15 @@ class PaqueteService
         $this->paqueteModel->update($id, ['estado' => $estado]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Agregar producto al paquete (o actualizar cantidad si ya existe)
-    // Retorna 'created' | 'updated' para que el controlador use el HTTP status correcto
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * Agrega un producto al paquete o actualiza su cantidad si ya existe.
+     *
+     * @param  int                  $idPaquete ID del paquete.
+     * @param  array<string, mixed> $data      Campos: id_producto, cantidad?.
+     * @return string                          'created' si se insertó, 'updated' si se actualizó.
+     *
+     * @throws \RuntimeException 404 si el paquete no existe.
+     */
     public function agregarProducto(int $idPaquete, array $data): string
     {
         if (!$this->paqueteModel->find($idPaquete)) {
@@ -154,9 +230,15 @@ class PaqueteService
         return 'created';
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Quitar producto del paquete
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * Elimina la relación entre un paquete y uno de sus productos.
+     *
+     * @param  int  $idPaquete     ID del paquete.
+     * @param  int  $idPaqueteProd ID del registro en `paquetes_productos`.
+     * @return void
+     *
+     * @throws \RuntimeException 404 si la relación paquete-producto no existe.
+     */
     public function quitarProducto(int $idPaquete, int $idPaqueteProd): void
     {
         $rel = $this->paqueteProductoModel

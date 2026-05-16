@@ -1,26 +1,90 @@
+/**
+ * @file    paquete.form.js
+ * @module  modules/paquetes/form
+ *
+ * Gestiona el formulario de creación/edición de paquetes (modal Bootstrap).
+ *
+ * Responsabilidades:
+ *  - Limpiar y poblar los campos del formulario modal.
+ *  - Mantener la lista de ítems incluidos (`_items`) en memoria.
+ *  - Renderizar dinámicamente los inputs de ítems con botones de quitar.
+ *  - Validar los campos requeridos antes de guardar.
+ *  - Construir los payloads para `POST /api/paquetes` y `PUT /api/paquetes/:id`.
+ *
+ * Expone en `window.*` dos helpers invocados desde HTML generado dinámicamente:
+ *  - `window.__paqUpdateItem(i, v)` — actualiza el ítem en posición `i`.
+ *  - `window.__paqRemoveItem(i)`    — elimina el ítem en posición `i` y re-renderiza.
+ */
+
 import { categoriaDesdNombre } from './paquete.state.js';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ESTADO INTERNO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lista de ítems incluidos en el paquete que se está editando/creando.
+ * Cada elemento corresponde a una línea del campo `descripcion` (líneas 2+).
+ *
+ * @type {string[]}
+ */
 let _items = [];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Valores válidos para el campo `nivel_disponible`.
+ * Deben coincidir con el ENUM de la BD.
+ *
+ * @type {string[]}
+ */
 const NIVELES_VALIDOS = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
 
-// Maps UI select value → DB ENUM value
+/**
+ * Mapeo de valor de select UI → valor ENUM de la BD para `categoria`.
+ * Solo cubre las categorías con correspondencia 1-a-1; los demás caen en `'otros'`.
+ *
+ * @type {Object<string, string>}
+ */
 const CAT_DB_MAP = {
     'Cuadros':  'Cuadros',
     'Anuarios': 'Anuarios',
     'Paquetes': 'Paquetes',
 };
 
-// Maps DB ENUM → UI select value (only for known 1-to-1; 'otros' falls back to name inference)
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS PRIVADOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Resuelve el valor a mostrar en el select de categoría UI a partir del paquete de la BD.
+ * Para categorías sin mapeo 1-a-1 infiere la categoría desde el nombre del paquete.
+ *
+ * @param {Object} p              - Objeto paquete de la API.
+ * @param {string} [p.categoria] - Campo `categoria` de la BD.
+ * @param {string} p.nombre_paquete
+ * @returns {string} Valor a asignar al select `#pCategoria`.
+ */
 function _uiCatFromPaquete(p) {
     if (p.categoria === 'Cuadros')  return 'Cuadros';
     if (p.categoria === 'Anuarios') return 'Anuarios';
     return categoriaDesdNombre(p.nombre_paquete);
 }
 
+/** Asigna `v` al `value` del elemento con `id`. */
 const _set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+
+/** Devuelve el `value` recortado del elemento con `id`, o `''` si no existe. */
 const _get = (id)    => document.getElementById(id)?.value?.trim() ?? '';
 
+/**
+ * Re-renderiza el contenedor de ítems `#itemsContainer` a partir del array `_items`.
+ * Cada ítem produce un input de texto con botón de eliminar.
+ *
+ * @returns {void}
+ */
 function _renderItems() {
     const container = document.getElementById('itemsContainer');
     if (!container) return;
@@ -42,17 +106,47 @@ function _renderItems() {
         </div>`).join('');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// API PÚBLICA
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Colección de operaciones del formulario de paquetes.
+ *
+ * @namespace form
+ */
 export const form = {
+
+    /**
+     * Limpia todos los campos del modal y reinicia la lista de ítems.
+     * Deja el select de categoría en `'Quinceañeros'` y el de nivel vacío.
+     *
+     * @returns {void}
+     */
     limpiar() {
         ['pId', 'pNombre', 'pDesc', 'pPrecio'].forEach(id => _set(id, ''));
-        const cat  = document.getElementById('pCategoria');
-        if (cat)  cat.value  = 'Quinceañeros';
-        const niv  = document.getElementById('pNivel');
-        if (niv)  niv.value  = '';
+        const cat = document.getElementById('pCategoria');
+        if (cat) cat.value = 'Quinceañeros';
+        const niv = document.getElementById('pNivel');
+        if (niv) niv.value = '';
         _items = [];
         _renderItems();
     },
 
+    /**
+     * Pobla el formulario con los datos de un paquete existente para edición.
+     * La primera línea de `descripcion` va al campo `#pDesc`;
+     * las líneas siguientes se convierten en ítems individuales.
+     *
+     * @param {Object} p                    - Objeto paquete de la API.
+     * @param {number} p.id_paquete
+     * @param {string} p.nombre_paquete
+     * @param {number|string} p.precio
+     * @param {string} [p.categoria]
+     * @param {string} [p.nivel_disponible]
+     * @param {string} [p.descripcion]      - Líneas separadas por `\n`.
+     * @returns {void}
+     */
     poblar(p) {
         _set('pId',     p.id_paquete);
         _set('pNombre', p.nombre_paquete);
@@ -70,6 +164,11 @@ export const form = {
         _renderItems();
     },
 
+    /**
+     * Valida los campos requeridos del formulario.
+     *
+     * @returns {string|null} Mensaje de error si hay validación fallida, o `null` si es válido.
+     */
     validar() {
         if (!_get('pNombre'))                          return 'El nombre del paquete es obligatorio.';
         const precio = parseFloat(_get('pPrecio'));
@@ -78,6 +177,19 @@ export const form = {
         return null;
     },
 
+    /**
+     * Construye el payload para crear un nuevo paquete (`POST /api/paquetes`).
+     * La `descripcion` se forma uniendo la descripción corta con los ítems,
+     * separados por `\n`.
+     *
+     * @returns {{
+     *   nombre_paquete:   string,
+     *   nivel_disponible: string,
+     *   descripcion:      string|null,
+     *   precio:           number,
+     *   categoria:        string
+     * }}
+     */
     datosCrear() {
         const cat    = document.getElementById('pCategoria')?.value ?? 'Otro';
         const desc   = _get('pDesc');
@@ -91,6 +203,18 @@ export const form = {
         };
     },
 
+    /**
+     * Construye el payload para actualizar un paquete existente (`PUT /api/paquetes/:id`).
+     * Idéntico a {@link form.datosCrear} ya que ambas operaciones comparten los mismos campos.
+     *
+     * @returns {{
+     *   nombre_paquete:   string,
+     *   nivel_disponible: string,
+     *   descripcion:      string|null,
+     *   precio:           number,
+     *   categoria:        string
+     * }}
+     */
     datosActualizar() {
         const cat    = document.getElementById('pCategoria')?.value ?? 'Otro';
         const desc   = _get('pDesc');
@@ -104,10 +228,14 @@ export const form = {
         };
     },
 
+    /**
+     * Agrega un ítem vacío a la lista y enfoca el nuevo input tras un breve retardo.
+     *
+     * @returns {void}
+     */
     agregarItem() {
         _items.push('');
         _renderItems();
-        // Focus en el último input generado
         setTimeout(() => {
             const inputs = document.querySelectorAll('#itemsContainer input[type="text"]');
             inputs[inputs.length - 1]?.focus();
@@ -115,6 +243,23 @@ export const form = {
     },
 };
 
-// Helpers llamados desde HTML generado dinámicamente
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS GLOBALES (llamados desde HTML generado dinámicamente)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Actualiza el texto del ítem en la posición indicada.
+ * Invocado por el atributo `oninput` de los inputs generados por `_renderItems`.
+ *
+ * @param {number} i - Índice del ítem en `_items`.
+ * @param {string} v - Nuevo valor.
+ */
 window.__paqUpdateItem = (i, v) => { _items[i] = v; };
+
+/**
+ * Elimina el ítem en la posición indicada y re-renderiza el contenedor.
+ * Invocado por el `onclick` de los botones de quitar generados por `_renderItems`.
+ *
+ * @param {number} i - Índice del ítem a eliminar.
+ */
 window.__paqRemoveItem = (i)    => { _items.splice(i, 1); _renderItems(); };
