@@ -1,15 +1,42 @@
 <?php
 
+/**
+ * @file    ContratoService.php
+ * @package App\Services\Contratos
+ *
+ * Capa de negocio para la gestión de contratos.
+ * Aplica todas las reglas que convierten una cotización aprobada
+ * en un contrato activo, incluyendo validaciones de antigüedad,
+ * estado y control de pagos.
+ */
+
 namespace App\Services\Contratos;
 
 use App\Models\ContratosModel;
 use App\Models\CotizacionesModel;
 use App\Models\PagosModel;
 
+/**
+ * Servicio de Contratos.
+ *
+ * Responsabilidades:
+ * - Listar contratos con filtros opcionales.
+ * - Crear un contrato validando que la cotización esté APROBADA,
+ *   no tenga más de 30 días y no cuente con un contrato activo previo.
+ * - Actualizar datos corregibles de un contrato ACTIVO.
+ * - Cambiar el estado del contrato (COMPLETADO / CANCELADO).
+ * - Retornar el detalle completo de un contrato con historial de pagos
+ *   y cálculo de saldo pendiente.
+ */
 class ContratoService
 {
+    /** @var ContratosModel Acceso a la tabla `contratos`. */
     protected ContratosModel $contratoModel;
+
+    /** @var CotizacionesModel Acceso a la tabla `cotizaciones`. */
     protected CotizacionesModel $cotizacionModel;
+
+    /** @var PagosModel Acceso a la tabla `pagos`. */
     protected PagosModel $pagoModel;
 
     public function __construct()
@@ -19,8 +46,15 @@ class ContratoService
         $this->pagoModel       = new PagosModel();
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONSULTAS
+    // ─────────────────────────────────────────────────────────────────────────
+
     /**
-     * LISTAR CONTRATOS
+     * Lista todos los contratos, opcionalmente filtrados.
+     *
+     * @param  array<string, mixed> $filters Filtros admitidos: estado, id_cliente.
+     * @return array<int, array<string, mixed>>
      */
     public function listar(array $filters = []): array
     {
@@ -28,7 +62,65 @@ class ContratoService
     }
 
     /**
-     * CREAR CONTRATO
+     * Retorna un contrato con sus datos de cliente, cotización y pagos,
+     * incluyendo el cálculo de total pagado y saldo pendiente.
+     *
+     * El adelanto inicial se incluye como el primer registro del historial
+     * de pagos para mantener una vista unificada.
+     *
+     * @param  int                       $id ID del contrato.
+     * @return array<string, mixed>|null     null si no existe.
+     */
+    public function buscarPorID(int $id): ?array
+    {
+        $contrato = $this->contratoModel->obtenerConCliente($id);
+        if (!$contrato) {
+            return null;
+        }
+
+        $pagosAdicionales = $this->pagoModel->historialPorContrato($id);
+
+        $adelanto    = (float) $contrato['adelanto'];
+        $total       = (float) $contrato['total'];
+        $sumPagos    = array_sum(array_column($pagosAdicionales, 'monto'));
+        $totalPagado = $adelanto + $sumPagos;
+
+        // El adelanto se presenta como primer pago del historial
+        $adelantoEntry = [
+            'fecha'             => $contrato['fecha_creacion'],
+            'monto'             => $adelanto,
+            'nombre_forma_pago' => 'Adelanto inicial',
+        ];
+
+        $contrato['pagos']        = array_merge([$adelantoEntry], $pagosAdicionales);
+        $contrato['total_pagado'] = round($totalPagado, 2);
+        $contrato['saldo']        = round($total - $totalPagado, 2);
+
+        return $contrato;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ESCRITURA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Crea un contrato a partir de una cotización aprobada.
+     *
+     * Reglas de negocio aplicadas:
+     * 1. La cotización debe existir.
+     * 2. No puede estar en estado EXPIRADA.
+     * 3. Debe estar en estado APROBADA.
+     * 4. No puede tener más de 30 días de antigüedad.
+     * 5. No debe existir ya un contrato ACTIVO para esa cotización.
+     * 6. El adelanto no puede superar el total de la cotización.
+     *
+     * @param  array<string, mixed> $data Campos requeridos:
+     *                                    id_cotizacion, adelanto, fecha_emision?, observaciones?
+     * @return array{id_contrato: int, total: float, saldo: float}
+     *
+     * @throws \RuntimeException 404 si la cotización no existe.
+     * @throws \RuntimeException 409 si alguna regla de negocio impide la creación.
+     * @throws \RuntimeException 422 si el adelanto supera el total o falla validación.
      */
     public function crear(array $data): array
     {
@@ -40,20 +132,23 @@ class ContratoService
 
         if ($cotizacion['estado'] === 'EXPIRADA') {
             throw new \RuntimeException(
-                'La cotización ha expirado (más de 30 días). Ya no puede convertirse en contrato', 409
+                'La cotización ha expirado (más de 30 días). Ya no puede convertirse en contrato',
+                409
             );
         }
 
         if ($cotizacion['estado'] !== 'APROBADA') {
             throw new \RuntimeException(
-                'La cotización debe estar APROBADA para generar un contrato', 409
+                'La cotización debe estar APROBADA para generar un contrato',
+                409
             );
         }
 
         $fechaCot = strtotime($cotizacion['fecha_registro']);
         if ($fechaCot && (time() - $fechaCot) > 30 * 86400) {
             throw new \RuntimeException(
-                'La cotización tiene más de 30 días y no puede convertirse en contrato', 409
+                'La cotización tiene más de 30 días y no puede convertirse en contrato',
+                409
             );
         }
 
@@ -71,7 +166,8 @@ class ContratoService
 
         if ($adelanto > $total) {
             throw new \RuntimeException(
-                'El adelanto no puede superar el total de la cotización', 422
+                'El adelanto no puede superar el total de la cotización',
+                422
             );
         }
 
@@ -97,7 +193,18 @@ class ContratoService
     }
 
     /**
-     * ACTUALIZAR CONTRATO
+     * Actualiza campos corregibles de un contrato ACTIVO (adelanto, fecha, observaciones).
+     *
+     * Solo modifica los campos presentes en $data.
+     * Revalida que el nuevo adelanto no supere el total si se incluye.
+     *
+     * @param  int                  $id   ID del contrato.
+     * @param  array<string, mixed> $data Campos a actualizar (parcial).
+     * @return void
+     *
+     * @throws \RuntimeException 404 si el contrato no existe.
+     * @throws \RuntimeException 409 si el contrato no está ACTIVO.
+     * @throws \RuntimeException 422 si el adelanto supera el total o falla validación.
      */
     public function actualizar(int $id, array $data): void
     {
@@ -117,14 +224,19 @@ class ContratoService
             $cot = $this->cotizacionModel->find((int) $contrato['id_cotizacion']);
             if ((float) $data['adelanto'] > (float) $cot['total_estimado']) {
                 throw new \RuntimeException(
-                    'El adelanto no puede superar el total de la cotización', 422
+                    'El adelanto no puede superar el total de la cotización',
+                    422
                 );
             }
             $updateData['adelanto'] = $data['adelanto'];
         }
 
-        if (array_key_exists('fecha_emision', $data)) $updateData['fecha_emision'] = $data['fecha_emision'];
-        if (array_key_exists('observaciones',  $data)) $updateData['observaciones']  = $data['observaciones'];
+        if (array_key_exists('fecha_emision', $data)) {
+            $updateData['fecha_emision'] = $data['fecha_emision'];
+        }
+        if (array_key_exists('observaciones', $data)) {
+            $updateData['observaciones'] = $data['observaciones'];
+        }
 
         if (!empty($updateData) && $this->contratoModel->update($id, $updateData) === false) {
             throw new \RuntimeException(json_encode($this->contratoModel->errors()), 422);
@@ -132,7 +244,16 @@ class ContratoService
     }
 
     /**
-     * CAMBIAR ESTADO DE CONTRATO
+     * Cambia el estado de un contrato (COMPLETADO / CANCELADO).
+     *
+     * Al completar, registra automáticamente la fecha de emisión si aún no existe.
+     *
+     * @param  int    $id     ID del contrato.
+     * @param  string $estado Nuevo estado: 'COMPLETADO' | 'CANCELADO'.
+     * @return void
+     *
+     * @throws \RuntimeException 404 si el contrato no existe.
+     * @throws \RuntimeException 422 si falla la validación del modelo.
      */
     public function cambiarEstado(int $id, string $estado): void
     {
@@ -149,33 +270,5 @@ class ContratoService
         if ($this->contratoModel->update($id, $updateData) === false) {
             throw new \RuntimeException(json_encode($this->contratoModel->errors()), 422);
         }
-    }
-
-    /**
-     * OBTENER CONTRATO COMPLETO CON PAGOS
-     */
-    public function buscarPorID(int $id): ?array
-    {
-        $contrato = $this->contratoModel->obtenerConCliente($id);
-        if (!$contrato) return null;
-
-        $pagosAdicionales = $this->pagoModel->historialPorContrato($id);
-
-        $adelanto    = (float) $contrato['adelanto'];
-        $total       = (float) $contrato['total'];
-        $sumPagos    = array_sum(array_column($pagosAdicionales, 'monto'));
-        $totalPagado = $adelanto + $sumPagos;
-
-        $adelantoEntry = [
-            'fecha'             => $contrato['fecha_creacion'],
-            'monto'             => $adelanto,
-            'nombre_forma_pago' => 'Adelanto inicial',
-        ];
-
-        $contrato['pagos']        = array_merge([$adelantoEntry], $pagosAdicionales);
-        $contrato['total_pagado'] = round($totalPagado, 2);
-        $contrato['saldo']        = round($total - $totalPagado, 2);
-
-        return $contrato;
     }
 }

@@ -1,5 +1,20 @@
 <?php
 
+/**
+ * @file    BaseController.php
+ * @package App\Controllers
+ *
+ * Controlador base del que heredan todos los controladores web de la aplicación.
+ * Provee el punto de inicialización centralizado para helpers, servicios y
+ * cualquier dependencia compartida entre controladores.
+ *
+ * Para agregar helpers globales, descomenta la línea:
+ *   $this->helpers = ['form', 'url'];
+ *
+ * Para cargar la sesión en todas las vistas, descomenta:
+ *   $this->session = service('session');
+ */
+
 namespace App\Controllers;
 
 use CodeIgniter\Controller;
@@ -8,38 +23,41 @@ use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * BaseController provides a convenient place for loading components
- * and performing functions that are needed by all your controllers.
+ * Controlador abstracto base de la aplicación.
  *
- * Extend this class in any new controllers:
- * ```
- *     class Home extends BaseController
- * ```
- *
- * For security, be sure to declare any new methods as protected or private.
+ * Todos los controladores web heredan de esta clase.
+ * Por seguridad, cualquier método nuevo en subclases debe ser
+ * declarado como `protected` o `private` si no es una acción de ruta.
  */
 abstract class BaseController extends Controller
 {
     /**
-     * Be sure to declare properties for any property fetch you initialized.
-     * The creation of dynamic property is deprecated in PHP 8.2.
+     * Instancia de sesión compartida (descomentar si se necesita en todas las vistas).
+     *
+     * @var \CodeIgniter\Session\Session|null
      */
-
     // protected $session;
 
     /**
+     * Inicializa el controlador base con las dependencias de CI4.
+     *
+     * Se ejecuta antes de cada acción del controlador. Es el lugar
+     * correcto para cargar helpers globales, inicializar la sesión
+     * o pre-cargar modelos/librerías comunes.
+     *
+     * @param  RequestInterface  $request  Objeto de petición HTTP.
+     * @param  ResponseInterface $response Objeto de respuesta HTTP.
+     * @param  LoggerInterface   $logger   Logger PSR-3.
      * @return void
      */
     public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
     {
-        // Load here all helpers you want to be available in your controllers that extend BaseController.
-        // Caution: Do not put the this below the parent::initController() call below.
+        // Cargar helpers disponibles en todos los controladores hijos:
         // $this->helpers = ['form', 'url'];
 
-        // Caution: Do not edit this line.
         parent::initController($request, $response, $logger);
 
-        // Preload any models, libraries, etc, here.
+        // Pre-cargar modelos, librerías, etc.:
         // $this->session = service('session');
     }
 }

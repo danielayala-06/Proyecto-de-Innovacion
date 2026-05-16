@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * @file    ContratosApi.php
+ * @package App\Controllers\Api
+ *
+ * Controlador REST para la gestión de contratos.
+ * Delega la lógica de negocio en ContratoService y formatea
+ * las respuestas con ContratoTransformer.
+ *
+ * Endpoints:
+ *   GET    /api/contratos             → listar con filtros opcionales
+ *   GET    /api/contratos/{id}        → detalle + pagos + saldo
+ *   POST   /api/contratos             → crear (requiere cotización APROBADA)
+ *   PATCH  /api/contratos/{id}/estado → cambiar estado
+ *   PATCH  /api/contratos/{id}        → actualizar datos del contrato
+ */
+
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
@@ -8,18 +24,17 @@ use App\Transformers\ContratoTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * ContratosApi
- * Base URL: /api/contratos
+ * API de Contratos.
  *
- * GET    /api/contratos              → listar con filtros
- * GET    /api/contratos/{id}         → detalle + pagos asociados
- * POST   /api/contratos              → crear (requiere cotización APROBADA)
- * PATCH  /api/contratos/{id}/estado  → cambiar estado
- * PATCH  /api/contratos/{id}         → actualizar datos
+ * Todas las respuestas siguen el formato:
+ * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
 class ContratosApi extends BaseController
 {
-    protected ContratoService     $contratoService;
+    /** @var ContratoService Servicio con la lógica de negocio de contratos. */
+    protected ContratoService $contratoService;
+
+    /** @var ContratoTransformer Formateador de respuestas JSON. */
     protected ContratoTransformer $contratoTransformer;
 
     public function __construct()
@@ -28,9 +43,11 @@ class ContratosApi extends BaseController
         $this->contratoTransformer = new ContratoTransformer();
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/contratos[?estado=ACTIVO]
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/contratos[?estado=ACTIVO]
+     *
+     * @return ResponseInterface 200 con la lista de contratos.
+     */
     public function index()
     {
         return $this->response
@@ -43,9 +60,14 @@ class ContratosApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/contratos/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/contratos/{id}
+     *
+     * Incluye el historial de pagos y el saldo pendiente calculado.
+     *
+     * @param  int $id ID del contrato.
+     * @return ResponseInterface 200 con detalle | 404 si no existe.
+     */
     public function show(int $id)
     {
         $contrato = $this->contratoService->buscarPorID($id);
@@ -64,10 +86,13 @@ class ContratosApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // POST /api/contratos
-    // Body: { id_cotizacion, adelanto, observaciones? }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * POST /api/contratos
+     *
+     * Body: { id_cotizacion, adelanto, observaciones? }
+     *
+     * @return ResponseInterface 201 con id_contrato, total y saldo | 409 si la cotización no es válida.
+     */
     public function create()
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -94,10 +119,14 @@ class ContratosApi extends BaseController
             ->setJSON(array_merge(['status' => 'success', 'message' => 'Contrato creado'], $result));
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PATCH /api/contratos/{id}/estado
-    // Body: { estado: "ACTIVO" | "CANCELADO" | "COMPLETADO" }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PATCH /api/contratos/{id}/estado
+     *
+     * Body: { estado: "ACTIVO" | "CANCELADO" | "COMPLETADO" }
+     *
+     * @param  mixed $id ID del contrato.
+     * @return ResponseInterface 200 | 404 | 422.
+     */
     public function cambiarEstado($id)
     {
         $body    = $this->request->getJSON(true) ?? [];
@@ -121,10 +150,14 @@ class ContratosApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => "Estado del contrato cambiado a {$estado}"]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PATCH /api/contratos/{id}
-    // Body: { adelanto?, fecha_emision?, observaciones? }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PATCH /api/contratos/{id}
+     *
+     * Body: { adelanto?, fecha_emision?, observaciones? }
+     *
+     * @param  int $id ID del contrato.
+     * @return ResponseInterface 200 | 404 | 409 | 422.
+     */
     public function update(int $id)
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -140,6 +173,12 @@ class ContratosApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Contrato actualizado']);
     }
 
+    /**
+     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
+     *
+     * @param  \RuntimeException $e Excepción lanzada por el servicio.
+     * @return ResponseInterface
+     */
     private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
     {
         $code   = (int) $e->getCode() ?: 500;

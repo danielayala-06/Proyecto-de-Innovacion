@@ -1,9 +1,26 @@
 <?php
 
+/**
+ * @file    SesionesFotograficasModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `sesiones_fotograficas`.
+ * Una sesión representa un evento fotográfico programado para una promoción.
+ * El límite de sesiones por tipo está determinado por el paquete contratado.
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Sesiones Fotográficas.
+ *
+ * Tabla: `sesiones_fotograficas` (PK: id_sesion).
+ * Relación: id_promocion → promociones_escolares.
+ * Tipos: exteriores | colegio | estudio | otro.
+ * Estados: pendiente | finalizado | cancelado.
+ */
 class SesionesFotograficasModel extends Model
 {
     protected $table            = 'sesiones_fotograficas';
@@ -47,6 +64,12 @@ class SesionesFotograficasModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    /**
+     * Lista las sesiones de una promoción ordenadas cronológicamente.
+     *
+     * @param  int                      $idPromocion ID de la promoción.
+     * @return array<int, array<string, mixed>>
+     */
     public function listarPorPromocion(int $idPromocion): array
     {
         return $this

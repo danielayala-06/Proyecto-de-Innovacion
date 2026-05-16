@@ -1,25 +1,70 @@
-import { formatters }                                    from '../../utils/formatters.js';
+/**
+ * @file    sesion.ui.js
+ * @module  modules/sesiones/ui
+ *
+ * Capa de renderizado DOM del módulo de sesiones fotográficas.
+ * Todas las funciones manipulan el DOM directamente; ninguna realiza
+ * llamadas a la API ni modifica el estado global.
+ *
+ * Elementos DOM requeridos (IDs):
+ *  - `promocionesTabs`    : nav de pestañas de promociones.
+ *  - `sesionesContainer`  : panel que muestra las sesiones y barras de límite.
+ *  - `estudiantesContainer`: panel lateral con la lista de estudiantes.
+ *  - `asistenciaContainer`: contenedor del offcanvas de asistencia.
+ */
+
+import { formatters }                                        from '../../utils/formatters.js';
 import { TIPO_LABEL, TIPO_ICON, ESTADO_LABEL, ESTADO_CLASS } from './sesion.state.js';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS PRIVADOS
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Genera el HTML del badge de estado de una sesión.
+ *
+ * @param {string} estado - Estado de la sesión (`'pendiente'`, `'finalizado'`, `'cancelado'`).
+ * @returns {string} HTML del `<span>` con la clase CSS correspondiente.
+ */
 function _estadoBadge(estado) {
     const cls   = ESTADO_CLASS[estado] ?? 'badge-pendiente';
     const label = ESTADO_LABEL[estado] ?? estado;
     return `<span class="${cls}">${label}</span>`;
 }
 
+/**
+ * Genera el HTML del badge de tipo de sesión con icono Bootstrap Icons.
+ *
+ * @param {string} tipo - Tipo de sesión (`'exteriores'`, `'colegio'`, `'estudio'`, `'otro'`).
+ * @returns {string} HTML del `<span class="tipo-badge">` con icono y etiqueta.
+ */
 function _tipoBadge(tipo) {
     const icon  = TIPO_ICON[tipo]  ?? 'bi-calendar';
     const label = TIPO_LABEL[tipo] ?? tipo;
     return `<span class="tipo-badge tipo-${tipo}"><i class="bi ${icon}"></i> ${label}</span>`;
 }
 
-// ─── Renders públicos ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// UI PÚBLICA
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Colección de funciones de renderizado del módulo de sesiones.
+ *
+ * @namespace ui
+ */
 export const ui = {
 
-    // ── Tabs de promociones ────────────────────────────────────────────────────
+    // ── Pestañas de promociones ───────────────────────────────────────────────
+
+    /**
+     * Renderiza las pestañas de promociones en `#promocionesTabs`.
+     * La pestaña activa recibe la clase `active`.
+     *
+     * @param {Array<Object>} promociones        - Lista de promociones del contrato.
+     * @param {number|null}   activeId           - ID de la promoción actualmente seleccionada.
+     * @returns {void}
+     */
     renderTabs(promociones, activeId) {
         const nav = document.getElementById('promocionesTabs');
         if (!nav) return;
@@ -32,7 +77,22 @@ export const ui = {
             </button>`).join('');
     },
 
-    // ── Panel de sesiones de una promoción ────────────────────────────────────
+    // ── Panel de sesiones ─────────────────────────────────────────────────────
+
+    /**
+     * Renderiza el panel de sesiones de una promoción en `#sesionesContainer`.
+     *
+     * Incluye:
+     *  - Barras de progreso de uso de límites por tipo de sesión.
+     *  - Botón de "Nueva sesión" inline en cada barra (si `puede_crear`).
+     *  - Tarjetas `.sesion-card` con tipo, estado, fecha, hora, observaciones
+     *    y botones de acción contextuales (editar, asistencia, finalizar, cancelar).
+     *
+     * @param {Array<Object>} sesiones     - Sesiones de la promoción activa.
+     * @param {Object}        limites      - Mapa `tipo → {permitidas, usadas, puede_crear}`.
+     * @param {Array<Object>} configTipos  - Configuración de tipos desde `paquetes_sesiones`.
+     * @returns {void}
+     */
     renderSesiones(sesiones, limites, configTipos) {
         const container = document.getElementById('sesionesContainer');
         if (!container) return;
@@ -109,7 +169,18 @@ export const ui = {
             <div class="sesiones-lista">${cards}</div>`;
     },
 
-    // ── Panel de estudiantes de una promoción ─────────────────────────────────
+    // ── Panel de estudiantes ──────────────────────────────────────────────────
+
+    /**
+     * Renderiza el panel de estudiantes de la promoción activa en `#estudiantesContainer`.
+     *
+     * Muestra el contador de estudiantes, el botón de agregar y la lista de filas
+     * con avatar (iniciales), nombre, datos del apoderado y botón de eliminar.
+     *
+     * @param {Array<Object>} estudiantes - Estudiantes de la promoción.
+     * @param {number}        idPromocion - ID de la promoción activa (para el botón de agregar).
+     * @returns {void}
+     */
     renderEstudiantes(estudiantes, idPromocion) {
         const container = document.getElementById('estudiantesContainer');
         if (!container) return;
@@ -153,15 +224,28 @@ export const ui = {
         container.innerHTML = header + `<div class="estudiantes-lista">${rows}</div>`;
     },
 
-    // ── Panel de asistencia de una sesión (offcanvas) ─────────────────────────
+    // ── Offcanvas de asistencia ───────────────────────────────────────────────
+
+    /**
+     * Renderiza el contenido del offcanvas de asistencia en `#asistenciaContainer`.
+     *
+     * Muestra dos secciones:
+     *  1. Estudiantes ya en la sesión: con botones de "Asistió" / "Ausente" y "Quitar".
+     *  2. Estudiantes disponibles para agregar a la sesión.
+     *
+     * @param {Object}        sesion           - Sesión activa con campo `asistencia[]`.
+     * @param {number}        sesion.id_sesion
+     * @param {Array<Object>} sesion.asistencia - Estudiantes ya vinculados con campo `asistio`.
+     * @param {Array<Object>} todosEstudiantes  - Lista completa de estudiantes de la promoción.
+     * @returns {void}
+     */
     renderAsistencia(sesion, todosEstudiantes) {
         const container = document.getElementById('asistenciaContainer');
         if (!container) return;
 
-        const enSesion   = new Set(sesion.asistencia.map(a => a.id_estudiante));
+        const enSesion    = new Set(sesion.asistencia.map(a => a.id_estudiante));
         const disponibles = todosEstudiantes.filter(e => !enSesion.has(e.id_estudiante));
 
-        // Estudiantes ya en la sesión
         const enRows = sesion.asistencia.map(a => `
             <div class="asistencia-row">
                 <div class="estudiante-avatar sm">${a.nombres[0]}${a.apellidos[0]}</div>
@@ -181,7 +265,6 @@ export const ui = {
                 </button>
             </div>`).join('');
 
-        // Estudiantes disponibles para agregar
         const dispRows = disponibles.length ? `
             <div class="asistencia-section-title">Agregar a la sesión</div>
             ${disponibles.map(e => `

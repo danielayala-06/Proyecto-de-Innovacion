@@ -1,14 +1,37 @@
 <?php
 
+/**
+ * @file    EstudianteTransformer.php
+ * @package App\Transformers
+ *
+ * Formateador de respuestas JSON para la entidad Estudiante.
+ * Incluye los datos del apoderado aplanados en la misma estructura
+ * para simplificar el renderizado en el frontend.
+ */
+
 namespace App\Transformers;
 
 use CodeIgniter\API\BaseTransformer;
 
+/**
+ * Transformer de Estudiantes.
+ *
+ * Entrada: fila del modelo EstudiantesModel::listarConApoderado().
+ * Salida: objeto JSON con datos del estudiante y su apoderado aplanados.
+ */
 class EstudianteTransformer extends BaseTransformer
 {
+    /**
+     * Convierte un registro de estudiante en su representación JSON.
+     *
+     * @param  mixed                $resource Fila del modelo con datos de apoderado.
+     * @return array<string, mixed>           Datos normalizados.
+     */
     public function toArray(mixed $resource): array
     {
-        if (!$resource) return [];
+        if (!$resource) {
+            return [];
+        }
 
         return [
             'id_estudiante'       => (int) $resource['id_estudiante'],
@@ -25,6 +48,9 @@ class EstudianteTransformer extends BaseTransformer
         ];
     }
 
+    /**
+     * @return null Todos los campos son permitidos.
+     */
     protected function getAllowedFields(): ?array
     {
         return null;

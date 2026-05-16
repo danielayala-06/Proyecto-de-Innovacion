@@ -1,10 +1,31 @@
+/**
+ * @file    cotizacion.events.js
+ * @module  modules/cotizaciones/events
+ *
+ * Lógica de interacción del módulo de cotizaciones del index.
+ * Gestiona filtrado, paginación, ordenamiento y los modales de detalle,
+ * confirmación de rechazo y aprobación.
+ *
+ * Expone funciones globales en `window.*` para ser invocadas desde
+ * los atributos `onclick` generados dinámicamente en el HTML.
+ *
+ * @exports initIndex - Registra los listeners del index (búsqueda y filtro).
+ */
+
 import { state, calcularResumenes } from './cotizacion.state.js';
 import { ui }                       from './cotizacion.ui.js';
 import { manager }                  from './cotizacion.manager.js';
 import { cotizacionApi }            from '../../api/cotizacion.api.js';
 import { alerts }                   from '../../utils/alerts.js';
 
-/* ── Renderiza la página actual de la tabla ──────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS INTERNOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Renderiza el slice de `state.filtradas` correspondiente a la página activa.
+ * @returns {void}
+ */
 function _renderPagina() {
   const { filtradas, pagina, porPagina } = state;
   const desde = (pagina - 1) * porPagina;
@@ -12,7 +33,12 @@ function _renderPagina() {
   ui.renderPaginacion(filtradas.length, pagina, porPagina);
 }
 
-/* ── Extrae nombre del cliente (string u objeto) ─────────────── */
+/**
+ * Extrae el nombre del cliente de una cotización para búsqueda/ordenamiento.
+ *
+ * @param {Object} c - Cotización con campo `cliente` (string u objeto).
+ * @returns {string}
+ */
 function _nombreCliente(c) {
   if (!c.cliente) return '';
   return typeof c.cliente === 'object'
@@ -20,7 +46,12 @@ function _nombreCliente(c) {
     : c.cliente;
 }
 
-/* ── Filtra y vuelve a la página 1 ──────────────────────────── */
+/**
+ * Aplica los filtros activos de búsqueda y estado, persiste las preferencias
+ * y vuelve a la página 1.
+ *
+ * @returns {void}
+ */
 function _filtrar() {
   const search = (document.getElementById('searchInput')?.value  || '').toLowerCase().trim();
   const estado = (document.getElementById('filterEstado')?.value || '').toUpperCase().trim();
@@ -39,13 +70,25 @@ function _filtrar() {
   _renderPagina();
 }
 
-/* ── Paginación global (onclick en el HTML) ──────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGINACIÓN Y ORDEN (window.*)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Cambia la página activa.
+ *
+ * @param {number} n - Número de página (base 1).
+ */
 window.irPagina = function (n) {
   state.pagina = n;
   _renderPagina();
 };
 
-/* ── Orden de columnas ───────────────────────────────────────── */
+/**
+ * Ordena la tabla por la columna indicada, alternando asc/desc.
+ *
+ * @param {string} key - Clave de columna (`'codigo'`, `'cliente'`, `'total'`, etc.).
+ */
 window.sortBy = function (key) {
   if (state.sortKey === key) {
     state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
@@ -69,10 +112,21 @@ window.sortBy = function (key) {
   _renderPagina();
 };
 
-/* ── Confirmar rechazo/eliminación ──────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// RECHAZO / ELIMINACIÓN (window.*)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {number|null} ID de la cotización pendiente de rechazo. */
 let _pendingId = null;
+/** @type {bootstrap.Modal|null} */
 let _modalDel  = null;
 
+/**
+ * Abre el modal de confirmación de rechazo de la cotización.
+ *
+ * @param {number} id     - ID de la cotización.
+ * @param {string} codigo - Código formateado para mostrar en el mensaje.
+ */
 window.confirmarEliminar = function (id, codigo) {
   _pendingId = id;
   const span = document.getElementById('confirmCod');
@@ -81,6 +135,10 @@ window.confirmarEliminar = function (id, codigo) {
   _modalDel.show();
 };
 
+/**
+ * Rechaza (elimina) la cotización pendiente y actualiza la tabla localmente
+ * sin volver a llamar a la API.
+ */
 window.eliminarCotizacion = async function () {
   if (!_pendingId) return;
   try {
@@ -88,7 +146,6 @@ window.eliminarCotizacion = async function () {
     _modalDel?.hide();
     alerts.ok('Cotización rechazada correctamente.');
 
-    // Actualizar estado local y re-renderizar sin volver a llamar a la API
     state.filas     = state.filas.filter(c => c.id !== _pendingId);
     state.filtradas = state.filtradas.filter(c => c.id !== _pendingId);
     _pendingId = null;
@@ -100,9 +157,19 @@ window.eliminarCotizacion = async function () {
   }
 };
 
-/* ── Ver detalle en modal ────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// DETALLE EN MODAL (window.*)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {bootstrap.Modal|null} */
 let _modalDet = null;
 
+/**
+ * Abre el modal de detalle de la cotización especificada.
+ * Las acciones disponibles dependen del estado y si ya tiene contrato.
+ *
+ * @param {number} id - ID de la cotización.
+ */
 window.verDetalle = async function (id) {
   if (!_modalDet) _modalDet = new bootstrap.Modal(document.getElementById('modalDetalle'));
 
@@ -149,7 +216,16 @@ window.verDetalle = async function (id) {
   }
 };
 
-/* ── Aprobar cotización ──────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// APROBACIÓN (window.*)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Aprueba una cotización y actualiza su estado localmente en `state.filas`.
+ * Muestra el botón "Generar contrato" en el modal de detalle si sigue abierto.
+ *
+ * @param {number} id - ID de la cotización a aprobar.
+ */
 window.aprobarCotizacion = async function (id) {
   try {
     await cotizacionApi.cambiarEstado(id, 'APROBADA');
@@ -173,12 +249,25 @@ window.aprobarCotizacion = async function (id) {
   }
 };
 
-/* ── Ir al modal de generar contrato ────────────────────────── */
+/**
+ * Redirige a la vista de creación de contrato con la cotización indicada.
+ *
+ * @param {number} id - ID de la cotización.
+ */
 window.irAGenerarContrato = function (id) {
   window.location.href = (window.BASE_URL || '/') + 'contratos/crear?cot=' + id;
 };
 
-/* ── Inicializa los listeners del index ──────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// INICIALIZACIÓN PÚBLICA
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Registra los listeners de búsqueda y filtro de estado del index.
+ * Debe llamarse una vez en el punto de entrada del módulo.
+ *
+ * @returns {void}
+ */
 export function initIndex() {
   document.getElementById('searchInput') ?.addEventListener('input',  _filtrar);
   document.getElementById('filterEstado')?.addEventListener('change', _filtrar);

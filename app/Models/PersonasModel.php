@@ -1,9 +1,25 @@
 <?php
 
+/**
+ * @file    PersonasModel.php
+ * @package App\Models
+ *
+ * Modelo base para la tabla `personas`.
+ * Almacena los datos personales compartidos por clientes, apoderados y usuarios.
+ * Las entidades de negocio referencian esta tabla en lugar de duplicar datos.
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Personas.
+ *
+ * Tabla: `personas` (PK: id_persona).
+ * Tipos de documento: DNI | CE | PASAPORTE.
+ * Teléfono debe tener exactamente 9 dígitos (formato peruano).
+ */
 class PersonasModel extends Model
 {
     protected $table            = 'personas';
@@ -39,8 +55,8 @@ class PersonasModel extends Model
             'min_length' => 'Los nombres deben tener al menos 2 caracteres.',
         ],
         'telefono' => [
-            'required'      => 'El teléfono es obligatorio.',
-            'exact_length'  => 'El teléfono debe tener exactamente 9 dígitos.',
+            'required'     => 'El teléfono es obligatorio.',
+            'exact_length' => 'El teléfono debe tener exactamente 9 dígitos.',
         ],
         'correo' => [
             'valid_email' => 'El correo ingresado no es válido.',

@@ -1,5 +1,21 @@
+/**
+ * @file    cotizacion.ui.js
+ * @module  modules/cotizaciones/ui
+ *
+ * Capa de renderizado DOM para el módulo de cotizaciones del index.
+ * Todas las funciones operan sobre el DOM directamente; ninguna realiza
+ * llamadas a la API ni modifica el estado global.
+ *
+ * Elementos DOM requeridos (IDs):
+ *  - `tablaBody`                : <tbody> de la tabla principal.
+ *  - `statTotal`, `statPend`, `statAprobadas`, `statRechazadas`, `statExpiradas` : tarjetas de resumen.
+ *  - `paginaInfo`, `paginaBtns` : pie de paginación.
+ *  - `detalleBody`, `detalleTitle`, `detalleAcciones` : modal de detalle.
+ */
+
 import { formatters } from '../../utils/formatters.js';
 
+/** @type {Object<string, string[]>} Mapa de estado → [clase CSS de badge, etiqueta]. */
 const BADGE_MAP = {
   PENDIENTE:         ['badge-pendiente',  'Pendiente'],
   APROBADA:          ['badge-aprobada',   'Aprobada'],
@@ -8,12 +24,24 @@ const BADGE_MAP = {
   CONTRATO_GENERADO: ['badge-completada', 'Contrato'],
 };
 
+/**
+ * Genera el HTML del badge de estado de una cotización.
+ *
+ * @param {string} estado - Estado de la cotización (insensible a mayúsculas).
+ * @returns {string} HTML del badge `<span>`.
+ */
 function badgeEstado(estado) {
   const [cls, label] = BADGE_MAP[estado?.toUpperCase()] ?? ['badge-inactivo', estado ?? '—'];
   return `<span class="${cls}">${label}</span>`;
 }
 
-/** Extrae el nombre del cliente sin importar si viene como string u objeto */
+/**
+ * Extrae el nombre completo del cliente de una cotización.
+ * Normaliza tanto el caso en que `cliente` sea un string como un objeto anidado.
+ *
+ * @param {Object} c - Cotización con campo `cliente`.
+ * @returns {string} Nombre del cliente o cadena vacía si no está disponible.
+ */
 function nombreCliente(c) {
   if (!c.cliente) return '—';
   return typeof c.cliente === 'object'
@@ -21,8 +49,16 @@ function nombreCliente(c) {
     : c.cliente;
 }
 
+/**
+ * Colección de funciones de renderizado para el módulo de cotizaciones.
+ *
+ * @namespace ui
+ */
 export const ui = {
-  /* ── Loading skeleton en tbody ───────────────────────────────── */
+  /**
+   * Muestra un skeleton de carga en el `<tbody>` de la tabla.
+   * @returns {void}
+   */
   renderLoading() {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
@@ -32,7 +68,12 @@ export const ui = {
     ).join('');
   },
 
-  /* ── Error en tbody ──────────────────────────────────────────── */
+  /**
+   * Muestra un mensaje de error en el `<tbody>` de la tabla.
+   *
+   * @param {string} [msg='Error al cargar los datos.'] - Mensaje de error.
+   * @returns {void}
+   */
   renderError(msg = 'Error al cargar los datos.') {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
@@ -44,7 +85,12 @@ export const ui = {
       </tr>`;
   },
 
-  /* ── Stats ───────────────────────────────────────────────────── */
+  /**
+   * Actualiza los valores de las tarjetas de estadísticas superiores.
+   *
+   * @param {{ total: number, borrador: number, aprobadas: number, rechazadas: number, expiradas: number }} r
+   * @returns {void}
+   */
   renderStats(r) {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     set('statTotal',      r.total      ?? 0);
@@ -54,7 +100,15 @@ export const ui = {
     set('statExpiradas',  r.expiradas  ?? 0);
   },
 
-  /* ── Tabla ───────────────────────────────────────────────────── */
+  /**
+   * Renderiza las filas de la tabla principal de cotizaciones.
+   * Las acciones disponibles por fila dependen del estado y si ya tiene contrato:
+   *  - PENDIENTE  : botón de rechazo.
+   *  - APROBADA sin contrato: botón de generar contrato.
+   *
+   * @param {Array<Object>} filas - Cotizaciones a renderizar (ya paginadas).
+   * @returns {void}
+   */
   renderTabla(filas) {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
@@ -107,7 +161,14 @@ export const ui = {
     }).join('');
   },
 
-  /* ── Paginación ──────────────────────────────────────────────── */
+  /**
+   * Renderiza los controles de paginación (info textual + botones numéricos).
+   *
+   * @param {number} total     - Total de filas filtradas.
+   * @param {number} pagina    - Página activa (base 1).
+   * @param {number} porPagina - Filas por página.
+   * @returns {void}
+   */
   renderPaginacion(total, pagina, porPagina) {
     const totalPags = Math.ceil(total / porPagina) || 1;
     const info = document.getElementById('paginaInfo');
@@ -127,7 +188,13 @@ export const ui = {
       ).join('');
   },
 
-  /* ── Modal detalle ───────────────────────────────────────────── */
+  /**
+   * Genera el HTML del cuerpo del modal de detalle de una cotización.
+   * Incluye metadata de la cotización, datos del cliente y tabla de ítems.
+   *
+   * @param {Object} data - Objeto con `cotizacion`, `cliente` e `items[]` (o estructura plana).
+   * @returns {string} HTML del contenido del modal de detalle.
+   */
   renderDetalle(data) {
     const cot     = data.cotizacion ?? data;
     const cliente = data.cliente    ?? {};

@@ -1,35 +1,66 @@
 <?php
 
+/**
+ * @file    AuthController.php
+ * @package App\Controllers
+ *
+ * Controlador de autenticación: inicio y cierre de sesión.
+ *
+ * Protecciones implementadas:
+ *  - Fuerza bruta   : rate limiting por IP (10 intentos / 15 min)
+ *                     y por nombre de usuario (5 intentos / 15 min).
+ *  - SQL Injection  : Query Builder de CI4 usa consultas parametrizadas.
+ *  - XSS            : esc() en vistas + CSRF global en Filters.php.
+ *  - Session fixation: session()->regenerate(true) antes de escribir sesión.
+ *  - Enumeración    : mensaje genérico cuando usuario o contraseña fallan.
+ *  - Caracteres     : regex que rechaza emojis y caracteres fuera de ASCII imprimible.
+ */
+
 namespace App\Controllers;
 
 use App\Models\UsuariosModel;
 
 /**
- * AuthController — gestiona inicio y cierre de sesión.
+ * Gestiona el ciclo de vida de la autenticación web.
  *
- * Protecciones implementadas:
- *  - Fuerza bruta : rate limiting por IP (10 intentos / 15 min) y por usuario (5 intentos / 15 min)
- *  - SQL Injection: Query Builder de CI4 usa consultas parametrizadas
- *  - XSS          : esc() en vistas + CSRF habilitado en Filters
- *  - Fijación de sesión: session()->regenerate() al autenticar
- *  - Enumeración  : mismo mensaje de error para "usuario no existe" y "contraseña incorrecta"
- *  - Caracteres   : regex backend que rechaza emojis y caracteres fuera del rango ASCII imprimible
+ * Rutas:
+ *  - GET  /login  → login()
+ *  - POST /login  → authenticate()
+ *  - GET  /logout → logout()
+ *
+ * Las claves de throttler se derivan del hash MD5 de IP / nombre de usuario
+ * para evitar inyección de caracteres especiales en la clave de caché.
  */
 class AuthController extends BaseController
 {
-    // Intentos máximos por IP antes de bloqueo
+    /** @var int Intentos máximos por dirección IP en la ventana de bloqueo. */
     private const MAX_IP_ATTEMPTS   = 10;
-    // Intentos máximos por nombre de usuario antes de bloqueo
+
+    /** @var int Intentos máximos por nombre de usuario en la ventana de bloqueo. */
     private const MAX_USER_ATTEMPTS = 5;
-    // Ventana de bloqueo en segundos (15 minutos)
+
+    /** @var int Duración del bloqueo en segundos (15 minutos). */
     private const LOCKOUT_SECONDS   = 900;
 
+    /**
+     * Carga los helpers necesarios para el controlador.
+     */
     public function __construct()
     {
         helper(['url', 'form']);
     }
 
-    // ── GET /login ────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // RUTAS WEB
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Muestra el formulario de inicio de sesión.
+     *
+     * Si el usuario ya tiene sesión activa es redirigido al dashboard.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse|string Vista o redirección.
+     */
     public function login()
     {
         if (session()->get('logged_in')) {
@@ -39,7 +70,19 @@ class AuthController extends BaseController
         return view('auth/login');
     }
 
-    // ── POST /login ───────────────────────────────────────────────────────────
+    /**
+     * Procesa las credenciales enviadas por el formulario de login.
+     *
+     * Flujo:
+     *  1. Rate limiting por IP (fuerza bruta de red).
+     *  2. Validación de formato con regex estrictos.
+     *  3. Rate limiting por nombre de usuario (credential stuffing).
+     *  4. Búsqueda del usuario y verificación de contraseña con bcrypt.
+     *  5. Comprobación de estado de la cuenta.
+     *  6. Regeneración de sesión y escritura de datos de autenticación.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse Redirección al dashboard o de vuelta al login con error.
+     */
     public function authenticate()
     {
         $throttler = service('throttler');
@@ -51,9 +94,9 @@ class AuthController extends BaseController
                 ->with('error', 'Demasiados intentos desde tu dirección. Espera 15 minutos e inténtalo de nuevo.');
         }
 
-        // ── 2. Validación backend ─────────────────────────────────────────────
-        // Regex: solo caracteres ASCII imprimibles (0x20–0x7E), sin emojis ni
-        // caracteres multibyte que podrían evadir filtros.
+        // ── 2. Validación de formato ──────────────────────────────────────────
+        // nombre_user: alfanumérico + . _ - (sin emojis).
+        // password   : solo caracteres ASCII imprimibles (0x20–0x7E).
         $rules = [
             'nombre_user' => [
                 'label'  => 'Usuario',
@@ -92,11 +135,11 @@ class AuthController extends BaseController
                 ->with('error', 'Esta cuenta ha sido bloqueada temporalmente. Espera 15 minutos e inténtalo de nuevo.');
         }
 
-        // ── 4. Búsqueda de usuario ────────────────────────────────────────────
+        // ── 4. Verificación de credenciales ───────────────────────────────────
         $model   = new UsuariosModel();
         $usuario = $model->findByUsername($nombreUser);
 
-        // Mensaje genérico: no revelar si el usuario existe o no (evita enumeración)
+        // Mensaje genérico: no revelar si el usuario existe o no (anti-enumeración).
         $errorGenerico = 'Usuario o contraseña incorrectos.';
 
         if (!$usuario || !password_verify($password, $usuario['password_hash'])) {
@@ -105,14 +148,14 @@ class AuthController extends BaseController
                 ->with('error', $errorGenerico);
         }
 
-        // ── 5. Verificar estado de la cuenta ──────────────────────────────────
+        // ── 5. Estado de la cuenta ────────────────────────────────────────────
         if ($usuario['estado'] === 'INACTIVO') {
             return redirect()->back()
                 ->with('error', 'Tu cuenta está desactivada. Contacta al administrador.');
         }
 
-        // ── 6. Autenticación exitosa ──────────────────────────────────────────
-        // Regenerar ID de sesión para prevenir session fixation
+        // ── 6. Sesión segura ──────────────────────────────────────────────────
+        // regenerate(true) destruye la sesión anterior y crea un nuevo ID.
         session()->regenerate(true);
         session()->set([
             'logged_in'   => true,
@@ -127,7 +170,11 @@ class AuthController extends BaseController
         return redirect()->to('/');
     }
 
-    // ── GET /logout ───────────────────────────────────────────────────────────
+    /**
+     * Cierra la sesión activa y redirige al login.
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse
+     */
     public function logout()
     {
         session()->destroy();

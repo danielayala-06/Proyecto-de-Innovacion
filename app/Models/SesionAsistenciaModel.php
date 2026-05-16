@@ -1,9 +1,25 @@
 <?php
 
+/**
+ * @file    SesionAsistenciaModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `sesion_asistencia`.
+ * Registra qué estudiantes están inscritos en una sesión fotográfica
+ * y si efectivamente asistieron (null = sin marcar, 1 = asistió, 0 = faltó).
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Asistencia a Sesiones.
+ *
+ * Tabla: `sesion_asistencia` (PK: id_asistencia).
+ * Relaciones: id_sesion → sesiones_fotograficas, id_estudiante → estudiantes.
+ * Campo `asistio`: null (sin marcar) | 1 (asistió) | 0 (faltó).
+ */
 class SesionAsistenciaModel extends Model
 {
     protected $table            = 'sesion_asistencia';
@@ -28,6 +44,12 @@ class SesionAsistenciaModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    /**
+     * Lista los registros de asistencia de una sesión con los nombres del estudiante.
+     *
+     * @param  int                      $idSesion ID de la sesión.
+     * @return array<int, array<string, mixed>>
+     */
     public function listarConEstudiante(int $idSesion): array
     {
         return $this

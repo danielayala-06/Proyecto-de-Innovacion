@@ -1,5 +1,23 @@
 <?php
 
+/**
+ * @file    PaquetesApi.php
+ * @package App\Controllers\Api
+ *
+ * Controlador REST para la gestión del catálogo de paquetes fotográficos.
+ * Delega la lógica de negocio en PaqueteService y formatea
+ * las respuestas con PaqueteTransformer.
+ *
+ * Endpoints:
+ *   GET    /api/paquetes                        → listar con filtros opcionales
+ *   GET    /api/paquetes/{id}                   → detalle + productos + reglas
+ *   POST   /api/paquetes                        → crear paquete
+ *   PUT    /api/paquetes/{id}                   → actualizar datos
+ *   PATCH  /api/paquetes/{id}/estado            → activar / desactivar
+ *   POST   /api/paquetes/{id}/productos         → agregar producto al paquete
+ *   DELETE /api/paquetes/{id}/productos/{pid}   → quitar producto del paquete
+ */
+
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
@@ -8,20 +26,17 @@ use App\Transformers\PaqueteTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * PaquetesApi
- * Base URL: /api/paquetes
+ * API de Paquetes.
  *
- * GET    /api/paquetes                        → listar con filtros opcionales
- * GET    /api/paquetes/{id}                   → detalle + productos + reglas
- * POST   /api/paquetes                        → crear paquete
- * PUT    /api/paquetes/{id}                   → actualizar datos del paquete
- * PATCH  /api/paquetes/{id}/estado            → activar / desactivar
- * POST   /api/paquetes/{id}/productos         → agregar producto al paquete
- * DELETE /api/paquetes/{id}/productos/{pid}   → quitar producto del paquete
+ * Todas las respuestas siguen el formato:
+ * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
 class PaquetesApi extends BaseController
 {
-    protected PaqueteService    $paqueteService;
+    /** @var PaqueteService Servicio con la lógica de negocio de paquetes. */
+    protected PaqueteService $paqueteService;
+
+    /** @var PaqueteTransformer Formateador de respuestas JSON. */
     protected PaqueteTransformer $paqueteTransformer;
 
     public function __construct()
@@ -30,9 +45,11 @@ class PaquetesApi extends BaseController
         $this->paqueteTransformer = new PaqueteTransformer();
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/paquetes[?nivel=secundaria&estado=ACTIVO]
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/paquetes[?nivel=secundaria&estado=ACTIVO]
+     *
+     * @return ResponseInterface 200 con la lista de paquetes.
+     */
     public function index()
     {
         $filters = array_filter([
@@ -50,9 +67,14 @@ class PaquetesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/paquetes/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/paquetes/{id}
+     *
+     * Incluye productos asociados y reglas de bonificación.
+     *
+     * @param  mixed $id ID del paquete.
+     * @return ResponseInterface 200 con detalle | 404 si no existe.
+     */
     public function show($id)
     {
         $paquete = $this->paqueteService->obtenerPorId((int) $id);
@@ -68,11 +90,14 @@ class PaquetesApi extends BaseController
             ->setJSON(['status' => 'success', 'data' => $this->paqueteTransformer->transform($paquete)]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // POST /api/paquetes
-    // Body: { nombre_paquete, nivel_disponible, precio, descripcion?,
-    //         categoria?, imagen?, productos?: [{ id_producto, cantidad }] }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * POST /api/paquetes
+     *
+     * Body: { nombre_paquete, nivel_disponible, precio, descripcion?,
+     *         categoria?, imagen?, productos?: [{ id_producto, cantidad }] }
+     *
+     * @return ResponseInterface 201 con id_paquete | 422 si falla validación.
+     */
     public function create()
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -101,9 +126,14 @@ class PaquetesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Paquete creado', 'id_paquete' => $idPaquete]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PUT /api/paquetes/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PUT /api/paquetes/{id}
+     *
+     * Body: { nombre_paquete?, nivel_disponible?, precio?, descripcion?, categoria? }
+     *
+     * @param  mixed $id ID del paquete.
+     * @return ResponseInterface 200 | 404 | 422.
+     */
     public function update($id)
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -132,10 +162,14 @@ class PaquetesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Paquete actualizado']);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PATCH /api/paquetes/{id}/estado
-    // Body: { estado: "ACTIVO" | "INACTIVO" }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PATCH /api/paquetes/{id}/estado
+     *
+     * Body: { estado: "ACTIVO" | "INACTIVO" }
+     *
+     * @param  mixed $id ID del paquete.
+     * @return ResponseInterface 200 | 404 | 422.
+     */
     public function cambiarEstado($id)
     {
         $body   = $this->request->getJSON(true) ?? [];
@@ -158,10 +192,16 @@ class PaquetesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => "Paquete {$estado}"]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // POST /api/paquetes/{id}/productos
-    // Body: { id_producto, cantidad? }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * POST /api/paquetes/{id}/productos
+     *
+     * Body: { id_producto, cantidad? }
+     *
+     * Si el producto ya está en el paquete, actualiza solo la cantidad.
+     *
+     * @param  mixed $id ID del paquete.
+     * @return ResponseInterface 201 (creado) | 200 (cantidad actualizada) | 404 | 422.
+     */
     public function agregarProducto($id)
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -188,9 +228,13 @@ class PaquetesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // DELETE /api/paquetes/{id}/productos/{pid}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * DELETE /api/paquetes/{id}/productos/{pid}
+     *
+     * @param  mixed $id  ID del paquete.
+     * @param  mixed $pid ID del registro en paquetes_productos.
+     * @return ResponseInterface 200 | 404.
+     */
     public function quitarProducto($id, $pid)
     {
         try {
@@ -204,6 +248,12 @@ class PaquetesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Producto removido del paquete']);
     }
 
+    /**
+     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
+     *
+     * @param  \RuntimeException $e Excepción lanzada por el servicio.
+     * @return ResponseInterface
+     */
     private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
     {
         $code   = (int) $e->getCode() ?: 500;

@@ -1,3 +1,19 @@
+/**
+ * @file    contratosIndexMain.js
+ * @module  modules/contratos/contratosIndexMain
+ *
+ * Punto de entrada del módulo de contratos para la vista index (`/contratos`).
+ * Se ejecuta como módulo ES6 con top-level `await`.
+ *
+ * Flujo de inicialización:
+ *  1. Muestra skeleton de carga inmediatamente.
+ *  2. Restaura filtros guardados en `localStorage`.
+ *  3. Carga la lista de contratos desde la API y renderiza tabla + stats.
+ *  4. Registra los listeners de búsqueda, filtro y modales.
+ *  5. Si la URL contiene `?cot_id=N`, abre automáticamente el modal de generación
+ *     de contrato con esa cotización pre-seleccionada (flujo desde cotizaciones).
+ */
+
 import { state, calcularStats }                    from './contrato.state.js';
 import { ui }                                       from './contrato.ui.js';
 import { manager }                                  from './contrato.manager.js';
@@ -5,10 +21,10 @@ import { initEvents, _filtrar, abrirConCotizacionId } from './contrato.events.js
 import { contratoApi }                              from '../../api/contrato.api.js';
 import { alerts }                                   from '../../utils/alerts.js';
 
-/* ── 1. Mostrar estado de carga inmediatamente ───────────────── */
+/* ── 1. Mostrar estado de carga inmediatamente ───────────────────────────── */
 ui.renderLoading();
 
-/* ── 2. Restaurar filtros guardados en localStorage ──────────── */
+/* ── 2. Restaurar filtros guardados en localStorage ─────────────────────── */
 const pref = manager.cargarFiltros();
 if (pref?.search) {
   const el = document.getElementById('searchInput');
@@ -19,7 +35,7 @@ if (pref?.estado) {
   if (el) el.value = pref.estado;
 }
 
-/* ── 3. Fetch a la API y renderizar ──────────────────────────── */
+/* ── 3. Fetch a la API y renderizar ─────────────────────────────────────── */
 try {
   const res = await contratoApi.listar();
   state.filas     = res.data ?? [];
@@ -37,10 +53,10 @@ try {
   alerts.error(e.message || 'Error de conexión con el servidor.');
 }
 
-/* ── 4. Cablear eventos (búsqueda, filtro, sort, modales) ────── */
+/* ── 4. Cablear eventos (búsqueda, filtro, sort, modales) ───────────────── */
 initEvents();
 
-/* ── 5. Auto-abrir modal si viene de cotizaciones con ?cot_id ── */
+/* ── 5. Auto-abrir modal si viene de cotizaciones con ?cot_id ───────────── */
 const _cotId = new URL(window.location.href).searchParams.get('cot_id');
 if (_cotId) {
   history.replaceState(null, '', window.location.pathname);

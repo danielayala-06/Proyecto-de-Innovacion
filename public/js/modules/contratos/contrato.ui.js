@@ -1,16 +1,47 @@
+/**
+ * @file    contrato.ui.js
+ * @module  modules/contratos/ui
+ *
+ * Capa de renderizado DOM para el módulo de contratos.
+ * Todas las funciones operan sobre el DOM directamente; ninguna realiza
+ * llamadas a la API ni modifica el estado global.
+ *
+ * Elementos DOM requeridos (IDs):
+ *  - `tablaBody`               : <tbody> de la tabla principal.
+ *  - `statTotal`, `statVigentes`, `statCompletados`, `statMonto` : tarjetas de resumen.
+ *  - `paginaInfo`, `paginaBtns`   : pie de paginación.
+ *  - `cotizacionesDisponibles`    : contenedor de la lista en el modal 1.
+ *  - `cotResumen`                 : resumen de cotización seleccionada en el modal 2.
+ *  - `detalleBody`, `detalleTitle`, `detalleAcciones` : modal de detalle.
+ */
+
 import { formatters } from '../../utils/formatters.js';
 
+/** @type {Object<string, string[]>} Mapa de estado → [clase CSS de badge, etiqueta]. */
 const BADGE_MAP = {
   ACTIVO:     ['badge-pendiente', 'Vigente'],
   COMPLETADO: ['badge-aprobada',  'Completado'],
   CANCELADO:  ['badge-rechazada', 'Cancelado'],
 };
 
+/**
+ * Genera el HTML del badge de estado de un contrato.
+ *
+ * @param {string} estado - Estado del contrato (ACTIVO | COMPLETADO | CANCELADO).
+ * @returns {string} HTML del badge `<span>`.
+ */
 function badgeEstado(estado) {
   const [cls, label] = BADGE_MAP[estado?.toUpperCase()] ?? ['badge-inactivo', estado ?? '—'];
   return `<span class="${cls}">${label}</span>`;
 }
 
+/**
+ * Extrae el nombre del cliente de un contrato, independientemente de si viene
+ * como string u objeto anidado.
+ *
+ * @param {Object} c - Contrato con campo `cliente` (string u objeto).
+ * @returns {string} Nombre del cliente o `'—'` si no está disponible.
+ */
 function nombreCot(c) {
   if (!c.cliente) return '—';
   return typeof c.cliente === 'object'
@@ -18,7 +49,16 @@ function nombreCot(c) {
     : c.cliente;
 }
 
+/**
+ * Colección de funciones de renderizado para el módulo de contratos.
+ *
+ * @namespace ui
+ */
 export const ui = {
+  /**
+   * Muestra un skeleton de carga en el `<tbody>` de la tabla.
+   * @returns {void}
+   */
   renderLoading() {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
@@ -28,6 +68,12 @@ export const ui = {
     ).join('');
   },
 
+  /**
+   * Muestra un mensaje de error en el `<tbody>` de la tabla.
+   *
+   * @param {string} [msg='Error al cargar los datos.'] - Mensaje de error.
+   * @returns {void}
+   */
   renderError(msg = 'Error al cargar los datos.') {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
@@ -39,6 +85,12 @@ export const ui = {
       </tr>`;
   },
 
+  /**
+   * Actualiza los valores de las tarjetas de estadísticas superiores.
+   *
+   * @param {{ total: number, vigentes: number, completados: number, monto_total: number }} stats
+   * @returns {void}
+   */
   renderStats({ total, vigentes, completados, monto_total }) {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
     set('statTotal',       total);
@@ -47,6 +99,13 @@ export const ui = {
     set('statMonto',       formatters.moneda(monto_total));
   },
 
+  /**
+   * Renderiza las filas de la tabla principal de contratos.
+   * Cada fila incluye acciones condicionales según el estado del contrato.
+   *
+   * @param {Array<Object>} filas - Contratos a renderizar (ya paginados).
+   * @returns {void}
+   */
   renderTabla(filas) {
     const tbody = document.getElementById('tablaBody');
     if (!tbody) return;
@@ -99,6 +158,14 @@ export const ui = {
     }).join('');
   },
 
+  /**
+   * Renderiza los controles de paginación (info textual + botones numéricos).
+   *
+   * @param {number} total     - Total de filas filtradas.
+   * @param {number} pagina    - Página activa (base 1).
+   * @param {number} porPagina - Filas por página.
+   * @returns {void}
+   */
   renderPaginacion(total, pagina, porPagina) {
     const totalPags = Math.ceil(total / porPagina) || 1;
     const info = document.getElementById('paginaInfo');
@@ -118,6 +185,14 @@ export const ui = {
       ).join('');
   },
 
+  /**
+   * Renderiza la lista de cotizaciones aprobadas disponibles en el modal 1.
+   * Aplica filtro de búsqueda local sobre nombre del cliente o código.
+   *
+   * @param {Array<Object>} cotizaciones - Lista completa de cotizaciones disponibles.
+   * @param {string}        [filtro=''] - Término de búsqueda para filtrar la lista.
+   * @returns {void}
+   */
   renderCotizacionesDisponibles(cotizaciones, filtro = '') {
     const el = document.getElementById('cotizacionesDisponibles');
     if (!el) return;
@@ -151,6 +226,12 @@ export const ui = {
     }).join('');
   },
 
+  /**
+   * Muestra el resumen de la cotización seleccionada en el modal 2 (generar contrato).
+   *
+   * @param {Object} cot - Datos de la cotización seleccionada.
+   * @returns {void}
+   */
   renderResumenCotizacion(cot) {
     const el = document.getElementById('cotResumen');
     if (!el) return;
@@ -169,6 +250,14 @@ export const ui = {
       </div>`;
   },
 
+  /**
+   * Genera el HTML del cuerpo del modal de detalle de un contrato.
+   * Incluye metadata del contrato e historial de pagos completo.
+   *
+   * @param {Object}        data        - Contrato completo con campos `pagos[]`, `total_pagado`, `saldo`.
+   * @param {Array<Object>} [data.pagos=[]] - Historial de pagos del contrato.
+   * @returns {string} HTML del contenido del modal de detalle.
+   */
   renderDetalle(data) {
     const pagos = data.pagos ?? [];
     const filasPagos = pagos.length

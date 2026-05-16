@@ -1,5 +1,20 @@
 <?php
 
+/**
+ * @file    EstudiantesApi.php
+ * @package App\Controllers\Api
+ *
+ * Controlador REST para la gestión de estudiantes dentro de una promoción escolar.
+ * Delega la lógica de negocio en EstudianteService y formatea
+ * las respuestas con EstudianteTransformer.
+ *
+ * Endpoints:
+ *   GET    /api/estudiantes?id_promocion=X  → listar por promoción
+ *   POST   /api/estudiantes                 → crear (incluye apoderado + persona en transacción)
+ *   PUT    /api/estudiantes/{id}            → actualizar datos del estudiante
+ *   DELETE /api/estudiantes/{id}            → eliminar
+ */
+
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
@@ -8,17 +23,17 @@ use App\Transformers\EstudianteTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * EstudiantesApi
- * Base URL: /api/estudiantes
+ * API de Estudiantes.
  *
- * GET    /api/estudiantes?id_promocion=X  → listar por promoción
- * POST   /api/estudiantes                 → crear (incluye apoderado + persona)
- * PUT    /api/estudiantes/{id}            → actualizar datos del estudiante
- * DELETE /api/estudiantes/{id}            → eliminar
+ * Todas las respuestas siguen el formato:
+ * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
 class EstudiantesApi extends BaseController
 {
-    protected EstudianteService     $estudianteService;
+    /** @var EstudianteService Servicio con la lógica de negocio de estudiantes. */
+    protected EstudianteService $estudianteService;
+
+    /** @var EstudianteTransformer Formateador de respuestas JSON. */
     protected EstudianteTransformer $estudianteTransformer;
 
     public function __construct()
@@ -27,46 +42,60 @@ class EstudiantesApi extends BaseController
         $this->estudianteTransformer = new EstudianteTransformer();
     }
 
-    // GET /api/estudiantes?id_promocion=X
+    /**
+     * GET /api/estudiantes?id_promocion=X
+     *
+     * @return ResponseInterface 200 con la lista de estudiantes | 422 si falta id_promocion.
+     */
     public function index()
     {
         $idPromocion = (int) ($this->request->getGet('id_promocion') ?? 0);
+
         if (!$idPromocion) {
-            return $this->response->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
                 ->setJSON(['status' => 'error', 'message' => 'id_promocion es requerido']);
         }
 
-        return $this->response->setStatusCode(ResponseInterface::HTTP_OK)->setJSON([
-            'status' => 'success',
-            'data'   => $this->estudianteTransformer->transformMany(
-                $this->estudianteService->listarPorPromocion($idPromocion)
-            ),
-        ]);
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON([
+                'status' => 'success',
+                'data'   => $this->estudianteTransformer->transformMany(
+                    $this->estudianteService->listarPorPromocion($idPromocion)
+                ),
+            ]);
     }
 
-    // POST /api/estudiantes
-    // Body: {
-    //   id_promocion,
-    //   estudiante: { nombres, apellidos, fecha_nacimiento?, color_fav?, profesion_futura? },
-    //   apoderado:  { nombres, apellidos, telefono, tipo_relacion,
-    //                 tipo_documento, numero_documento, correo? }
-    // }
+    /**
+     * POST /api/estudiantes
+     *
+     * Body: {
+     *   id_promocion,
+     *   estudiante: { nombres, apellidos, fecha_nacimiento?, color_fav?, profesion_futura? },
+     *   apoderado:  { nombres, apellidos?, telefono, tipo_relacion,
+     *                 tipo_documento, numero_documento, correo? }
+     * }
+     *
+     * @return ResponseInterface 201 con id_estudiante | 404 si no existe la promoción | 422 si falla validación.
+     */
     public function create()
     {
         $body  = $this->request->getJSON(true) ?? [];
         $rules = [
-            'id_promocion'                   => 'required|integer|is_natural_no_zero',
-            'estudiante.nombres'             => 'required|max_length[30]',
-            'estudiante.apellidos'           => 'required|max_length[30]',
-            'apoderado.nombres'              => 'required|max_length[100]',
-            'apoderado.telefono'             => 'required|exact_length[9]',
-            'apoderado.tipo_documento'       => 'required|in_list[DNI,CE,PASAPORTE]',
-            'apoderado.numero_documento'     => 'required|min_length[6]|max_length[20]',
-            'apoderado.tipo_relacion'        => 'required|in_list[padre,madre,hermano,otro]',
+            'id_promocion'               => 'required|integer|is_natural_no_zero',
+            'estudiante.nombres'         => 'required|max_length[30]',
+            'estudiante.apellidos'       => 'required|max_length[30]',
+            'apoderado.nombres'          => 'required|max_length[100]',
+            'apoderado.telefono'         => 'required|exact_length[9]',
+            'apoderado.tipo_documento'   => 'required|in_list[DNI,CE,PASAPORTE]',
+            'apoderado.numero_documento' => 'required|min_length[6]|max_length[20]',
+            'apoderado.tipo_relacion'    => 'required|in_list[padre,madre,hermano,otro]',
         ];
 
         if (!$this->validateData($body, $rules)) {
-            return $this->response->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
                 ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
         }
 
@@ -76,25 +105,42 @@ class EstudiantesApi extends BaseController
             return $this->_serviceError($e);
         }
 
-        return $this->response->setStatusCode(ResponseInterface::HTTP_CREATED)
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_CREATED)
             ->setJSON(['status' => 'success', 'message' => 'Estudiante registrado', 'id_estudiante' => $id]);
     }
 
-    // PUT /api/estudiantes/{id}
-    // Body: { nombres?, apellidos?, fecha_nacimiento?, color_fav?, profesion_futura? }
+    /**
+     * PUT /api/estudiantes/{id}
+     *
+     * Body: { nombres?, apellidos?, fecha_nacimiento?, color_fav?, profesion_futura? }
+     *
+     * @param  mixed $id ID del estudiante.
+     * @return ResponseInterface 200 | 404 | 422.
+     */
     public function update($id)
     {
         $body = $this->request->getJSON(true) ?? [];
+
         try {
             $this->estudianteService->actualizar((int) $id, $body);
         } catch (\RuntimeException $e) {
             return $this->_serviceError($e);
         }
-        return $this->response->setStatusCode(ResponseInterface::HTTP_OK)
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON(['status' => 'success', 'message' => 'Estudiante actualizado']);
     }
 
-    // DELETE /api/estudiantes/{id}
+    /**
+     * DELETE /api/estudiantes/{id}
+     *
+     * La asistencia del estudiante se elimina en cascada por FK.
+     *
+     * @param  mixed $id ID del estudiante.
+     * @return ResponseInterface 200 | 404.
+     */
     public function delete($id)
     {
         try {
@@ -102,10 +148,18 @@ class EstudiantesApi extends BaseController
         } catch (\RuntimeException $e) {
             return $this->_serviceError($e);
         }
-        return $this->response->setStatusCode(ResponseInterface::HTTP_OK)
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON(['status' => 'success', 'message' => 'Estudiante eliminado']);
     }
 
+    /**
+     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
+     *
+     * @param  \RuntimeException $e Excepción lanzada por el servicio.
+     * @return ResponseInterface
+     */
     private function _serviceError(\RuntimeException $e): ResponseInterface
     {
         $code   = (int) $e->getCode() ?: 500;

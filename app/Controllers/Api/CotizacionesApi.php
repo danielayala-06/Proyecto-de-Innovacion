@@ -1,5 +1,22 @@
 <?php
 
+/**
+ * @file    CotizacionesApi.php
+ * @package App\Controllers\Api
+ *
+ * Controlador REST para la gestión de cotizaciones.
+ * Delega la lógica de negocio en CotizacionService y formatea
+ * las respuestas con CotizacionTransformer.
+ *
+ * Endpoints:
+ *   GET    /api/cotizaciones                → listar (todas o solo las disponibles para contrato)
+ *   GET    /api/cotizaciones/{id}           → detalle con ítems
+ *   POST   /api/cotizaciones                → crear
+ *   PUT    /api/cotizaciones/{id}           → actualizar (reemplaza ítems)
+ *   PATCH  /api/cotizaciones/{id}/estado    → cambiar estado
+ *   DELETE /api/cotizaciones/{id}           → rechazar (soft, no elimina físicamente)
+ */
+
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
@@ -8,19 +25,17 @@ use App\Transformers\CotizacionTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * CotizacionesApi
- * Base URL: /api/cotizaciones
+ * API de Cotizaciones.
  *
- * GET    /api/cotizaciones              → listar (paginado)
- * GET    /api/cotizaciones/{id}         → detalle + detalles
- * POST   /api/cotizaciones              → crear
- * PUT    /api/cotizaciones/{id}         → actualizar (reemplaza detalles)
- * PATCH  /api/cotizaciones/{id}/estado  → cambiar estado
- * DELETE /api/cotizaciones/{id}         → rechazar (soft)
+ * Todas las respuestas siguen el formato:
+ * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
 class CotizacionesApi extends BaseController
 {
-    protected CotizacionService     $service;
+    /** @var CotizacionService Servicio con la lógica de negocio de cotizaciones. */
+    protected CotizacionService $service;
+
+    /** @var CotizacionTransformer Formateador de respuestas JSON. */
     protected CotizacionTransformer $transformer;
 
     public function __construct()
@@ -29,9 +44,14 @@ class CotizacionesApi extends BaseController
         $this->transformer = new CotizacionTransformer();
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/cotizaciones
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/cotizaciones[?sin_contrato=1]
+     *
+     * Con `sin_contrato=1` devuelve solo las APROBADAS sin contrato activo
+     * (para el selector al generar contratos).
+     *
+     * @return ResponseInterface 200 con la lista de cotizaciones.
+     */
     public function index()
     {
         $sinContrato = $this->request->getGet('sin_contrato');
@@ -45,9 +65,14 @@ class CotizacionesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // GET /api/cotizaciones/{id}
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * GET /api/cotizaciones/{id}
+     *
+     * Verifica la expiración de la cotización antes de devolverla.
+     *
+     * @param  mixed $id ID de la cotización.
+     * @return ResponseInterface 200 con detalle | 404 si no existe.
+     */
     public function show($id = null)
     {
         $cotizacion = $this->service->obtenerPorId((int) $id);
@@ -63,10 +88,16 @@ class CotizacionesApi extends BaseController
             ->setJSON(['status' => 'success', 'data' => $this->transformer->transform($cotizacion)]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // POST /api/cotizaciones
-    // Body: { id_cliente, id_usuario, detalles: [...], observaciones? }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * POST /api/cotizaciones
+     *
+     * Body: { id_cliente, id_usuario, detalles: [...], observaciones?,
+     *         sesion?: {...}, colegio?: {...} }
+     *
+     * El total se calcula automáticamente a partir de los detalles.
+     *
+     * @return ResponseInterface 201 con datos de la cotización creada | 422 si faltan campos.
+     */
     public function create()
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -106,10 +137,17 @@ class CotizacionesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PUT /api/cotizaciones/{id}
-    // Body: { detalles: [...], observaciones? }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PUT /api/cotizaciones/{id}
+     *
+     * Body: { detalles: [...], observaciones? }
+     *
+     * Reemplaza todos los ítems y recalcula el total.
+     * Solo permite actualizar cotizaciones PENDIENTES.
+     *
+     * @param  mixed $id ID de la cotización.
+     * @return ResponseInterface 200 con la cotización actualizada | 404 | 409 | 422.
+     */
     public function update($id = null)
     {
         $body = $this->request->getJSON(true) ?? [];
@@ -133,14 +171,18 @@ class CotizacionesApi extends BaseController
             ]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // PATCH /api/cotizaciones/{id}/estado
-    // Body: { estado: "PENDIENTE" | "APROBADA" | "RECHAZADA" }
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * PATCH /api/cotizaciones/{id}/estado
+     *
+     * Body: { estado: "PENDIENTE" | "APROBADA" | "RECHAZADA" }
+     *
+     * @param  mixed $id ID de la cotización.
+     * @return ResponseInterface 200 | 404 | 422.
+     */
     public function cambiarEstado($id = null)
     {
-        $body   = $this->request->getJSON(true) ?? [];
-        $estado = strtoupper($body['estado'] ?? '');
+        $body    = $this->request->getJSON(true) ?? [];
+        $estado  = strtoupper($body['estado'] ?? '');
         $validos = ['PENDIENTE', 'APROBADA', 'RECHAZADA'];
 
         if (!in_array($estado, $validos)) {
@@ -164,9 +206,15 @@ class CotizacionesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => "Estado cambiado a {$estado}"]);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // DELETE /api/cotizaciones/{id}  → rechazar (no se borra físicamente)
-    // ────────────────────────────────────────────────────────────────────────
+    /**
+     * DELETE /api/cotizaciones/{id}
+     *
+     * Cambia el estado a RECHAZADA. Solo funciona en cotizaciones PENDIENTES.
+     * No elimina el registro físicamente.
+     *
+     * @param  mixed $id ID de la cotización.
+     * @return ResponseInterface 200 | 404 | 409.
+     */
     public function delete($id = null)
     {
         $cotizacion = $this->service->obtenerPorId((int) $id);
@@ -190,10 +238,12 @@ class CotizacionesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Cotización rechazada']);
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Helpers privados
-    // ────────────────────────────────────────────────────────────────────────
-
+    /**
+     * Calcula el total estimado sumando cantidad × precio_unitario de cada ítem.
+     *
+     * @param  array<int, array<string, mixed>> $detalles Lista de ítems de la cotización.
+     * @return float                                      Total calculado.
+     */
     private function _calcularTotal(array $detalles): float
     {
         return (float) array_sum(
@@ -204,6 +254,12 @@ class CotizacionesApi extends BaseController
         );
     }
 
+    /**
+     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
+     *
+     * @param  \RuntimeException $e Excepción lanzada por el servicio.
+     * @return ResponseInterface
+     */
     private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
     {
         $code   = (int) $e->getCode() ?: 500;

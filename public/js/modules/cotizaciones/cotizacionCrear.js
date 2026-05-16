@@ -1,3 +1,23 @@
+/**
+ * @file    cotizacionCrear.js
+ * @module  modules/cotizaciones/cotizacionCrear
+ *
+ * Módulo autoejecutable para la vista de creación de cotizaciones (`/cotizaciones/crear`).
+ * Orquesta todos los flujos de la pantalla: selección de cliente (existente o nuevo),
+ * búsqueda RENIEC, selección de paquetes/servicios, resumen lateral, borrador en
+ * localStorage y envío del formulario a la API.
+ *
+ * Variables globales requeridas (declaradas en la vista PHP):
+ *  - `window.BASE_URL`         : URL base de la aplicación.
+ *  - `window.CURRENT_USER_ID`  : ID del usuario autenticado.
+ *
+ * Flujo principal (función `init`):
+ *  1. Carga en paralelo clientes y paquetes activos desde la API.
+ *  2. Puebla el modal de paquetes agrupado por categoría y nivel.
+ *  3. Restaura el borrador guardado en `localStorage` si existe.
+ *  4. Registra todos los listeners de eventos (cliente, paquetes, servicios, submit).
+ */
+
 import { clienteApi }    from '../../api/cliente.api.js';
 import { paqueteApi }    from '../../api/paquete.api.js';
 import { cotizacionApi } from '../../api/cotizacion.api.js';
@@ -5,25 +25,52 @@ import { manager }       from './cotizacion.manager.js';
 import { formatters }    from '../../utils/formatters.js';
 import { alerts }        from '../../utils/alerts.js';
 
-/* ── Estado en memoria ────────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// ESTADO LOCAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {string} Nivel de filtro activo en el modal de paquetes ('todos' o nombre de nivel). */
 let _nivelFiltro = 'todos';
 
+/**
+ * Estado interno del formulario de creación.
+ *
+ * @type {Object}
+ * @property {Object|null}   cliente             - Cliente existente seleccionado.
+ * @property {boolean}       esNuevoCliente      - `true` si el cliente no existe en BD.
+ * @property {Array<Object>} items               - Ítems añadidos (paquetes y servicios).
+ * @property {Array<Object>} todosClientes       - Caché de todos los clientes activos.
+ * @property {Array<Object>} todosPaquetes       - Caché de todos los paquetes activos.
+ * @property {Object|null}   paqueteSeleccionado - Paquete actualmente marcado en el modal.
+ */
 const state = {
-    cliente:             null,   // objeto cliente existente seleccionado
-    esNuevoCliente:      false,  // true = no existe en BD, se creará al guardar
-    items:               [],     // [{tipo, idRef, nombre, precio}]
+    cliente:             null,
+    esNuevoCliente:      false,
+    items:               [],
     todosClientes:       [],
     todosPaquetes:       [],
     paqueteSeleccionado: null,
 };
 
-/* ── Reglas de validación por tipo de documento ───────────────── */
+// ─────────────────────────────────────────────────────────────────────────────
+// VALIDACIÓN DE DOCUMENTO Y TELÉFONO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Reglas de validación por tipo de documento.
+ *
+ * @type {Object<string, { regex: RegExp, hint: string, maxlen: number }>}
+ */
 const DOC_RULES = {
-    DNI:       { regex: /^\d{8}$/,              hint: '8 dígitos numéricos',            maxlen: 8  },
-    CE:        { regex: /^[A-Za-z0-9]{9}$/,     hint: '9 caracteres alfanuméricos',     maxlen: 9  },
+    DNI:       { regex: /^\d{8}$/,              hint: '8 dígitos numéricos',              maxlen: 8  },
+    CE:        { regex: /^[A-Za-z0-9]{9}$/,     hint: '9 caracteres alfanuméricos',       maxlen: 9  },
     PASAPORTE: { regex: /^[A-Za-z0-9]{6,12}$/,  hint: '6 a 12 caracteres alfanuméricos', maxlen: 12 },
 };
 
+/**
+ * Actualiza el placeholder e `maxLength` del campo de documento según el tipo seleccionado.
+ * @returns {void}
+ */
 function _actualizarPlaceholderDoc() {
     const tipo = document.getElementById('tipoDocumento')?.value ?? 'DNI';
     const inp  = document.getElementById('dniCliente');
@@ -32,8 +79,13 @@ function _actualizarPlaceholderDoc() {
     inp.maxLength   = DOC_RULES[tipo]?.maxlen ?? 12;
 }
 
+/** @type {RegExp} Regex para validar teléfonos peruanos (9 + 8 dígitos). */
 const TEL_REGEX = /^9\d{8}$/;
 
+/**
+ * Muestra feedback visual en tiempo real sobre la validez del teléfono.
+ * @returns {void}
+ */
 function _validarTel() {
     const val        = document.getElementById('telefonoCliente')?.value?.trim() ?? '';
     const feedbackEl = document.getElementById('telFeedback');
@@ -50,27 +102,36 @@ function _validarTel() {
     }
 }
 
+/**
+ * Muestra feedback visual en tiempo real sobre la validez del documento.
+ * @returns {void}
+ */
 function _validarDoc() {
-    const tipo      = document.getElementById('tipoDocumento')?.value ?? 'DNI';
-    const val       = document.getElementById('dniCliente')?.value?.trim() ?? '';
+    const tipo       = document.getElementById('tipoDocumento')?.value ?? 'DNI';
+    const val        = document.getElementById('dniCliente')?.value?.trim() ?? '';
     const feedbackEl = document.getElementById('docFeedback');
     if (!feedbackEl) return;
     if (!val) { feedbackEl.textContent = ''; return; }
     const rule = DOC_RULES[tipo];
     if (rule?.regex.test(val)) {
-        feedbackEl.style.color   = 'var(--green-text)';
-        feedbackEl.textContent   = '✓ Formato válido';
+        feedbackEl.style.color = 'var(--green-text)';
+        feedbackEl.textContent = '✓ Formato válido';
     } else {
-        feedbackEl.style.color   = 'var(--red-text)';
-        feedbackEl.textContent   = `Formato esperado: ${rule?.hint ?? ''}`;
+        feedbackEl.style.color = 'var(--red-text)';
+        feedbackEl.textContent = `Formato esperado: ${rule?.hint ?? ''}`;
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SECCIÓN CLIENTE
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// SECCIÓN CLIENTE
+// ─────────────────────────────────────────────────────────────────────────────
 
-/** Aplica un cliente existente: llena campos y los bloquea */
+/**
+ * Aplica un cliente existente al formulario: llena los campos y los bloquea.
+ *
+ * @param {Object} c - Cliente obtenido de la API o del caché local.
+ * @returns {void}
+ */
 function _setClienteExistente(c) {
     state.cliente        = c;
     state.esNuevoCliente = false;
@@ -94,7 +155,10 @@ function _setClienteExistente(c) {
     _saveDraft();
 }
 
-/** Activa modo "nuevo cliente": campos editables, badge naranja */
+/**
+ * Activa el modo "nuevo cliente": campos editables, badge naranja.
+ * @returns {void}
+ */
 function _setModoNuevoCliente() {
     state.cliente        = null;
     state.esNuevoCliente = true;
@@ -107,7 +171,10 @@ function _setModoNuevoCliente() {
     _mostrarBtnCambiar(true);
 }
 
-/** Limpia toda la sección de cliente (para empezar de nuevo) */
+/**
+ * Limpia toda la sección de cliente para comenzar de nuevo.
+ * @returns {void}
+ */
 function _limpiarCliente() {
     state.cliente        = null;
     state.esNuevoCliente = false;
@@ -126,7 +193,12 @@ function _limpiarCliente() {
     _saveDraft();
 }
 
-/** Busca en la lista local por número de documento (exacto, sin distinción de mayúsculas) */
+/**
+ * Busca en el caché local por número de documento (coincidencia exacta).
+ *
+ * @param {string} dni - Número de documento a buscar.
+ * @returns {Object|null} Cliente encontrado o `null`.
+ */
 function _buscarPorDni(dni) {
     if (!dni) return null;
     return state.todosClientes.find(c =>
@@ -134,7 +206,14 @@ function _buscarPorDni(dni) {
     ) ?? null;
 }
 
-/* ── Helpers de UI para el cliente ───────────────────────────── */
+// ─── Helpers de UI del cliente ────────────────────────────────────────────────
+
+/**
+ * Rellena los campos del formulario de cliente.
+ *
+ * @param {{ nombres: string, apellidos: string, tipoDoc: string, dni: string, telefono: string, correo: string }} campos
+ * @returns {void}
+ */
 function _llenarCamposCliente({ nombres, apellidos, tipoDoc = 'DNI', dni, telefono, correo }) {
     const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
     set('nombresCliente',   nombres);
@@ -147,8 +226,15 @@ function _llenarCamposCliente({ nombres, apellidos, tipoDoc = 'DNI', dni, telefo
     _validarDoc();
 }
 
+/** @type {string[]} IDs de los campos del formulario de cliente. */
 const CAMPOS_CLIENTE_IDS = ['nombresCliente', 'apellidosCliente', 'tipoDocumento', 'dniCliente', 'telefonoCliente', 'emailCliente'];
 
+/**
+ * Habilita o deshabilita los campos del formulario de cliente.
+ *
+ * @param {boolean} readonly - `true` para bloquear, `false` para habilitar.
+ * @returns {void}
+ */
 function _setCamposClienteReadonly(readonly) {
     CAMPOS_CLIENTE_IDS.forEach(id => {
         const el = document.getElementById(id);
@@ -158,14 +244,20 @@ function _setCamposClienteReadonly(readonly) {
     });
 }
 
-/* ── Badge de estado del cliente ──────────────────────────────── */
+/** @type {HTMLElement|null} Elemento badge de estado del cliente (creado dinámicamente). */
 let _badgeEl = null;
 
+/**
+ * Muestra u oculta el badge de estado del cliente (encontrado / nuevo / buscando).
+ *
+ * @param {'found'|'new'|'searching'|''} tipo  - Tipo de badge.
+ * @param {string}                        texto - Mensaje a mostrar (vacío para ocultar).
+ * @returns {void}
+ */
 function _mostrarBadgeCliente(tipo, texto) {
     if (!_badgeEl) {
         _badgeEl = document.createElement('div');
         _badgeEl.style.cssText = 'font-size:0.81rem;margin-top:6px;padding:5px 10px;border-radius:5px;display:none;';
-        // Insertarlo después del row de campos (dentro del fieldset)
         const fieldset = document.querySelector('fieldset.mb-4');
         fieldset?.appendChild(_badgeEl);
     }
@@ -185,9 +277,15 @@ function _mostrarBadgeCliente(tipo, texto) {
     }
 }
 
-/* ── Botón "Cambiar cliente" ──────────────────────────────────── */
+/** @type {HTMLButtonElement|null} Botón "Cambiar cliente" (creado dinámicamente). */
 let _btnCambiarEl = null;
 
+/**
+ * Muestra u oculta el botón "Cambiar cliente".
+ *
+ * @param {boolean} visible
+ * @returns {void}
+ */
 function _mostrarBtnCambiar(visible) {
     if (!_btnCambiarEl) {
         _btnCambiarEl = document.createElement('button');
@@ -200,16 +298,30 @@ function _mostrarBtnCambiar(visible) {
     _btnCambiarEl.style.display = visible ? '' : 'none';
 }
 
+/**
+ * Actualiza el texto del sidebar del cliente seleccionado.
+ *
+ * @param {string} html - HTML a insertar en `#clienteSeleccionado`.
+ * @returns {void}
+ */
 function _actualizarSidebarCliente(html) {
     const el = document.getElementById('clienteSeleccionado');
     if (el) el.innerHTML = html;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   BÚSQUEDA DROPDOWN (barra general)
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// DROPDOWN DE BÚSQUEDA DE CLIENTE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {HTMLElement|null} Contenedor del dropdown de resultados (creado dinámicamente). */
 let _dropdown = null;
 
+/**
+ * Muestra el dropdown de resultados de búsqueda de clientes.
+ *
+ * @param {Array<Object>} resultados - Clientes que coinciden con la búsqueda.
+ * @returns {void}
+ */
 function _mostrarDropdown(resultados) {
     if (!_dropdown) {
         _dropdown = document.createElement('div');
@@ -237,7 +349,7 @@ function _mostrarDropdown(resultados) {
             el.addEventListener('mouseenter', () => { el.style.background = 'var(--bg-hover)'; });
             el.addEventListener('mouseleave', () => { el.style.background = ''; });
             el.addEventListener('mousedown', (e) => {
-                e.preventDefault(); // evitar blur en searchCliente antes de completar selección
+                e.preventDefault();
                 const cliente = state.todosClientes.find(c => Number(c.id_cliente) === parseInt(el.dataset.id));
                 if (cliente) _setClienteExistente(cliente);
                 _ocultarDropdown();
@@ -250,10 +362,18 @@ function _mostrarDropdown(resultados) {
     _dropdown.style.display = 'block';
 }
 
+/** Oculta el dropdown de búsqueda. @returns {void} */
 function _ocultarDropdown() {
     if (_dropdown) _dropdown.style.display = 'none';
 }
 
+/**
+ * Filtra el caché local de clientes por nombre, documento o teléfono
+ * y muestra el dropdown con los primeros 8 resultados.
+ *
+ * @param {string} q - Término de búsqueda.
+ * @returns {void}
+ */
 function _filtrarClientes(q) {
     q = (q || '').toLowerCase().trim();
     if (!q) { _ocultarDropdown(); return; }
@@ -266,9 +386,14 @@ function _filtrarClientes(q) {
     _mostrarDropdown(res);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   RESUMEN LATERAL
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// RESUMEN LATERAL DE ÍTEMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Re-renderiza el resumen lateral de ítems seleccionados y el total.
+ * @returns {void}
+ */
 function _actualizarResumen() {
     const el      = document.getElementById('resumenItems');
     const totalEl = document.getElementById('totalResumen');
@@ -282,7 +407,7 @@ function _actualizarResumen() {
 
     const total = state.items.reduce((s, i) => s + i.precio * (i.cantidad ?? 1), 0);
     el.innerHTML = state.items.map((item, idx) => {
-        const cant    = item.cantidad ?? 1;
+        const cant     = item.cantidad ?? 1;
         const subtotal = item.precio * cant;
         const cantLabel = cant > 1 ? `<span style="color:#888;font-size:0.72rem;">×${cant} </span>` : '';
         return `
@@ -310,9 +435,16 @@ function _actualizarResumen() {
     });
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SINCRONIZAR N.° ESTUDIANTES
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// SINCRONIZAR N.° ESTUDIANTES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Actualiza el campo `#numEstudiantes` sumando las cantidades de los ítems
+ * de tipo `paquete` (cada paquete corresponde a un grupo de estudiantes).
+ *
+ * @returns {void}
+ */
 function _sincronizarNumEstudiantes() {
     const el = document.getElementById('numEstudiantes');
     if (!el) return;
@@ -322,14 +454,27 @@ function _sincronizarNumEstudiantes() {
     el.value = total > 0 ? Math.min(parseInt(el.max) || 100, total) : '';
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CONTENEDORES DE ÍTEMS
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTENEDORES DE ÍTEMS (paquetes y servicios)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Re-renderiza ambos contenedores de ítems (paquetes y servicios personalizados).
+ * @returns {void}
+ */
 function _renderContainers() {
     _renderContainer('paquetesContainer',  'paquete');
     _renderContainer('serviciosContainer', 'personalizado');
 }
 
+/**
+ * Renderiza el contenedor de ítems de un tipo específico.
+ * Cada ítem tiene un botón de eliminar que actualiza el estado y re-renderiza.
+ *
+ * @param {string} containerId - ID del contenedor DOM.
+ * @param {'paquete'|'personalizado'} tipo - Tipo de ítems a renderizar.
+ * @returns {void}
+ */
 function _renderContainer(containerId, tipo) {
     const el = document.getElementById(containerId);
     if (!el) return;
@@ -371,9 +516,11 @@ function _renderContainer(containerId, tipo) {
     });
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MODAL PAQUETES
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL DE PAQUETES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {Object<string,string>} Etiquetas de nivel para mostrar en el modal. */
 const NIVEL_LABEL = {
     'inicial-primaria': 'Inicial / Primaria',
     primaria:           'Inicial / Primaria',
@@ -382,8 +529,11 @@ const NIVEL_LABEL = {
     postgrado:          'Postgrado',
     otro:               'Otro',
 };
+
+/** @type {string[]} Orden de visualización de niveles en el modal. */
 const NIVEL_ORDER = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
 
+/** @type {Object<string,string>} Estilos CSS de los badges de nivel. */
 const NIVEL_STYLE = {
     'inicial-primaria': 'background:#e3f2fd;color:#1565c0',
     primaria:           'background:#e3f2fd;color:#1565c0',
@@ -393,15 +543,22 @@ const NIVEL_STYLE = {
     otro:               'background:#fff3e0;color:#e65100',
 };
 
+/** @type {Object<string,string>} Normalización de alias de nivel a clave canónica. */
 const NIVEL_NORMALIZE = { primaria: 'inicial-primaria', inicial: 'inicial-primaria' };
 
+/**
+ * Construye el contenido del modal de paquetes agrupando por categoría (tabs)
+ * y añadiendo botones de filtro por nivel.
+ *
+ * @param {Array<Object>} paquetes - Lista de paquetes a mostrar en el modal.
+ * @returns {void}
+ */
 function _poblarModalPaquetes(paquetes) {
     const nivelEl  = document.getElementById('nivelFiltrosContainer');
     const tabsEl   = document.getElementById('catTabsContainer');
     const panelsEl = document.getElementById('catPanelsContainer');
     if (!tabsEl || !panelsEl) return;
 
-    /* ── Botones de filtro por nivel ── */
     const nivelesPresentes = [...new Set(
         paquetes.map(p => NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro')
     )];
@@ -418,7 +575,6 @@ function _poblarModalPaquetes(paquetes) {
         ].join('');
     }
 
-    /* ── Tabs por categoría ── */
     const CAT_LABEL = { Paquetes: 'Paquetes', Cuadros: 'Cuadros', Anuarios: 'Anuarios', otros: 'Otros' };
     const CAT_ORDER = ['Paquetes', 'Cuadros', 'Anuarios', 'otros'];
 
@@ -445,8 +601,8 @@ function _poblarModalPaquetes(paquetes) {
 
     panelsEl.innerHTML = keys.map((cat, i) => {
         const rows = grupos[cat].map(p => {
-            const nombre    = (p.nombre_paquete || '').replace(/'/g, "\\'");
-            const nivel     = NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro';
+            const nombre     = (p.nombre_paquete || '').replace(/'/g, "\\'");
+            const nivel      = NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro';
             const badgeStyle = NIVEL_STYLE[nivel] ?? NIVEL_STYLE.otro;
             return `
                 <div class="paquete-option" data-nivel="${nivel}"
@@ -463,6 +619,12 @@ function _poblarModalPaquetes(paquetes) {
     }).join('');
 }
 
+/**
+ * Cambia la tab de categoría activa en el modal de paquetes.
+ *
+ * @param {string}      cat   - Nombre de la categoría.
+ * @param {HTMLElement} tabEl - Botón de tab clickeado.
+ */
 window.cambiarCategoria = function (cat, tabEl) {
     document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.cat-panel').forEach(p => p.classList.remove('active'));
@@ -471,6 +633,12 @@ window.cambiarCategoria = function (cat, tabEl) {
     state.paqueteSeleccionado = null;
 };
 
+/**
+ * Filtra las opciones del modal de paquetes por nivel educativo.
+ *
+ * @param {string}      nivel - Nivel a mostrar (`'todos'` o nombre de nivel).
+ * @param {HTMLElement} btn   - Botón de filtro clickeado.
+ */
 window.filtrarPorNivel = function (nivel, btn) {
     _nivelFiltro = nivel;
     document.querySelectorAll('.nivel-filtro-btn').forEach(b => b.classList.remove('active'));
@@ -480,6 +648,14 @@ window.filtrarPorNivel = function (nivel, btn) {
     });
 };
 
+/**
+ * Marca un paquete como seleccionado en el modal y guarda sus datos en el estado.
+ *
+ * @param {HTMLElement} el     - Elemento `.paquete-option` clickeado.
+ * @param {string}      nombre - Nombre del paquete.
+ * @param {number}      precio - Precio del paquete.
+ * @param {number}      idRef  - ID del paquete en BD.
+ */
 window.seleccionarOpcion = function (el, nombre, precio, idRef) {
     el.closest('.cat-panel')?.querySelectorAll('.paquete-option')
         .forEach(o => o.classList.remove('selected'));
@@ -491,9 +667,14 @@ window.seleccionarOpcion = function (el, nombre, precio, idRef) {
     };
 };
 
-/* ═══════════════════════════════════════════════════════════════
-   MODAL SERVICIOS
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL DE SERVICIOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Inyecta el formulario del modal de servicios personalizados en el panel correspondiente.
+ * @returns {void}
+ */
 function _inicializarModalServicio() {
     const panel = document.getElementById('panel-servicios');
     if (!panel) return;
@@ -507,9 +688,14 @@ function _inicializarModalServicio() {
         </div>`;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   BORRADOR (localStorage)
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// BORRADOR EN LOCALSTORAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Serializa y guarda el estado actual del formulario como borrador.
+ * @returns {void}
+ */
 function _saveDraft() {
     manager.guardar({
         cliente:        state.cliente,
@@ -533,6 +719,12 @@ function _saveDraft() {
     });
 }
 
+/**
+ * Restaura el estado del formulario desde un borrador guardado en `localStorage`.
+ *
+ * @param {Object|null} borrador - Datos del borrador, o `null` si no existe.
+ * @returns {void}
+ */
 function _restoreDraft(borrador) {
     if (!borrador) return;
 
@@ -576,9 +768,15 @@ function _restoreDraft(borrador) {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   VALIDACIÓN
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// VALIDACIÓN DEL FORMULARIO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Valida todos los campos del formulario antes del envío.
+ *
+ * @returns {string|null} Mensaje de error, o `null` si el formulario es válido.
+ */
 function _validar() {
     if (!state.cliente && !state.esNuevoCliente) {
         return 'Busca un cliente existente o ingresa sus datos para registrar uno nuevo.';
@@ -601,7 +799,7 @@ function _validar() {
             return 'El correo electrónico no tiene un formato válido.';
     }
 
-    if (!state.items.length)  return 'Agrega al menos un paquete o servicio a la cotización.';
+    if (!state.items.length) return 'Agrega al menos un paquete o servicio a la cotización.';
     const wrapGrado = document.getElementById('wrap-grado');
     if (wrapGrado?.style.display !== 'none' && !document.getElementById('gradoProm')?.value) {
         return 'Selecciona el grado de la promoción.';
@@ -610,9 +808,16 @@ function _validar() {
     return null;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   PAYLOAD
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYLOAD PARA LA API
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Construye el payload completo para `POST /api/cotizaciones`.
+ *
+ * @param {number} idCliente - ID del cliente (existente o recién creado).
+ * @returns {Object} Payload con `id_cliente`, `detalles[]`, `colegio`, `sesion`, etc.
+ */
 function _buildPayload(idCliente) {
     const total    = state.items.reduce((s, i) => s + i.precio * (i.cantidad ?? 1), 0);
     const detalles = state.items.map(item => ({
@@ -650,15 +855,21 @@ function _buildPayload(idCliente) {
     };
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   MODALES BOOTSTRAP
-═══════════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// INICIALIZACIÓN
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {bootstrap.Modal|null} Modal de selección de paquetes. */
 let _modalPaquete  = null;
+/** @type {bootstrap.Modal|null} Modal de creación de servicio personalizado. */
 let _modalServicio = null;
 
-/* ═══════════════════════════════════════════════════════════════
-   INICIALIZACIÓN
-═══════════════════════════════════════════════════════════════ */
+/**
+ * Función principal de inicialización del módulo.
+ * Carga datos, puebla los modales, restaura el borrador y registra todos los listeners.
+ *
+ * @returns {Promise<void>}
+ */
 async function init() {
     /* 1. Cargar clientes y paquetes en paralelo */
     try {
@@ -681,13 +892,11 @@ async function init() {
     /* 4. Restaurar borrador */
     _restoreDraft(manager.cargar());
 
-    /* 5. Bootstrap modals */
+    /* 5. Instanciar modales Bootstrap */
     const paqEl = document.getElementById('modalPaquete');
     const srvEl = document.getElementById('modalServicio');
     if (paqEl) _modalPaquete  = new bootstrap.Modal(paqEl);
     if (srvEl) _modalServicio = new bootstrap.Modal(srvEl);
-
-    /* ── SECCIÓN CLIENTE ── */
 
     /* 6a. Teléfono: solo dígitos, feedback en tiempo real */
     document.getElementById('telefonoCliente')?.addEventListener('input', function () {
@@ -695,7 +904,7 @@ async function init() {
         _validarTel();
     });
 
-    /* 6b. Inicializar placeholder y listeners de tipo de documento */
+    /* 6b. Tipo de documento: actualizar placeholder y limpiar campo */
     _actualizarPlaceholderDoc();
     document.getElementById('tipoDocumento')?.addEventListener('change', () => {
         _actualizarPlaceholderDoc();
@@ -704,7 +913,7 @@ async function init() {
         document.getElementById('docFeedback').textContent = '';
     });
 
-    /* 6c. Campo documento: filtrar caracteres, validar y resetear si cliente ya seleccionado */
+    /* 6c. Campo documento: filtrar caracteres y auto-buscar al perder foco */
     const dniInput = document.getElementById('dniCliente');
     dniInput?.addEventListener('input', function () {
         const tipo   = document.getElementById('tipoDocumento')?.value ?? 'DNI';
@@ -735,7 +944,7 @@ async function init() {
         }
     });
 
-    /* 7. Barra de búsqueda general */
+    /* 7. Barra de búsqueda general (nombre, DNI, teléfono + RENIEC) */
     const searchInput = document.getElementById('searchCliente');
     const searchBtn   = document.getElementById('btnBuscar');
 
@@ -748,7 +957,7 @@ async function init() {
         const q = searchInput?.value?.trim();
         if (!q) { _ocultarDropdown(); return; }
 
-        // 1. Coincidencia exacta por número de documento en BD
+        // 1. Coincidencia exacta por número de documento en caché local
         const exactoDni = _buscarPorDni(q);
         if (exactoDni) {
             _setClienteExistente(exactoDni);
@@ -758,7 +967,7 @@ async function init() {
             return;
         }
 
-        // 2. Si es DNI de 8 dígitos → consultar RENIEC vía Decolecta
+        // 2. DNI de 8 dígitos → consultar RENIEC vía proxy Decolecta
         if (/^\d{8}$/.test(q)) {
             _ocultarDropdown();
             _setSearchFeedback('Consultando RENIEC...', 'var(--text-muted)');
@@ -786,7 +995,7 @@ async function init() {
             return;
         }
 
-        // 3. Búsqueda general (nombre / teléfono) → dropdown
+        // 3. Búsqueda general → dropdown
         _setSearchFeedback('');
         _filtrarClientes(q);
     };
@@ -823,7 +1032,7 @@ async function init() {
         _modalServicio?.show();
     });
 
-    /* 10. Confirmar paquete */
+    /* 10. Confirmar selección de paquete */
     document.getElementById('btn-confirmar-paquetes')?.addEventListener('click', () => {
         if (!state.paqueteSeleccionado) { alerts.warning('Selecciona un paquete de la lista.'); return; }
         const { idRef, nombre, precio } = state.paqueteSeleccionado;
@@ -836,7 +1045,7 @@ async function init() {
         _modalPaquete?.hide();
     });
 
-    /* 11. Confirmar servicio */
+    /* 11. Confirmar servicio personalizado */
     document.getElementById('btn-confirmar-servicio')?.addEventListener('click', () => {
         const nombre = document.getElementById('servicioModalNombre')?.value?.trim();
         const precio = parseFloat(document.getElementById('servicioModalPrecio')?.value || 0);
@@ -849,13 +1058,12 @@ async function init() {
         _modalServicio?.hide();
     });
 
-/* 12. Auto-guardar borrador en campos de sesión/colegio */
+    /* 12. Auto-guardar borrador en campos de sesión y colegio */
     ['notas', 'nombreColegio'].forEach(id =>
         document.getElementById(id)?.addEventListener('input', _saveDraft));
     document.getElementById('provinciaColegio')?.addEventListener('change', _saveDraft);
     document.getElementById('distritoColegio')?.addEventListener('change', _saveDraft);
 
-    /* Auto-guardar cuando el usuario edita campos de nuevo cliente */
     CAMPOS_CLIENTE_IDS.forEach(id =>
         document.getElementById(id)?.addEventListener('input', () => {
             if (state.esNuevoCliente) _saveDraft();
@@ -878,18 +1086,17 @@ async function init() {
         try {
             let idCliente;
 
-            /* Si es cliente nuevo, primero lo creamos en la BD */
             if (state.esNuevoCliente) {
                 _mostrarBadgeCliente('searching', 'Registrando cliente...');
                 const resCliente = await clienteApi.crear({
-                    nombres:              document.getElementById('nombresCliente')?.value?.trim(),
-                    apellidos:            document.getElementById('apellidosCliente')?.value?.trim() || null,
-                    numero_documento:     document.getElementById('dniCliente')?.value?.trim(),
-                    tipo_documento:       document.getElementById('tipoDocumento')?.value ?? 'DNI',
-                    telefono:             document.getElementById('telefonoCliente')?.value?.trim(),
-                    correo:               document.getElementById('emailCliente')?.value?.trim() || null,
-                    metodo_comunicacion:  'whatsapp',
-                    acepta_promociones:   false,
+                    nombres:             document.getElementById('nombresCliente')?.value?.trim(),
+                    apellidos:           document.getElementById('apellidosCliente')?.value?.trim() || null,
+                    numero_documento:    document.getElementById('dniCliente')?.value?.trim(),
+                    tipo_documento:      document.getElementById('tipoDocumento')?.value ?? 'DNI',
+                    telefono:            document.getElementById('telefonoCliente')?.value?.trim(),
+                    correo:              document.getElementById('emailCliente')?.value?.trim() || null,
+                    metodo_comunicacion: 'whatsapp',
+                    acepta_promociones:  false,
                 });
                 idCliente = resCliente.id_cliente;
                 _mostrarBadgeCliente('found', 'Cliente registrado correctamente.');

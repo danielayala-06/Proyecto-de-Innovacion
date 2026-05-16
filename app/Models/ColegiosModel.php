@@ -1,9 +1,24 @@
 <?php
 
+/**
+ * @file    ColegiosModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `colegios`.
+ * Los colegios pueden crearse automáticamente al registrar una cotización
+ * o gestionarse manualmente desde el panel.
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Colegios.
+ *
+ * Tabla: `colegios` (PK: id_colegio).
+ * Campos permitidos: nombre_colegio, distrito, provincia, estado.
+ */
 class ColegiosModel extends Model
 {
     protected $table            = 'colegios';
@@ -22,7 +37,6 @@ class ColegiosModel extends Model
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
-    // Validation
     protected $validationRules = [
         'nombre_colegio' => 'required|max_length[100]',
         'distrito'       => 'permit_empty|max_length[100]',
@@ -31,8 +45,6 @@ class ColegiosModel extends Model
     ];
     protected $validationMessages = [
         'nombre_colegio' => ['required' => 'El nombre del colegio es obligatorio.'],
-        'distrito'       => ['required' => 'El distrito es obligatorio.'],
-        'provincia'      => ['required' => 'La provincia es obligatoria.'],
         'estado'         => ['in_list'  => 'Estado inválido. Use: ACTIVO o INACTIVO.'],
     ];
     protected $skipValidation       = false;

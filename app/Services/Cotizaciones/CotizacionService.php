@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * @file    CotizacionService.php
+ * @package App\Services\Cotizaciones
+ *
+ * Capa de negocio para la creación, consulta y gestión de cotizaciones.
+ * Centraliza la lógica de expiración automática, cálculo de totales
+ * y la carga eficiente de ítems y relaciones sin consultas N+1.
+ */
+
 namespace App\Services\Cotizaciones;
 
 use App\Models\CotizacionesModel;
@@ -9,14 +18,37 @@ use App\Models\PromocionesEscolaresModel;
 use App\Models\PaquetesModel;
 use App\Models\ProductosModel;
 
+/**
+ * Servicio de Cotizaciones.
+ *
+ * Responsabilidades:
+ * - Listar cotizaciones con sus detalles de ítems (paquetes / productos), sin N+1.
+ * - Marcar automáticamente como EXPIRADAS las cotizaciones APROBADAS con más de 30 días.
+ * - Listar solo las cotizaciones disponibles (APROBADAS sin contrato activo).
+ * - Retornar el detalle de una cotización verificando su expiración al vuelo.
+ * - Crear cotizaciones en transacción (cabecera + ítems) y auto-crear la promoción escolar.
+ * - Actualizar cotizaciones PENDIENTES reemplazando todos sus ítems.
+ * - Cambiar el estado de una cotización (PENDIENTE → APROBADA | RECHAZADA | EXPIRADA).
+ */
 class CotizacionService
 {
-    protected CotizacionesModel         $cotizacionModel;
+    /** @var CotizacionesModel Acceso a la tabla `cotizaciones`. */
+    protected CotizacionesModel $cotizacionModel;
+
+    /** @var CotizacionesDetallesModel Acceso a la tabla `cotizaciones_detalles`. */
     protected CotizacionesDetallesModel $detalleModel;
-    protected ColegiosModel             $colegioModel;
+
+    /** @var ColegiosModel Acceso a la tabla `colegios` (auto-creación al cotizar). */
+    protected ColegiosModel $colegioModel;
+
+    /** @var PromocionesEscolaresModel Acceso a la tabla `promociones_escolares`. */
     protected PromocionesEscolaresModel $promocionModel;
-    protected ProductosModel            $productoModel;
-    protected PaquetesModel             $paqueteModel;
+
+    /** @var ProductosModel Acceso a la tabla `productos` (resolución de nombres en ítems). */
+    protected ProductosModel $productoModel;
+
+    /** @var PaquetesModel Acceso a la tabla `paquetes` (resolución de nombres en ítems). */
+    protected PaquetesModel $paqueteModel;
 
     public function __construct()
     {
@@ -29,10 +61,19 @@ class CotizacionService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Carga detalles (con nombres de referencia) para un conjunto de cotizaciones.
-    // Resuelve el problema N+1: 1 query para detalles + max 2 queries para nombres.
-    // Retorna array indexado por id_cotizacion.
+    // HELPERS PRIVADOS
     // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Carga los ítems de un conjunto de cotizaciones en el mínimo de consultas.
+     *
+     * Estrategia anti-N+1:
+     * 1. Una sola query para todos los detalles del batch.
+     * 2. Máximo dos queries batch extra (productos y paquetes) para resolver nombres.
+     *
+     * @param  int[]                                    $cotizacionIds IDs de las cotizaciones a cargar.
+     * @return array<int, array<int, array<string, mixed>>> Detalles indexados por id_cotizacion.
+     */
     private function _cargarDetalles(array $cotizacionIds): array
     {
         if (empty($cotizacionIds)) {
@@ -47,7 +88,6 @@ class CotizacionService
             return [];
         }
 
-        // Colectar IDs únicos por tipo para carga batch
         $productoIds = [];
         $paqueteIds  = [];
 
@@ -76,7 +116,6 @@ class CotizacionService
             $paqueteMap = array_column($paquetes, 'nombre_paquete', 'id_paquete');
         }
 
-        // Agrupar por id_cotizacion construyendo la estructura final
         $resultado = [];
 
         foreach ($rawDetalles as $item) {
@@ -103,9 +142,14 @@ class CotizacionService
         return $resultado;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Construye el array de salida estándar de una cotización
-    // ─────────────────────────────────────────────────────────────────────────
+    /**
+     * Construye la estructura de salida estándar de una cotización.
+     *
+     * @param  array<string, mixed> $row           Fila con JOIN de cliente y usuario.
+     * @param  array<int, mixed>    $detalles      Ítems ya formateados por _cargarDetalles().
+     * @param  bool                 $tieneContrato true si la cotización tiene un contrato activo.
+     * @return array<string, mixed>                Estructura: cotizacion, cliente, usuario, detalles.
+     */
     private function _formatearCotizacion(array $row, array $detalles, bool $tieneContrato = false): array
     {
         return [
@@ -118,8 +162,8 @@ class CotizacionService
                 'tiene_contrato' => $tieneContrato,
             ],
             'cliente' => [
-                'id'             => (int) $row['id_cliente'],
-                'nombre_completo'=> trim($row['nombres'] . ' ' . $row['apellidos']),
+                'id'              => (int) $row['id_cliente'],
+                'nombre_completo' => trim($row['nombres'] . ' ' . $row['apellidos']),
             ],
             'usuario' => [
                 'username' => $row['nombre_user'],
@@ -128,9 +172,80 @@ class CotizacionService
         ];
     }
 
+    /**
+     * Crea automáticamente una promoción escolar al generar una cotización.
+     *
+     * Requiere que $data contenga las claves 'sesion' y 'colegio'.
+     * Si faltan datos o el insert falla, el error se silencia sin afectar
+     * la cotización ya confirmada en BD.
+     *
+     * @param  int                  $idCotizacion ID de la cotización recién creada.
+     * @param  array<string, mixed> $data         Payload completo de la cotización (incluye sesion/colegio).
+     * @return void
+     */
+    private function _crearPromocionDesde(int $idCotizacion, array $data): void
+    {
+        $sesion  = $data['sesion']  ?? [];
+        $colegio = $data['colegio'] ?? [];
+
+        $grado          = $sesion['grado']           ?? null;
+        $numEstudiantes = (int) ($sesion['num_estudiantes'] ?? 0);
+        $nombreColegio  = trim($colegio['nombre']    ?? '');
+
+        if (!$grado || $numEstudiantes <= 0 || $nombreColegio === '') {
+            return;
+        }
+
+        try {
+            $colegioRow = $this->colegioModel
+                ->where('LOWER(nombre_colegio)', strtolower($nombreColegio))
+                ->first();
+
+            if ($colegioRow) {
+                $idColegio = $colegioRow['id_colegio'];
+            } else {
+                $idColegio = $this->colegioModel->insert([
+                    'nombre_colegio' => $nombreColegio,
+                    'provincia'      => $colegio['provincia'] ?? null,
+                    'distrito'       => $colegio['distrito']  ?? null,
+                    'estado'         => 'ACTIVO',
+                ]);
+                if ($idColegio === false) return;
+            }
+
+            $anio    = !empty($sesion['fecha']) ? (int) date('Y', strtotime($sesion['fecha'])) : (int) date('Y');
+            $seccion = $sesion['seccion'] ?? null;
+            $nombre  = !empty($sesion['nombre_promocion'])
+                ? $sesion['nombre_promocion']
+                : ($grado . ($seccion ? ' ' . $seccion : '') . ' · ' . $anio);
+
+            $this->promocionModel->insert([
+                'id_colegio'      => $idColegio,
+                'id_cotizacion'   => $idCotizacion,
+                'nombre'          => $nombre,
+                'grado'           => $grado,
+                'seccion'         => $seccion,
+                'num_estudiantes' => $numEstudiantes,
+                'anio'            => $anio,
+                'is_active'       => true,
+            ]);
+        } catch (\Throwable) {
+            // La cotización ya está confirmada; la promoción es accesoria.
+        }
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
-    // Listado general — sin N+1
+    // CONSULTAS
     // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Lista todas las cotizaciones con sus ítems y la bandera de contrato activo.
+     *
+     * Ejecuta la expiración automática antes de leer para que el estado
+     * almacenado en BD refleje siempre la realidad al momento del listado.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     public function listar(): array
     {
         $this->cotizacionModel->expirarAntiguas();
@@ -140,10 +255,10 @@ class CotizacionService
             return [];
         }
 
-        $ids               = array_column($rows, 'id_cotizacion');
-        $detallesPorCot    = $this->_cargarDetalles($ids);
-        $conContrato       = array_flip($this->cotizacionModel->idsCotizacionesConContrato($ids));
-        $cotizaciones      = [];
+        $ids            = array_column($rows, 'id_cotizacion');
+        $detallesPorCot = $this->_cargarDetalles($ids);
+        $conContrato    = array_flip($this->cotizacionModel->idsCotizacionesConContrato($ids));
+        $cotizaciones   = [];
 
         foreach ($rows as $row) {
             $id             = $row['id_cotizacion'];
@@ -157,7 +272,14 @@ class CotizacionService
         return $cotizaciones;
     }
 
-    // Cotizaciones APROBADAS sin contrato activo (para el selector de generar contrato)
+    /**
+     * Lista únicamente cotizaciones APROBADAS que no tienen contrato activo.
+     *
+     * Utilizado por el selector de cotizaciones al generar un contrato,
+     * para evitar mostrar opciones que ya fueron contratadas.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     public function listarDisponibles(): array
     {
         $rows = $this->cotizacionModel->listarAprobadasSinContrato();
@@ -178,13 +300,17 @@ class CotizacionService
         return $cotizaciones;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Detalle de una cotización — sin N+1
-    // ─────────────────────────────────────────────────────────────────────────
+    /**
+     * Retorna el detalle completo de una cotización individual.
+     *
+     * Verifica la expiración puntual antes de leer para garantizar
+     * que el estado sea fresco incluso si el listado no fue llamado recientemente.
+     *
+     * @param  int                       $idCotizacion ID de la cotización.
+     * @return array<string, mixed>|null               null si no existe.
+     */
     public function obtenerPorId(int $idCotizacion): ?array
     {
-        // Verificar expiración puntual antes de devolver el dato,
-        // para que el estado siempre refleje la realidad aunque no se haya listado antes.
         $this->cotizacionModel->verificarExpiracion($idCotizacion);
 
         $row = $this->cotizacionModel->obtenerConCliente($idCotizacion);
@@ -204,8 +330,27 @@ class CotizacionService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Crear cotización completa
+    // ESCRITURA
     // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Crea una cotización completa (cabecera + ítems) en una sola transacción.
+     *
+     * Después de confirmar la transacción, intenta crear automáticamente
+     * la promoción escolar a partir de los datos del payload (best-effort).
+     *
+     * Estructura esperada en $data:
+     * - id_cliente, id_usuario, total_estimado, observaciones?
+     * - detalles[]: { tipo_item, id_referencia?, descripcion, cantidad, precio_unitario }
+     * - sesion?:    { grado, num_estudiantes, fecha?, seccion?, nombre_promocion? }
+     * - colegio?:   { nombre, provincia?, distrito? }
+     *
+     * @param  array<string, mixed> $data Payload del formulario de cotización.
+     * @return array<string, mixed>       Cotización recién creada con todos sus datos.
+     *
+     * @throws \RuntimeException 422 si falla la validación del modelo de cabecera.
+     * @throws \RuntimeException 500 si falla la inserción de detalles o la transacción.
+     */
     public function crear(array $data): array
     {
         $db = $this->cotizacionModel->db;
@@ -242,7 +387,8 @@ class CotizacionService
             if ($ok === false) {
                 $db->transRollback();
                 throw new \RuntimeException(
-                    'Error al insertar detalles: ' . implode(', ', $this->detalleModel->errors()), 500
+                    'Error al insertar detalles: ' . implode(', ', $this->detalleModel->errors()),
+                    500
                 );
             }
         }
@@ -253,71 +399,25 @@ class CotizacionService
             throw new \RuntimeException('Error al crear la cotización', 500);
         }
 
-        // Auto-crear promoción a partir de los datos de sesión/colegio (best-effort)
         $this->_crearPromocionDesde($idCotizacion, $data);
 
         return $this->obtenerPorId($idCotizacion);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Crea automáticamente una promoción escolar al generar una cotización.
-    // Si faltan datos o ocurre cualquier error, se ignora silenciosamente.
-    // ─────────────────────────────────────────────────────────────────────────
-    private function _crearPromocionDesde(int $idCotizacion, array $data): void
-    {
-        $sesion  = $data['sesion']  ?? [];
-        $colegio = $data['colegio'] ?? [];
-
-        $grado          = $sesion['grado']           ?? null;
-        $numEstudiantes = (int) ($sesion['num_estudiantes'] ?? 0);
-        $nombreColegio  = trim($colegio['nombre']    ?? '');
-
-        if (!$grado || $numEstudiantes <= 0 || $nombreColegio === '') {
-            return;
-        }
-
-        try {
-            // Buscar colegio existente por nombre (case-insensitive)
-            $colegioRow = $this->colegioModel
-                ->where('LOWER(nombre_colegio)', strtolower($nombreColegio))
-                ->first();
-
-            if ($colegioRow) {
-                $idColegio = $colegioRow['id_colegio'];
-            } else {
-                $idColegio = $this->colegioModel->insert([
-                    'nombre_colegio' => $nombreColegio,
-                    'provincia'      => $colegio['provincia'] ?? null,
-                    'distrito'       => $colegio['distrito']  ?? null,
-                    'estado'         => 'ACTIVO',
-                ]);
-                if ($idColegio === false) return;
-            }
-
-            $anio   = !empty($sesion['fecha']) ? (int) date('Y', strtotime($sesion['fecha'])) : (int) date('Y');
-            $seccion = $sesion['seccion'] ?? null;
-            $nombre  = !empty($sesion['nombre_promocion'])
-                ? $sesion['nombre_promocion']
-                : ($grado . ($seccion ? ' ' . $seccion : '') . ' · ' . $anio);
-
-            $this->promocionModel->insert([
-                'id_colegio'      => $idColegio,
-                'id_cotizacion'   => $idCotizacion,
-                'nombre'          => $nombre,
-                'grado'           => $grado,
-                'seccion'         => $seccion,
-                'num_estudiantes' => $numEstudiantes,
-                'anio'            => $anio,
-                'is_active'       => true,
-            ]);
-        } catch (\Throwable) {
-            // Silently ignore: the cotización is already committed
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Actualizar cotización: reemplaza detalles y recalcula totales
-    // ─────────────────────────────────────────────────────────────────────────
+    /**
+     * Actualiza cabecera e ítems de una cotización PENDIENTE.
+     *
+     * Reemplaza completamente los ítems existentes (delete + insertBatch)
+     * en la misma transacción para mantener la consistencia del total.
+     *
+     * @param  int                  $idCotizacion ID de la cotización.
+     * @param  array<string, mixed> $data         Nuevos valores: total_estimado, observaciones?, detalles[].
+     * @return array<string, mixed>               Cotización actualizada con todos sus datos.
+     *
+     * @throws \RuntimeException 404 si la cotización no existe.
+     * @throws \RuntimeException 409 si la cotización no está en estado PENDIENTE.
+     * @throws \RuntimeException 500 si falla el guardado de detalles o la transacción.
+     */
     public function actualizar(int $idCotizacion, array $data): array
     {
         $cotizacion = $this->cotizacionModel->find($idCotizacion);
@@ -333,13 +433,11 @@ class CotizacionService
         $db = $this->cotizacionModel->db;
         $db->transStart();
 
-        // Actualizar cabecera
         $this->cotizacionModel->update($idCotizacion, [
             'observaciones'  => $data['observaciones'] ?? $cotizacion['observaciones'],
             'total_estimado' => $data['total_estimado'],
         ]);
 
-        // Reemplazar detalles: eliminar existentes e insertar los nuevos
         $this->detalleModel->where('id_cotizacion', $idCotizacion)->delete();
 
         if (!empty($data['detalles'])) {
@@ -359,7 +457,8 @@ class CotizacionService
             if ($ok === false) {
                 $db->transRollback();
                 throw new \RuntimeException(
-                    'Error al guardar detalles: ' . implode(', ', $this->detalleModel->errors()), 500
+                    'Error al guardar detalles: ' . implode(', ', $this->detalleModel->errors()),
+                    500
                 );
             }
         }
@@ -373,9 +472,16 @@ class CotizacionService
         return $this->obtenerPorId($idCotizacion);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Cambiar solo el estado
-    // ─────────────────────────────────────────────────────────────────────────
+    /**
+     * Cambia el estado de una cotización.
+     *
+     * Los estados válidos son los definidos en el ENUM de la tabla:
+     * PENDIENTE | APROBADA | RECHAZADA | EXPIRADA.
+     *
+     * @param  int    $idCotizacion ID de la cotización.
+     * @param  string $estado       Nuevo estado a aplicar.
+     * @return void
+     */
     public function cambiarEstado(int $idCotizacion, string $estado): void
     {
         $this->cotizacionModel->update($idCotizacion, ['estado' => $estado]);

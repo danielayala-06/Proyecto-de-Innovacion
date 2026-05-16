@@ -1,9 +1,25 @@
 <?php
 
+/**
+ * @file    PaquetesSesionesModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `paquetes_sesiones`.
+ * Define el número de sesiones fotográficas de cada tipo incluidas en un paquete.
+ * Utilizado por SesionService para calcular cuántas sesiones puede crear una promoción.
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Sesiones por Paquete.
+ *
+ * Tabla: `paquetes_sesiones` (PK: id_paquete_sesion).
+ * Relación: id_paquete → paquetes.
+ * Tipos de sesión: exteriores | colegio | estudio | otro.
+ */
 class PaquetesSesionesModel extends Model
 {
     protected $table            = 'paquetes_sesiones';
@@ -38,6 +54,16 @@ class PaquetesSesionesModel extends Model
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    /**
+     * Retorna las configuraciones de sesión de un tipo dado para un batch de paquetes.
+     *
+     * Utilizado por SesionService::calcularLimite() para obtener en una sola consulta
+     * cuántas sesiones de un tipo están incluidas en cada paquete contratado.
+     *
+     * @param  int[]   $idsPaquetes IDs de paquetes a consultar.
+     * @param  string  $tipo        Tipo de sesión (exteriores, colegio, estudio, otro).
+     * @return array<int, array<string, mixed>>
+     */
     public function configuracionesPorTipo(array $idsPaquetes, string $tipo): array
     {
         return $this

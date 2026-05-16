@@ -1,16 +1,55 @@
+/**
+ * @file    paquetesMain.js
+ * @module  modules/paquetes/main
+ *
+ * Punto de entrada del módulo de paquetes (`/paquetes`).
+ * Orquesta la carga de datos, el filtrado, los modales de CRUD y el toggle
+ * de estado activo/inactivo.
+ *
+ * Flujo de inicialización (`init`):
+ *  1. Crea instancias de los modales Bootstrap `#modalPaquete` y `#modalConfirm`.
+ *  2. Registra los listeners de búsqueda (`#searchInput`), categoría
+ *     (`#filterCat`) y nivel (`#filterNivel`).
+ *  3. Llama a `cargarPaquetes()` para la carga inicial.
+ *
+ * Funciones globales expuestas en `window.*` para ser invocadas desde
+ * los atributos `onclick` generados dinámicamente en las tarjetas:
+ *  - {@link window.abrirNuevo}
+ *  - {@link window.editarPaquete}
+ *  - {@link window.guardarPaquete}
+ *  - {@link window.toggleEstado}
+ *  - {@link window.confirmarEliminar}
+ *  - {@link window.eliminarPaquete}
+ *  - {@link window.agregarItemModal}
+ */
+
 import { paqueteApi }                    from '../../api/paquete.api.js';
 import { state, calcularStats, filtrar } from './paquete.state.js';
 import { ui }                            from './paquete.ui.js';
 import { form }                          from './paquete.form.js';
 import { alerts }                        from '../../utils/alerts.js';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ESTADO INTERNO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {bootstrap.Modal|null} Modal de creación/edición de paquete. */
 let _modal        = null;
+/** @type {bootstrap.Modal|null} Modal de confirmación de desactivación. */
 let _modalConfirm = null;
+/** @type {number|null} ID del paquete que se está editando; `null` si es creación. */
 let _idEditando   = null;
 
-/* ═══════════════════════════════════════════════════════════
-   CARGA (fetch → api)
-═══════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// CARGA DESDE API
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Carga todos los paquetes desde la API, aplica el filtro vacío inicial
+ * y renderiza el grid y las estadísticas.
+ *
+ * @returns {Promise<void>}
+ */
 async function cargarPaquetes() {
     ui.renderLoading();
     try {
@@ -24,23 +63,33 @@ async function cargarPaquetes() {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   FILTRADO (estado)
-═══════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTRADO
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Lee los controles de filtro activos y aplica el filtro sobre `state.todos`.
+ * Actualiza el grid y las estadísticas sin volver a llamar a la API.
+ *
+ * @returns {void}
+ */
 function _aplicarFiltros() {
-    const busqueda   = document.getElementById('searchInput')?.value  ?? '';
-    const categoria  = document.getElementById('filterCat')?.value    ?? '';
-    const nivelFiltro = document.getElementById('filterNivel')?.value ?? '';
+    const busqueda    = document.getElementById('searchInput')?.value  ?? '';
+    const categoria   = document.getElementById('filterCat')?.value    ?? '';
+    const nivelFiltro = document.getElementById('filterNivel')?.value  ?? '';
     state.filtrados = filtrar(state.todos, { busqueda, categoria, nivelFiltro });
     ui.renderStats(calcularStats(state.filtrados));
     ui.renderGrid(state.filtrados);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   FUNCIONES GLOBALES — llamadas desde la vista
-═══════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// FUNCIONES GLOBALES — CRUD
+// ─────────────────────────────────────────────────────────────────────────────
 
-/** Abre el modal para crear un nuevo paquete */
+/**
+ * Abre el modal en modo creación: limpia el formulario y oculta el botón
+ * de desactivación.
+ */
 window.abrirNuevo = function () {
     _idEditando = null;
     form.limpiar();
@@ -49,7 +98,13 @@ window.abrirNuevo = function () {
     _modal?.show();
 };
 
-/** Abre el modal con los datos de un paquete existente para editar */
+/**
+ * Carga los datos del paquete desde la API y abre el modal en modo edición.
+ * Muestra el botón de desactivación.
+ *
+ * @param {number} id - ID del paquete a editar.
+ * @returns {Promise<void>}
+ */
 window.editarPaquete = async function (id) {
     try {
         const res = await paqueteApi.obtener(id);
@@ -63,7 +118,12 @@ window.editarPaquete = async function (id) {
     }
 };
 
-/** Guarda (crea o actualiza) el paquete desde el modal */
+/**
+ * Valida el formulario y guarda el paquete (crea o actualiza según `_idEditando`).
+ * Cierra el modal y recarga el grid al finalizar con éxito.
+ *
+ * @returns {Promise<void>}
+ */
 window.guardarPaquete = async function () {
     const error = form.validar();
     if (error) { alerts.error(error); return; }
@@ -82,7 +142,14 @@ window.guardarPaquete = async function () {
     }
 };
 
-/** Activa o desactiva un paquete desde la tarjeta */
+/**
+ * Alterna el estado de un paquete entre `'ACTIVO'` e `'INACTIVO'` y recarga el grid.
+ * Se invoca desde los botones de activar/desactivar de cada tarjeta.
+ *
+ * @param {number} id           - ID del paquete.
+ * @param {string} estadoActual - Estado actual (`'ACTIVO'` o `'INACTIVO'`).
+ * @returns {Promise<void>}
+ */
 window.toggleEstado = async function (id, estadoActual) {
     const nuevo = estadoActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
     try {
@@ -94,7 +161,11 @@ window.toggleEstado = async function (id, estadoActual) {
     }
 };
 
-/** Abre el modal de confirmación de eliminación */
+/**
+ * Lee el nombre del paquete del formulario abierto, lo muestra en el modal
+ * de confirmación y cierra el modal principal.
+ * La API no soporta DELETE; se usa desactivación.
+ */
 window.confirmarEliminar = function () {
     const nombre = document.getElementById('pNombre')?.value || '';
     document.getElementById('confirmNombre').textContent = nombre;
@@ -102,7 +173,12 @@ window.confirmarEliminar = function () {
     _modalConfirm?.show();
 };
 
-/** Desactiva el paquete (la API no tiene DELETE, se desactiva) */
+/**
+ * Desactiva el paquete actualmente en edición a través de la API.
+ * La API no expone un endpoint DELETE; se usa `PATCH estado = 'INACTIVO'`.
+ *
+ * @returns {Promise<void>}
+ */
 window.eliminarPaquete = async function () {
     if (!_idEditando) return;
     try {
@@ -115,14 +191,23 @@ window.eliminarPaquete = async function () {
     }
 };
 
-/** Agrega un ítem vacío a la lista del modal */
+/**
+ * Delega en `form.agregarItem()` para agregar un ítem vacío al modal.
+ * Expuesto globalmente para el botón `#btnAgregarItem` del modal.
+ */
 window.agregarItemModal = function () {
     form.agregarItem();
 };
 
-/* ═══════════════════════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════════════════════ */
+// ─────────────────────────────────────────────────────────────────────────────
+// INICIALIZACIÓN
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Inicializa el módulo: crea los modales, registra listeners y carga los paquetes.
+ *
+ * @returns {void}
+ */
 function init() {
     const modalEl        = document.getElementById('modalPaquete');
     const modalConfirmEl = document.getElementById('modalConfirm');

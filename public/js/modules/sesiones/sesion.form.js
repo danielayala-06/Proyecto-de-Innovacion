@@ -1,16 +1,63 @@
-// ─── Formulario nueva/editar sesión ──────────────────────────────────────────
+/**
+ * @file    sesion.form.js
+ * @module  modules/sesiones/form
+ *
+ * Gestiona los formularios de creación/edición de sesiones y de registro
+ * de nuevos estudiantes en el módulo de sesiones fotográficas.
+ *
+ * Expone dos objetos:
+ *  - {@link sesionForm}     — Opera sobre el modal `#modalSesion`.
+ *  - {@link estudianteForm} — Opera sobre el modal `#modalEstudiante`.
+ *
+ * Campos del formulario de sesión (IDs):
+ *  `sfId`, `sfTipo`, `sfFecha`, `sfHora`, `sfObservaciones`, `sfPromocion`
+ *
+ * Campos del formulario de estudiante (IDs):
+ *  `efNombres`, `efApellidos`, `efNacimiento`, `efColor`, `efProfesion`,
+ *  `apNombres`, `apApellidos`, `apTelefono`, `apDocTipo`, `apDocNum`,
+ *  `apCorreo`, `apRelacion`
+ */
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FORMULARIO DE SESIÓN
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Colección de operaciones del formulario de nueva/editar sesión.
+ *
+ * @namespace sesionForm
+ */
 export const sesionForm = {
+
+    /**
+     * Limpia todos los campos del formulario de sesión.
+     * Opcionalmente pre-selecciona un tipo de sesión (útil al abrir desde
+     * el botón de una barra de límite específica).
+     *
+     * @param {string} [tipo=''] - Valor inicial del select `#sfTipo`.
+     * @returns {void}
+     */
     limpiar(tipo = '') {
-        document.getElementById('sfId').value             = '';
-        document.getElementById('sfTipo').value           = tipo;
-        document.getElementById('sfFecha').value          = '';
-        document.getElementById('sfHora').value           = '';
-        document.getElementById('sfObservaciones').value  = '';
+        document.getElementById('sfId').value            = '';
+        document.getElementById('sfTipo').value          = tipo;
+        document.getElementById('sfFecha').value         = '';
+        document.getElementById('sfHora').value          = '';
+        document.getElementById('sfObservaciones').value = '';
     },
 
+    /**
+     * Pobla el formulario con los datos de una sesión existente para edición.
+     * Descompone `fecha_hora_sesion` en campos separados de fecha y hora.
+     *
+     * @param {Object} sesion                      - Objeto sesión de la API.
+     * @param {number} sesion.id_sesion
+     * @param {string} sesion.tipo
+     * @param {string} sesion.fecha_hora_sesion    - Formato `'YYYY-MM-DD HH:MM:SS'`.
+     * @param {string|null} [sesion.observaciones]
+     * @returns {void}
+     */
     poblar(sesion) {
-        document.getElementById('sfId').value = sesion.id_sesion;
+        document.getElementById('sfId').value   = sesion.id_sesion;
         document.getElementById('sfTipo').value = sesion.tipo;
         const [fecha, hora] = sesion.fecha_hora_sesion.split(' ');
         document.getElementById('sfFecha').value         = fecha;
@@ -18,6 +65,17 @@ export const sesionForm = {
         document.getElementById('sfObservaciones').value = sesion.observaciones ?? '';
     },
 
+    /**
+     * Lee los valores del formulario y construye el payload para la API.
+     * Si no se indicó hora, usa `'08:00'` como valor por defecto.
+     *
+     * @returns {{
+     *   id_promocion:      number,
+     *   tipo:              string,
+     *   fecha_hora_sesion: string,
+     *   observaciones:     string|null
+     * }}
+     */
     datos() {
         const fecha = document.getElementById('sfFecha').value;
         const hora  = document.getElementById('sfHora').value || '08:00';
@@ -29,6 +87,11 @@ export const sesionForm = {
         };
     },
 
+    /**
+     * Valida los campos requeridos del formulario de sesión.
+     *
+     * @returns {string|null} Mensaje de error si falla la validación, o `null` si es válido.
+     */
     validar() {
         const fecha = document.getElementById('sfFecha').value;
         const tipo  = document.getElementById('sfTipo').value;
@@ -37,14 +100,33 @@ export const sesionForm = {
         return null;
     },
 
+    /**
+     * Devuelve el ID de la sesión del campo oculto `#sfId`, o `null` si está vacío.
+     * Permite distinguir entre modo creación (`null`) y modo edición.
+     *
+     * @returns {number|null}
+     */
     getId() {
         return parseInt(document.getElementById('sfId').value, 10) || null;
     },
 };
 
-// ─── Formulario nuevo estudiante ──────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FORMULARIO DE ESTUDIANTE
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Colección de operaciones del formulario de registro de nuevo estudiante.
+ *
+ * @namespace estudianteForm
+ */
 export const estudianteForm = {
+
+    /**
+     * Limpia todos los campos del formulario de estudiante y apoderado.
+     *
+     * @returns {void}
+     */
     limpiar() {
         ['efNombres','efApellidos','efNacimiento','efColor','efProfesion',
          'apNombres','apApellidos','apTelefono','apDocTipo','apDocNum',
@@ -54,6 +136,30 @@ export const estudianteForm = {
         });
     },
 
+    /**
+     * Lee los valores del formulario y construye el payload para `POST /api/estudiantes`.
+     *
+     * @param {number} idPromocion - ID de la promoción a la que se asocia el estudiante.
+     * @returns {{
+     *   id_promocion: number,
+     *   estudiante: {
+     *     nombres:          string,
+     *     apellidos:        string,
+     *     fecha_nacimiento: string|null,
+     *     color_fav:        string|null,
+     *     profesion_futura: string|null
+     *   },
+     *   apoderado: {
+     *     nombres:          string,
+     *     apellidos:        string|null,
+     *     telefono:         string,
+     *     tipo_documento:   string,
+     *     numero_documento: string,
+     *     correo:           string|null,
+     *     tipo_relacion:    string
+     *   }
+     * }}
+     */
     datos(idPromocion) {
         return {
             id_promocion: idPromocion,
@@ -76,15 +182,21 @@ export const estudianteForm = {
         };
     },
 
+    /**
+     * Valida los campos requeridos del formulario de estudiante.
+     * Verifica que el teléfono del apoderado tenga exactamente 9 dígitos.
+     *
+     * @returns {string|null} Mensaje de error si falla la validación, o `null` si es válido.
+     */
     validar() {
         const reqs = {
-            efNombres:  'El nombre del estudiante es obligatorio.',
-            efApellidos:'Los apellidos del estudiante son obligatorios.',
-            apNombres:  'El nombre del apoderado es obligatorio.',
-            apTelefono: 'El teléfono del apoderado es obligatorio.',
-            apDocTipo:  'El tipo de documento del apoderado es obligatorio.',
-            apDocNum:   'El número de documento del apoderado es obligatorio.',
-            apRelacion: 'La relación con el estudiante es obligatoria.',
+            efNombres:   'El nombre del estudiante es obligatorio.',
+            efApellidos: 'Los apellidos del estudiante son obligatorios.',
+            apNombres:   'El nombre del apoderado es obligatorio.',
+            apTelefono:  'El teléfono del apoderado es obligatorio.',
+            apDocTipo:   'El tipo de documento del apoderado es obligatorio.',
+            apDocNum:    'El número de documento del apoderado es obligatorio.',
+            apRelacion:  'La relación con el estudiante es obligatoria.',
         };
         for (const [id, msg] of Object.entries(reqs)) {
             if (!document.getElementById(id)?.value.trim()) return msg;

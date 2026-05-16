@@ -1,21 +1,61 @@
+/**
+ * @file    contratoCrear.js
+ * @module  modules/contratos/contratoCrear
+ *
+ * Módulo autoejecutable para la vista de creación de contratos (`/contratos/crear?cot={id}`).
+ * Lee el parámetro `cot` de la URL, carga la cotización y la promoción asociada,
+ * valida el estado de la cotización y, si es válida, inicializa el formulario
+ * de generación de contrato.
+ *
+ * Flujo:
+ *  1. Lee `?cot=N` de la URL; si no existe, muestra error y termina.
+ *  2. Carga en paralelo la cotización y la primera promoción vinculada.
+ *  3. Renderiza la preview de cotización y de promoción en los paneles laterales.
+ *  4. Verifica el estado de la cotización (debe ser APROBADA); si no, bloquea el formulario.
+ *  5. Inicializa el formulario con fecha, adelanto y formas de pago.
+ *  6. Al hacer click en "Generar", valida y crea el contrato vía API.
+ */
+
 import { cotizacionApi } from '../../api/cotizacion.api.js';
 import { contratoApi }   from '../../api/contrato.api.js';
 import { promocionApi }  from '../../api/promocion.api.js';
 import { formatters }    from '../../utils/formatters.js';
 import { alerts }        from '../../utils/alerts.js';
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS DE URL Y FECHA
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Lee un parámetro de la query string de la URL actual.
+ *
+ * @param {string} key - Nombre del parámetro.
+ * @returns {string|null} Valor del parámetro o `null` si no existe.
+ */
 function _param(key) {
   return new URLSearchParams(window.location.search).get(key);
 }
 
+/**
+ * Serializa un `Date` en formato `YYYY-MM-DD`.
+ *
+ * @param {Date} d
+ * @returns {string}
+ */
 function _isoDate(d) {
   return d.toISOString().slice(0, 10);
 }
 
-// ── render helpers ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Muestra un skeleton de carga dentro de un elemento del DOM.
+ *
+ * @param {HTMLElement} el - Contenedor donde mostrar el skeleton.
+ * @returns {void}
+ */
 function _renderSkeleton(el) {
   el.innerHTML = `
     <div class="placeholder-glow d-flex flex-column gap-2">
@@ -25,6 +65,13 @@ function _renderSkeleton(el) {
     </div>`;
 }
 
+/**
+ * Muestra un mensaje de error dentro de un elemento del DOM.
+ *
+ * @param {HTMLElement} el  - Contenedor donde mostrar el error.
+ * @param {string}      msg - Mensaje de error.
+ * @returns {void}
+ */
 function _renderError(el, msg) {
   el.innerHTML = `
     <div class="text-center py-4" style="color:var(--red-text);font-size:.85rem;">
@@ -32,12 +79,25 @@ function _renderError(el, msg) {
     </div>`;
 }
 
+/**
+ * Genera un badge de icono según el tipo de ítem de la cotización.
+ *
+ * @param {'paquete'|'producto'|'servicio'} tipo
+ * @returns {string} HTML del badge.
+ */
 function _tipoBadge(tipo) {
   const map = { paquete: 'bi-box-seam', producto: 'bi-tag', servicio: 'bi-tools' };
   const icon = map[tipo] ?? 'bi-dot';
   return `<span style="font-size:.7rem;color:var(--text-muted);"><i class="bi ${icon} me-1"></i>${tipo}</span>`;
 }
 
+/**
+ * Renderiza la preview completa de la cotización en el panel izquierdo.
+ *
+ * @param {Object}      cot - Datos de la cotización (con `items[]`, `cliente`, `total`).
+ * @param {HTMLElement} el  - Contenedor donde renderizar.
+ * @returns {void}
+ */
 function _renderPreviewCotizacion(cot, el) {
   const items = cot.items ?? [];
   const filas = items.map(it => `
@@ -81,6 +141,13 @@ function _renderPreviewCotizacion(cot, el) {
     </div>`;
 }
 
+/**
+ * Renderiza la preview de la promoción escolar vinculada a la cotización.
+ *
+ * @param {Object|null} prom - Datos de la promoción, o `null` si no hay ninguna.
+ * @param {HTMLElement} el   - Contenedor donde renderizar.
+ * @returns {void}
+ */
 function _renderPreviewPromocion(prom, el) {
   if (!prom) {
     el.innerHTML = `<p style="font-size:.82rem;color:var(--text-muted);">Sin promoción vinculada a esta cotización.</p>`;
@@ -95,16 +162,25 @@ function _renderPreviewPromocion(prom, el) {
     <div class="cc-row"><span>Año</span><strong>${prom.anio}</strong></div>`;
 }
 
-// ── bloqueo de formulario ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// BLOQUEO DE FORMULARIO
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Deshabilita el botón de generación y muestra un aviso de error en el formulario.
+ * Se usa cuando la cotización no está en estado APROBADA.
+ *
+ * @param {string} mensaje - Razón del bloqueo mostrada al usuario.
+ * @returns {void}
+ */
 function _bloquearFormulario(mensaje) {
   const formCol = document.querySelector('.cc-card:last-child');
   const btn     = document.getElementById('btnGenerar');
 
   if (btn) {
-    btn.disabled  = true;
-    btn.style.opacity = '0.5';
-    btn.style.cursor  = 'not-allowed';
+    btn.disabled          = true;
+    btn.style.opacity     = '0.5';
+    btn.style.cursor      = 'not-allowed';
   }
 
   const aviso = document.createElement('div');
@@ -119,10 +195,21 @@ function _bloquearFormulario(mensaje) {
   }
 }
 
-// ── form ──────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FORMULARIO
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Inicializa el formulario de generación de contrato:
+ * - Configura restricciones de fecha (máx. hoy, mín. hace 2 días).
+ * - Carga el catálogo de formas de pago en el select.
+ * - Registra el listener del botón de envío.
+ *
+ * @param {number} cotId - ID de la cotización para la que se genera el contrato.
+ * @param {number} total - Total de la cotización (para validar el adelanto).
+ * @returns {void}
+ */
 function _initForm(cotId, total) {
-  // Fecha: hoy por defecto, máximo hoy, mínimo hace 2 días
   const hoy  = new Date();
   const min2 = new Date(hoy);
   min2.setDate(hoy.getDate() - 2);
@@ -134,13 +221,11 @@ function _initForm(cotId, total) {
     fechaInput.min   = _isoDate(min2);
   }
 
-  // Mostrar total en placeholder del adelanto
   const adelantoInput = document.getElementById('contratoAdelanto');
   if (adelantoInput && total) {
     adelantoInput.placeholder = `Máx. ${formatters.moneda(total)}`;
   }
 
-  // Cargar formas de pago
   const selectForma = document.getElementById('contratoFormaPago');
   if (selectForma) {
     selectForma.innerHTML = '<option value="">— Cargando... —</option>';
@@ -153,10 +238,17 @@ function _initForm(cotId, total) {
     });
   }
 
-  // Submit
   document.getElementById('btnGenerar')?.addEventListener('click', () => _submit(cotId, total));
 }
 
+/**
+ * Valida y envía el formulario para crear el contrato.
+ * Tras el éxito redirige al listado de contratos con un pequeño delay.
+ *
+ * @param {number} cotId - ID de la cotización.
+ * @param {number} total - Total de la cotización (límite superior del adelanto).
+ * @returns {Promise<void>}
+ */
 async function _submit(cotId, total) {
   const adelanto = parseFloat(document.getElementById('contratoAdelanto')?.value) || 0;
   if (!adelanto || adelanto <= 0) {
@@ -211,8 +303,16 @@ async function _submit(cotId, total) {
   }
 }
 
-// ── init ──────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// INICIALIZACIÓN
+// ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Función principal de inicialización. Lee `?cot=N` de la URL, carga los datos
+ * necesarios y prepara la vista de creación de contrato.
+ *
+ * @returns {Promise<void>}
+ */
 async function init() {
   const cotId = parseInt(_param('cot'));
   if (!cotId) {
@@ -250,11 +350,9 @@ async function init() {
     if (elCot)  _renderPreviewCotizacion(cot, elCot);
     if (elProm) _renderPreviewPromocion(prom, elProm);
 
-    // Título de la página
     const titleEl = document.getElementById('pageTitleCot');
     if (titleEl) titleEl.textContent = formatters.codigo(cot.id) + ' — ' + (cot.cliente?.nombre_completo ?? '');
 
-    // Bloquear formulario si la cotización ya expiró o no está APROBADA
     if (cot.estado?.toUpperCase() === 'EXPIRADA') {
       _bloquearFormulario('Esta cotización ha expirado (más de 30 días). Ya no puede convertirse en contrato.');
       return;

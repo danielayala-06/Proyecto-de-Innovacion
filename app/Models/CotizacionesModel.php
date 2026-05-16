@@ -1,9 +1,26 @@
 <?php
 
+/**
+ * @file    CotizacionesModel.php
+ * @package App\Models
+ *
+ * Modelo para la tabla `cotizaciones`.
+ * Gestiona el ciclo de vida de las cotizaciones: PENDIENTE → APROBADA → EXPIRADA
+ * (si supera los 30 días sin convertirse en contrato) o → RECHAZADA.
+ * Incluye métodos para la expiración masiva y puntual sin N+1.
+ */
+
 namespace App\Models;
 
 use CodeIgniter\Model;
 
+/**
+ * Modelo de Cotizaciones.
+ *
+ * Tabla: `cotizaciones` (PK: id_cotizacion).
+ * Estados: PENDIENTE | APROBADA | RECHAZADA | EXPIRADA.
+ * Relaciones: id_cliente → clientes, id_usuario → usuarios.
+ */
 class CotizacionesModel extends Model
 {
     protected $table            = 'cotizaciones';
@@ -23,25 +40,29 @@ class CotizacionesModel extends Model
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
 
-    // Validation
     protected $validationRules = [
-        'id_cliente' => 'required|is_natural_no_zero',
-        'id_usuario' => 'required|is_natural_no_zero',
+        'id_cliente'     => 'required|is_natural_no_zero',
+        'id_usuario'     => 'required|is_natural_no_zero',
         'fecha_registro' => 'required|valid_date',
         'total_estimado' => 'required|decimal|greater_than_equal_to[0]',
-        'estado' => 'required|in_list[PENDIENTE,APROBADA,RECHAZADA,EXPIRADA]'
+        'estado'         => 'required|in_list[PENDIENTE,APROBADA,RECHAZADA,EXPIRADA]',
     ];
     protected $validationMessages = [
         'id_cliente' => [
-            'required' => 'El cliente es obligatorio.'
+            'required' => 'El cliente es obligatorio.',
         ],
         'total_estimado' => [
-            'decimal' => 'El total debe ser numérico.'
-        ]
+            'decimal' => 'El total debe ser numérico.',
+        ],
     ];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;
 
+    /**
+     * Lista todas las cotizaciones con datos del cliente y el usuario que las creó.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     public function listarConCliente(): array
     {
         return $this
@@ -54,7 +75,30 @@ class CotizacionesModel extends Model
             ->paginate();
     }
 
-    // Cotizaciones APROBADAS que aún no tienen contrato activo (no CANCELADO)
+    /**
+     * Retorna el detalle de una cotización con los datos del cliente y el usuario.
+     *
+     * @param  int                       $id ID de la cotización.
+     * @return array<string, mixed>|null     null si no existe.
+     */
+    public function obtenerConCliente(int $id): ?array
+    {
+        return $this
+            ->select(['cotizaciones.*', 'clientes.id_cliente',
+                      'personas.nombres', 'personas.apellidos', 'usuarios.nombre_user'])
+            ->join('clientes', 'clientes.id_cliente = cotizaciones.id_cliente')
+            ->join('personas', 'personas.id_persona = clientes.id_persona')
+            ->join('usuarios', 'usuarios.id_usuario = cotizaciones.id_usuario')
+            ->find($id);
+    }
+
+    /**
+     * Lista cotizaciones APROBADAS que no tienen aún un contrato activo (no CANCELADO).
+     *
+     * Utilizado por el selector de cotizaciones al generar contratos.
+     *
+     * @return array<int, array<string, mixed>>
+     */
     public function listarAprobadasSinContrato(): array
     {
         return $this
@@ -69,8 +113,16 @@ class CotizacionesModel extends Model
             ->findAll();
     }
 
-    // Marca como EXPIRADA toda cotización APROBADA con más de $dias días sin contrato.
-    // Retorna el número de filas afectadas.
+    /**
+     * Marca como EXPIRADAS todas las cotizaciones APROBADAS con más de $dias días
+     * que no tienen un contrato activo.
+     *
+     * Se ejecuta vía raw SQL para evitar que el modelo valide el ENUM antes
+     * de que la migración lo haya extendido. Retorna el número de filas afectadas.
+     *
+     * @param  int $dias Días de antigüedad a partir de los cuales se expira (default: 30).
+     * @return int       Número de cotizaciones expiradas.
+     */
     public function expirarAntiguas(int $dias = 30): int
     {
         $corte = date('Y-m-d', strtotime("-{$dias} days"));
@@ -89,25 +141,16 @@ class CotizacionesModel extends Model
         return $this->db->affectedRows();
     }
 
-    // Retorna el subconjunto de IDs que ya tienen un contrato no cancelado.
-    public function idsCotizacionesConContrato(array $ids): array
-    {
-        if (empty($ids)) {
-            return [];
-        }
-
-        $rows = $this->db->table('contratos')
-            ->select('id_cotizacion')
-            ->whereIn('id_cotizacion', $ids)
-            ->where('estado !=', 'CANCELADO')
-            ->get()
-            ->getResultArray();
-
-        return array_column($rows, 'id_cotizacion');
-    }
-
-    // Verifica y expira una cotización específica si corresponde.
-    // Se usa al consultar el detalle para que el estado siempre esté actualizado.
+    /**
+     * Verifica y expira una cotización específica si supera el límite de días.
+     *
+     * Llamado desde el servicio al consultar el detalle de una cotización,
+     * para garantizar que el estado esté actualizado sin necesidad de listar primero.
+     *
+     * @param  int $id   ID de la cotización a verificar.
+     * @param  int $dias Días de antigüedad límite (default: 30).
+     * @return void
+     */
     public function verificarExpiracion(int $id, int $dias = 30): void
     {
         $corte = date('Y-m-d', strtotime("-{$dias} days"));
@@ -125,14 +168,28 @@ class CotizacionesModel extends Model
         );
     }
 
-    public function obtenerConCliente(int $id): ?array
+    /**
+     * Retorna el subconjunto de IDs de cotizaciones que ya tienen un contrato no cancelado.
+     *
+     * Permite al servicio marcar la bandera `tiene_contrato` en un solo batch query
+     * en lugar de una consulta por cotización (anti-N+1).
+     *
+     * @param  int[] $ids IDs de cotizaciones a verificar.
+     * @return int[]      IDs que tienen contrato activo o completado.
+     */
+    public function idsCotizacionesConContrato(array $ids): array
     {
-        return $this
-            ->select(['cotizaciones.*', 'clientes.id_cliente',
-                      'personas.nombres', 'personas.apellidos', 'usuarios.nombre_user'])
-            ->join('clientes', 'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas', 'personas.id_persona = clientes.id_persona')
-            ->join('usuarios', 'usuarios.id_usuario = cotizaciones.id_usuario')
-            ->find($id);
+        if (empty($ids)) {
+            return [];
+        }
+
+        $rows = $this->db->table('contratos')
+            ->select('id_cotizacion')
+            ->whereIn('id_cotizacion', $ids)
+            ->where('estado !=', 'CANCELADO')
+            ->get()
+            ->getResultArray();
+
+        return array_column($rows, 'id_cotizacion');
     }
 }
