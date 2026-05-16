@@ -22,7 +22,7 @@
 
 namespace App\Controllers\Api;
 
-use App\Controllers\BaseController;
+use App\Controllers\BaseApiController;
 use App\Services\Sesiones\SesionService;
 use App\Transformers\SesionTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -33,7 +33,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  * Todas las respuestas siguen el formato:
  * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
-class SesionesApi extends BaseController
+class SesionesApi extends BaseApiController
 {
     /** @var SesionService Servicio con la lógica de negocio de sesiones. */
     protected SesionService $sesionService;
@@ -117,7 +117,7 @@ class SesionesApi extends BaseController
         try {
             $id = $this->sesionService->crear($body);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -142,7 +142,7 @@ class SesionesApi extends BaseController
         try {
             $this->sesionService->actualizar((int) $id, $body);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -172,7 +172,7 @@ class SesionesApi extends BaseController
         try {
             $this->sesionService->cambiarEstado((int) $id, $estado);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -201,7 +201,7 @@ class SesionesApi extends BaseController
         try {
             $data = $this->sesionService->calcularLimite((int) $id, $tipo);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -232,7 +232,7 @@ class SesionesApi extends BaseController
         try {
             $this->sesionService->agregarEstudiante((int) $id, (int) $body['id_estudiante']);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -252,7 +252,7 @@ class SesionesApi extends BaseController
         try {
             $this->sesionService->quitarEstudiante((int) $id, (int) $eid);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -283,7 +283,7 @@ class SesionesApi extends BaseController
         try {
             $this->sesionService->marcarAsistencia((int) $id, (int) $eid, $asistio);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -291,28 +291,4 @@ class SesionesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Asistencia actualizada']);
     }
 
-    /**
-     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
-     *
-     * @param  \RuntimeException $e Excepción lanzada por el servicio.
-     * @return ResponseInterface
-     */
-    private function _serviceError(\RuntimeException $e): ResponseInterface
-    {
-        $code   = (int) $e->getCode() ?: 500;
-        $errors = ($code === 422) ? json_decode($e->getMessage(), true) : null;
-
-        $httpStatus = match ($code) {
-            404     => ResponseInterface::HTTP_NOT_FOUND,
-            409     => ResponseInterface::HTTP_CONFLICT,
-            422     => ResponseInterface::HTTP_UNPROCESSABLE_ENTITY,
-            default => ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
-        };
-
-        return $this->response->setStatusCode($httpStatus)->setJSON(
-            is_array($errors)
-                ? ['status' => 'error', 'errors'  => $errors]
-                : ['status' => 'error', 'message' => $e->getMessage()]
-        );
-    }
 }

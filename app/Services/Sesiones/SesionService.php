@@ -158,44 +158,9 @@ class SesionService
             throw new \RuntimeException('Promoción no encontrada', 404);
         }
 
-        $detalles    = $this->detalleModel->listarPaquetes($promocion['id_cotizacion']);
-        $idsPaquetes = array_column($detalles, 'id_referencia');
-        $cantidades  = array_column($detalles, 'cantidad', 'id_referencia');
-
-        $permitidas = 0;
-
-        if (!empty($idsPaquetes)) {
-            $configs = $this->paquetesSesionesModel->configuracionesPorTipo($idsPaquetes, $tipo);
-
-            foreach ($configs as $cfg) {
-                $permitidas = max($permitidas, (int) $cfg['num_sesiones']);
-            }
-
-            // Aplicar reglas de bonificación por cantidad de paquetes
-            foreach ($detalles as $det) {
-                $idPaq = $det['id_referencia'];
-                $cant  = (int) ($cantidades[$idPaq] ?? 0);
-
-                $reglas = $this->reglasPaquetesModel->porPaqueteTipo((int) $idPaq, 'sesion_unica');
-
-                foreach ($reglas as $regla) {
-                    $cumple = match ($regla['tipo_condicion']) {
-                        'CANTIDAD_MIN' => $cant >= (float) $regla['valor_condicion'],
-                        'CANTIDAD_MAX' => $cant <= (float) $regla['valor_condicion'],
-                        default        => false,
-                    };
-                    if ($cumple) {
-                        $permitidas += 1;
-                    }
-                }
-            }
-        }
-
-        $usadas = (int) $this->sesionModel
-            ->where('id_promocion', $idPromocion)
-            ->where('tipo', $tipo)
-            ->where('estado !=', 'cancelado')
-            ->countAllResults();
+        $detalles   = $this->detalleModel->listarPaquetes($promocion['id_cotizacion']);
+        $permitidas = $this->_calcularPermitidas($detalles, $tipo);
+        $usadas     = $this->_contarUsadas($idPromocion, $tipo);
 
         return [
             'tipo'        => $tipo,
@@ -203,6 +168,78 @@ class SesionService
             'usadas'      => $usadas,
             'puede_crear' => $usadas < $permitidas,
         ];
+    }
+
+    /**
+     * Determina el total de sesiones permitidas del tipo dado a partir de los paquetes
+     * de la cotización y las reglas de bonificación aplicables.
+     *
+     * @param  array<int, array<string, mixed>> $detalles Ítems de la cotización (tipo PAQUETE).
+     * @param  string                           $tipo     Tipo de sesión.
+     * @return int                                        Número de sesiones permitidas.
+     */
+    private function _calcularPermitidas(array $detalles, string $tipo): int
+    {
+        $idsPaquetes = array_column($detalles, 'id_referencia');
+        if (empty($idsPaquetes)) {
+            return 0;
+        }
+
+        $configs    = $this->paquetesSesionesModel->configuracionesPorTipo($idsPaquetes, $tipo);
+        $permitidas = 0;
+        foreach ($configs as $cfg) {
+            $permitidas = max($permitidas, (int) $cfg['num_sesiones']);
+        }
+
+        return $permitidas + $this->_bonificacionesPorCantidad($detalles);
+    }
+
+    /**
+     * Suma las sesiones extra otorgadas por reglas de bonificación de tipo 'sesion_unica'.
+     * Cada regla que se cumpla (por condición de cantidad mínima o máxima) suma +1 sesión.
+     *
+     * @param  array<int, array<string, mixed>> $detalles Ítems de la cotización.
+     * @return int                                        Bonus de sesiones adicionales.
+     */
+    private function _bonificacionesPorCantidad(array $detalles): int
+    {
+        $cantidades = array_column($detalles, 'cantidad', 'id_referencia');
+        $bonus      = 0;
+
+        foreach ($detalles as $det) {
+            $idPaq  = $det['id_referencia'];
+            $cant   = (int) ($cantidades[$idPaq] ?? 0);
+            $reglas = $this->reglasPaquetesModel->porPaqueteTipo((int) $idPaq, 'sesion_unica');
+
+            foreach ($reglas as $regla) {
+                $cumple = match ($regla['tipo_condicion']) {
+                    'CANTIDAD_MIN' => $cant >= (float) $regla['valor_condicion'],
+                    'CANTIDAD_MAX' => $cant <= (float) $regla['valor_condicion'],
+                    default        => false,
+                };
+                if ($cumple) {
+                    $bonus++;
+                }
+            }
+        }
+
+        return $bonus;
+    }
+
+    /**
+     * Cuenta las sesiones no canceladas de un tipo dado en una promoción.
+     *
+     * @param  int    $idPromocion ID de la promoción.
+     * @param  string $tipo        Tipo de sesión.
+     * @return int                 Número de sesiones usadas.
+     */
+    private function _contarUsadas(int $idPromocion, string $tipo): int
+    {
+        return (int) $this->sesionModel
+            ->where('id_promocion', $idPromocion)
+            ->where('tipo', $tipo)
+            ->where('estado !=', 'cancelado')
+            ->countAllResults();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
