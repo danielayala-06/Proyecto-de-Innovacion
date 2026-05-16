@@ -20,7 +20,7 @@
 
 namespace App\Controllers\Api;
 
-use App\Controllers\BaseController;
+use App\Controllers\BaseApiController;
 use App\Services\Paquetes\PaqueteService;
 use App\Transformers\PaqueteTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -31,7 +31,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  * Todas las respuestas siguen el formato:
  * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
-class PaquetesApi extends BaseController
+class PaquetesApi extends BaseApiController
 {
     /** @var PaqueteService Servicio con la lógica de negocio de paquetes. */
     protected PaqueteService $paqueteService;
@@ -118,7 +118,7 @@ class PaquetesApi extends BaseController
         try {
             $idPaquete = $this->paqueteService->crear($body);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -154,7 +154,7 @@ class PaquetesApi extends BaseController
         try {
             $this->paqueteService->actualizar((int) $id, $body);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -184,7 +184,7 @@ class PaquetesApi extends BaseController
         try {
             $this->paqueteService->cambiarEstado((int) $id, $estado);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -215,7 +215,7 @@ class PaquetesApi extends BaseController
         try {
             $action = $this->paqueteService->agregarProducto((int) $id, $body);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -240,7 +240,7 @@ class PaquetesApi extends BaseController
         try {
             $this->paqueteService->quitarProducto((int) $id, (int) $pid);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -248,29 +248,4 @@ class PaquetesApi extends BaseController
             ->setJSON(['status' => 'success', 'message' => 'Producto removido del paquete']);
     }
 
-    /**
-     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
-     *
-     * @param  \RuntimeException $e Excepción lanzada por el servicio.
-     * @return ResponseInterface
-     */
-    private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
-    {
-        $code   = (int) $e->getCode() ?: 500;
-        $errors = ($code === 422) ? json_decode($e->getMessage(), true) : null;
-
-        $httpStatus = match ($code) {
-            404     => ResponseInterface::HTTP_NOT_FOUND,
-            409     => ResponseInterface::HTTP_CONFLICT,
-            422     => ResponseInterface::HTTP_UNPROCESSABLE_ENTITY,
-            default => ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
-        };
-
-        return $this->response
-            ->setStatusCode($httpStatus)
-            ->setJSON(is_array($errors)
-                ? ['status' => 'error', 'errors'  => $errors]
-                : ['status' => 'error', 'message' => $e->getMessage()]
-            );
-    }
 }

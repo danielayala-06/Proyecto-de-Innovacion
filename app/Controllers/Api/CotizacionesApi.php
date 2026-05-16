@@ -19,7 +19,7 @@
 
 namespace App\Controllers\Api;
 
-use App\Controllers\BaseController;
+use App\Controllers\BaseApiController;
 use App\Services\Cotizaciones\CotizacionService;
 use App\Transformers\CotizacionTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -30,7 +30,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  * Todas las respuestas siguen el formato:
  * { status: 'success'|'error', data?: ..., message?: ..., errors?: ... }
  */
-class CotizacionesApi extends BaseController
+class CotizacionesApi extends BaseApiController
 {
     /** @var CotizacionService Servicio con la lógica de negocio de cotizaciones. */
     protected CotizacionService $service;
@@ -125,7 +125,7 @@ class CotizacionesApi extends BaseController
         try {
             $cotizacion = $this->service->crear($body);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -159,7 +159,7 @@ class CotizacionesApi extends BaseController
         try {
             $updated = $this->service->actualizar((int) $id, $body);
         } catch (\RuntimeException $e) {
-            return $this->_serviceError($e);
+            return $this->serviceError($e);
         }
 
         return $this->response
@@ -254,29 +254,4 @@ class CotizacionesApi extends BaseController
         );
     }
 
-    /**
-     * Convierte una RuntimeException del servicio en respuesta JSON con el código HTTP adecuado.
-     *
-     * @param  \RuntimeException $e Excepción lanzada por el servicio.
-     * @return ResponseInterface
-     */
-    private function _serviceError(\RuntimeException $e): \CodeIgniter\HTTP\ResponseInterface
-    {
-        $code   = (int) $e->getCode() ?: 500;
-        $errors = ($code === 422) ? json_decode($e->getMessage(), true) : null;
-
-        $httpStatus = match ($code) {
-            404     => ResponseInterface::HTTP_NOT_FOUND,
-            409     => ResponseInterface::HTTP_CONFLICT,
-            422     => ResponseInterface::HTTP_UNPROCESSABLE_ENTITY,
-            default => ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
-        };
-
-        return $this->response
-            ->setStatusCode($httpStatus)
-            ->setJSON(is_array($errors)
-                ? ['status' => 'error', 'errors'  => $errors]
-                : ['status' => 'error', 'message' => $e->getMessage()]
-            );
-    }
 }
