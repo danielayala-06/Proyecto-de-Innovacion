@@ -150,8 +150,13 @@ class CotizacionService
      * @param  bool                 $tieneContrato true si la cotización tiene un contrato activo.
      * @return array<string, mixed>                Estructura: cotizacion, cliente, usuario, detalles.
      */
-    private function _formatearCotizacion(array $row, array $detalles, bool $tieneContrato = false): array
-    {
+    private function _formatearCotizacion(
+        array  $row,
+        array  $detalles,
+        bool   $tieneContrato = false,
+        ?array $promocion     = null,
+        ?array $colegio       = null
+    ): array {
         return [
             'cotizacion' => [
                 'id'             => (int) $row['id_cotizacion'],
@@ -162,13 +167,28 @@ class CotizacionService
                 'tiene_contrato' => $tieneContrato,
             ],
             'cliente' => [
-                'id'              => (int) $row['id_cliente'],
-                'nombre_completo' => trim($row['nombres'] . ' ' . $row['apellidos']),
+                'id'               => (int) $row['id_cliente'],
+                'nombre_completo'  => trim($row['nombres'] . ' ' . $row['apellidos']),
+                'tipo_documento'   => $row['tipo_documento']   ?? null,
+                'numero_documento' => $row['numero_documento'] ?? null,
+                'telefono'         => $row['telefono']         ?? null,
+                'correo'           => $row['correo']           ?? null,
             ],
             'usuario' => [
                 'username' => $row['nombre_user'],
             ],
-            'detalles' => $detalles,
+            'detalles'  => $detalles,
+            'promocion' => $promocion ? [
+                'id'              => (int) $promocion['id_promocion'],
+                'nombre'          => $promocion['nombre'],
+                'num_estudiantes' => (int) $promocion['num_estudiantes'],
+            ] : null,
+            'colegio' => $colegio ? [
+                'id'       => (int) $colegio['id_colegio'],
+                'nombre'   => $colegio['nombre_colegio'],
+                'provincia'=> $colegio['provincia'],
+                'distrito' => $colegio['distrito'],
+            ] : null,
         ];
     }
 
@@ -322,10 +342,17 @@ class CotizacionService
         $detallesPorCot = $this->_cargarDetalles([$idCotizacion]);
         $conContrato    = $this->cotizacionModel->idsCotizacionesConContrato([$idCotizacion]);
 
+        $promocion = $this->promocionModel->where('id_cotizacion', $idCotizacion)->first();
+        $colegio   = ($promocion && !empty($promocion['id_colegio']))
+            ? $this->colegioModel->find($promocion['id_colegio'])
+            : null;
+
         return $this->_formatearCotizacion(
             $row,
             $detallesPorCot[$idCotizacion] ?? [],
-            !empty($conContrato)
+            !empty($conContrato),
+            $promocion,
+            $colegio
         );
     }
 
@@ -469,7 +496,55 @@ class CotizacionService
             throw new \RuntimeException('Error al actualizar la cotización', 500);
         }
 
+        $this->_actualizarPromocionYColegio($idCotizacion, $data);
+
         return $this->obtenerPorId($idCotizacion);
+    }
+
+    /**
+     * Actualiza la promoción y el colegio vinculados a una cotización si se proporcionan datos.
+     * Se ejecuta fuera de la transacción principal; los errores se silencian para
+     * no revertir los cambios de ítems ya confirmados.
+     *
+     * @param  int                  $idCotizacion
+     * @param  array<string, mixed> $data Puede contener 'promocion' y/o 'colegio'.
+     * @return void
+     */
+    private function _actualizarPromocionYColegio(int $idCotizacion, array $data): void
+    {
+        try {
+            $promocion = $this->promocionModel->where('id_cotizacion', $idCotizacion)->first();
+            if (!$promocion) return;
+
+            $promoUpdate = [];
+            if (isset($data['promocion']['nombre'])) {
+                $promoUpdate['nombre'] = $data['promocion']['nombre'];
+            }
+            if (isset($data['promocion']['num_estudiantes']) && (int) $data['promocion']['num_estudiantes'] > 0) {
+                $promoUpdate['num_estudiantes'] = (int) $data['promocion']['num_estudiantes'];
+            }
+            if (!empty($promoUpdate)) {
+                $this->promocionModel->update($promocion['id_promocion'], $promoUpdate);
+            }
+
+            if (!empty($data['colegio']) && !empty($promocion['id_colegio'])) {
+                $colegioUpdate = [];
+                if (!empty($data['colegio']['nombre'])) {
+                    $colegioUpdate['nombre_colegio'] = trim($data['colegio']['nombre']);
+                }
+                if (isset($data['colegio']['provincia'])) {
+                    $colegioUpdate['provincia'] = $data['colegio']['provincia'] ?: null;
+                }
+                if (isset($data['colegio']['distrito'])) {
+                    $colegioUpdate['distrito'] = $data['colegio']['distrito'] ?: null;
+                }
+                if (!empty($colegioUpdate)) {
+                    $this->colegioModel->update($promocion['id_colegio'], $colegioUpdate);
+                }
+            }
+        } catch (\Throwable) {
+            // La cotización ya fue actualizada; la promoción/colegio son accesorios.
+        }
     }
 
     /**

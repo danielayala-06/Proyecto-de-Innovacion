@@ -43,6 +43,8 @@ class CotizacionTransformer extends BaseTransformer
             'cliente'        => $this->includeCliente(),
             'usuario'        => $this->includeUsuario(),
             'items'          => $this->includeDetalles(),
+            'promocion'      => $this->includePromocion(),
+            'colegio'        => $this->includeColegio(),
         ];
     }
 
@@ -72,9 +74,14 @@ class CotizacionTransformer extends BaseTransformer
      */
     protected function includeCliente(): array
     {
+        $c = $this->resource['cliente'];
         return [
-            'id'              => (int) $this->resource['cliente']['id'],
-            'nombre_completo' =>       $this->resource['cliente']['nombre_completo'],
+            'id'               => (int) $c['id'],
+            'nombre_completo'  =>       $c['nombre_completo'],
+            'tipo_documento'   =>       $c['tipo_documento']   ?? null,
+            'numero_documento' =>       $c['numero_documento'] ?? null,
+            'telefono'         =>       $c['telefono']         ?? null,
+            'correo'           =>       $c['correo']           ?? null,
         ];
     }
 
@@ -106,5 +113,38 @@ class CotizacionTransformer extends BaseTransformer
             'cantidad'          => (int)   $detalle['cantidad'],
             'precio_unitario'   => (float) $detalle['precio_unitario'],
         ], $this->resource['detalles'] ?? []);
+    }
+
+    /**
+     * Formatea la promoción escolar vinculada a la cotización (si existe).
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function includePromocion(): ?array
+    {
+        $p = $this->resource['promocion'] ?? null;
+        if (!$p) return null;
+        return [
+            'id'              => $p['id'],
+            'nombre'          => $p['nombre'],
+            'num_estudiantes' => $p['num_estudiantes'],
+        ];
+    }
+
+    /**
+     * Formatea el colegio vinculado a la cotización (si existe).
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function includeColegio(): ?array
+    {
+        $c = $this->resource['colegio'] ?? null;
+        if (!$c) return null;
+        return [
+            'id'       => $c['id'],
+            'nombre'   => $c['nombre'],
+            'provincia'=> $c['provincia'],
+            'distrito' => $c['distrito'],
+        ];
     }
 }

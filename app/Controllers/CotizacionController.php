@@ -17,8 +17,9 @@ use App\Controllers\BaseController;
  * Sirve las vistas del módulo de cotizaciones.
  *
  * Rutas:
- *  - GET /cotizaciones        → index()
- *  - GET /cotizaciones/crear  → crear()
+ *  - GET /cotizaciones                → index()
+ *  - GET /cotizaciones/crear          → crear()
+ *  - GET /cotizaciones/editar/{id}    → editar()
  */
 class CotizacionController extends BaseController
 {
@@ -57,5 +58,25 @@ class CotizacionController extends BaseController
         ];
 
         return view('cotizaciones/crear', $data);
+    }
+
+    /**
+     * Renderiza la vista del formulario de edición de una cotización existente.
+     *
+     * Solo cotizaciones en estado PENDIENTE pueden editarse; la validación
+     * la hace el módulo JS al cargar la cotización desde la API.
+     *
+     * @param  int    $id ID de la cotización a editar.
+     * @return string HTML de la vista renderizada.
+     */
+    public function editar(int $id)
+    {
+        $data = [
+            'header'        => view('Layouts/header'),
+            'footer'        => view('Layouts/footer'),
+            'id_cotizacion' => $id,
+        ];
+
+        return view('cotizaciones/editar', $data);
     }
 }

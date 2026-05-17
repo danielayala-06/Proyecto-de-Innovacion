@@ -21,8 +21,9 @@ $routes->get ('/logout', 'AuthController::logout');
 $routes->group('', ['filter' => 'auth'], function ($routes) {
 
     $routes->get('/',                      'Home::index');
-    $routes->get('/cotizaciones',          'CotizacionController::index');
-    $routes->get('/cotizaciones/crear',    'CotizacionController::crear');
+    $routes->get('/cotizaciones',                  'CotizacionController::index');
+    $routes->get('/cotizaciones/crear',           'CotizacionController::crear');
+    $routes->get('/cotizaciones/editar/(:num)',   'CotizacionController::editar/$1');
     $routes->get('/contratos',                      'ContratoController::index');
     $routes->get('/contratos/crear',               'ContratoController::crear');
     $routes->get('/contratos/(:num)',              'ContratoController::generarContrato/$1');

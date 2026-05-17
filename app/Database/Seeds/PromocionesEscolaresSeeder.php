@@ -8,7 +8,7 @@ class PromocionesEscolaresSeeder extends Seeder
 {
     public function run()
     {
-        // Colegios: 1-4, Cotizaciones: 1 y 3 (solo las APROBADAS)
+        // Cotización 1 (APROBADA), 2 (PENDIENTE) y 3 (APROBADA)
         $data = [
             [
                 'id_colegio'     => 1,
@@ -27,6 +27,16 @@ class PromocionesEscolaresSeeder extends Seeder
                 'grado'          => '5to',
                 'seccion'        => 'B',
                 'num_estudiantes'=> 28,
+                'anio'           => 2026,
+                'is_active'      => true,
+            ],
+            [
+                'id_colegio'     => 2,
+                'id_cotizacion'  => 2,
+                'nombre'         => 'Promoción 2026 – 6to Primaria',
+                'grado'          => '6to',
+                'seccion'        => 'A',
+                'num_estudiantes'=> 35,
                 'anio'           => 2026,
                 'is_active'      => true,
             ],
