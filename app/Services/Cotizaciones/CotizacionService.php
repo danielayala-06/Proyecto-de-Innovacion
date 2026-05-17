@@ -513,38 +513,105 @@ class CotizacionService
     private function _actualizarPromocionYColegio(int $idCotizacion, array $data): void
     {
         try {
+            $promoData   = is_array($data['promocion'] ?? null) ? $data['promocion'] : [];
+            $colegioData = is_array($data['colegio']   ?? null) ? $data['colegio']   : [];
+
             $promocion = $this->promocionModel->where('id_cotizacion', $idCotizacion)->first();
-            if (!$promocion) return;
+
+            if (!$promocion) {
+                $nombre        = trim($promoData['nombre']          ?? '');
+                $numEst        = (int) ($promoData['num_estudiantes'] ?? 0);
+                $nombreColegio = trim($colegioData['nombre']          ?? '');
+
+                if (($nombre === '' && $numEst <= 0) || $nombreColegio === '') {
+                    return;
+                }
+
+                $idColegio = $this->_encontrarOCrearColegio($nombreColegio, $colegioData);
+                if ($idColegio === null) {
+                    return;
+                }
+
+                $db = $this->cotizacionModel->db;
+                $db->table('promociones_escolares')->insert([
+                    'id_colegio'      => $idColegio,
+                    'id_cotizacion'   => $idCotizacion,
+                    'nombre'          => $nombre !== '' ? $nombre : ('Promoción ' . date('Y')),
+                    'grado'           => 'N/E',
+                    'seccion'         => null,
+                    'num_estudiantes' => max(1, $numEst),
+                    'anio'            => (int) date('Y'),
+                    'is_active'       => 1,
+                ]);
+                return;
+            }
 
             $promoUpdate = [];
-            if (isset($data['promocion']['nombre'])) {
-                $promoUpdate['nombre'] = $data['promocion']['nombre'];
+            if (isset($promoData['nombre'])) {
+                $promoUpdate['nombre'] = $promoData['nombre'];
             }
-            if (isset($data['promocion']['num_estudiantes']) && (int) $data['promocion']['num_estudiantes'] > 0) {
-                $promoUpdate['num_estudiantes'] = (int) $data['promocion']['num_estudiantes'];
+            if (isset($promoData['num_estudiantes']) && (int) $promoData['num_estudiantes'] > 0) {
+                $promoUpdate['num_estudiantes'] = (int) $promoData['num_estudiantes'];
             }
             if (!empty($promoUpdate)) {
                 $this->promocionModel->update($promocion['id_promocion'], $promoUpdate);
             }
 
-            if (!empty($data['colegio']) && !empty($promocion['id_colegio'])) {
+            if (!empty($colegioData)) {
                 $colegioUpdate = [];
-                if (!empty($data['colegio']['nombre'])) {
-                    $colegioUpdate['nombre_colegio'] = trim($data['colegio']['nombre']);
+                if (!empty($colegioData['nombre'])) {
+                    $colegioUpdate['nombre_colegio'] = trim($colegioData['nombre']);
                 }
-                if (isset($data['colegio']['provincia'])) {
-                    $colegioUpdate['provincia'] = $data['colegio']['provincia'] ?: null;
+                if (array_key_exists('provincia', $colegioData)) {
+                    $colegioUpdate['provincia'] = $colegioData['provincia'] ?: null;
                 }
-                if (isset($data['colegio']['distrito'])) {
-                    $colegioUpdate['distrito'] = $data['colegio']['distrito'] ?: null;
+                if (array_key_exists('distrito', $colegioData)) {
+                    $colegioUpdate['distrito'] = $colegioData['distrito'] ?: null;
                 }
                 if (!empty($colegioUpdate)) {
-                    $this->colegioModel->update($promocion['id_colegio'], $colegioUpdate);
+                    if (!empty($promocion['id_colegio'])) {
+                        $this->colegioModel->update($promocion['id_colegio'], $colegioUpdate);
+                    } else {
+                        $nombreCol = trim($colegioData['nombre'] ?? '');
+                        if ($nombreCol !== '') {
+                            $idColegio = $this->_encontrarOCrearColegio($nombreCol, $colegioData);
+                            if ($idColegio !== null) {
+                                $this->promocionModel->update($promocion['id_promocion'], ['id_colegio' => $idColegio]);
+                            }
+                        }
+                    }
                 }
             }
-        } catch (\Throwable) {
-            // La cotización ya fue actualizada; la promoción/colegio son accesorios.
+        } catch (\Throwable $e) {
+            log_message('error', '[CotizacionService] _actualizarPromocionYColegio id=' . $idCotizacion . ': ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Busca un colegio por nombre (case-insensitive) o lo crea si no existe.
+     *
+     * @param  string               $nombre      Nombre del colegio.
+     * @param  array<string, mixed> $colegioData Datos extra (provincia, distrito).
+     * @return int|null                          ID del colegio, o null si falla el insert.
+     */
+    private function _encontrarOCrearColegio(string $nombre, array $colegioData): ?int
+    {
+        $existente = $this->colegioModel
+            ->where('nombre_colegio', $nombre)
+            ->first();
+
+        if ($existente) {
+            return (int) $existente['id_colegio'];
+        }
+
+        $id = $this->colegioModel->insert([
+            'nombre_colegio' => $nombre,
+            'provincia'      => $colegioData['provincia'] ?? null,
+            'distrito'       => $colegioData['distrito']  ?? null,
+            'estado'         => 'ACTIVO',
+        ]);
+
+        return $id !== false ? (int) $id : null;
     }
 
     /**
