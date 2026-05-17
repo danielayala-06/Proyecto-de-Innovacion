@@ -124,10 +124,12 @@ export const ui = {
       return;
     }
 
+    const baseUrl = window.BASE_URL || '/';
     tbody.innerHTML = filas.map(c => {
       const codigo      = formatters.codigo(c.id);
       const nombre      = nombreCliente(c);
       const estado      = c.estado?.toUpperCase();
+      const canEdit     = estado === 'PENDIENTE';
       const canDel      = estado === 'PENDIENTE';
       const canContract = estado === 'APROBADA' && !c.tiene_contrato;
 
@@ -144,6 +146,11 @@ export const ui = {
                       onclick="verDetalle(${c.id})">
                 <i class="bi bi-eye"></i>
               </button>
+              ${canEdit ? `
+              <button class="btn-accion" title="Editar cotización"
+                      onclick="window.location.href='${baseUrl}cotizaciones/editar/${c.id}'">
+                <i class="bi bi-pencil"></i>
+              </button>` : ''}
               ${canContract ? `
               <button class="btn-accion" title="Generar contrato"
                       style="color:var(--accent);"

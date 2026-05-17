@@ -85,7 +85,10 @@ class CotizacionesModel extends Model
     {
         return $this
             ->select(['cotizaciones.*', 'clientes.id_cliente',
-                      'personas.nombres', 'personas.apellidos', 'usuarios.nombre_user'])
+                      'personas.nombres', 'personas.apellidos',
+                      'personas.tipo_documento', 'personas.numero_documento',
+                      'personas.telefono', 'personas.correo',
+                      'usuarios.nombre_user'])
             ->join('clientes', 'clientes.id_cliente = cotizaciones.id_cliente')
             ->join('personas', 'personas.id_persona = clientes.id_persona')
             ->join('usuarios', 'usuarios.id_usuario = cotizaciones.id_usuario')

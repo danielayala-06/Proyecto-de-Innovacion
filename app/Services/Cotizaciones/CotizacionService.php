@@ -150,8 +150,13 @@ class CotizacionService
      * @param  bool                 $tieneContrato true si la cotización tiene un contrato activo.
      * @return array<string, mixed>                Estructura: cotizacion, cliente, usuario, detalles.
      */
-    private function _formatearCotizacion(array $row, array $detalles, bool $tieneContrato = false): array
-    {
+    private function _formatearCotizacion(
+        array  $row,
+        array  $detalles,
+        bool   $tieneContrato = false,
+        ?array $promocion     = null,
+        ?array $colegio       = null
+    ): array {
         return [
             'cotizacion' => [
                 'id'             => (int) $row['id_cotizacion'],
@@ -162,13 +167,28 @@ class CotizacionService
                 'tiene_contrato' => $tieneContrato,
             ],
             'cliente' => [
-                'id'              => (int) $row['id_cliente'],
-                'nombre_completo' => trim($row['nombres'] . ' ' . $row['apellidos']),
+                'id'               => (int) $row['id_cliente'],
+                'nombre_completo'  => trim($row['nombres'] . ' ' . $row['apellidos']),
+                'tipo_documento'   => $row['tipo_documento']   ?? null,
+                'numero_documento' => $row['numero_documento'] ?? null,
+                'telefono'         => $row['telefono']         ?? null,
+                'correo'           => $row['correo']           ?? null,
             ],
             'usuario' => [
                 'username' => $row['nombre_user'],
             ],
-            'detalles' => $detalles,
+            'detalles'  => $detalles,
+            'promocion' => $promocion ? [
+                'id'              => (int) $promocion['id_promocion'],
+                'nombre'          => $promocion['nombre'],
+                'num_estudiantes' => (int) $promocion['num_estudiantes'],
+            ] : null,
+            'colegio' => $colegio ? [
+                'id'       => (int) $colegio['id_colegio'],
+                'nombre'   => $colegio['nombre_colegio'],
+                'provincia'=> $colegio['provincia'],
+                'distrito' => $colegio['distrito'],
+            ] : null,
         ];
     }
 
@@ -322,10 +342,17 @@ class CotizacionService
         $detallesPorCot = $this->_cargarDetalles([$idCotizacion]);
         $conContrato    = $this->cotizacionModel->idsCotizacionesConContrato([$idCotizacion]);
 
+        $promocion = $this->promocionModel->where('id_cotizacion', $idCotizacion)->first();
+        $colegio   = ($promocion && !empty($promocion['id_colegio']))
+            ? $this->colegioModel->find($promocion['id_colegio'])
+            : null;
+
         return $this->_formatearCotizacion(
             $row,
             $detallesPorCot[$idCotizacion] ?? [],
-            !empty($conContrato)
+            !empty($conContrato),
+            $promocion,
+            $colegio
         );
     }
 
@@ -469,7 +496,122 @@ class CotizacionService
             throw new \RuntimeException('Error al actualizar la cotización', 500);
         }
 
+        $this->_actualizarPromocionYColegio($idCotizacion, $data);
+
         return $this->obtenerPorId($idCotizacion);
+    }
+
+    /**
+     * Actualiza la promoción y el colegio vinculados a una cotización si se proporcionan datos.
+     * Se ejecuta fuera de la transacción principal; los errores se silencian para
+     * no revertir los cambios de ítems ya confirmados.
+     *
+     * @param  int                  $idCotizacion
+     * @param  array<string, mixed> $data Puede contener 'promocion' y/o 'colegio'.
+     * @return void
+     */
+    private function _actualizarPromocionYColegio(int $idCotizacion, array $data): void
+    {
+        try {
+            $promoData   = is_array($data['promocion'] ?? null) ? $data['promocion'] : [];
+            $colegioData = is_array($data['colegio']   ?? null) ? $data['colegio']   : [];
+
+            $promocion = $this->promocionModel->where('id_cotizacion', $idCotizacion)->first();
+
+            if (!$promocion) {
+                $nombre        = trim($promoData['nombre']          ?? '');
+                $numEst        = (int) ($promoData['num_estudiantes'] ?? 0);
+                $nombreColegio = trim($colegioData['nombre']          ?? '');
+
+                if (($nombre === '' && $numEst <= 0) || $nombreColegio === '') {
+                    return;
+                }
+
+                $idColegio = $this->_encontrarOCrearColegio($nombreColegio, $colegioData);
+                if ($idColegio === null) {
+                    return;
+                }
+
+                $db = $this->cotizacionModel->db;
+                $db->table('promociones_escolares')->insert([
+                    'id_colegio'      => $idColegio,
+                    'id_cotizacion'   => $idCotizacion,
+                    'nombre'          => $nombre !== '' ? $nombre : ('Promoción ' . date('Y')),
+                    'grado'           => 'N/E',
+                    'seccion'         => null,
+                    'num_estudiantes' => max(1, $numEst),
+                    'anio'            => (int) date('Y'),
+                    'is_active'       => 1,
+                ]);
+                return;
+            }
+
+            $promoUpdate = [];
+            if (isset($promoData['nombre'])) {
+                $promoUpdate['nombre'] = $promoData['nombre'];
+            }
+            if (isset($promoData['num_estudiantes']) && (int) $promoData['num_estudiantes'] > 0) {
+                $promoUpdate['num_estudiantes'] = (int) $promoData['num_estudiantes'];
+            }
+            if (!empty($promoUpdate)) {
+                $this->promocionModel->update($promocion['id_promocion'], $promoUpdate);
+            }
+
+            if (!empty($colegioData)) {
+                $colegioUpdate = [];
+                if (!empty($colegioData['nombre'])) {
+                    $colegioUpdate['nombre_colegio'] = trim($colegioData['nombre']);
+                }
+                if (array_key_exists('provincia', $colegioData)) {
+                    $colegioUpdate['provincia'] = $colegioData['provincia'] ?: null;
+                }
+                if (array_key_exists('distrito', $colegioData)) {
+                    $colegioUpdate['distrito'] = $colegioData['distrito'] ?: null;
+                }
+                if (!empty($colegioUpdate)) {
+                    if (!empty($promocion['id_colegio'])) {
+                        $this->colegioModel->update($promocion['id_colegio'], $colegioUpdate);
+                    } else {
+                        $nombreCol = trim($colegioData['nombre'] ?? '');
+                        if ($nombreCol !== '') {
+                            $idColegio = $this->_encontrarOCrearColegio($nombreCol, $colegioData);
+                            if ($idColegio !== null) {
+                                $this->promocionModel->update($promocion['id_promocion'], ['id_colegio' => $idColegio]);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            log_message('error', '[CotizacionService] _actualizarPromocionYColegio id=' . $idCotizacion . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Busca un colegio por nombre (case-insensitive) o lo crea si no existe.
+     *
+     * @param  string               $nombre      Nombre del colegio.
+     * @param  array<string, mixed> $colegioData Datos extra (provincia, distrito).
+     * @return int|null                          ID del colegio, o null si falla el insert.
+     */
+    private function _encontrarOCrearColegio(string $nombre, array $colegioData): ?int
+    {
+        $existente = $this->colegioModel
+            ->where('nombre_colegio', $nombre)
+            ->first();
+
+        if ($existente) {
+            return (int) $existente['id_colegio'];
+        }
+
+        $id = $this->colegioModel->insert([
+            'nombre_colegio' => $nombre,
+            'provincia'      => $colegioData['provincia'] ?? null,
+            'distrito'       => $colegioData['distrito']  ?? null,
+            'estado'         => 'ACTIVO',
+        ]);
+
+        return $id !== false ? (int) $id : null;
     }
 
     /**
