@@ -118,7 +118,7 @@
 
                         <div class="row g-3">
                             <!-- Nombre de la institución (label cambia según tipo) -->
-                            <div class="col-12 col-md-6">
+                            <div class="col-12 col-md-5">
                                 <label for="nombreColegio" class="form-label" id="labelInstitucion">Nombre del colegio*</label>
                                 <input type="text" class="form-control" id="nombreColegio"
                                        name="nombre_colegio" required minlength="3" maxlength="100"
@@ -169,14 +169,14 @@
                                 <div class="form-text" id="textoMaxEstudiantes">Máximo 100 personas.</div>
                             </div>
 
-                            <!-- Grado (oculto para Grado Superior y Empresas) -->
-                            <div class="col-6 col-md-4" id="wrap-grado">
-                                <label for="gradoProm" class="form-label">Grado*</label>
+                            <!-- Nivel (oculto para Grado Superior y Empresas) -->
+                            <div class="col-6 col-md-3" id="wrap-grado">
+                                <label for="gradoProm" class="form-label">Nivel*</label>
                                 <select class="form-select" id="gradoProm" name="grado">
                                     <option value="">Seleccionar grado...</option>
-                                    <option value="5 añitos">5 añitos</option>
-                                    <option value="6to primaria">6to primaria</option>
-                                    <option value="5to secundaria">5to secundaria</option>
+                                    <option value="5 añitos">Inicial/Jardin</option>
+                                    <option value="6to primaria">Primaria</option>
+                                    <option value="5to secundaria">Secundaria</option>
                                 </select>
                             </div>
 
@@ -186,19 +186,6 @@
                                 <input type="text" class="form-control" id="seccionProm"
                                        name="seccion" maxlength="10"
                                        placeholder="Ej: A, B, C…">
-                            </div>
-
-                            <!-- Fecha y hora de la sesión -->
-                            <div class="col-12 col-md-6">
-                                <label class="form-label">Fecha y hora de la sesión</label>
-                                <div class="d-flex gap-2">
-                                    <input type="date" class="form-control" id="fechaInicio-date">
-                                    <select class="form-select" id="fechaInicio-time"
-                                            style="flex:0 0 auto;width:115px;">
-                                        <option value="">Hora</option>
-                                    </select>
-                                </div>
-                                <input type="hidden" name="fechaInicio" id="fechaInicio">
                             </div>
 
                             <!-- Observaciones -->
@@ -258,7 +245,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-secondary btn->sm" data-bs-dismiss="modal">Cancelar</button>
                 <button class="btn btn-primary btn-sm" id="btn-confirmar-servicio">Agregar servicio</button>
             </div>
         </div>
@@ -345,15 +332,8 @@
 <script>
 /* ── Validación Fecha y Hora de la sesión ─────────────────── */
 (function () {
-    const inputFecha = document.getElementById('fechaInicio-date');
-    const selHora    = document.getElementById('fechaInicio-time');
 
     function pad(n) { return String(n).padStart(2, '0'); }
-
-    /* Fecha mínima = hoy */
-    const hoy = new Date();
-    const minFecha = `${hoy.getFullYear()}-${pad(hoy.getMonth() + 1)}-${pad(hoy.getDate())}`;
-    inputFecha.min = minFecha;
 
     /* Genera opciones de hora (06:00 – 21:00 cada 30 min) */
     function generarHoras(soloFuturas) {
@@ -384,20 +364,6 @@
         if ([...selHora.options].some(o => o.value === anterior)) selHora.value = anterior;
     }
 
-    function esHoy(valor) {
-        return valor === minFecha;
-    }
-
-    /* Poblar horas al cargar (sin fecha elegida = todas disponibles) */
-    poblarHoras(false);
-
-    /* Al cambiar la fecha filtrar horas si es hoy */
-    inputFecha.addEventListener('change', function () {
-        if (this.value && this.value < minFecha) {
-            this.value = minFecha; /* fuerza al mínimo si el navegador lo permite */
-        }
-        poblarHoras(esHoy(this.value));
-    });
 
     /* ── N.° estudiantes: solo dígitos, sin símbolos ni emojis ── */
     const inputAlumnos = document.getElementById('numEstudiantes');
