@@ -121,4 +121,37 @@ class ContratosModel extends Model
             ->where('contratos.id_contrato', $id)
             ->first();
     }
+
+    /**
+     * Retorna el detalle de un contrato con los datos del cliente y la cotización para generar el PDF.
+     */
+    public function obtenerDataPDFContrato(int $id): ?array{
+        $builder = $this 
+            ->select([
+                // Contratos
+                'contratos.id_contrato', 'contratos.id_cotizacion',
+                'contratos.fecha_creacion',
+                'contratos.adelanto', 'contratos.total',
+                'contratos.estado',
+                // Clientes 
+                "CONCAT(personas.nombres,' ',COALESCE(personas.apellidos,'')) AS cliente",
+                'personas.telefono', 
+                // Cotizaciones
+                'cotizaciones.total_estimado',
+
+                // Cotizaciones_detalles (Detalles paquetes)
+                'cotizaciones_detalles.descripcion',
+                'cotizaciones_detalles.cantidad',
+                'cotizaciones_detalles.precio_unitario',
+                'cotizaciones_detalles.tipo_item',//(PAQUETE|PRODUCTO)
+                'cotizaciones_detalles.id_referencia',
+            ])
+            ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion') // cotizaciones
+            ->join('cotizaciones_detalles', 'cotizaciones_detalles.id_cotizacion = cotizaciones.id_cotizacion') // cotidetalles
+            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')//clientes
+            ->join('personas',    'personas.id_persona = clientes.id_persona')// personas
+            ->where('contratos.id_contrato', $id);
+
+            return $builder->first();
+    }
 }

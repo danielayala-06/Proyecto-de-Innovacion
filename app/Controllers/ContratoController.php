@@ -74,8 +74,9 @@ class ContratoController extends BaseController
      */
     public function generarContrato(int $id)
     {
+        // Obtenemos la data del contrato
         $contratoService = new ContratoService();
-        $contrato        = $contratoService->buscarPorID($id) ?? null;
+        $contrato        = $contratoService->obtenerDataContratoPDF($id)?? null;
 
         if (!$contrato) {
             return view('errors/html/error_404', ['message' => 'Contrato no encontrado']);

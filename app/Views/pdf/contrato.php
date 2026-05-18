@@ -220,15 +220,32 @@
     <div class="section-title">Tipo de Servicio</div>
     <table class="services-table">
         <tr>
+            <!-- Obtenemos la data de cotizaciones detalles -->
             <td style="width:50%">
+                <?php if($contrato['tipo_item'] === 'ANUARIOS'): ?> 
                 <span class="cb checked"></span>
                 Anuarios &nbsp;
-                <span class="svc-line">21 estudiantes</span>
+
+                <span class="svc-line"><?= $contrato['cantidad'] ?></span>
+                
+                <?php else: ?>
+                    <span class="cb"></span>
+                    Anuarios &nbsp;
+                        <span class="svc-line"></span>
+                <?php endif;?>
+                
             </td>
             <td style="width:50%">
-                <span class="cb"></span>
-                Otros &nbsp;
-                <span class="svc-line">&nbsp;</span>
+                <?php if($contrato['tipo_item'] === 'OTRO'): ?> 
+                    <span class="cb checked"></span>
+                    Otro &nbsp;
+                    <span class="svc-line"><?= $contrato['cantidad'] ?></span>
+                
+                <?php else: ?>
+                    <span class="cb"></span>
+                    Otro &nbsp;
+                    <span class="svc-line"></span>
+                <?php endif;?>
             </td>
         </tr>
         <tr>
@@ -238,16 +255,30 @@
                 <span class="svc-line">&nbsp;</span>
             </td>-->
             <td>
-                <span class="cb"></span>
-                Cuadros
-                <span class="svc-line"></span>
+                <?php if($contrato['tipo_item'] === 'CUADROS'): ?> 
+                    <span class="cb checked"></span>
+                    Cuadros &nbsp;
+                    <span class="svc-line"><?= $contrato['cantidad'] ?></span>
+                
+                <?php else: ?>
+                    <span class="cb"></span>
+                    Cuadros &nbsp;
+                    <span class="svc-line"></span>
+                <?php endif;?>               
             </td>
         </tr>
         <tr>
             <td>
-                <span class="cb"></span>
-                Photobook &nbsp;
-                <span class="svc-line">&nbsp;</span>
+                <?php if($contrato['tipo_item'] === 'PHOTOBOOK'): ?> 
+                    <span class="cb checked"></span>
+                    Photobook &nbsp;
+                    <span class="svc-line"><?= $contrato['cantidad'] ?></span>
+                
+                <?php else: ?>
+                    <span class="cb"></span>
+                    Photobook &nbsp;
+                    <span class="svc-line"></span>
+                <?php endif;?>
             </td>
             <!--<td>
                 <span class="cb"></span>
@@ -263,16 +294,31 @@
     </div>
     <div class="sesion-row">
         <div class="sesion-label">Fecha de la sesión 2:</div>
-        <!--<div class="sesion-value">22 / 07 / 2025</div>-->
+        <!--<div class="sesion-value">22 / 07 / 2025</di25 paquete - Estudiantes S/. 150.00 c/uv>-->
     </div>
 
     <!-- POR LO SIGUIENTE -->
-    <div class="section-title" style="margin-top:10px">Por lo Siguiente:</div>
-    <div class="desc-line">21 Anuarios 25x25 (5 hojas) – Estudiantes S/. 135.00 c/u</div>
-    <div class="desc-line">1 Anuario 25x25 (5 hojas) – Tutor (sin costo adicional)</div>
-    <div class="desc-line">2 Sesiones de fotos incluidas en el paquete</div>
+    <div class="section-title" style="margin-top:30px">Por lo Siguiente:</div>
+    <?php if($contrato['tipo_item']): ?>
+        <div class="desc-line">
+            <?= $contrato['cantidad'] ?>
+
+            <?= $contrato['tipo_item'] ?>
+            - 
+            Estudiantes S/.
+            <?= number_format($contrato['precio_unitario'], 2) ?>
+             c/u
+        </div>
+    <?php endif; ?>
+
+
+    <!-- Linea original -->
+    <!-- <div class="desc-line">2 Sesiones de fotos incluidas en el paquete</div> -->
     <div class="desc-line">&nbsp;</div>
 
+    <br>
+    <br>
+    <br>
     <!-- CLÁUSULAS + PRECIOS -->
     <div class="bottom-grid">
         <div class="bottom-left">
@@ -289,11 +335,6 @@
         </div>
 
         <!-- SALTO DE LINEA XD-->
-        <br>
-        <br>
-        <br>
-        <br>
-        <br>
 
         <div class="bottom-right">
             <div class="price-block">

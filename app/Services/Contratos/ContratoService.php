@@ -15,6 +15,7 @@ namespace App\Services\Contratos;
 use App\Models\ContratosModel;
 use App\Models\CotizacionesModel;
 use App\Models\PagosModel;
+use Exception;
 
 /**
  * Servicio de Contratos.
@@ -270,5 +271,10 @@ class ContratoService
         if ($this->contratoModel->update($id, $updateData) === false) {
             throw new \RuntimeException(json_encode($this->contratoModel->errors()), 422);
         }
+    }
+
+    public function obtenerDataContratoPDF(int $id)
+    {
+        return $this->contratoModel->obtenerDataPDFContrato($id);
     }
 }
