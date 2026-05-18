@@ -123,35 +123,73 @@ class ContratosModel extends Model
     }
 
     /**
-     * Retorna el detalle de un contrato con los datos del cliente y la cotización para generar el PDF.
+     * Retorna todos los datos necesarios para generar el PDF del contrato.
+     *
+     * Estructura retornada:
+     *   - Campos planos del contrato + cliente (nombres, telefono, total_estimado)
+     *   - 'detalles'    → todos los ítems de cotizaciones_detalles con categoria resuelta
+     *   - 'promociones' → todas las promociones_escolares con datos del colegio
+     *
+     * @param  int                       $id ID del contrato.
+     * @return array<string, mixed>|null     null si no existe.
      */
-    public function obtenerDataPDFContrato(int $id): ?array{
-        $builder = $this 
+    public function obtenerDataPDFContrato(int $id): ?array
+    {
+        $contrato = $this
             ->select([
-                // Contratos
-                'contratos.id_contrato', 'contratos.id_cotizacion',
+                'contratos.id_contrato',
+                'contratos.id_cotizacion',
                 'contratos.fecha_creacion',
-                'contratos.adelanto', 'contratos.total',
+                'contratos.adelanto',
+                'contratos.total',
                 'contratos.estado',
-                // Clientes 
                 "CONCAT(personas.nombres,' ',COALESCE(personas.apellidos,'')) AS cliente",
-                'personas.telefono', 
-                // Cotizaciones
+                'personas.telefono',
                 'cotizaciones.total_estimado',
-
-                // Cotizaciones_detalles (Detalles paquetes)
-                'cotizaciones_detalles.descripcion',
-                'cotizaciones_detalles.cantidad',
-                'cotizaciones_detalles.precio_unitario',
-                'cotizaciones_detalles.tipo_item',//(PAQUETE|PRODUCTO)
-                'cotizaciones_detalles.id_referencia',
             ])
-            ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion') // cotizaciones
-            ->join('cotizaciones_detalles', 'cotizaciones_detalles.id_cotizacion = cotizaciones.id_cotizacion') // cotidetalles
-            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')//clientes
-            ->join('personas',    'personas.id_persona = clientes.id_persona')// personas
-            ->where('contratos.id_contrato', $id);
+            ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion')
+            ->join('clientes',     'clientes.id_cliente = cotizaciones.id_cliente')
+            ->join('personas',     'personas.id_persona = clientes.id_persona')
+            ->where('contratos.id_contrato', $id)
+            ->first();
 
-            return $builder->first();
+        if (!$contrato) {
+            return null;
+        }
+
+        $idCot = (int) $contrato['id_cotizacion'];
+
+        // Todos los ítems; LEFT JOIN a paquetes y productos para resolver la categoría visual.
+        $contrato['detalles'] = $this->db
+            ->table('cotizaciones_detalles cd')
+            ->select([
+                'cd.tipo_item',
+                'cd.descripcion',
+                'cd.cantidad',
+                'cd.precio_unitario',
+                'COALESCE(p.categoria, pr.categoria) AS categoria',
+            ])
+            ->join('paquetes p',    "p.id_paquete  = cd.id_referencia AND cd.tipo_item = 'paquete'",  'left')
+            ->join('productos pr',  "pr.id_producto = cd.id_referencia AND cd.tipo_item = 'producto'", 'left')
+            ->where('cd.id_cotizacion', $idCot)
+            ->get()->getResultArray();
+
+        // Promociones con datos del colegio (pueden ser varias por cotización).
+        $contrato['promociones'] = $this->db
+            ->table('promociones_escolares pe')
+            ->select([
+                'pe.nombre AS nombre_promocion',
+                'pe.grado',
+                'pe.seccion',
+                'pe.num_estudiantes',
+                'colegios.nombre_colegio',
+                'colegios.distrito',
+                'colegios.provincia',
+            ])
+            ->join('colegios', 'colegios.id_colegio = pe.id_colegio')
+            ->where('pe.id_cotizacion', $idCot)
+            ->get()->getResultArray();
+
+        return $contrato;
     }
 }
