@@ -43,7 +43,7 @@ class PromocionesEscolaresModel extends Model
 
     protected $validationRules = [
         'nombre'          => 'required|max_length[100]',
-        'grado'           => 'required|max_length[10]',
+        'grado'           => 'required|in_list[Inicial,Jardin,Primaria,Secundaria,Superior,Otro]',
         'seccion'         => 'permit_empty|max_length[10]',
         'num_estudiantes' => 'required|integer|greater_than[0]',
         'anio'            => 'required|integer|exact_length[4]',
@@ -53,12 +53,13 @@ class PromocionesEscolaresModel extends Model
         'nombre' => [
             'required' => 'El nombre de la promoción es obligatorio.',
         ],
+        'grado' => [
+            'required' => 'El grado es obligatorio.',
+            'in_list'  => 'El grado debe ser: Inicial, Jardin, Primaria, Secundaria, Superior u Otro.',
+        ],
         'num_estudiantes' => [
             'required'     => 'El número de estudiantes es obligatorio.',
             'greater_than' => 'Debe haber al menos un estudiante.',
-        ],
-        'grado' => [
-            'required' => 'El grado es obligatorio.',
         ],
         'anio' => [
             'required'     => 'El año es obligatorio.',

@@ -32,8 +32,8 @@ class CotizacionesSeeder extends Seeder
                 'id_cliente'      => 3,
                 'id_usuario'      => 1,
                 'fecha_registro'  => '2026-04-02',
-                'observaciones'   => null,
-                'total_estimado'  => 6000.00,
+                'observaciones'   => 'Anuario Small x25 + Cuadro Grupal x5.',
+                'total_estimado'  => 4200.00,
                 'estado'          => 'APROBADA',
             ],
             [

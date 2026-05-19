@@ -23,9 +23,9 @@ class ContratosSeeder extends Seeder
                 'id_cotizacion' => 3,
                 'fecha_creacion'=> '2026-04-05',
                 'fecha_emision' => '2026-04-08',
-                'adelanto'      => 2000.00,
-                'total'         => 6000.00,
-                'observaciones' => 'Pago en dos cuotas acordado con el cliente.',
+                'adelanto'      => 1500.00,
+                'total'         => 4200.00,
+                'observaciones' => 'Adelanto del 36%. Saldo de 1 300 acordado en dos cuotas.',
                 'estado'        => 'ACTIVO',
             ],
         ];

@@ -30,19 +30,19 @@ class PromocionesEscolares extends Migration
                 'null'=>false
             ],
             'grado' => [
-                'type'=>'VARCHAR',
-                'constraint'=>10,
-                'null'=>false
+                'type'       => 'ENUM',
+                'constraint' => ['Inicial', 'Jardin', 'Primaria', 'Secundaria', 'Superior', 'Otro'],
+                'null'       => false,
             ],
             'seccion' => [
-                'type'=>'VARCHAR',
-                'constraint'=>10,
-                'null'=>true
+                'type'       => 'VARCHAR',
+                'constraint' => 10,
+                'null'       => true,
             ],
             'num_estudiantes' => [
-                'type'=>'TINYINT',
-                'unsigned'=>true,
-                'null'=>false
+                'type'     => 'SMALLINT',
+                'unsigned' => true,
+                'null'     => false,
             ],
             'anio' => [
                 'type'=>'YEAR',

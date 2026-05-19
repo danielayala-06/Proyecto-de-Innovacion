@@ -208,35 +208,26 @@ class CotizacionService
         $sesion  = $data['sesion']  ?? [];
         $colegio = $data['colegio'] ?? [];
 
-        $grado          = $sesion['grado']           ?? null;
         $numEstudiantes = (int) ($sesion['num_estudiantes'] ?? 0);
-        $nombreColegio  = trim($colegio['nombre']    ?? '');
+        $nombreColegio  = trim($colegio['nombre'] ?? '');
 
-        if (!$grado || $numEstudiantes <= 0 || $nombreColegio === '') {
+        if ($numEstudiantes <= 0 || $nombreColegio === '') {
+            log_message('warning', "[CotizacionService] _crearPromocionDesde #{$idCotizacion}: datos insuficientes (num_estudiantes={$numEstudiantes}, nombre='{$nombreColegio}')");
             return;
         }
 
         try {
-            $colegioRow = $this->colegioModel
-                ->where('LOWER(nombre_colegio)', strtolower($nombreColegio))
-                ->first();
-
-            if ($colegioRow) {
-                $idColegio = $colegioRow['id_colegio'];
-            } else {
-                $idColegio = $this->colegioModel->insert([
-                    'nombre_colegio' => $nombreColegio,
-                    'provincia'      => $colegio['provincia'] ?? null,
-                    'distrito'       => $colegio['distrito']  ?? null,
-                    'estado'         => 'ACTIVO',
-                ]);
-                if ($idColegio === false) return;
+            $idColegio = $this->_encontrarOCrearColegio($nombreColegio, $colegio);
+            if ($idColegio === null) {
+                log_message('error', "[CotizacionService] _crearPromocionDesde #{$idCotizacion}: no se pudo crear el colegio '{$nombreColegio}'");
+                return;
             }
 
+            $grado   = !empty($sesion['grado']) ? $sesion['grado'] : 'Otro';
+            $seccion = !empty($sesion['seccion']) ? $sesion['seccion'] : null;
             $anio    = !empty($sesion['fecha']) ? (int) date('Y', strtotime($sesion['fecha'])) : (int) date('Y');
-            $seccion = $sesion['seccion'] ?? null;
             $nombre  = !empty($sesion['nombre_promocion'])
-                ? $sesion['nombre_promocion']
+                ? trim($sesion['nombre_promocion'])
                 : ($grado . ($seccion ? ' ' . $seccion : '') . ' · ' . $anio);
 
             $this->promocionModel->insert([
@@ -249,8 +240,13 @@ class CotizacionService
                 'anio'            => $anio,
                 'is_active'       => true,
             ]);
-        } catch (\Throwable) {
-            // La cotización ya está confirmada; la promoción es accesoria.
+
+            $errors = $this->promocionModel->errors();
+            if (!empty($errors)) {
+                log_message('error', "[CotizacionService] _crearPromocionDesde #{$idCotizacion}: " . json_encode($errors));
+            }
+        } catch (\Throwable $e) {
+            log_message('error', "[CotizacionService] _crearPromocionDesde #{$idCotizacion}: {$e->getMessage()}");
         }
     }
 
@@ -542,7 +538,7 @@ class CotizacionService
                     'id_colegio'      => $idColegio,
                     'id_cotizacion'   => $idCotizacion,
                     'nombre'          => $nombre !== '' ? $nombre : ('Promoción ' . date('Y')),
-                    'grado'           => 'N/E',
+                    'grado'           => 'Otro',
                     'seccion'         => null,
                     'num_estudiantes' => max(1, $numEst),
                     'anio'            => (int) date('Y'),
@@ -602,7 +598,7 @@ class CotizacionService
     private function _encontrarOCrearColegio(string $nombre, array $colegioData): ?int
     {
         $existente = $this->colegioModel
-            ->where('nombre_colegio', $nombre)
+            ->where('LOWER(nombre_colegio)', strtolower($nombre))
             ->first();
 
         if ($existente) {

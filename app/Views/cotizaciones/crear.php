@@ -167,10 +167,11 @@
                             <div class="col-6 col-md-3" id="wrap-grado">
                                 <label for="gradoProm" class="form-label">Nivel*</label>
                                 <select class="form-select" id="gradoProm" name="grado">
-                                    <option value="">Seleccionar grado...</option>
-                                    <option value="5 añitos">Inicial/Jardin</option>
-                                    <option value="6to primaria">Primaria</option>
-                                    <option value="5to secundaria">Secundaria</option>
+                                    <option value="">Seleccionar nivel...</option>
+                                    <option value="Inicial">Inicial</option>
+                                    <option value="Jardin">Jardín</option>
+                                    <option value="Primaria">Primaria</option>
+                                    <option value="Secundaria">Secundaria</option>
                                 </select>
                             </div>
 

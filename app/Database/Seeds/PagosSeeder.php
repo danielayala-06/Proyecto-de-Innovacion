@@ -8,41 +8,30 @@ class PagosSeeder extends Seeder
 {
     public function run()
     {
-        // Contratos: 1-4, FormasPago: 1=Efectivo, 2=BCP, 3=Interbank, 4=Yape, 5=Plin
+        // El adelanto inicial ya está registrado en contratos.adelanto y se suma
+        // automáticamente en ContratoService al calcular totalPagado.
+        // Esta tabla solo contiene ABONOS POSTERIORES al adelanto.
+        //
+        // Contrato 1: total=13 500, adelanto=5 000 → saldo base 8 500
+        //   + pago 4 000 → saldo pendiente 4 500
+        // Contrato 2: total=4 200, adelanto=1 500 → saldo base 2 700
+        //   + pago 1 300 → saldo pendiente 1 400
         $data = [
-            // Pagos del Contrato 1 (total 13500, adelanto 5000)
             [
-                'fecha'       => '2026-03-12',
-                'monto'       => 5000.00,
-                'moneda'      => 'PEN',
-                'voucher'     => null,
-                'id_form_pago'=> 1,
-                'id_contrato' => 1,
+                'fecha'        => '2026-05-01',
+                'monto'        => 4000.00,
+                'moneda'       => 'PEN',
+                'voucher'      => 'BCP-2026050198765',
+                'id_form_pago' => 2,
+                'id_contrato'  => 1,
             ],
             [
-                'fecha'       => '2026-05-01',
-                'monto'       => 4000.00,
-                'moneda'      => 'PEN',
-                'voucher'     => 'BCP-2026050198765',
-                'id_form_pago'=> 2,
-                'id_contrato' => 1,
-            ],
-            // Pagos del Contrato 2 (total 6000, adelanto 2000)
-            [
-                'fecha'       => '2026-04-05',
-                'monto'       => 2000.00,
-                'moneda'      => 'PEN',
-                'voucher'     => null,
-                'id_form_pago'=> 4,
-                'id_contrato' => 2,
-            ],
-            [
-                'fecha'       => '2026-05-05',
-                'monto'       => 2000.00,
-                'moneda'      => 'PEN',
-                'voucher'     => 'IBK-20260505-112233',
-                'id_form_pago'=> 3,
-                'id_contrato' => 2,
+                'fecha'        => '2026-05-10',
+                'monto'        => 1300.00,
+                'moneda'       => 'PEN',
+                'voucher'      => 'IBK-20260510-112233',
+                'id_form_pago' => 3,
+                'id_contrato'  => 2,
             ],
         ];
 

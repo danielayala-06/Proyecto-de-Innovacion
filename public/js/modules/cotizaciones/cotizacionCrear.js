@@ -949,6 +949,10 @@ function _validar() {
         return 'El n.° de estudiantes no puede superar 1000.';
     }
 
+    const nombreColegio = document.getElementById('nombreColegio')?.value?.trim() ?? '';
+    if (!nombreColegio) return 'El nombre de la institución es obligatorio.';
+    if (nombreColegio.length < 3) return 'El nombre de la institución debe tener al menos 3 caracteres.';
+
     const wrapGrado = document.getElementById('wrap-grado');
     if (wrapGrado?.style.display !== 'none' && !document.getElementById('gradoProm')?.value) {
         return 'Selecciona el grado de la promoción.';
@@ -997,8 +1001,8 @@ function _buildPayload(idCliente) {
             tipo_institucion: document.querySelector('input[name="tipoInstitucion"]:checked')?.value ?? 'colegio',
             nombre_promocion: document.getElementById('nombreProm')?.value?.trim()      ?? null,
             num_estudiantes:  parseInt(document.getElementById('numEstudiantes')?.value) || null,
-            grado:            document.getElementById('gradoProm')?.value               ?? null,
-            seccion:          document.getElementById('seccionProm')?.value?.trim()     ?? null,
+            grado:            document.getElementById('gradoProm')?.value               || null,
+            seccion:          document.getElementById('seccionProm')?.value?.trim()     || null,
             fecha,
         },
     };
