@@ -17,7 +17,14 @@ class ReglasPaquetes extends Migration
             'id_paquete' => [
                 'type'     => 'INT',
                 'unsigned' => true,
-                'null' => false,
+                'null'     => true,
+                'default'  => null,
+            ],
+            'id_producto' => [
+                'type'     => 'INT',
+                'unsigned' => true,
+                'null'     => true,
+                'default'  => null,
             ],
             'descripcion' => [
                 'type'       => 'VARCHAR',
@@ -42,7 +49,8 @@ class ReglasPaquetes extends Migration
         ]);
 
         $this->forge->addKey('id_regla', true);
-        $this->forge->addForeignKey('id_paquete', 'paquetes', 'id_paquete', 'CASCADE', 'CASCADE');
+        $this->forge->addForeignKey('id_paquete',  'paquetes',  'id_paquete',  'SET NULL', 'CASCADE');
+        $this->forge->addForeignKey('id_producto', 'productos', 'id_producto', 'SET NULL', 'CASCADE');
         $this->forge->createTable('reglas_paquetes');
     }
 
