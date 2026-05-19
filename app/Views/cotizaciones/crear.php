@@ -122,7 +122,8 @@
                                 <label for="nombreColegio" class="form-label" id="labelInstitucion">Nombre del colegio*</label>
                                 <input type="text" class="form-control" id="nombreColegio"
                                        name="nombre_colegio" required minlength="3" maxlength="100"
-                                       placeholder="Ej: I.E. San Marcos">
+                                       placeholder="Ej: I.E. SAN MARCOS"
+                                       oninput="this.value=this.value.toUpperCase()">
                             </div>
 
                             <!-- Provincia -->
@@ -180,7 +181,8 @@
                                 <label for="seccionProm" class="form-label">Sección</label>
                                 <input type="text" class="form-control" id="seccionProm"
                                        name="seccion" maxlength="10"
-                                       placeholder="Ej: A, B, C…">
+                                       placeholder="Ej: A, B, C…"
+                                       oninput="this.value=this.value.toUpperCase()">
                             </div>
 
                             <!-- Observaciones -->
