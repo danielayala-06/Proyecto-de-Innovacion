@@ -150,7 +150,6 @@
         width: 50%; padding: 0 20px; vertical-align: bottom;
     }
 
-    /* Espacio en blanco para firmar a mano */
     .sig-space { height: 56px; }
 
     .sig-line { border-top: 1.5px solid #333; margin-bottom: 5px; }
@@ -161,6 +160,22 @@
 
 </style>
 <body>
+<?php
+// ── Datos derivados ──────────────────────────────────────────────────────────
+$promo     = $contrato['promociones'][0] ?? [];
+$detalles  = $contrato['detalles'] ?? [];
+
+$nombreCliente   = $promo ? $promo['nombre_promocion'] . ' · ' . $promo['nombre_colegio'] : $contrato['cliente'];
+$direccion       = $promo ? $promo['distrito'] . ', ' . $promo['provincia'] : '—';
+$firmaNombreCliente = $promo ? $promo['nombre_promocion'] : $contrato['cliente'];
+
+// Qué checkboxes marcar según las categorías de los ítems de la cotización.
+$categorias = array_map('strtolower', array_column($detalles, 'categoria'));
+$tieneAnuarios  = !empty(array_filter($categorias, fn($c) => in_array($c, ['anuarios', 'anuario', 'paquetes'])));
+$tieneCuadros   = !empty(array_filter($categorias, fn($c) => in_array($c, ['cuadros', 'cuadro'])));
+$tienePhotobook = in_array('photobook', $categorias);
+$tieneOtro      = !empty(array_filter($categorias, fn($c) => in_array($c, ['otro', 'otros', 'personalizado'])));
+?>
 <div class="page" id="contrato">
     <!-- HEADER -->
     <div class="header">
@@ -195,22 +210,22 @@
     <!-- DATOS DEL CLIENTE -->
     <div class="field-row">
         <div class="field-label">Cliente:</div>
-        <div class="field-value">Promoción Secundaria Colegio Byron</div>
+        <div class="field-value"><?= esc($nombreCliente) ?></div>
     </div>
     <div class="two-col">
         <div class="col">
             <div class="field-row">
                 <div class="field-label">Dirección:</div>
-                <div class="field-value">Chincha</div>
+                <div class="field-value"><?= esc($direccion) ?></div>
             </div>
         </div>
         <div class="col">
             <div class="field-row">
                 <div class="field-label">Contacto:</div>
                 <div class="field-value">
-                    <?= $contrato['cliente']?>
+                    <?= esc($contrato['cliente']) ?>
                     :
-                    <?= $contrato['telefono']?>
+                    <?= esc($contrato['telefono']) ?>
                 </div>
             </div>
         </div>
@@ -220,105 +235,90 @@
     <div class="section-title">Tipo de Servicio</div>
     <table class="services-table">
         <tr>
-            <!-- Obtenemos la data de cotizaciones detalles -->
             <td style="width:50%">
-                <?php if($contrato['tipo_item'] === 'ANUARIOS'): ?> 
-                <span class="cb checked"></span>
+                <span class="cb <?= $tieneAnuarios ? 'checked' : '' ?>"></span>
                 Anuarios &nbsp;
-
-                <span class="svc-line"><?= $contrato['cantidad'] ?></span>
-                
+                <?php if ($tieneAnuarios):
+                    $cant = array_sum(array_column(
+                        array_filter($detalles, fn($d) => in_array(strtolower($d['categoria'] ?? ''), ['anuarios','anuario','paquetes'])),
+                        'cantidad'
+                    )); ?>
+                    <span class="svc-line"><?= $cant ?></span>
                 <?php else: ?>
-                    <span class="cb"></span>
-                    Anuarios &nbsp;
-                        <span class="svc-line"></span>
-                <?php endif;?>
-                
+                    <span class="svc-line"></span>
+                <?php endif; ?>
             </td>
             <td style="width:50%">
-                <?php if($contrato['tipo_item'] === 'OTRO'): ?> 
-                    <span class="cb checked"></span>
-                    Otro &nbsp;
-                    <span class="svc-line"><?= $contrato['cantidad'] ?></span>
-                
+                <span class="cb <?= $tieneOtro ? 'checked' : '' ?>"></span>
+                Otro &nbsp;
+                <?php if ($tieneOtro):
+                    $cant = array_sum(array_column(
+                        array_filter($detalles, fn($d) => in_array(strtolower($d['categoria'] ?? ''), ['otro','otros','personalizado'])),
+                        'cantidad'
+                    )); ?>
+                    <span class="svc-line"><?= $cant ?></span>
                 <?php else: ?>
-                    <span class="cb"></span>
-                    Otro &nbsp;
                     <span class="svc-line"></span>
-                <?php endif;?>
-            </td>
-        </tr>
-        <tr>
-            <!--<td>
-                <span class="cb"></span>
-                Sesión prom. &nbsp;
-                <span class="svc-line">&nbsp;</span>
-            </td>-->
-            <td>
-                <?php if($contrato['tipo_item'] === 'CUADROS'): ?> 
-                    <span class="cb checked"></span>
-                    Cuadros &nbsp;
-                    <span class="svc-line"><?= $contrato['cantidad'] ?></span>
-                
-                <?php else: ?>
-                    <span class="cb"></span>
-                    Cuadros &nbsp;
-                    <span class="svc-line"></span>
-                <?php endif;?>               
+                <?php endif; ?>
             </td>
         </tr>
         <tr>
             <td>
-                <?php if($contrato['tipo_item'] === 'PHOTOBOOK'): ?> 
-                    <span class="cb checked"></span>
-                    Photobook &nbsp;
-                    <span class="svc-line"><?= $contrato['cantidad'] ?></span>
-                
+                <span class="cb <?= $tieneCuadros ? 'checked' : '' ?>"></span>
+                Cuadros &nbsp;
+                <?php if ($tieneCuadros):
+                    $cant = array_sum(array_column(
+                        array_filter($detalles, fn($d) => in_array(strtolower($d['categoria'] ?? ''), ['cuadros','cuadro'])),
+                        'cantidad'
+                    )); ?>
+                    <span class="svc-line"><?= $cant ?></span>
                 <?php else: ?>
-                    <span class="cb"></span>
-                    Photobook &nbsp;
                     <span class="svc-line"></span>
-                <?php endif;?>
+                <?php endif; ?>
             </td>
-            <!--<td>
-                <span class="cb"></span>
-                Fiesta de Promoción &nbsp;
-                <span class="svc-line">&nbsp;</span>
-            </td>-->
+        </tr>
+        <tr>
+            <td>
+                <span class="cb <?= $tienePhotobook ? 'checked' : '' ?>"></span>
+                Photobook &nbsp;
+                <?php if ($tienePhotobook):
+                    $cant = array_sum(array_column(
+                        array_filter($detalles, fn($d) => strtolower($d['categoria'] ?? '') === 'photobook'),
+                        'cantidad'
+                    )); ?>
+                    <span class="svc-line"><?= $cant ?></span>
+                <?php else: ?>
+                    <span class="svc-line"></span>
+                <?php endif; ?>
+            </td>
         </tr>
     </table>
 
     <div class="sesion-row">
         <div class="sesion-label">Fecha de la sesión 1:</div>
-        <!--<div class="sesion-value">15 / 07 / 2025</div>-->
+        <div class="sesion-value">&nbsp;</div>
     </div>
     <div class="sesion-row">
         <div class="sesion-label">Fecha de la sesión 2:</div>
-        <!--<div class="sesion-value">22 / 07 / 2025</di25 paquete - Estudiantes S/. 150.00 c/uv>-->
+        <div class="sesion-value">&nbsp;</div>
     </div>
 
     <!-- POR LO SIGUIENTE -->
     <div class="section-title" style="margin-top:30px">Por lo Siguiente:</div>
-    <?php if($contrato['tipo_item']): ?>
+    <?php foreach ($detalles as $item): ?>
         <div class="desc-line">
-            <?= $contrato['cantidad'] ?>
-
-            <?= $contrato['tipo_item'] ?>
-            - 
-            Estudiantes S/.
-            <?= number_format($contrato['precio_unitario'], 2) ?>
-             c/u
+            <?= esc($item['cantidad']) ?>
+            <?= esc($item['descripcion']) ?>
+            &nbsp;–&nbsp; S/.&nbsp;<?= number_format($item['precio_unitario'], 2) ?> c/u
         </div>
+    <?php endforeach; ?>
+
+    <?php if (empty($detalles)): ?>
+        <div class="desc-line">&nbsp;</div>
     <?php endif; ?>
 
+    <br><br><br>
 
-    <!-- Linea original -->
-    <!-- <div class="desc-line">2 Sesiones de fotos incluidas en el paquete</div> -->
-    <div class="desc-line">&nbsp;</div>
-
-    <br>
-    <br>
-    <br>
     <!-- CLÁUSULAS + PRECIOS -->
     <div class="bottom-grid">
         <div class="bottom-left">
@@ -333,8 +333,6 @@
                 </ol>
             </div>
         </div>
-
-        <!-- SALTO DE LINEA XD-->
 
         <div class="bottom-right">
             <div class="price-block">
@@ -355,32 +353,21 @@
                 <div class="price-label">Saldo</div>
                 <div class="price-pill">
                     S/.
-                    <?php $saldo_pendiente = $contrato['total_estimado'] - $contrato['adelanto'] ?>
-                    <?= number_format($saldo_pendiente, 2) ?>
+                    <?= number_format($contrato['total_estimado'] - $contrato['adelanto'], 2) ?>
                 </div>
             </div>
         </div>
     </div>
 
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
-    <br>
+    <br><br><br><br><br><br><br><br><br><br>
 
     <!-- FIRMAS -->
     <div class="signatures">
-
         <div class="sig-col">
             <div class="sig-space"></div>
             <div class="sig-line"></div>
             <div class="sig-name">CLIENTE</div>
-            <div class="sig-sub">Promoción Secundaria Colegio Byron</div>
+            <div class="sig-sub"><?= esc($firmaNombreCliente) ?></div>
         </div>
 
         <div class="sig-col">

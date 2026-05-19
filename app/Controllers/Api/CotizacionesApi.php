@@ -120,6 +120,18 @@ class CotizacionesApi extends BaseApiController
                 ->setJSON(['status' => 'error', 'message' => 'Debe incluir al menos un detalle']);
         }
 
+        $numEstudiantes = (int) (($body['sesion'] ?? [])['num_estudiantes'] ?? 0);
+        if ($numEstudiantes <= 0) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'El número de estudiantes es obligatorio y debe ser mayor a 0']);
+        }
+        if ($numEstudiantes > 1000) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'El número de estudiantes no puede superar 1000']);
+        }
+
         $body['total_estimado'] = $this->_calcularTotal($body['detalles']);
 
         try {

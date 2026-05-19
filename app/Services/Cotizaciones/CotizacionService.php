@@ -380,6 +380,11 @@ class CotizacionService
      */
     public function crear(array $data): array
     {
+        $numEstudiantes = (int) (($data['sesion'] ?? [])['num_estudiantes'] ?? 0);
+        if ($numEstudiantes <= 0 || $numEstudiantes > 1000) {
+            throw new \RuntimeException('El número de estudiantes es obligatorio y debe estar entre 1 y 1000', 422);
+        }
+
         $db = $this->cotizacionModel->db;
         $db->transStart();
 
