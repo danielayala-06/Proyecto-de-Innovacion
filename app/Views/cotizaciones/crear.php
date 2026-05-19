@@ -161,13 +161,7 @@
                                        placeholder="Ej: Promoción 2025">
                             </div>
 
-                            <!-- N.° de estudiantes / participantes (label y max cambian según tipo) -->
-                            <div class="col-6 col-md-3">
-                                <label for="numEstudiantes" class="form-label" id="labelEstudiantes">N.° estudiantes</label>
-                                <input type="number" class="form-control" id="numEstudiantes"
-                                       name="num_estudiantes" min="1" max="100" placeholder="0">
-                                <div class="form-text" id="textoMaxEstudiantes">Máximo 100 personas.</div>
-                            </div>
+                            <input type="hidden" id="numEstudiantes" name="num_estudiantes">
 
                             <!-- Nivel (oculto para Grado Superior y Empresas) -->
                             <div class="col-6 col-md-3" id="wrap-grado">
@@ -261,22 +255,114 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <!-- N.° de estudiantes -->
+                <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.9rem;
+                            padding-bottom:.8rem;border-bottom:1px solid var(--border-color,#dde3ee);">
+                    <div style="flex:1;">
+                        <label for="modalNumEstudiantes"
+                               style="font-size:.78rem;font-weight:700;color:var(--text-primary,#333);
+                                      margin-bottom:.3rem;display:block;">
+                            <i class="bi bi-people-fill me-1" style="color:var(--sidebar-bg,#1b2d6b);"></i>
+                            N.° de estudiantes
+                        </label>
+                        <input type="number" id="modalNumEstudiantes" class="form-control form-control-sm"
+                               min="1" max="1000" placeholder="Ej: 30"
+                               style="max-width:140px;">
+                    </div>
+                    <div id="modal-est-hint"
+                         style="font-size:.72rem;color:var(--text-muted,#888);line-height:1.4;max-width:200px;padding-top:.25rem;">
+                        La cantidad máxima por paquete se limita a este número.
+                    </div>
+                </div>
                 <div class="nivel-filtro-wrap" id="nivelFiltrosContainer"></div>
                 <div class="cat-tabs" id="catTabsContainer"></div>
                 <div id="catPanelsContainer"></div>
-
-                <!-- Cantidad -->
-                <div class="d-flex align-items-center gap-3 mt-3 pt-3 border-top">
-                    <label for="paqueteCantidad" class="form-label mb-0"
-                           style="font-size:0.85rem;font-weight:500;white-space:nowrap;">Cantidad:</label>
-                    <input type="number" class="form-control form-control-sm" id="paqueteCantidad"
-                           value="1" min="1" max="999" style="width:75px;">
+                <div id="paq-hint" style="font-size:.75rem;color:var(--text-muted);margin-top:.6rem;text-align:center;">
+                    Haz clic en un paquete para seleccionarlo · puedes elegir varios
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-primary btn-sm" id="btn-confirmar-paquetes">Agregar paquete</button>
+                <button class="btn btn-primary btn-sm" id="btn-confirmar-paquetes" disabled>
+                    Selecciona un paquete
+                </button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN DE COTIZACIÓN -->
+<div class="modal fade" id="modalConfirmacion" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:660px;">
+        <div class="modal-content">
+
+            <div class="modal-header" style="background:var(--sidebar-bg,#1A1814);border-bottom:none;padding:1rem 1.25rem;">
+                <div>
+                    <h6 class="modal-title mb-0" style="color:var(--sidebar-active-text,#F2E4BC);font-size:1rem;font-weight:700;letter-spacing:.3px;">
+                        <i class="bi bi-file-earmark-check me-2"></i>Resumen de cotización
+                    </h6>
+                    <div style="color:var(--sidebar-link,#C8BCA8);font-size:.75rem;margin-top:2px;opacity:.75;">
+                        Revisa los datos antes de confirmar
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" style="padding:1.25rem;background:var(--bg-surface,#FAFAF8);">
+
+                <!-- Bloque destacado: estudiantes + total -->
+                <div style="display:flex;gap:.75rem;margin-bottom:1.1rem;">
+                    <div id="conf-bloque-estudiantes"
+                         style="flex:1;background:var(--bg-elevated,#fff);border-radius:10px;
+                                padding:.85rem 1rem;text-align:center;border:1.5px solid var(--border,#D6D0C8);">
+                        <div style="font-size:1.9rem;font-weight:800;color:var(--accent,#B49040);line-height:1;"
+                             id="conf-num-estudiantes">—</div>
+                        <div style="font-size:.72rem;color:var(--text-muted,#7C7468);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;">
+                            Estudiantes
+                        </div>
+                    </div>
+                    <div style="flex:1;background:var(--bg-elevated,#fff);border-radius:10px;
+                                padding:.85rem 1rem;text-align:center;border:1.5px solid var(--border,#D6D0C8);">
+                        <div style="font-size:1.9rem;font-weight:800;color:var(--green-text,#1A5E2E);line-height:1;"
+                             id="conf-total">S/ 0.00</div>
+                        <div style="font-size:.72rem;color:var(--text-muted,#7C7468);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;">
+                            Total estimado
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de paquetes -->
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;
+                            letter-spacing:.6px;color:var(--text-muted,#7C7468);margin-bottom:.5rem;">
+                    Paquetes y servicios
+                </div>
+                <div id="conf-tabla-items"
+                     style="border:1.5px solid var(--border,#D6D0C8);border-radius:8px;overflow:hidden;">
+                    <!-- Poblado por JS -->
+                </div>
+
+                <!-- Nota/observaciones (si existen) -->
+                <div id="conf-wrap-notas" style="display:none;margin-top:.9rem;">
+                    <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;
+                                letter-spacing:.6px;color:var(--text-muted,#7C7468);margin-bottom:.35rem;">Notas</div>
+                    <div id="conf-notas"
+                         style="font-size:.82rem;color:var(--text-primary,#1C1916);
+                                background:var(--bg-elevated,#fff);border-radius:7px;
+                                padding:.6rem .85rem;border:1px solid var(--border,#D6D0C8);"></div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer" style="border-top:1px solid var(--border,#D6D0C8);padding:.9rem 1.25rem;gap:.5rem;background:var(--bg-surface,#FAFAF8);">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                    <i class="bi bi-pencil me-1"></i>Revisar
+                </button>
+                <button type="button" class="btn btn-sm" id="btn-confirmar-cotizacion"
+                        style="background:var(--accent,#B49040);color:#fff;font-weight:600;padding:.45rem 1.2rem;border:none;">
+                    <i class="bi bi-check-circle me-1"></i>Confirmar y guardar
+                </button>
+            </div>
+
         </div>
     </div>
 </div>
@@ -329,61 +415,6 @@
 })();
 </script>
 
-<script>
-/* ── Validación Fecha y Hora de la sesión ─────────────────── */
-(function () {
-
-    function pad(n) { return String(n).padStart(2, '0'); }
-
-    /* Genera opciones de hora (06:00 – 21:00 cada 30 min) */
-    function generarHoras(soloFuturas) {
-        const ahora    = new Date();
-        const hActual  = ahora.getHours();
-        const mActual  = ahora.getMinutes();
-        const opciones = [];
-
-        for (let h = 6; h <= 21; h++) {
-            for (let m = 0; m < 60; m += 30) {
-                if (soloFuturas && (h < hActual || (h === hActual && m <= mActual))) continue;
-                opciones.push(`${pad(h)}:${pad(m)}`);
-            }
-        }
-        return opciones;
-    }
-
-    function poblarHoras(soloFuturas) {
-        const anterior = selHora.value;
-        selHora.innerHTML = '<option value="">Hora</option>';
-        generarHoras(soloFuturas).forEach(function (h) {
-            const opt = document.createElement('option');
-            opt.value = h;
-            opt.textContent = h;
-            selHora.appendChild(opt);
-        });
-        /* Mantener la hora elegida si sigue disponible */
-        if ([...selHora.options].some(o => o.value === anterior)) selHora.value = anterior;
-    }
-
-
-    /* ── N.° estudiantes: solo dígitos, sin símbolos ni emojis ── */
-    const inputAlumnos = document.getElementById('numEstudiantes');
-
-    /* Bloquea teclas no numéricas antes de que lleguen al input */
-    inputAlumnos.addEventListener('keydown', function (e) {
-        const permitidas = ['Backspace','Delete','Tab','ArrowLeft','ArrowRight','Home','End'];
-        if (permitidas.includes(e.key)) return;
-        if (!/^\d$/.test(e.key)) e.preventDefault();
-    });
-
-    /* Limpia lo que llega por paste o autocompletado */
-    inputAlumnos.addEventListener('input', function () {
-        const soloDigitos = this.value.replace(/\D/g, '');
-        const numero = parseInt(soloDigitos, 10);
-        if (!soloDigitos || isNaN(numero)) { this.value = ''; return; }
-        this.value = Math.min(parseInt(this.max) || 100, Math.max(1, numero));
-    });
-})();
-</script>
 
 <script>
 /* ── Selector de tipo de institución ──────────────────────── */
@@ -433,11 +464,17 @@
         document.getElementById('labelPromocion').textContent    = c.labelPromocion;
         document.getElementById('nombreProm').placeholder        = c.placeholderProm;
 
-        document.getElementById('labelEstudiantes').textContent  = c.labelEstudiantes;
-        document.getElementById('textoMaxEstudiantes').textContent = c.textoMax;
-        const numInput = document.getElementById('numEstudiantes');
-        numInput.max = c.max;
-        if (numInput.value && parseInt(numInput.value) > c.max) numInput.value = c.max;
+        // Actualizar el max del input de estudiantes en el modal de paquetes
+        const modalNumInput = document.getElementById('modalNumEstudiantes');
+        if (modalNumInput) {
+            modalNumInput.max = c.max;
+            if (modalNumInput.value && parseInt(modalNumInput.value) > c.max)
+                modalNumInput.value = c.max;
+        }
+        // Actualizar el campo oculto si excede el nuevo máximo
+        const hiddenNumEst = document.getElementById('numEstudiantes');
+        if (hiddenNumEst && hiddenNumEst.value && parseInt(hiddenNumEst.value) > c.max)
+            hiddenNumEst.value = c.max;
 
         const show = (id, visible) => {
             document.getElementById(id).style.display = visible ? '' : 'none';

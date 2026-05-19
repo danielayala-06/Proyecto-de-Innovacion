@@ -628,8 +628,38 @@ label {
 .po-name  { font-size: 0.85rem; color: var(--text-primary); font-weight: 600; margin-bottom: 2px; }
 .po-desc  { font-size: 0.74rem; color: var(--text-muted); }
 .po-price { font-size: 0.86rem; color: var(--accent); font-weight: 700; white-space: nowrap; margin-left: 12px; }
-.po-check { color: var(--accent); margin-left: 10px; display: none; }
+.po-check { color: var(--accent); margin-left: 8px; display: none; flex-shrink: 0; }
 .paquete-option.selected .po-check { display: block; }
+
+/* ── CONTROL DE CANTIDAD INLINE (selección múltiple de paquetes) ─── */
+.po-qty {
+    display: none;
+    align-items: center;
+    gap: 3px;
+    margin-left: 10px;
+    flex-shrink: 0;
+}
+.paquete-option.selected .po-qty { display: flex; }
+.po-qty-btn {
+    width: 26px; height: 26px;
+    border: 1.5px solid var(--border); border-radius: 6px;
+    background: var(--bg-card); color: var(--text-primary);
+    font-size: 1rem; font-weight: 700; line-height: 1;
+    cursor: pointer; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .12s, background .12s;
+}
+.po-qty-btn:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+.po-qty-input {
+    width: 42px; height: 26px;
+    text-align: center;
+    border: 1.5px solid var(--border); border-radius: 6px;
+    font-size: 0.82rem; font-weight: 700; color: var(--text-primary);
+    background: var(--bg-input); padding: 0 3px;
+    -moz-appearance: textfield;
+}
+.po-qty-input::-webkit-outer-spin-button,
+.po-qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* ── PAQUETES GRID ───────────────────────────────────────────────── */
 .paquetes-grid {

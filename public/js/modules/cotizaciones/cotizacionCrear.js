@@ -44,12 +44,12 @@ let _nivelFiltro = 'todos';
  * @property {Object|null}   paqueteSeleccionado - Paquete actualmente marcado en el modal.
  */
 const state = {
-    cliente:             null,
-    esNuevoCliente:      false,
-    items:               [],
-    todosClientes:       [],
-    todosPaquetes:       [],
-    paqueteSeleccionado: null,
+    cliente:               null,
+    esNuevoCliente:        false,
+    items:                 [],
+    todosClientes:         [],
+    todosPaquetes:         [],
+    paquetesSeleccionados: new Map(), // idRef (o nombre) → { idRef, nombre, precio, el }
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -427,7 +427,6 @@ function _actualizarResumen() {
     el.querySelectorAll('.btn-res-del').forEach(btn => {
         btn.addEventListener('click', () => {
             state.items.splice(parseInt(btn.dataset.idx), 1);
-            _sincronizarNumEstudiantes();
             _renderContainers();
             _actualizarResumen();
             _saveDraft();
@@ -469,7 +468,7 @@ function _renderContainers() {
 
 /**
  * Renderiza el contenedor de ítems de un tipo específico.
- * Cada ítem tiene un botón de eliminar que actualiza el estado y re-renderiza.
+ * Los paquetes incluyen un control +/− para editar la cantidad en sitio.
  *
  * @param {string} containerId - ID del contenedor DOM.
  * @param {'paquete'|'personalizado'} tipo - Tipo de ítems a renderizar.
@@ -488,15 +487,25 @@ function _renderContainer(containerId, tipo) {
     el.innerHTML = filtered.map(({ item, idx }) => {
         const cant     = item.cantidad ?? 1;
         const subtotal = item.precio * cant;
-        const cantTag  = cant > 1
-            ? `<span style="font-size:0.75rem;color:#888;white-space:nowrap;">×${cant}</span>`
-            : '';
+
+        const cantControl = tipo === 'paquete'
+            ? `<div class="po-qty" style="display:flex;">
+                   <button type="button" class="po-qty-btn item-qty-dec" data-idx="${idx}">−</button>
+                   <input  type="number" class="po-qty-input item-qty-input"
+                           data-idx="${idx}" value="${cant}" min="1" max="999">
+                   <button type="button" class="po-qty-btn item-qty-inc" data-idx="${idx}">+</button>
+               </div>`
+            : (cant > 1 ? `<span style="font-size:0.75rem;color:#888;white-space:nowrap;">×${cant}</span>` : '');
+
         return `
         <div class="d-flex justify-content-between align-items-center p-2 mt-1"
              style="border:1px solid var(--border,#dee2e6);border-radius:6px;font-size:0.82rem;gap:8px;">
             <span style="flex:1;">${item.nombre}</span>
-            ${cantTag}
-            <span style="font-weight:600;white-space:nowrap;">${formatters.moneda(subtotal)}</span>
+            ${cantControl}
+            <span class="item-subtotal" data-idx="${idx}"
+                  style="font-weight:600;white-space:nowrap;min-width:62px;text-align:right;">
+                ${formatters.moneda(subtotal)}
+            </span>
             <button type="button" data-idx="${idx}"
                     style="background:none;border:none;padding:2px 4px;color:#e57373;cursor:pointer;font-size:0.85rem;"
                     class="btn-item-del" title="Quitar">
@@ -505,15 +514,52 @@ function _renderContainer(containerId, tipo) {
         </div>`;
     }).join('');
 
+    // ── Eliminar ítem ────────────────────────────────────────────────────────
     el.querySelectorAll('.btn-item-del').forEach(btn => {
         btn.addEventListener('click', () => {
             state.items.splice(parseInt(btn.dataset.idx), 1);
-            _sincronizarNumEstudiantes();
             _renderContainers();
             _actualizarResumen();
             _saveDraft();
         });
     });
+
+    // ── Editar cantidad (solo paquetes) ──────────────────────────────────────
+    if (tipo !== 'paquete') return;
+
+    const _aplicarCantidad = (idx, nuevaCant) => {
+        nuevaCant = Math.min(999, Math.max(1, nuevaCant));
+        state.items[idx].cantidad = nuevaCant;
+
+        const inputEl    = el.querySelector(`.item-qty-input[data-idx="${idx}"]`);
+        const subtotalEl = el.querySelector(`.item-subtotal[data-idx="${idx}"]`);
+        if (inputEl)    inputEl.value       = nuevaCant;
+        if (subtotalEl) subtotalEl.textContent = formatters.moneda(state.items[idx].precio * nuevaCant);
+
+        _actualizarResumen();
+        _saveDraft();
+    };
+
+    el.querySelectorAll('.item-qty-dec').forEach(btn =>
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.idx);
+            _aplicarCantidad(idx, (state.items[idx].cantidad ?? 1) - 1);
+        })
+    );
+
+    el.querySelectorAll('.item-qty-inc').forEach(btn =>
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.idx);
+            _aplicarCantidad(idx, (state.items[idx].cantidad ?? 1) + 1);
+        })
+    );
+
+    el.querySelectorAll('.item-qty-input').forEach(input =>
+        input.addEventListener('change', () => {
+            const idx = parseInt(input.dataset.idx);
+            _aplicarCantidad(idx, parseInt(input.value) || 1);
+        })
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -605,22 +651,28 @@ function _poblarModalPaquetes(paquetes) {
             const nivel      = NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro';
             const badgeStyle = NIVEL_STYLE[nivel] ?? NIVEL_STYLE.otro;
             return `
-                <div class="paquete-option" data-nivel="${nivel}"
+                <div class="paquete-option" data-nivel="${nivel}" data-id="${p.id_paquete}"
                      onclick="seleccionarOpcion(this,'${nombre}',${p.precio ?? 0},${p.id_paquete})">
-                    <div>
+                    <div class="po-left">
                         <div class="po-name">${p.nombre_paquete}</div>
                         <span class="nivel-badge" style="${badgeStyle}">${NIVEL_LABEL[nivel] ?? nivel}</span>
                     </div>
                     <span class="po-price">${formatters.moneda(p.precio ?? 0)}</span>
+                    <div class="po-qty" onclick="event.stopPropagation()">
+                        <button type="button" class="po-qty-btn" onclick="poQtyStep(this,-1)">−</button>
+                        <input type="number" class="po-qty-input" value="1" min="1" max="999">
+                        <button type="button" class="po-qty-btn" onclick="poQtyStep(this,1)">+</button>
+                    </div>
                     <i class="bi bi-check-circle-fill po-check"></i>
                 </div>`;
         }).join('');
-        return `<div class="cat-panel overflow-auto${i === 0 ? ' active' : ''}" id="cat-panel-${cat}" style="max-height:20rem;">${rows}</div>`;
+        return `<div class="cat-panel overflow-auto${i === 0 ? ' active' : ''}" id="cat-panel-${cat}" style="max-height:22rem;">${rows}</div>`;
     }).join('');
 }
 
 /**
  * Cambia la tab de categoría activa en el modal de paquetes.
+ * Las selecciones previas se conservan al cambiar de tab.
  *
  * @param {string}      cat   - Nombre de la categoría.
  * @param {HTMLElement} tabEl - Botón de tab clickeado.
@@ -630,7 +682,6 @@ window.cambiarCategoria = function (cat, tabEl) {
     document.querySelectorAll('.cat-panel').forEach(p => p.classList.remove('active'));
     tabEl.classList.add('active');
     document.getElementById(`cat-panel-${cat}`)?.classList.add('active');
-    state.paqueteSeleccionado = null;
 };
 
 /**
@@ -648,8 +699,63 @@ window.filtrarPorNivel = function (nivel, btn) {
     });
 };
 
+/** Devuelve el n.° de estudiantes ingresado en el modal de paquetes (0 si vacío). */
+function _getModalNumEst() {
+    return parseInt(document.getElementById('modalNumEstudiantes')?.value) || 0;
+}
+
+/** Suma las cantidades de todos los paquetes actualmente seleccionados en el modal. */
+function _calcularTotalModalQty() {
+    let total = 0;
+    state.paquetesSeleccionados.forEach(({ el }) => {
+        total += parseInt(el?.querySelector('.po-qty-input')?.value) || 0;
+    });
+    return total;
+}
+
 /**
- * Marca un paquete como seleccionado en el modal y guarda sus datos en el estado.
+ * Actualiza el botón de confirmar y el hint con el contador en vivo.
+ * El botón se habilita solo cuando el total de cantidades >= numEst.
+ */
+function _actualizarBtnConfirmar() {
+    const btn  = document.getElementById('btn-confirmar-paquetes');
+    const hint = document.getElementById('paq-hint');
+    if (!btn) return;
+
+    const numEst   = _getModalNumEst();
+    const n        = state.paquetesSeleccionados.size;
+    const totalQty = _calcularTotalModalQty();
+
+    if (numEst <= 0) {
+        btn.disabled    = true;
+        btn.textContent = 'Primero ingresa el n.° de estudiantes';
+        if (hint) hint.textContent = 'Ingresa el n.° de estudiantes para continuar.';
+        return;
+    }
+
+    if (n === 0) {
+        btn.disabled    = true;
+        btn.textContent = 'Selecciona un paquete';
+        if (hint) hint.textContent = 'Haz clic en un paquete para seleccionarlo · puedes elegir varios';
+        return;
+    }
+
+    const alcanza = totalQty >= numEst;
+    btn.disabled    = !alcanza;
+    btn.textContent = alcanza
+        ? `Agregar ${n} paquete${n > 1 ? 's' : ''}`
+        : `Faltan ${numEst - totalQty} para cubrir a todos`;
+
+    if (hint) {
+        hint.innerHTML = alcanza
+            ? `Total: <strong style="color:#198754">${totalQty}</strong> / ${numEst} — listo ✓`
+            : `Total: <strong style="color:#dc3545">${totalQty}</strong> / ${numEst} estudiantes — selecciona más o aumenta la cantidad`;
+    }
+}
+
+/**
+ * Alterna la selección de un paquete en el modal (multi-select).
+ * Si ya está seleccionado lo deselecciona; si no, lo agrega al mapa.
  *
  * @param {HTMLElement} el     - Elemento `.paquete-option` clickeado.
  * @param {string}      nombre - Nombre del paquete.
@@ -657,14 +763,42 @@ window.filtrarPorNivel = function (nivel, btn) {
  * @param {number}      idRef  - ID del paquete en BD.
  */
 window.seleccionarOpcion = function (el, nombre, precio, idRef) {
-    el.closest('.cat-panel')?.querySelectorAll('.paquete-option')
-        .forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    state.paqueteSeleccionado = {
-        idRef:  idRef ? parseInt(idRef) : null,
-        nombre,
-        precio: parseFloat(precio) || 0,
-    };
+    const key = idRef ?? nombre;
+
+    if (el.classList.contains('selected')) {
+        el.classList.remove('selected');
+        state.paquetesSeleccionados.delete(key);
+    } else {
+        el.classList.add('selected');
+        const numEst   = _getModalNumEst();
+        const qtyInput = el.querySelector('.po-qty-input');
+        if (qtyInput) {
+            qtyInput.min   = 1;
+            qtyInput.value = numEst > 0 ? numEst : 1;
+        }
+        state.paquetesSeleccionados.set(key, {
+            idRef:  idRef ? parseInt(idRef) : null,
+            nombre,
+            precio: parseFloat(precio) || 0,
+            el,
+        });
+    }
+
+    _actualizarBtnConfirmar();
+};
+
+/**
+ * Incrementa o decrementa la cantidad de un paquete seleccionado.
+ *
+ * @param {HTMLElement} btn  - Botón +/− presionado.
+ * @param {number}      step - +1 o -1.
+ */
+window.poQtyStep = function (btn, step) {
+    const input = step > 0 ? btn.previousElementSibling : btn.nextElementSibling;
+    const val   = parseInt(input?.value) || 1;
+    const next  = Math.max(1, val + step);
+    if (input) input.value = next;
+    _actualizarBtnConfirmar();
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -708,7 +842,8 @@ function _saveDraft() {
             telefono:  document.getElementById('telefonoCliente')?.value  ?? '',
             correo:    document.getElementById('emailCliente')?.value     ?? '',
         } : null,
-        tipoInstitucion: document.querySelector('input[name="tipoInstitucion"]:checked')?.value ?? 'colegio',
+        tipoInstitucion:  document.querySelector('input[name="tipoInstitucion"]:checked')?.value ?? 'colegio',
+        numEstudiantes:   parseInt(document.getElementById('numEstudiantes')?.value) || 0,
         items: state.items,
         notas: document.getElementById('notas')?.value ?? '',
         colegio: {
@@ -752,6 +887,11 @@ function _restoreDraft(borrador) {
 
     const notasEl = document.getElementById('notas');
     if (notasEl && borrador.notas) notasEl.value = borrador.notas;
+
+    if (borrador.numEstudiantes > 0) {
+        const numEstEl = document.getElementById('numEstudiantes');
+        if (numEstEl) numEstEl.value = borrador.numEstudiantes;
+    }
 
     if (borrador.colegio) {
         const nc = document.getElementById('nombreColegio');
@@ -800,6 +940,15 @@ function _validar() {
     }
 
     if (!state.items.length) return 'Agrega al menos un paquete o servicio a la cotización.';
+
+    const numEst = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
+    if (numEst <= 0) {
+        return 'El n.° de estudiantes es obligatorio. Agrégalo al seleccionar paquetes desde el modal.';
+    }
+    if (numEst > 1000) {
+        return 'El n.° de estudiantes no puede superar 1000.';
+    }
+
     const wrapGrado = document.getElementById('wrap-grado');
     if (wrapGrado?.style.display !== 'none' && !document.getElementById('gradoProm')?.value) {
         return 'Selecciona el grado de la promoción.';
@@ -860,9 +1009,128 @@ function _buildPayload(idCliente) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** @type {bootstrap.Modal|null} Modal de selección de paquetes. */
-let _modalPaquete  = null;
+let _modalPaquete      = null;
 /** @type {bootstrap.Modal|null} Modal de creación de servicio personalizado. */
-let _modalServicio = null;
+let _modalServicio     = null;
+/** @type {bootstrap.Modal|null} Modal de confirmación antes de guardar. */
+let _modalConfirmacion = null;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL DE CONFIRMACIÓN
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Puebla el modal de confirmación con el resumen de la cotización actual
+ * y lo muestra al usuario.
+ *
+ * Datos destacados: n.° de estudiantes, paquetes con cantidad y precio, total.
+ */
+function _mostrarModalConfirmacion() {
+    const numEst = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
+    const notas  = document.getElementById('notas')?.value?.trim() ?? '';
+    const total  = state.items.reduce((s, i) => s + i.precio * (i.cantidad ?? 1), 0);
+
+    // ── Bloques de resumen ──────────────────────────────────────────────────
+    const numEstEl = document.getElementById('conf-num-estudiantes');
+    if (numEstEl) {
+        numEstEl.textContent = numEst > 0 ? numEst : '—';
+        const bloqueEst = document.getElementById('conf-bloque-estudiantes');
+        if (bloqueEst) {
+            bloqueEst.style.borderColor = numEst > 0
+                ? 'var(--accent,#B49040)'
+                : 'var(--border,#D6D0C8)';
+        }
+    }
+
+    const totalEl = document.getElementById('conf-total');
+    if (totalEl) totalEl.textContent = formatters.moneda(total);
+
+    // ── Tabla de ítems ──────────────────────────────────────────────────────
+    const tablaEl = document.getElementById('conf-tabla-items');
+    if (tablaEl) {
+        const paquetes     = state.items.filter(i => i.tipo === 'paquete');
+        const otros        = state.items.filter(i => i.tipo !== 'paquete');
+        const COLS = '1fr 55px 105px 110px';
+
+        const filaHeader = `
+            <div style="display:grid;grid-template-columns:${COLS};
+                        gap:0;background:var(--sidebar-bg,#1A1814);color:var(--sidebar-link,#C8BCA8);
+                        font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
+                <div style="padding:.45rem 1rem;">Descripción</div>
+                <div style="padding:.45rem .5rem;text-align:center;">Cant.</div>
+                <div style="padding:.45rem .75rem;text-align:right;">Precio u.</div>
+                <div style="padding:.45rem 1rem;text-align:right;">Subtotal</div>
+            </div>`;
+
+        const filaItem = (item, esDestacado) => {
+            const cant     = item.cantidad ?? 1;
+            const subtotal = item.precio * cant;
+            const bg       = esDestacado ? 'background:var(--accent-light,#F4EAD0);' : '';
+            return `
+            <div style="display:grid;grid-template-columns:${COLS};
+                        gap:0;${bg}border-bottom:1px solid var(--border,#D6D0C8);
+                        align-items:center;">
+                <div style="padding:.55rem 1rem;">
+                    ${esDestacado
+                        ? `<i class="bi bi-box-seam me-1" style="color:var(--accent,#B49040);font-size:.8rem;"></i>`
+                        : `<i class="bi bi-tools me-1" style="color:var(--text-muted,#7C7468);font-size:.8rem;"></i>`}
+                    <span style="font-size:.82rem;font-weight:${esDestacado ? '600' : '400'};
+                                 color:var(--text-primary,#1C1916);">${item.nombre}</span>
+                </div>
+                <div style="padding:.55rem .5rem;text-align:center;font-size:.82rem;
+                            font-weight:${esDestacado ? '700' : '400'};
+                            color:${esDestacado ? 'var(--accent-text,#6A5018)' : 'var(--text-secondary,#4E4840)'};">
+                    ${cant}
+                </div>
+                <div style="padding:.55rem .75rem;text-align:right;font-size:.8rem;color:var(--text-muted,#7C7468);">
+                    ${formatters.moneda(item.precio)}
+                </div>
+                <div style="padding:.55rem 1rem;text-align:right;font-size:.82rem;font-weight:600;
+                            color:${esDestacado ? 'var(--green-text,#1A5E2E)' : 'var(--text-primary,#1C1916)'};">
+                    ${formatters.moneda(subtotal)}
+                </div>
+            </div>`;
+        };
+
+        const filaTotal = `
+            <div style="display:grid;grid-template-columns:${COLS};gap:0;
+                        background:var(--bg-input,#ECEAE4);">
+                <div style="padding:.65rem 1rem;font-size:.8rem;font-weight:700;
+                            color:var(--text-secondary,#4E4840);text-align:right;
+                            grid-column:1/4;">TOTAL ESTIMADO</div>
+                <div style="padding:.65rem 1rem;text-align:right;font-size:.97rem;
+                            font-weight:800;color:var(--green-text,#1A5E2E);white-space:nowrap;">
+                    ${formatters.moneda(total)}
+                </div>
+            </div>`;
+
+        const sinItems = `
+            <div style="padding:1.2rem;text-align:center;font-size:.82rem;color:var(--text-muted,#7C7468);">
+                Sin ítems registrados.
+            </div>`;
+
+        tablaEl.innerHTML = filaHeader
+            + (paquetes.length || otros.length
+                ? [...paquetes.map(i => filaItem(i, true)),
+                   ...otros.map(i => filaItem(i, false))].join('')
+                : sinItems)
+            + filaTotal;
+    }
+
+    // ── Notas ───────────────────────────────────────────────────────────────
+    const wrapNotas = document.getElementById('conf-wrap-notas');
+    const notasEl   = document.getElementById('conf-notas');
+    if (wrapNotas && notasEl) {
+        if (notas) {
+            notasEl.textContent  = notas;
+            wrapNotas.style.display = '';
+        } else {
+            wrapNotas.style.display = 'none';
+        }
+    }
+
+    _modalConfirmacion?.show();
+}
 
 /**
  * Función principal de inicialización del módulo.
@@ -893,10 +1161,12 @@ async function init() {
     _restoreDraft(manager.cargar());
 
     /* 5. Instanciar modales Bootstrap */
-    const paqEl = document.getElementById('modalPaquete');
-    const srvEl = document.getElementById('modalServicio');
-    if (paqEl) _modalPaquete  = new bootstrap.Modal(paqEl);
-    if (srvEl) _modalServicio = new bootstrap.Modal(srvEl);
+    const paqEl  = document.getElementById('modalPaquete');
+    const srvEl  = document.getElementById('modalServicio');
+    const confEl = document.getElementById('modalConfirmacion');
+    if (paqEl)  _modalPaquete      = new bootstrap.Modal(paqEl);
+    if (srvEl)  _modalServicio     = new bootstrap.Modal(srvEl);
+    if (confEl) _modalConfirmacion = new bootstrap.Modal(confEl);
 
     /* 6a. Teléfono: solo dígitos, feedback en tiempo real */
     document.getElementById('telefonoCliente')?.addEventListener('input', function () {
@@ -1011,16 +1281,45 @@ async function init() {
 
     /* 8. Abrir modal paquete */
     document.getElementById('btn-modal-paquete')?.addEventListener('click', () => {
-        state.paqueteSeleccionado = null;
+        state.paquetesSeleccionados = new Map();
         _nivelFiltro = 'todos';
+
+        // Pre-poblar el campo de estudiantes desde el formulario
+        const formNumEst    = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
+        const modalNumEstEl = document.getElementById('modalNumEstudiantes');
+        if (modalNumEstEl) modalNumEstEl.value = formNumEst > 0 ? formNumEst : '';
+
+        const defaultQty = formNumEst > 0 ? formNumEst : 1;
         document.querySelectorAll('.nivel-filtro-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
         document.querySelectorAll('.paquete-option').forEach(o => {
             o.classList.remove('selected');
             o.style.display = '';
+            const qi = o.querySelector('.po-qty-input');
+            if (qi) { qi.value = defaultQty; qi.min = 1; qi.max = ''; }
         });
-        const cantEl = document.getElementById('paqueteCantidad');
-        if (cantEl) cantEl.value = '1';
+        _actualizarBtnConfirmar();
         _modalPaquete?.show();
+    });
+
+    /* 8b. Listener del input de estudiantes en el modal */
+    document.getElementById('modalNumEstudiantes')?.addEventListener('input', () => {
+        const numEst = _getModalNumEst();
+        document.querySelectorAll('.paquete-option .po-qty-input').forEach(inp => {
+            inp.min = 1;
+            inp.max = '';
+            if (numEst > 0) inp.value = numEst;
+        });
+        _actualizarBtnConfirmar();
+    });
+
+    /* 8c. Event delegation: recalcular total al escribir en cualquier qty del modal */
+    document.getElementById('catPanelsContainer')?.addEventListener('input', e => {
+        if (e.target.classList.contains('po-qty-input')) _actualizarBtnConfirmar();
+    });
+
+    /* 8d. Seleccionar todo el texto al hacer clic/focus en un qty input del modal */
+    document.getElementById('catPanelsContainer')?.addEventListener('focusin', e => {
+        if (e.target.classList.contains('po-qty-input')) e.target.select();
     });
 
     /* 9. Abrir modal servicio */
@@ -1032,13 +1331,33 @@ async function init() {
         _modalServicio?.show();
     });
 
-    /* 10. Confirmar selección de paquete */
+    /* 10. Confirmar selección de paquetes (múltiple) */
     document.getElementById('btn-confirmar-paquetes')?.addEventListener('click', () => {
-        if (!state.paqueteSeleccionado) { alerts.warning('Selecciona un paquete de la lista.'); return; }
-        const { idRef, nombre, precio } = state.paqueteSeleccionado;
-        const cantidad = Math.max(1, parseInt(document.getElementById('paqueteCantidad')?.value) || 1);
-        state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad });
-        _sincronizarNumEstudiantes();
+        const numEst = _getModalNumEst();
+        if (numEst <= 0) {
+            alerts.warning('Ingresa la cantidad de estudiantes antes de agregar paquetes.');
+            return;
+        }
+        if (state.paquetesSeleccionados.size === 0) {
+            alerts.warning('Selecciona al menos un paquete de la lista.');
+            return;
+        }
+
+        const totalQty = _calcularTotalModalQty();
+        if (totalQty < numEst) {
+            alerts.warning(`La cantidad total seleccionada (${totalQty}) no cubre a todos los estudiantes (${numEst}). Aumenta la cantidad o selecciona más paquetes.`);
+            return;
+        }
+
+        state.paquetesSeleccionados.forEach(({ idRef, nombre, precio, el }) => {
+            const cantidad = Math.max(1, parseInt(el.querySelector('.po-qty-input')?.value) || 1);
+            state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad });
+        });
+
+        // Copiar el n.° de estudiantes del modal al campo del formulario
+        const numEstEl = document.getElementById('numEstudiantes');
+        if (numEstEl) numEstEl.value = numEst;
+
         _renderContainers();
         _actualizarResumen();
         _saveDraft();
@@ -1070,17 +1389,22 @@ async function init() {
         })
     );
 
-    /* 13. Envío del formulario */
-    document.getElementById('form-cotizacion')?.addEventListener('submit', async e => {
+    /* 13. Submit → validar y abrir modal de confirmación */
+    document.getElementById('form-cotizacion')?.addEventListener('submit', e => {
         e.preventDefault();
-
         const error = _validar();
         if (error) { alerts.error(error); return; }
+        _mostrarModalConfirmacion();
+    });
 
+    /* 14. Botón confirmar del modal → llamada real a la API */
+    document.getElementById('btn-confirmar-cotizacion')?.addEventListener('click', async () => {
+        const btnConf    = document.getElementById('btn-confirmar-cotizacion');
         const btnGuardar = document.querySelector('.btn-guardar');
-        if (btnGuardar) {
-            btnGuardar.disabled = true;
-            btnGuardar.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Guardando...';
+
+        if (btnConf) {
+            btnConf.disabled    = true;
+            btnConf.innerHTML   = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Guardando...';
         }
 
         try {
@@ -1106,15 +1430,21 @@ async function init() {
 
             await cotizacionApi.crear(_buildPayload(idCliente));
             manager.limpiar();
+            _modalConfirmacion?.hide();
             alerts.ok('Cotización creada correctamente.');
             setTimeout(() => {
                 window.location.href = (window.BASE_URL || '/') + 'cotizaciones';
             }, 1100);
 
         } catch (err) {
+            _modalConfirmacion?.hide();
             alerts.error(err.message || 'Error al crear la cotización.');
+            if (btnConf) {
+                btnConf.disabled  = false;
+                btnConf.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirmar y guardar';
+            }
             if (btnGuardar) {
-                btnGuardar.disabled = false;
+                btnGuardar.disabled  = false;
                 btnGuardar.innerHTML = '<i class="bi bi-check-circle me-2"></i>Guardar cotización';
             }
         }
