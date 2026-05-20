@@ -95,11 +95,11 @@ class ContratoController extends BaseController
 
         // Configuración de Dompdf
         $options = new Options();
-        $options->set('isRemoteEnabled',    true);
+        $options->set('isRemoteEnabled',    false);
         $options->set('defaultFont',        'Times New Roman');
         $options->set('defaultPaperSize',   'letter');
         $options->set('isHtml5ParserEnabled', true);
-        $options->set('isPhpEnabled',       true);
+        $options->set('isPhpEnabled',       false);
 
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);

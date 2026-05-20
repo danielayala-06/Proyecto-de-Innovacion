@@ -8,8 +8,7 @@
  * localStorage y envío del formulario a la API.
  *
  * Variables globales requeridas (declaradas en la vista PHP):
- *  - `window.BASE_URL`         : URL base de la aplicación.
- *  - `window.CURRENT_USER_ID`  : ID del usuario autenticado.
+ *  - `window.BASE_URL` : URL base de la aplicación.
  *
  * Flujo principal (función `init`):
  *  1. Carga en paralelo clientes y paquetes activos desde la API.
@@ -988,7 +987,6 @@ function _buildPayload(idCliente) {
 
     return {
         id_cliente:     idCliente,
-        id_usuario:     window.CURRENT_USER_ID ?? 1,
         observaciones:  document.getElementById('notas')?.value?.trim() ?? null,
         total_estimado: total,
         detalles,

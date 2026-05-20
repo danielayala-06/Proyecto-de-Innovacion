@@ -104,7 +104,6 @@ class CotizacionesApi extends BaseApiController
 
         $rules = [
             'id_cliente' => 'required|integer',
-            'id_usuario' => 'required|integer',
             'detalles'   => 'required',
         ];
 
@@ -113,6 +112,9 @@ class CotizacionesApi extends BaseApiController
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
                 ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
         }
+
+        // id_usuario siempre viene de la sesión autenticada, nunca del body
+        $body['id_usuario'] = session()->get('usuario_id');
 
         if (empty($body['detalles'])) {
             return $this->response
