@@ -1432,13 +1432,19 @@ async function init() {
                 idCliente = state.cliente.id_cliente;
             }
 
-            await cotizacionApi.crear(_buildPayload(idCliente));
+            const res = await cotizacionApi.crear(_buildPayload(idCliente));
             manager.limpiar();
             _modalConfirmacion?.hide();
             alerts.ok('Cotización creada correctamente.');
+
+            const activadas = res.reglas_activadas ?? [];
+            activadas.forEach((r, i) => {
+                setTimeout(() => alerts.info(`Beneficio: ${r.descripcion}`), 600 + i * 400);
+            });
+
             setTimeout(() => {
                 window.location.href = (window.BASE_URL || '/') + 'cotizaciones';
-            }, 1100);
+            }, activadas.length ? 600 + activadas.length * 400 + 1500 : 1100);
 
         } catch (err) {
             _modalConfirmacion?.hide();

@@ -142,6 +142,59 @@ function _renderPreviewCotizacion(cot, el) {
 }
 
 /**
+ * Renderiza la sección de beneficios activados por las reglas de cantidad.
+ *
+ * @param {Array} activadas   - Reglas activadas (tipo_beneficio, descripcion, nombre_producto_beneficio, valor_beneficio).
+ * @param {Array} violaciones - Reglas que superaron el límite.
+ * @param {HTMLElement} container - Contenedor de la cotización donde se inserta el bloque.
+ * @returns {void}
+ */
+function _rowReglaBase(icon, color, descripcion, badge) {
+  return `<div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-color);font-size:.8rem;">
+    <span style="color:${color};font-weight:700;flex-shrink:0;">${icon}</span>
+    <span style="flex:1;color:var(--text-primary);">${descripcion}</span>
+    ${badge}
+  </div>`;
+}
+
+function _rowActivada(r) {
+  const label = r.nombre_producto_beneficio ?? r.valor_beneficio ?? '';
+  const badge  = label
+    ? `<span style="background:var(--accent-faint,#e8f0fe);color:var(--accent);border-radius:12px;padding:2px 9px;font-size:.72rem;font-weight:600;white-space:nowrap;">${label}</span>`
+    : '';
+  return _rowReglaBase('+', 'var(--green-text,#4caf50)', r.descripcion, badge);
+}
+
+function _rowViolacion(r) {
+  const badge = `<span style="background:#fff0f0;color:var(--red-text,#c0392b);border-radius:12px;padding:2px 9px;font-size:.72rem;font-weight:600;white-space:nowrap;">Límite: ${r.limite} uds.</span>`;
+  return _rowReglaBase('!', 'var(--red-text,#e57373)', r.descripcion, badge);
+}
+
+function _renderReglas(activadas, violaciones, container) {
+  if (!container) return;
+  const existing = container.querySelector('.cc-reglas-block');
+  if (existing) existing.remove();
+
+  if (!activadas.length && !violaciones.length) return;
+
+  const rows = [
+    ...activadas.map(_rowActivada),
+    ...violaciones.map(_rowViolacion),
+  ].join('');
+
+  const block = document.createElement('div');
+  block.className = 'cc-reglas-block';
+  block.style.cssText = 'margin-top:16px;';
+  block.innerHTML = `
+    <div class="cc-section-title" style="margin-bottom:8px;">
+      <i class="bi bi-gift me-2" style="color:var(--accent);"></i>Beneficios y condiciones aplicables
+    </div>
+    ${rows}`;
+
+  container.appendChild(block);
+}
+
+/**
  * Renderiza la preview de la promoción escolar vinculada a la cotización.
  *
  * @param {Object|null} prom - Datos de la promoción, o `null` si no hay ninguna.
@@ -349,6 +402,8 @@ async function init() {
 
     if (elCot)  _renderPreviewCotizacion(cot, elCot);
     if (elProm) _renderPreviewPromocion(prom, elProm);
+
+    _renderReglas(cot.reglas_activadas ?? [], cot.reglas_violaciones ?? [], elCot);
 
     const titleEl = document.getElementById('pageTitleCot');
     if (titleEl) titleEl.textContent = formatters.codigo(cot.id) + ' — ' + (cot.cliente?.nombre_completo ?? '');

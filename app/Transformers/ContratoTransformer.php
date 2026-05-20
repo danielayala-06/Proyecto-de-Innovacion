@@ -51,9 +51,10 @@ class ContratoTransformer extends BaseTransformer
             ],
         ];
 
-        if (isset($resource['pagos']))        $result['pagos']        = $resource['pagos'];
-        if (isset($resource['total_pagado'])) $result['total_pagado'] = (float) $resource['total_pagado'];
-        if (isset($resource['saldo']))        $result['saldo']        = (float) $resource['saldo'];
+        if (isset($resource['pagos']))             $result['pagos']             = $resource['pagos'];
+        if (isset($resource['total_pagado']))      $result['total_pagado']      = (float) $resource['total_pagado'];
+        if (isset($resource['saldo']))             $result['saldo']             = (float) $resource['saldo'];
+        if (isset($resource['reglas_aplicadas']))  $result['reglas_aplicadas']  = $resource['reglas_aplicadas'];
 
         return $result;
     }
@@ -66,7 +67,7 @@ class ContratoTransformer extends BaseTransformer
         return [
             'id', 'id_cotizacion', 'fecha_creacion', 'fecha_emision',
             'adelanto', 'total', 'estado', 'observaciones',
-            'cliente', 'cotizacion', 'pagos', 'total_pagado', 'saldo',
+            'cliente', 'cotizacion', 'pagos', 'total_pagado', 'saldo', 'reglas_aplicadas',
         ];
     }
 }

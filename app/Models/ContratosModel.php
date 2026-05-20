@@ -36,6 +36,7 @@ class ContratosModel extends Model
         'total',
         'observaciones',
         'estado',
+        'reglas_aplicadas',
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -143,6 +144,7 @@ class ContratosModel extends Model
                 'contratos.adelanto',
                 'contratos.total',
                 'contratos.estado',
+                'contratos.reglas_aplicadas',
                 "CONCAT(personas.nombres,' ',COALESCE(personas.apellidos,'')) AS cliente",
                 'personas.telefono',
                 'cotizaciones.total_estimado',
@@ -156,6 +158,10 @@ class ContratosModel extends Model
         if (!$contrato) {
             return null;
         }
+
+        $contrato['reglas_aplicadas'] = !empty($contrato['reglas_aplicadas'])
+            ? json_decode($contrato['reglas_aplicadas'], true)
+            : ['violaciones' => [], 'activadas' => []];
 
         $idCot = (int) $contrato['id_cotizacion'];
 

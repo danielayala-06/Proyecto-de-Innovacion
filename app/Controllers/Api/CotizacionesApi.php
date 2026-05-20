@@ -140,12 +140,15 @@ class CotizacionesApi extends BaseApiController
             return $this->serviceError($e);
         }
 
+        $reglasActivadas = $cotizacion['reglas_activadas'] ?? [];
+
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_CREATED)
             ->setJSON([
-                'status'  => 'success',
-                'message' => 'Cotización creada correctamente',
-                'data'    => $this->transformer->transform($cotizacion),
+                'status'           => 'success',
+                'message'          => 'Cotización creada correctamente',
+                'data'             => $this->transformer->transform($cotizacion),
+                'reglas_activadas' => $reglasActivadas,
             ]);
     }
 

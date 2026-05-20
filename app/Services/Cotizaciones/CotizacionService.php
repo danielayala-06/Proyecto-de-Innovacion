@@ -17,6 +17,7 @@ use App\Models\ColegiosModel;
 use App\Models\PromocionesEscolaresModel;
 use App\Models\PaquetesModel;
 use App\Models\ProductosModel;
+use App\Models\ReglasPaquetesModel;
 
 /**
  * Servicio de Cotizaciones.
@@ -50,14 +51,18 @@ class CotizacionService
     /** @var PaquetesModel Acceso a la tabla `paquetes` (resolución de nombres en ítems). */
     protected PaquetesModel $paqueteModel;
 
+    /** @var ReglasPaquetesModel Acceso a las reglas de bonificación por cantidad. */
+    protected ReglasPaquetesModel $reglasPaquetesModel;
+
     public function __construct()
     {
-        $this->cotizacionModel = new CotizacionesModel();
-        $this->detalleModel    = new CotizacionesDetallesModel();
-        $this->colegioModel    = new ColegiosModel();
-        $this->promocionModel  = new PromocionesEscolaresModel();
-        $this->productoModel   = new ProductosModel();
-        $this->paqueteModel    = new PaquetesModel();
+        $this->cotizacionModel      = new CotizacionesModel();
+        $this->detalleModel         = new CotizacionesDetallesModel();
+        $this->colegioModel         = new ColegiosModel();
+        $this->promocionModel       = new PromocionesEscolaresModel();
+        $this->productoModel        = new ProductosModel();
+        $this->paqueteModel         = new PaquetesModel();
+        $this->reglasPaquetesModel  = new ReglasPaquetesModel();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -343,13 +348,21 @@ class CotizacionService
             ? $this->colegioModel->find($promocion['id_colegio'])
             : null;
 
-        return $this->_formatearCotizacion(
+        $detalles       = $detallesPorCot[$idCotizacion] ?? [];
+        $evaluacion     = $this->reglasPaquetesModel->evaluarDetalles($detalles);
+
+        $result = $this->_formatearCotizacion(
             $row,
-            $detallesPorCot[$idCotizacion] ?? [],
+            $detalles,
             !empty($conContrato),
             $promocion,
             $colegio
         );
+
+        $result['reglas_activadas']  = $evaluacion['activadas'];
+        $result['reglas_violaciones'] = $evaluacion['violaciones'];
+
+        return $result;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -379,6 +392,12 @@ class CotizacionService
         $numEstudiantes = (int) (($data['sesion'] ?? [])['num_estudiantes'] ?? 0);
         if ($numEstudiantes <= 0 || $numEstudiantes > 1000) {
             throw new \RuntimeException('El número de estudiantes es obligatorio y debe estar entre 1 y 1000', 422);
+        }
+
+        $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($data['detalles'] ?? []);
+        if (!empty($evaluacion['violaciones'])) {
+            $msgs = implode('; ', array_column($evaluacion['violaciones'], 'descripcion'));
+            throw new \RuntimeException("Límite de cantidad superado: {$msgs}", 422);
         }
 
         $db = $this->cotizacionModel->db;
@@ -429,7 +448,9 @@ class CotizacionService
 
         $this->_crearPromocionDesde($idCotizacion, $data);
 
-        return $this->obtenerPorId($idCotizacion);
+        $result = $this->obtenerPorId($idCotizacion);
+        $result['reglas_activadas'] = $evaluacion['activadas'];
+        return $result;
     }
 
     /**

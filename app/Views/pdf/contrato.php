@@ -129,6 +129,32 @@
         font-size: 10.5px; font-weight: 600; padding: 1px 2px;
     }
 
+    /* ═══ BENEFICIOS Y CONDICIONES ═══ */
+    .reglas-box {
+        border: 1.5px solid #1b2d6b;
+        border-radius: 5px;
+        padding: 6px 10px;
+        margin-bottom: 10px;
+    }
+    .reglas-title {
+        font-weight: 700; font-size: 10px;
+        text-transform: uppercase; letter-spacing: .5px;
+        color: #1b2d6b; margin-bottom: 5px;
+    }
+    .regla-row {
+        display: table; width: 100%; margin-bottom: 3px;
+    }
+    .regla-icon { display: table-cell; width: 14px; font-size: 10px; font-weight: 900; }
+    .regla-text { display: table-cell; font-size: 9px; color: #222; line-height: 1.4; }
+    .regla-badge {
+        display: inline-block;
+        background: #d4daea; color: #1b2d6b;
+        font-size: 7.5px; font-weight: 700;
+        border-radius: 8px; padding: 1px 6px;
+        margin-left: 4px; vertical-align: middle;
+    }
+    .regla-badge.limit { background: #f8d7da; color: #842029; }
+
     /* ═══ CLÁUSULAS + PRECIOS ═══ */
     .bottom-grid { display: table; width: 100%; margin-top: 12px; }
     .bottom-left  { display: table-cell; vertical-align: top; padding-right: 14px; }
@@ -164,6 +190,10 @@
 // ── Datos derivados ──────────────────────────────────────────────────────────
 $promo     = $contrato['promociones'][0] ?? [];
 $detalles  = $contrato['detalles'] ?? [];
+
+$reglasAplicadas = $contrato['reglas_aplicadas'] ?? ['violaciones' => [], 'activadas' => []];
+$reglasActivadas  = $reglasAplicadas['activadas']   ?? [];
+$reglasLimitadas  = $reglasAplicadas['violaciones'] ?? [];
 
 $nombreCliente   = $promo ? $promo['nombre_promocion'] . ' · ' . $promo['nombre_colegio'] : $contrato['cliente'];
 $direccion       = $promo ? $promo['distrito'] . ', ' . $promo['provincia'] : '—';
@@ -317,7 +347,40 @@ $tieneOtro      = !empty(array_filter($categorias, fn($c) => in_array($c, ['otro
         <div class="desc-line">&nbsp;</div>
     <?php endif; ?>
 
-    <br><br><br>
+    <?php if (!empty($reglasActivadas) || !empty($reglasLimitadas)): ?>
+    <br>
+    <!-- BENEFICIOS Y CONDICIONES -->
+    <div class="reglas-box">
+        <div class="reglas-title">Beneficios y condiciones del contrato</div>
+
+        <?php foreach ($reglasActivadas as $r): ?>
+        <div class="regla-row">
+            <div class="regla-icon">+</div>
+            <div class="regla-text">
+                <?= esc($r['descripcion']) ?>
+                <?php
+                    $labelBenef = !empty($r['nombre_producto_beneficio'])
+                        ? $r['nombre_producto_beneficio']
+                        : ($r['valor_beneficio'] ?? '');
+                ?>
+                <span class="regla-badge"><?= esc($labelBenef) ?></span>
+            </div>
+        </div>
+        <?php endforeach; ?>
+
+        <?php foreach ($reglasLimitadas as $r): ?>
+        <div class="regla-row">
+            <div class="regla-icon" style="color:#842029;">!</div>
+            <div class="regla-text">
+                <?= esc($r['descripcion']) ?>
+                <span class="regla-badge limit">Límite: <?= (int)$r['limite'] ?> uds.</span>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <br><br>
 
     <!-- CLÁUSULAS + PRECIOS -->
     <div class="bottom-grid">

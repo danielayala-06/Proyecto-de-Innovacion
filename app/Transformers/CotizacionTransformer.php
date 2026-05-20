@@ -34,17 +34,19 @@ class CotizacionTransformer extends BaseTransformer
         }
 
         return [
-            'id'             => (int)   $resource['cotizacion']['id'],
-            'fecha'          =>         $resource['cotizacion']['fecha'],
-            'estado'         =>         $resource['cotizacion']['estado'],
-            'total'          => (float) $resource['cotizacion']['total'],
-            'observaciones'  =>         $resource['cotizacion']['observaciones'],
-            'tiene_contrato' => (bool)  ($resource['cotizacion']['tiene_contrato'] ?? false),
-            'cliente'        => $this->includeCliente(),
-            'usuario'        => $this->includeUsuario(),
-            'items'          => $this->includeDetalles(),
-            'promocion'      => $this->includePromocion(),
-            'colegio'        => $this->includeColegio(),
+            'id'                  => (int)   $resource['cotizacion']['id'],
+            'fecha'               =>         $resource['cotizacion']['fecha'],
+            'estado'              =>         $resource['cotizacion']['estado'],
+            'total'               => (float) $resource['cotizacion']['total'],
+            'observaciones'       =>         $resource['cotizacion']['observaciones'],
+            'tiene_contrato'      => (bool)  ($resource['cotizacion']['tiene_contrato'] ?? false),
+            'cliente'             => $this->includeCliente(),
+            'usuario'             => $this->includeUsuario(),
+            'items'               => $this->includeDetalles(),
+            'promocion'           => $this->includePromocion(),
+            'colegio'             => $this->includeColegio(),
+            'reglas_activadas'    => $resource['reglas_activadas']   ?? [],
+            'reglas_violaciones'  => $resource['reglas_violaciones']  ?? [],
         ];
     }
 

@@ -14,8 +14,9 @@ namespace App\Services\Contratos;
 
 use App\Models\ContratosModel;
 use App\Models\CotizacionesModel;
+use App\Models\CotizacionesDetallesModel;
 use App\Models\PagosModel;
-use Exception;
+use App\Models\ReglasPaquetesModel;
 
 /**
  * Servicio de Contratos.
@@ -40,11 +41,19 @@ class ContratoService
     /** @var PagosModel Acceso a la tabla `pagos`. */
     protected PagosModel $pagoModel;
 
+    /** @var CotizacionesDetallesModel Acceso a los ítems de la cotización. */
+    protected CotizacionesDetallesModel $detalleModel;
+
+    /** @var ReglasPaquetesModel Evaluador de reglas de bonificación. */
+    protected ReglasPaquetesModel $reglasPaquetesModel;
+
     public function __construct()
     {
-        $this->contratoModel   = new ContratosModel();
-        $this->cotizacionModel = new CotizacionesModel();
-        $this->pagoModel       = new PagosModel();
+        $this->contratoModel      = new ContratosModel();
+        $this->cotizacionModel    = new CotizacionesModel();
+        $this->pagoModel          = new PagosModel();
+        $this->detalleModel       = new CotizacionesDetallesModel();
+        $this->reglasPaquetesModel = new ReglasPaquetesModel();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -172,14 +181,18 @@ class ContratoService
             );
         }
 
+        $detalles   = $this->detalleModel->where('id_cotizacion', (int) $data['id_cotizacion'])->findAll();
+        $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
+
         $idContrato = $this->contratoModel->insert([
-            'id_cotizacion'  => $data['id_cotizacion'],
-            'fecha_creacion' => date('Y-m-d'),
-            'fecha_emision'  => $data['fecha_emision'] ?? null,
-            'adelanto'       => $adelanto,
-            'total'          => $total,
-            'observaciones'  => $data['observaciones'] ?? null,
-            'estado'         => 'ACTIVO',
+            'id_cotizacion'    => $data['id_cotizacion'],
+            'fecha_creacion'   => date('Y-m-d'),
+            'fecha_emision'    => $data['fecha_emision'] ?? null,
+            'adelanto'         => $adelanto,
+            'total'            => $total,
+            'observaciones'    => $data['observaciones'] ?? null,
+            'estado'           => 'ACTIVO',
+            'reglas_aplicadas' => json_encode($evaluacion, JSON_UNESCAPED_UNICODE) ?: null,
         ]);
 
         if ($idContrato === false) {
@@ -187,9 +200,10 @@ class ContratoService
         }
 
         return [
-            'id_contrato' => $idContrato,
-            'total'       => $total,
-            'saldo'       => $total - $adelanto,
+            'id_contrato'      => $idContrato,
+            'total'            => $total,
+            'saldo'            => $total - $adelanto,
+            'reglas_aplicadas' => $evaluacion,
         ];
     }
 
