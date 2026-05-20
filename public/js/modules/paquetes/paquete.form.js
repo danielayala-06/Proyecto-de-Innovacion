@@ -30,6 +30,30 @@ import { categoriaDesdNombre } from './paquete.state.js';
  */
 let _items = [];
 
+/**
+ * Reglas del paquete en edición (cargadas desde la API al abrir en modo edit).
+ * En modo creación se mantiene vacío; las reglas nuevas van a `_reglasPendientes`.
+ *
+ * @type {Array<{id_regla:number, tipo_condicion:string, valor_condicion:number,
+ *              tipo_beneficio:string, valor_beneficio:string, descripcion:string}>}
+ */
+let _reglas = [];
+
+/**
+ * Reglas añadidas durante la creación de un nuevo paquete.
+ * Se envían a la API una a una después de que el paquete es creado.
+ *
+ * @type {Array<{tipo_condicion:string, valor_condicion:number,
+ *              tipo_beneficio:string, valor_beneficio:string, descripcion:string}>}
+ */
+let _reglasPendientes = [];
+
+/** true cuando el modal está en modo edición (paquete ya existe en BD). */
+let _modoEdicion = false;
+
+/** ID del paquete en edición; null si es creación. */
+let _idPaqueteActual = null;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -79,6 +103,49 @@ const _set = (id, v) => { const el = document.getElementById(id); if (el) el.val
 /** Devuelve el `value` recortado del elemento con `id`, o `''` si no existe. */
 const _get = (id)    => document.getElementById(id)?.value?.trim() ?? '';
 
+const TIPO_CONDICION_LABEL = { CANTIDAD_MIN: '≥ cantidad', CANTIDAD_MAX: 'máx. cantidad' };
+const TIPO_BENEFICIO_LABEL  = { producto_gratis: 'Producto gratis', sesion_unica: 'Sesión extra', otro: 'Otro' };
+
+/**
+ * Re-renderiza el contenedor de reglas `#reglasContainer`.
+ * Muestra tanto las reglas guardadas (con botón de borrar) como las pendientes.
+ */
+function _renderReglas() {
+    const container = document.getElementById('reglasContainer');
+    if (!container) return;
+
+    const todasLasReglas = [
+        ..._reglas.map(r => ({ ...r, guardada: true })),
+        ..._reglasPendientes.map((r, i) => ({ ...r, guardada: false, _idx: i })),
+    ];
+
+    if (!todasLasReglas.length) {
+        container.innerHTML = '<p class="text-muted" style="font-size:.8rem;margin:0;">Sin reglas definidas.</p>';
+        return;
+    }
+
+    container.innerHTML = todasLasReglas.map(r => {
+        const label    = `${TIPO_CONDICION_LABEL[r.tipo_condicion] ?? r.tipo_condicion} ${r.valor_condicion}`;
+        const benefTipo = TIPO_BENEFICIO_LABEL[r.tipo_beneficio] ?? r.tipo_beneficio;
+        const benefDetalle = r.tipo_beneficio === 'producto_gratis'
+            ? (r.nombre_producto_beneficio ?? r.valor_beneficio ?? '—')
+            : (r.valor_beneficio ?? '—');
+        const eliminar = r.guardada
+            ? `onclick="window.__paqEliminarRegla(${r.id_regla})"`
+            : `onclick="window.__paqQuitarReglaPendiente(${r._idx})"`;
+        return `
+        <div class="d-flex align-items-start gap-2 mb-2" style="font-size:.8rem;">
+            <span class="badge" style="background:var(--accent);color:#fff;white-space:nowrap;flex-shrink:0;">${label}</span>
+            <span style="color:var(--text-secondary);flex:1;">${r.descripcion}</span>
+            <span class="badge bg-secondary" style="white-space:nowrap;flex-shrink:0;">${benefTipo}: ${benefDetalle}</span>
+            <button type="button" ${eliminar}
+                    style="background:none;border:none;color:var(--red-text,#e57373);cursor:pointer;padding:0 2px;flex-shrink:0;">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>`;
+    }).join('');
+}
+
 /**
  * Re-renderiza el contenedor de ítems `#itemsContainer` a partir del array `_items`.
  * Cada ítem produce un input de texto con botón de eliminar.
@@ -107,6 +174,34 @@ function _renderItems() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HELPERS PRIVADOS ADICIONALES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Limpia el mini-formulario de agregar regla y restaura visibilidad. */
+function _limpiarFormRegla() {
+    ['rTipoCondicion', 'rValorCondicion', 'rTipoBeneficio', 'rValorBeneficio', 'rIdProductoBeneficio', 'rDescripcion']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    _toggleBeneficioUI('');
+}
+
+/**
+ * Muestra el selector de producto o el input de texto según el tipo de beneficio.
+ * @param {string} tipoBeneficio
+ */
+function _toggleBeneficioUI(tipoBeneficio) {
+    const wrapText    = document.getElementById('wrapRValorBeneficio');
+    const wrapSelect  = document.getElementById('wrapRProductoBeneficio');
+    if (!wrapText || !wrapSelect) return;
+    if (tipoBeneficio === 'producto_gratis') {
+        wrapText.classList.add('d-none');
+        wrapSelect.classList.remove('d-none');
+    } else {
+        wrapText.classList.remove('d-none');
+        wrapSelect.classList.add('d-none');
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // API PÚBLICA
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -118,7 +213,7 @@ function _renderItems() {
 export const form = {
 
     /**
-     * Limpia todos los campos del modal y reinicia la lista de ítems.
+     * Limpia todos los campos del modal y reinicia la lista de ítems y reglas.
      * Deja el select de categoría en `'Quinceañeros'` y el de nivel vacío.
      *
      * @returns {void}
@@ -130,7 +225,13 @@ export const form = {
         const niv = document.getElementById('pNivel');
         if (niv) niv.value = '';
         _items = [];
+        _reglas = [];
+        _reglasPendientes = [];
+        _modoEdicion = false;
+        _idPaqueteActual = null;
         _renderItems();
+        _renderReglas();
+        _limpiarFormRegla();
     },
 
     /**
@@ -161,7 +262,15 @@ export const form = {
         const lineas = (p.descripcion || '').split('\n').filter(Boolean);
         _set('pDesc', lineas[0] ?? '');
         _items = [...lineas.slice(1)];
+
+        _reglas = Array.isArray(p.reglas) ? p.reglas : [];
+        _reglasPendientes = [];
+        _modoEdicion = true;
+        _idPaqueteActual = p.id_paquete;
+
         _renderItems();
+        _renderReglas();
+        _limpiarFormRegla();
     },
 
     /**
@@ -241,6 +350,69 @@ export const form = {
             inputs[inputs.length - 1]?.focus();
         }, 30);
     },
+
+    /**
+     * Lee el mini-formulario de regla y agrega la regla a `_reglasPendientes`
+     * (modo creación) o devuelve los datos para que el caller la envíe a la API
+     * (modo edición). Retorna null si hay error de validación.
+     *
+     * @returns {{tipo_condicion:string, valor_condicion:number,
+     *           tipo_beneficio:string, valor_beneficio:string,
+     *           descripcion:string}|null}
+     */
+    leerReglaForm() {
+        const tipo_condicion  = document.getElementById('rTipoCondicion')?.value  ?? '';
+        const valor_condicion = parseFloat(document.getElementById('rValorCondicion')?.value ?? '');
+        const tipo_beneficio  = document.getElementById('rTipoBeneficio')?.value  ?? '';
+        const descripcion     = (document.getElementById('rDescripcion')?.value   ?? '').trim();
+
+        if (!tipo_condicion || !tipo_beneficio) return null;
+        if (!valor_condicion || valor_condicion <= 0) return null;
+        if (!descripcion) return null;
+
+        if (tipo_beneficio === 'producto_gratis') {
+            const sel = document.getElementById('rIdProductoBeneficio');
+            const id_producto_beneficio = parseInt(sel?.value ?? '0', 10);
+            if (!id_producto_beneficio) return null;
+            const nombre_producto_beneficio = sel?.options[sel.selectedIndex]?.text ?? '';
+            return { tipo_condicion, valor_condicion, tipo_beneficio, id_producto_beneficio, nombre_producto_beneficio, descripcion };
+        }
+
+        const valor_beneficio = (document.getElementById('rValorBeneficio')?.value ?? '').trim();
+        if (!valor_beneficio) return null;
+
+        return { tipo_condicion, valor_condicion, tipo_beneficio, valor_beneficio, descripcion };
+    },
+
+    /**
+     * Agrega una regla a la lista de pendientes (modo creación) y re-renderiza.
+     */
+    agregarReglaPendiente(regla) {
+        _reglasPendientes.push(regla);
+        _renderReglas();
+        _limpiarFormRegla();
+    },
+
+    /**
+     * Agrega una regla ya guardada a `_reglas` y re-renderiza (modo edición).
+     */
+    agregarReglaGuardada(regla) {
+        _reglas.push(regla);
+        _renderReglas();
+        _limpiarFormRegla();
+    },
+
+    /** Devuelve las reglas pendientes de guardar (solo en modo creación). */
+    getReglasPendientes() { return [..._reglasPendientes]; },
+
+    /** Muestra u oculta el selector de producto según el tipo de beneficio. */
+    toggleBeneficioUI: _toggleBeneficioUI,
+
+    /** true si el modal está en modo edición. */
+    get modoEdicion() { return _modoEdicion; },
+
+    /** ID del paquete en edición. */
+    get idPaqueteActual() { return _idPaqueteActual; },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -262,4 +434,18 @@ window.__paqUpdateItem = (i, v) => { _items[i] = v; };
  *
  * @param {number} i - Índice del ítem a eliminar.
  */
-window.__paqRemoveItem = (i)    => { _items.splice(i, 1); _renderItems(); };
+window.__paqRemoveItem = (i) => { _items.splice(i, 1); _renderItems(); };
+
+/**
+ * Quita una regla pendiente (modo creación) por índice.
+ * @param {number} i
+ */
+window.__paqQuitarReglaPendiente = (i) => { _reglasPendientes.splice(i, 1); _renderReglas(); };
+
+/**
+ * Quita una regla guardada del array local (la eliminación real vía API la maneja paquetesMain).
+ * @param {number} idRegla
+ */
+window.__paqEliminarRegla = (idRegla) => {
+    if (window.__paqEliminarReglaApi) window.__paqEliminarReglaApi(idRegla);
+};

@@ -119,6 +119,60 @@
                         <i class="bi bi-plus"></i> Agregar ítem
                     </button>
                 </div>
+
+                <!-- Reglas de bonificación -->
+                <hr style="border-color:var(--border);margin:1rem 0 .75rem;">
+                <label style="margin-bottom:8px;">Reglas y condiciones</label>
+                <div id="reglasContainer" style="margin-bottom:.75rem;"></div>
+
+                <!-- Mini-formulario para agregar regla -->
+                <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
+                    <div class="row g-2 mb-2">
+                        <div class="col-6 col-md-4">
+                            <label style="font-size:.75rem;">Condición</label>
+                            <select class="form-select form-select-sm" id="rTipoCondicion">
+                                <option value="">Tipo...</option>
+                                <option value="CANTIDAD_MIN">≥ cantidad (mínimo)</option>
+                                <option value="CANTIDAD_MAX">máx. cantidad (límite)</option>
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label style="font-size:.75rem;">Valor</label>
+                            <input type="number" class="form-control form-control-sm" id="rValorCondicion"
+                                   placeholder="Ej: 15" min="1" step="1">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label style="font-size:.75rem;">Tipo de beneficio</label>
+                            <select class="form-select form-select-sm" id="rTipoBeneficio">
+                                <option value="">Beneficio...</option>
+                                <option value="producto_gratis">Producto gratis</option>
+                                <option value="sesion_unica">Sesión extra</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-12 col-md-5" id="wrapRValorBeneficio">
+                            <label style="font-size:.75rem;">Detalle del beneficio</label>
+                            <input type="text" class="form-control form-control-sm" id="rValorBeneficio"
+                                   placeholder="Ej: Envío gratuito al colegio">
+                        </div>
+                        <div class="col-12 col-md-5 d-none" id="wrapRProductoBeneficio">
+                            <label style="font-size:.75rem;">Producto que se entrega</label>
+                            <select class="form-select form-select-sm" id="rIdProductoBeneficio">
+                                <option value="">Seleccionar producto...</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-7">
+                            <label style="font-size:.75rem;">Descripción visible al cliente</label>
+                            <input type="text" class="form-control form-control-sm" id="rDescripcion"
+                                   placeholder="Ej: +15 alumnos: cuadro laminado para el docente incluido.">
+                        </div>
+                    </div>
+                    <button class="btn-add-item" onclick="agregarReglaModal()">
+                        <i class="bi bi-plus"></i> Agregar regla
+                    </button>
+                </div>
             </div>
             <div class="modal-footer d-flex justify-content-between">
                 <button class="btn btn-outline-danger btn-sm" id="btnEliminarModal" style="display:none;" onclick="confirmarEliminar()">

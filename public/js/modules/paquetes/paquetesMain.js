@@ -24,6 +24,7 @@
  */
 
 import { paqueteApi }                    from '../../api/paquete.api.js';
+import { productoApi }                   from '../../api/producto.api.js';
 import { state, calcularStats, filtrar } from './paquete.state.js';
 import { ui }                            from './paquete.ui.js';
 import { form }                          from './paquete.form.js';
@@ -132,7 +133,12 @@ window.guardarPaquete = async function () {
         if (_idEditando) {
             await paqueteApi.actualizar(_idEditando, form.datosActualizar());
         } else {
-            await paqueteApi.crear(form.datosCrear());
+            const res       = await paqueteApi.crear(form.datosCrear());
+            const idPaquete = res.id_paquete;
+            const pendientes = form.getReglasPendientes();
+            for (const regla of pendientes) {
+                await paqueteApi.crearRegla(idPaquete, regla);
+            }
         }
         _modal?.hide();
         alerts.ok(_idEditando ? 'Paquete actualizado.' : 'Paquete creado.');
@@ -199,6 +205,48 @@ window.agregarItemModal = function () {
     form.agregarItem();
 };
 
+/**
+ * Lee el mini-formulario de regla y la guarda (en edición vía API, en creación en memoria).
+ */
+window.agregarReglaModal = async function () {
+    const regla = form.leerReglaForm();
+    if (!regla) {
+        alerts.error('Completa todos los campos de la regla antes de agregar.');
+        return;
+    }
+
+    if (form.modoEdicion) {
+        try {
+            const res = await paqueteApi.crearRegla(form.idPaqueteActual, regla);
+            // Re-fetch the package so saved rules show updated data (incl. nombre_producto_beneficio)
+            const updated = await paqueteApi.obtener(form.idPaqueteActual);
+            form.poblar(updated.data);
+            alerts.ok('Regla guardada.');
+        } catch (err) {
+            alerts.error(err.message || 'Error al guardar la regla.');
+        }
+    } else {
+        form.agregarReglaPendiente(regla);
+    }
+};
+
+/**
+ * Elimina una regla vía API y actualiza la vista (modo edición).
+ * Referenciado desde `window.__paqEliminarReglaApi` para que form.js pueda invocarlo.
+ *
+ * @param {number} idRegla
+ */
+window.__paqEliminarReglaApi = async function (idRegla) {
+    try {
+        await paqueteApi.eliminarRegla(idRegla);
+        alerts.ok('Regla eliminada.');
+        const res = await paqueteApi.obtener(form.idPaqueteActual);
+        form.poblar(res.data);
+    } catch (err) {
+        alerts.error(err.message || 'Error al eliminar la regla.');
+    }
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // INICIALIZACIÓN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -208,6 +256,23 @@ window.agregarItemModal = function () {
  *
  * @returns {void}
  */
+async function _cargarProductosEnSelect() {
+    try {
+        const res = await productoApi.listar();
+        const select = document.getElementById('rIdProductoBeneficio');
+        if (!select) return;
+        const placeholder = select.querySelector('option[value=""]');
+        select.innerHTML = '';
+        if (placeholder) select.appendChild(placeholder);
+        (res.data ?? []).forEach(p => {
+            const opt = document.createElement('option');
+            opt.value       = p.id_producto;
+            opt.textContent = p.nombre_producto;
+            select.appendChild(opt);
+        });
+    } catch (err) { console.warn('No se pudieron cargar productos para el selector:', err); }
+}
+
 function init() {
     const modalEl        = document.getElementById('modalPaquete');
     const modalConfirmEl = document.getElementById('modalConfirm');
@@ -218,6 +283,11 @@ function init() {
     document.getElementById('filterCat')?.addEventListener('change',   _aplicarFiltros);
     document.getElementById('filterNivel')?.addEventListener('change', _aplicarFiltros);
 
+    document.getElementById('rTipoBeneficio')?.addEventListener('change', e => {
+        form.toggleBeneficioUI(e.target.value);
+    });
+
+    _cargarProductosEnSelect();
     cargarPaquetes();
 }
 
