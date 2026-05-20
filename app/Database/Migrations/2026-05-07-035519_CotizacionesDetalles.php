@@ -26,20 +26,20 @@ class CotizacionesDetalles extends Migration
                 'null'=>false
             ],
             'id_referencia' => [
-                'type'=>'TINYINT',
-                'null'=>false,
-                'unsigned'=>true,
-                'default'=> null
+                'type'     => 'INT',
+                'unsigned' => true,
+                'null'     => true,
+                'default'  => null,
             ],
             'descripcion' => [
                 'type'=>'TEXT',
                 'null'=>true
             ],
             'cantidad' => [
-                'type'=>'TINYINT',
-                'unsigned'=>true,
-                'default'=>1,
-                'null'=>false
+                'type'     => 'SMALLINT',
+                'unsigned' => true,
+                'default'  => 1,
+                'null'     => false,
             ],
             'precio_unitario' => [
                 'type'=>'DECIMAL',

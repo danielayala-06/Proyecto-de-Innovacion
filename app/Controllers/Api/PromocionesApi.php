@@ -110,7 +110,7 @@ class PromocionesApi extends BaseApiController
             'id_colegio'      => 'required|integer',
             'id_cotizacion'   => 'required|integer',
             'nombre'          => 'required|max_length[100]',
-            'grado'           => 'required|max_length[10]',
+            'grado'           => 'required|in_list[Inicial,Jardin,Primaria,Secundaria,Superior,Otro]',
             'num_estudiantes' => 'required|integer|greater_than[0]',
         ];
 

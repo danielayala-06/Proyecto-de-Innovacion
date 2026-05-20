@@ -228,7 +228,9 @@ class CotizacionService
                 return;
             }
 
-            $grado   = !empty($sesion['grado']) ? $sesion['grado'] : 'Otro';
+            $gradosValidos = ['Inicial', 'Jardin', 'Primaria', 'Secundaria', 'Superior', 'Otro'];
+            $gradoRaw = $sesion['grado'] ?? '';
+            $grado    = in_array($gradoRaw, $gradosValidos, true) ? $gradoRaw : 'Otro';
             $seccion = !empty($sesion['seccion']) ? $sesion['seccion'] : null;
             $anio    = !empty($sesion['fecha']) ? (int) date('Y', strtotime($sesion['fecha'])) : (int) date('Y');
             $nombre  = !empty($sesion['nombre_promocion'])
@@ -482,12 +484,17 @@ class CotizacionService
         $db = $this->cotizacionModel->db;
         $db->transStart();
 
-        $this->cotizacionModel->update($idCotizacion, [
-            'observaciones'  => $data['observaciones'] ?? $cotizacion['observaciones'],
-            'total_estimado' => $data['total_estimado'],
-        ]);
+        $camposUpdate = [
+            'observaciones' => $data['observaciones'] ?? $cotizacion['observaciones'],
+        ];
+        if (isset($data['total_estimado'])) {
+            $camposUpdate['total_estimado'] = $data['total_estimado'];
+        }
+        $this->cotizacionModel->update($idCotizacion, $camposUpdate);
 
-        $this->detalleModel->where('id_cotizacion', $idCotizacion)->delete();
+        if (!empty($data['detalles'])) {
+            $this->detalleModel->where('id_cotizacion', $idCotizacion)->delete();
+        }
 
         if (!empty($data['detalles'])) {
             $detallesInsert = [];

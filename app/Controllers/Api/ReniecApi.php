@@ -16,7 +16,7 @@
 
 namespace App\Controllers\Api;
 
-use App\Controllers\BaseController;
+use App\Controllers\BaseApiController;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
@@ -25,7 +25,7 @@ use CodeIgniter\HTTP\ResponseInterface;
  * Normaliza la respuesta de Decolecta al formato interno:
  * { nombres, apellidos, numero_documento }.
  */
-class ReniecApi extends BaseController
+class ReniecApi extends BaseApiController
 {
     /**
      * GET /api/reniec/dni?numero={dni}

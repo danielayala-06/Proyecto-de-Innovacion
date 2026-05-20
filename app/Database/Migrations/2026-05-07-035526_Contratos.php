@@ -56,6 +56,7 @@ class Contratos extends Migration
             ],
         ]);
         $this->forge->addKey('id_contrato', true);
+        $this->forge->addUniqueKey('id_cotizacion');
         $this->forge->addForeignKey('id_cotizacion','cotizaciones','id_cotizacion','RESTRICT','RESTRICT');
         $this->forge->createTable('contratos');
     }

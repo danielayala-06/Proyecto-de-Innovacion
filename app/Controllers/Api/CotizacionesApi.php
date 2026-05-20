@@ -214,7 +214,39 @@ class CotizacionesApi extends BaseApiController
                 ->setJSON(['status' => 'error', 'message' => 'Cotización no encontrada']);
         }
 
-        $this->service->cambiarEstado((int) $id, $estado);
+        // Máquina de estados: transiciones permitidas
+        $estadoActual = $cotizacion['cotizacion']['estado'];
+        $transiciones = [
+            'PENDIENTE' => ['APROBADA', 'RECHAZADA'],
+            'APROBADA'  => ['RECHAZADA'],
+            'RECHAZADA' => [],
+            'EXPIRADA'  => [],
+        ];
+
+        if (!in_array($estado, $transiciones[$estadoActual] ?? [])) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_CONFLICT)
+                ->setJSON([
+                    'status'  => 'error',
+                    'message' => "No se puede cambiar de {$estadoActual} a {$estado}",
+                ]);
+        }
+
+        // Proteger cotizaciones APROBADAS que ya tienen contrato activo
+        if ($estado === 'RECHAZADA' && ($cotizacion['cotizacion']['tiene_contrato'] ?? false)) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_CONFLICT)
+                ->setJSON([
+                    'status'  => 'error',
+                    'message' => 'No se puede rechazar una cotización con contrato activo',
+                ]);
+        }
+
+        try {
+            $this->service->cambiarEstado((int) $id, $estado);
+        } catch (\RuntimeException $e) {
+            return $this->serviceError($e);
+        }
 
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)

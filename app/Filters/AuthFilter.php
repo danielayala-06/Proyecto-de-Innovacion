@@ -18,8 +18,11 @@ class AuthFilter implements FilterInterface
             return;
         }
 
-        // Detectar si la petición es a la API (espera JSON)
-        if (str_starts_with($request->getUri()->getPath(), 'api/')) {
+        // Detectar si la petición es a la API (espera JSON).
+        // getPath() puede incluir el segmento 'index.php' en dev, por eso
+        // se busca el segmento 'api' en cualquier posición del path.
+        $path = ltrim($request->getUri()->getPath(), '/');
+        if (str_starts_with($path, 'api/') || str_starts_with($path, 'index.php/api/')) {
             return service('response')
                 ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED)
                 ->setJSON(['status' => 'error', 'message' => 'No autorizado. Inicia sesión.']);

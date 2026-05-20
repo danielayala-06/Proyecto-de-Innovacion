@@ -19,9 +19,7 @@ class Personas extends Migration
             'tipo_documento' => ['type'=>'ENUM','constraint'=>['DNI', 'CE', 'PASAPORTE'],'null'=>false],
         ]);
         $this->forge->addKey('id_persona', true);
-        $this->forge->addUniqueKey('numero_documento');
-        $this->forge->addUniqueKey('telefono');
-        $this->forge->addUniqueKey('correo');
+        $this->forge->addKey('numero_documento');
         $this->forge->createTable('personas');
     }
 

@@ -103,26 +103,6 @@ class PagoService
      */
     public function registrar(array $data): array
     {
-        $contrato = $this->contratoModel->find((int) $data['id_contrato']);
-
-        if (!$contrato) {
-            throw new \RuntimeException('Contrato no encontrado', 404);
-        }
-
-        if ($contrato['estado'] !== 'ACTIVO') {
-            throw new \RuntimeException('Solo se pueden registrar pagos en contratos ACTIVOS', 409);
-        }
-
-        $sumPagos = $this->pagoModel->sumarPorContrato((int) $data['id_contrato']);
-        $saldo    = (float) $contrato['total'] - (float) $contrato['adelanto'] - $sumPagos;
-
-        if ((float) $data['monto'] > $saldo + 0.001) {
-            throw new \RuntimeException(
-                json_encode(['message' => 'El monto excede el saldo pendiente', 'saldo' => round($saldo, 2)]),
-                409
-            );
-        }
-
         $fechaStr  = $data['fecha'] ?? date('Y-m-d');
         $fechaPago = \DateTime::createFromFormat('Y-m-d', $fechaStr);
 
@@ -142,6 +122,36 @@ class PagoService
             throw new \RuntimeException('La fecha de pago no puede ser anterior a 3 días de hoy.', 422);
         }
 
+        $db = $this->contratoModel->db;
+        $db->transStart();
+
+        // Lock the contract row to prevent concurrent payments from racing
+        $contrato = $db->query(
+            'SELECT * FROM contratos WHERE id_contrato = ? FOR UPDATE',
+            [(int) $data['id_contrato']]
+        )->getRowArray();
+
+        if (!$contrato) {
+            $db->transRollback();
+            throw new \RuntimeException('Contrato no encontrado', 404);
+        }
+
+        if ($contrato['estado'] !== 'ACTIVO') {
+            $db->transRollback();
+            throw new \RuntimeException('Solo se pueden registrar pagos en contratos ACTIVOS', 409);
+        }
+
+        $sumPagos = $this->pagoModel->sumarPorContrato((int) $data['id_contrato']);
+        $saldo    = (float) $contrato['total'] - (float) $contrato['adelanto'] - $sumPagos;
+
+        if ((float) $data['monto'] > $saldo + 0.001) {
+            $db->transRollback();
+            throw new \RuntimeException(
+                json_encode(['message' => 'El monto excede el saldo pendiente', 'saldo' => round($saldo, 2)]),
+                409
+            );
+        }
+
         $idPago = $this->pagoModel->insert([
             'id_contrato'  => $data['id_contrato'],
             'id_form_pago' => $data['id_form_pago'],
@@ -152,15 +162,21 @@ class PagoService
         ]);
 
         if ($idPago === false) {
+            $db->transRollback();
             throw new \RuntimeException(json_encode($this->pagoModel->errors()), 422);
         }
 
         $nuevoTotalPagado = (float) $contrato['adelanto'] + $sumPagos + (float) $data['monto'];
         $nuevoSaldo       = (float) $contrato['total'] - $nuevoTotalPagado;
 
-        // Cierre automático del contrato al saldar la deuda
         if ($nuevoSaldo <= 0) {
             $this->contratoModel->update((int) $data['id_contrato'], ['estado' => 'COMPLETADO']);
+        }
+
+        $db->transComplete();
+
+        if (!$db->transStatus()) {
+            throw new \RuntimeException('Error al registrar el pago', 500);
         }
 
         return [
@@ -192,6 +208,10 @@ class PagoService
         }
 
         $contrato = $this->contratoModel->find((int) $pago['id_contrato']);
+
+        if (!$contrato) {
+            throw new \RuntimeException('Contrato asociado al pago no encontrado', 404);
+        }
 
         if ($contrato['estado'] !== 'ACTIVO') {
             throw new \RuntimeException('No se puede anular pagos de contratos no activos', 409);

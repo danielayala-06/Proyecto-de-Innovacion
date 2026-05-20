@@ -184,6 +184,9 @@ class ContratoService
         $detalles   = $this->detalleModel->where('id_cotizacion', (int) $data['id_cotizacion'])->findAll();
         $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
 
+        $db = $this->contratoModel->db;
+        $db->transStart();
+
         $idContrato = $this->contratoModel->insert([
             'id_cotizacion'    => $data['id_cotizacion'],
             'fecha_creacion'   => date('Y-m-d'),
@@ -196,7 +199,15 @@ class ContratoService
         ]);
 
         if ($idContrato === false) {
+            $db->transRollback();
             throw new \RuntimeException(json_encode($this->contratoModel->errors()), 422);
+        }
+
+        $db->transComplete();
+
+        if (!$db->transStatus()) {
+            // UNIQUE violation: concurrent request already created a contract
+            throw new \RuntimeException('Ya existe un contrato para esta cotización', 409);
         }
 
         return [
@@ -236,10 +247,9 @@ class ContratoService
         $updateData = [];
 
         if (isset($data['adelanto'])) {
-            $cot = $this->cotizacionModel->find((int) $contrato['id_cotizacion']);
-            if ((float) $data['adelanto'] > (float) $cot['total_estimado']) {
+            if ((float) $data['adelanto'] > (float) $contrato['total']) {
                 throw new \RuntimeException(
-                    'El adelanto no puede superar el total de la cotización',
+                    'El adelanto no puede superar el total del contrato',
                     422
                 );
             }

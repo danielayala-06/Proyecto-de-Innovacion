@@ -96,7 +96,8 @@ class SesionService
             ->join('cotizaciones',
                    'cotizaciones.id_cotizacion = promociones_escolares.id_cotizacion', 'left')
             ->join('contratos',
-                   'contratos.id_cotizacion = cotizaciones.id_cotizacion', 'left');
+                   "contratos.id_cotizacion = cotizaciones.id_cotizacion AND contratos.estado != 'CANCELADO'",
+                   'left');
 
         if (!empty($filters['id_promocion'])) {
             $builder->where('sesiones_fotograficas.id_promocion', (int) $filters['id_promocion']);
@@ -158,7 +159,7 @@ class SesionService
             throw new \RuntimeException('Promoción no encontrada', 404);
         }
 
-        $detalles   = $this->detalleModel->listarPaquetes($promocion['id_cotizacion']);
+        $detalles   = $this->detalleModel->listarPaquetes((int) $promocion['id_cotizacion']);
         $permitidas = $this->_calcularPermitidas($detalles, $tipo);
         $usadas     = $this->_contarUsadas($idPromocion, $tipo);
 
@@ -188,7 +189,7 @@ class SesionService
         $configs    = $this->paquetesSesionesModel->configuracionesPorTipo($idsPaquetes, $tipo);
         $permitidas = 0;
         foreach ($configs as $cfg) {
-            $permitidas = max($permitidas, (int) $cfg['num_sesiones']);
+            $permitidas += (int) $cfg['num_sesiones'];
         }
 
         return $permitidas + $this->_bonificacionesPorCantidad($detalles);
