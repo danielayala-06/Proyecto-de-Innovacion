@@ -196,30 +196,23 @@ class SesionService
 
     /**
      * Suma las sesiones extra otorgadas por reglas de bonificación de tipo 'sesion_unica'.
-     * Cada regla que se cumpla (por condición de cantidad mínima o máxima) suma +1 sesión.
+     * Usa evaluarDetalles() para respetar la estructura many-to-many de reglas_items.
      *
      * @param  array<int, array<string, mixed>> $detalles Ítems de la cotización.
      * @return int                                        Bonus de sesiones adicionales.
      */
     private function _bonificacionesPorCantidad(array $detalles): int
     {
-        $cantidades = array_column($detalles, 'cantidad', 'id_referencia');
+        if (empty($detalles)) {
+            return 0;
+        }
+
+        $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
         $bonus      = 0;
 
-        foreach ($detalles as $det) {
-            $idPaq  = $det['id_referencia'];
-            $cant   = (int) ($cantidades[$idPaq] ?? 0);
-            $reglas = $this->reglasPaquetesModel->porPaqueteTipo((int) $idPaq, 'sesion_unica');
-
-            foreach ($reglas as $regla) {
-                $cumple = match ($regla['tipo_condicion']) {
-                    'CANTIDAD_MIN' => $cant >= (float) $regla['valor_condicion'],
-                    'CANTIDAD_MAX' => $cant <= (float) $regla['valor_condicion'],
-                    default        => false,
-                };
-                if ($cumple) {
-                    $bonus++;
-                }
+        foreach ($evaluacion['activadas'] as $r) {
+            if ($r['tipo_beneficio'] === 'sesion_unica') {
+                $bonus++;
             }
         }
 
