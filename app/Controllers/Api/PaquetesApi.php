@@ -16,11 +16,14 @@
  *   PATCH  /api/paquetes/{id}/estado            → activar / desactivar
  *   POST   /api/paquetes/{id}/productos         → agregar producto al paquete
  *   DELETE /api/paquetes/{id}/productos/{pid}   → quitar producto del paquete
+ *   POST   /api/paquetes/{id}/reglas            → crear regla de bonificación
+ *   DELETE /api/paquetes/reglas/{rid}           → eliminar regla
  */
 
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseApiController;
+use App\Models\ProductosModel;
 use App\Services\Paquetes\PaqueteService;
 use App\Transformers\PaqueteTransformer;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -39,10 +42,14 @@ class PaquetesApi extends BaseApiController
     /** @var PaqueteTransformer Formateador de respuestas JSON. */
     protected PaqueteTransformer $paqueteTransformer;
 
+    /** @var ProductosModel Para el endpoint GET /api/productos. */
+    protected ProductosModel $productosModel;
+
     public function __construct()
     {
         $this->paqueteService     = new PaqueteService();
         $this->paqueteTransformer = new PaqueteTransformer();
+        $this->productosModel     = new ProductosModel();
     }
 
     /**
@@ -246,6 +253,84 @@ class PaquetesApi extends BaseApiController
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON(['status' => 'success', 'message' => 'Producto removido del paquete']);
+    }
+
+    /**
+     * POST /api/paquetes/{id}/reglas
+     *
+     * Body: { tipo_condicion, valor_condicion, tipo_beneficio, valor_beneficio, descripcion }
+     *
+     * @param  mixed $id ID del paquete.
+     * @return ResponseInterface 201 con id_regla | 404 | 422.
+     */
+    public function crearRegla($id)
+    {
+        $body = $this->request->getJSON(true) ?? [];
+
+        $rules = [
+            'tipo_condicion'  => 'required|in_list[CANTIDAD_MIN,CANTIDAD_MAX]',
+            'valor_condicion' => 'required|decimal',
+            'tipo_beneficio'  => 'required|in_list[producto_gratis,sesion_unica,otro]',
+            'descripcion'     => 'required|max_length[300]',
+        ];
+
+        if (!$this->validateData($body, $rules)) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
+        }
+
+        try {
+            $idRegla = $this->paqueteService->crearRegla((int) $id, $body);
+        } catch (\RuntimeException $e) {
+            return $this->serviceError($e);
+        }
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_CREATED)
+            ->setJSON(['status' => 'success', 'message' => 'Regla creada', 'id_regla' => $idRegla]);
+    }
+
+    /**
+     * GET /api/productos[?estado=ACTIVO]
+     *
+     * Lista simplificada de productos para selectores en formularios.
+     *
+     * @return ResponseInterface 200 con la lista de productos.
+     */
+    public function indexProductos()
+    {
+        $productos = $this->productosModel->where('estado', 'ACTIVO')->orderBy('nombre_producto', 'ASC')->findAll();
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON([
+                'status' => 'success',
+                'data'   => array_map(fn($p) => [
+                    'id_producto'    => (int) $p['id_producto'],
+                    'nombre_producto' => $p['nombre_producto'],
+                    'categoria'      => $p['categoria'],
+                ], $productos),
+            ]);
+    }
+
+    /**
+     * DELETE /api/paquetes/reglas/{rid}
+     *
+     * @param  mixed $rid ID de la regla.
+     * @return ResponseInterface 200 | 404.
+     */
+    public function eliminarRegla($rid)
+    {
+        try {
+            $this->paqueteService->eliminarRegla((int) $rid);
+        } catch (\RuntimeException $e) {
+            return $this->serviceError($e);
+        }
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON(['status' => 'success', 'message' => 'Regla eliminada']);
     }
 
 }
