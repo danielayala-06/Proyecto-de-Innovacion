@@ -5,8 +5,7 @@
  * @package App\Controllers
  *
  * Controlador web para el módulo de Sesiones Fotográficas.
- * Gestiona dos vistas: el listado global de sesiones y la vista detallada
- * de sesiones asociadas a un contrato específico.
+ * Gestiona la vista detallada de sesiones asociadas a un contrato específico.
  */
 
 namespace App\Controllers;
@@ -18,29 +17,10 @@ use Config\Database;
  * Sirve las vistas del módulo de sesiones fotográficas.
  *
  * Rutas:
- *  - GET /sesiones                        → lista()
  *  - GET /contratos/{idContrato}/sesiones → index(int $idContrato)
  */
 class SesionController extends BaseController
 {
-    /**
-     * Renderiza el listado global de sesiones fotográficas.
-     *
-     * La carga de datos y los filtros se manejan desde el módulo JS
-     * a través de la API.
-     *
-     * @return string HTML de la vista renderizada.
-     */
-    public function lista()
-    {
-        $data = [
-            'header' => view('Layouts/header'),
-            'footer' => view('Layouts/footer'),
-        ];
-
-        return view('sesiones/lista', $data);
-    }
-
     /**
      * Renderiza la vista de gestión de sesiones para un contrato específico.
      *

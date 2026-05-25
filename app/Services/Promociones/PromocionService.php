@@ -68,9 +68,11 @@ class PromocionService
     {
         $q = $this->promocionModel
             ->select('promociones_escolares.*, colegios.nombre_colegio, colegios.distrito,
-                      cotizaciones.total_estimado, cotizaciones.estado AS estado_cotizacion')
+                      cotizaciones.total_estimado, cotizaciones.estado AS estado_cotizacion,
+                      contratos.id_contrato')
             ->join('colegios',     'colegios.id_colegio = promociones_escolares.id_colegio')
             ->join('cotizaciones', 'cotizaciones.id_cotizacion = promociones_escolares.id_cotizacion')
+            ->join('contratos',    'contratos.id_cotizacion = promociones_escolares.id_cotizacion', 'left')
             ->orderBy('promociones_escolares.anio', 'DESC')
             ->orderBy('colegios.nombre_colegio', 'ASC');
 

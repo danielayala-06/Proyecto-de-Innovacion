@@ -62,6 +62,45 @@ class EstudianteService
         return $this->estudianteModel->listarConApoderado($idPromocion);
     }
 
+    /**
+     * Retorna el perfil completo de un estudiante:
+     *   - Datos personales + apoderado.
+     *   - Productos contratados en la cotización de su promoción.
+     *   - Historial de asistencia a sesiones fotográficas.
+     *
+     * @param  int                       $id ID del estudiante.
+     * @return array<string, mixed>|null     null si no existe.
+     */
+    public function obtenerDetalle(int $id): ?array
+    {
+        $estudiante = $this->estudianteModel->obtenerConApoderado($id);
+        if (!$estudiante) {
+            return null;
+        }
+
+        $db          = \Config\Database::connect();
+        $idPromocion = (int) $estudiante['id_promocion'];
+
+        // Productos/paquetes de la cotización vinculada a la promoción
+        $estudiante['productos'] = $db
+            ->table('cotizaciones_detalles cd')
+            ->select('cd.tipo_item, cd.descripcion, cd.cantidad, cd.precio_unitario')
+            ->join('promociones_escolares pe', 'pe.id_cotizacion = cd.id_cotizacion')
+            ->where('pe.id_promocion', $idPromocion)
+            ->get()->getResultArray();
+
+        // Historial de asistencia del estudiante
+        $estudiante['sesiones'] = $db
+            ->table('sesion_asistencia sa')
+            ->select('sf.id_sesion, sf.tipo, sf.fecha_hora_sesion, sf.estado, sa.asistio')
+            ->join('sesiones_fotograficas sf', 'sf.id_sesion = sa.id_sesion')
+            ->where('sa.id_estudiante', $id)
+            ->orderBy('sf.fecha_hora_sesion', 'ASC')
+            ->get()->getResultArray();
+
+        return $estudiante;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // ESCRITURA
     // ─────────────────────────────────────────────────────────────────────────

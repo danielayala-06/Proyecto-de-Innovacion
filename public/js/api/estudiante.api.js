@@ -27,6 +27,11 @@ export const estudianteApi = {
      */
     listar:    (idPromocion) => http.get('api/estudiantes', { id_promocion: idPromocion }),
     /**
+     * @param {number} id - ID del estudiante.
+     * @returns {Promise<Object>} Perfil completo con productos y historial de sesiones.
+     */
+    obtener:   (id)          => http.get(`api/estudiantes/${id}`),
+    /**
      * @param {Object} data - `{ id_promocion, estudiante: {...}, apoderado: {...} }`.
      */
     crear:     (data)        => http.post('api/estudiantes', data),

@@ -308,6 +308,173 @@ window.eliminarEstudiante = async function (id) {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PERFIL ESTUDIANTE
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TIPO_LABEL_SESION = { colegio: 'Colegio', exteriores: 'Exteriores', estudio: 'Estudio', otro: 'Otro' };
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+function _fechaCorta(str) {
+    if (!str) return '—';
+    const d = new Date(str.includes('T') ? str : str + 'T00:00:00');
+    if (isNaN(d)) return str;
+    return `${String(d.getDate()).padStart(2,'0')} ${MESES[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/**
+ * Abre el modal de perfil del estudiante con sus datos, productos y asistencia.
+ *
+ * @param {number} idEstudiante - ID del estudiante.
+ * @returns {Promise<void>}
+ */
+window.verDetalleEstudiante = async function(idEstudiante) {
+    const modalEl = document.getElementById('modalPerfilEstudiante');
+    const modal   = bootstrap.Modal.getOrCreateInstance(modalEl);
+    const body    = document.getElementById('perfilBody');
+    const titulo  = document.getElementById('perfilNombre');
+
+    titulo.textContent = 'Cargando...';
+    body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="bi bi-arrow-repeat"></i> Cargando...</div>';
+    modal.show();
+
+    try {
+        const res = await estudianteApi.obtener(idEstudiante);
+        const e   = res.data;
+
+        titulo.textContent = `${e.apellidos}, ${e.nombres}`;
+
+        // ── Sección: datos personales ──────────────────────────────────────────
+        const colorChip = e.color_fav
+            ? `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg-hover);
+                            border:1px solid var(--border-color);border-radius:20px;padding:2px 10px;font-size:.8rem;">
+                   <span style="width:12px;height:12px;border-radius:50%;background:${e.color_fav};
+                                border:1px solid var(--border-color);display:inline-block;"></span>
+                   ${e.color_fav}
+               </span>`
+            : '<span style="color:var(--text-muted);font-size:.8rem;">—</span>';
+
+        const datosPersonales = `
+            <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Nombres</div>
+                            <div style="font-weight:500;">${e.nombres}</div>
+                        </div>
+                        <div class="col-6">
+                            <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Apellidos</div>
+                            <div style="font-weight:500;">${e.apellidos}</div>
+                        </div>
+                        <div class="col-6">
+                            <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Nacimiento</div>
+                            <div>${_fechaCorta(e.fecha_nacimiento)}</div>
+                        </div>
+                        <div class="col-6">
+                            <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Profesión futura</div>
+                            <div>${e.profesion_futura ?? '—'}</div>
+                        </div>
+                        <div class="col-12">
+                            <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Color favorito</div>
+                            ${colorChip}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-6" style="border-left:1px solid var(--border-color);padding-left:1rem;">
+                    <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;">Apoderado</div>
+                    <div style="font-weight:500;">${e.apoderado_nombres} ${e.apoderado_apellidos ?? ''}</div>
+                    <div style="font-size:.8rem;color:var(--text-muted);margin-top:2px;">${e.tipo_relacion ?? ''}</div>
+                    <div style="font-size:.83rem;margin-top:6px;">
+                        <i class="bi bi-telephone me-1"></i>${e.apoderado_telefono ?? '—'}
+                    </div>
+                </div>
+            </div>`;
+
+        // ── Sección: productos adquiridos ──────────────────────────────────────
+        const productosHtml = e.productos?.length
+            ? `<div class="mb-4">
+                   <div style="font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;">
+                       Productos / paquetes contratados
+                   </div>
+                   <div style="border:1px solid var(--border-color);border-radius:8px;overflow:hidden;">
+                       ${e.productos.map((p, i) => `
+                       <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+                                   ${i < e.productos.length - 1 ? 'border-bottom:1px solid var(--border-color);' : ''}
+                                   background:${i % 2 === 0 ? 'transparent' : 'var(--bg-hover)'};">
+                           <i class="bi bi-${p.tipo_item === 'paquete' ? 'box-seam' : 'tag'}"
+                              style="color:var(--accent);font-size:.9rem;flex-shrink:0;"></i>
+                           <div style="flex:1;font-size:.83rem;">${p.descripcion}</div>
+                           <span style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;">x${p.cantidad}</span>
+                       </div>`).join('')}
+                   </div>
+               </div>`
+            : `<div class="mb-4" style="font-size:.83rem;color:var(--text-muted);">Sin productos registrados.</div>`;
+
+        // ── Sección: historial de sesiones ────────────────────────────────────
+        const totalSesiones = e.sesiones?.length ?? 0;
+        const asistio       = e.sesiones?.filter(s => s.asistio === 1).length ?? 0;
+        const ausente       = e.sesiones?.filter(s => s.asistio === 0).length ?? 0;
+        const sinMarcar     = e.sesiones?.filter(s => s.asistio === null).length ?? 0;
+
+        const resumenHtml = totalSesiones
+            ? `<div class="row g-2 mb-3">
+                   ${[
+                       { label:'Total',      val: totalSesiones, color:'var(--text-primary)' },
+                       { label:'Asistió',    val: asistio,       color:'var(--green-text)'  },
+                       { label:'Ausente',    val: ausente,       color:'var(--red-text)'    },
+                       { label:'Sin marcar', val: sinMarcar,     color:'var(--amber-text)'  },
+                   ].map(s => `
+                   <div class="col-3">
+                       <div style="text-align:center;background:var(--bg-hover);border:1px solid var(--border-color);
+                                   border-radius:8px;padding:8px 4px;">
+                           <div style="font-size:1.2rem;font-weight:700;color:${s.color};">${s.val}</div>
+                           <div style="font-size:.68rem;color:var(--text-muted);">${s.label}</div>
+                       </div>
+                   </div>`).join('')}
+               </div>`
+            : '';
+
+        const filasHtml = totalSesiones
+            ? `<div style="max-height:200px;overflow-y:auto;border:1px solid var(--border-color);border-radius:8px;">
+                   ${e.sesiones.map(s => {
+                       const asistioIcon = s.asistio === 1
+                           ? '<i class="bi bi-check-circle-fill" style="color:var(--green-text);" title="Asistió"></i>'
+                           : s.asistio === 0
+                               ? '<i class="bi bi-x-circle-fill" style="color:var(--red-text);" title="Ausente"></i>'
+                               : '<i class="bi bi-dash-circle" style="color:var(--amber-text);" title="Sin marcar"></i>';
+                       const [fecha, hora] = (s.fecha_hora_sesion || '').split(' ');
+                       return `
+                       <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+                                   border-bottom:1px solid var(--border-color);">
+                           ${asistioIcon}
+                           <div style="flex:1;min-width:0;">
+                               <div style="font-size:.83rem;font-weight:500;">${TIPO_LABEL_SESION[s.tipo] ?? s.tipo}</div>
+                               <div style="font-size:.73rem;color:var(--text-muted);">${_fechaCorta(fecha)}${hora ? ' · ' + hora.slice(0,5) : ''}</div>
+                           </div>
+                           <span class="${s.estado === 'finalizado' ? 'badge-aprobada' : s.estado === 'cancelado' ? 'badge-rechazada' : 'badge-pendiente'}"
+                                 style="font-size:.68rem;">${s.estado}</span>
+                       </div>`;
+                   }).join('')}
+               </div>`
+            : '<div style="font-size:.83rem;color:var(--text-muted);">Sin sesiones registradas.</div>';
+
+        const sesionesHtml = `
+            <div>
+                <div style="font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;">
+                    Asistencia a sesiones
+                </div>
+                ${resumenHtml}
+                ${filasHtml}
+            </div>`;
+
+        body.innerHTML = datosPersonales + productosHtml + sesionesHtml;
+
+    } catch (err) {
+        console.error('Error cargando perfil:', err);
+        body.innerHTML = '<div style="color:var(--red-text);padding:1rem;">No se pudo cargar el perfil del estudiante.</div>';
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INICIALIZACIÓN
 // ─────────────────────────────────────────────────────────────────────────────
 

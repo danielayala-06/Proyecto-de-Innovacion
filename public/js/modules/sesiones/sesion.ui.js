@@ -205,7 +205,7 @@ export const ui = {
         }
 
         const rows = estudiantes.map(e => `
-            <div class="estudiante-row">
+            <div class="estudiante-row" style="cursor:pointer;" onclick="verDetalleEstudiante(${e.id_estudiante})">
                 <div class="estudiante-avatar">${e.nombres[0]}${e.apellidos[0]}</div>
                 <div class="estudiante-info">
                     <div class="estudiante-nombre">${e.apellidos}, ${e.nombres}</div>
@@ -216,7 +216,7 @@ export const ui = {
                         · ${e.apoderado_telefono}
                     </div>
                 </div>
-                <button class="btn-icon danger" onclick="eliminarEstudiante(${e.id_estudiante})" title="Eliminar">
+                <button class="btn-icon danger" onclick="event.stopPropagation();eliminarEstudiante(${e.id_estudiante})" title="Eliminar">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>`).join('');

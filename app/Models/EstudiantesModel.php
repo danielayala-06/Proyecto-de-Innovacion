@@ -59,6 +59,23 @@ class EstudiantesModel extends Model
     protected $cleanValidationRules = true;
 
     /**
+     * Retorna un estudiante con los datos de su apoderado por ID.
+     *
+     * @param  int                       $id ID del estudiante.
+     * @return array<string, mixed>|null     null si no existe.
+     */
+    public function obtenerConApoderado(int $id): ?array
+    {
+        return $this
+            ->select('estudiantes.*, p.nombres AS apoderado_nombres, p.apellidos AS apoderado_apellidos,
+                      p.telefono AS apoderado_telefono, a.tipo_relacion')
+            ->join('apoderados a', 'a.id_apoderado = estudiantes.id_apoderado')
+            ->join('personas p',   'p.id_persona = a.id_persona')
+            ->where('estudiantes.id_estudiante', $id)
+            ->first() ?: null;
+    }
+
+    /**
      * Lista los estudiantes de una promoción con los datos de su apoderado.
      *
      * @param  int                      $idPromocion ID de la promoción.

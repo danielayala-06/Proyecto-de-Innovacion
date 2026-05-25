@@ -48,6 +48,7 @@ class PromocionTransformer extends BaseTransformer
             'distrito'          =>        $resource['distrito']         ?? null,
             'total_estimado'    => isset($resource['total_estimado']) ? (float) $resource['total_estimado'] : null,
             'estado_cotizacion' =>        $resource['estado_cotizacion'] ?? null,
+            'id_contrato'       => isset($resource['id_contrato']) ? (int) $resource['id_contrato'] : null,
         ];
 
         if (isset($resource['provincia']))              $data['provincia']              = $resource['provincia'];
@@ -68,7 +69,7 @@ class PromocionTransformer extends BaseTransformer
             'id_promocion', 'id_colegio', 'id_cotizacion', 'nombre', 'grado',
             'seccion', 'num_estudiantes', 'anio', 'is_active', 'nombre_colegio',
             'distrito', 'total_estimado', 'estado_cotizacion', 'provincia',
-            'cliente', 'telefono', 'estudiantes', 'sesiones_fotograficas',
+            'cliente', 'telefono', 'estudiantes', 'sesiones_fotograficas', 'id_contrato',
         ];
     }
 }

@@ -186,6 +186,26 @@
     </div>
 </div>
 
+<!-- ═══════ MODAL PERFIL ESTUDIANTE ══════════════════════════════════════════ -->
+<div class="modal fade" id="modalPerfilEstudiante" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">
+                    <i class="bi bi-person-badge me-2" style="color:var(--accent);"></i>
+                    <span id="perfilNombre">Perfil del estudiante</span>
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="perfilBody">
+                <div style="text-align:center;padding:2rem;color:var(--text-muted);">
+                    <i class="bi bi-arrow-repeat"></i> Cargando...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════ OFFCANVAS ASISTENCIA ══════════════════════════════════════════════ -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasAsistencia"
      style="width:380px;">

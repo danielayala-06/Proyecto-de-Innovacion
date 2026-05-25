@@ -43,6 +43,46 @@ class EstudiantesApi extends BaseApiController
     }
 
     /**
+     * GET /api/estudiantes/{id}
+     *
+     * Retorna el perfil completo: datos personales, apoderado,
+     * productos contratados y historial de asistencia a sesiones.
+     *
+     * @param  mixed $id ID del estudiante.
+     * @return ResponseInterface 200 con el perfil | 404 si no existe.
+     */
+    public function show($id)
+    {
+        $estudiante = $this->estudianteService->obtenerDetalle((int) $id);
+
+        if (!$estudiante) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
+                ->setJSON(['status' => 'error', 'message' => 'Estudiante no encontrado']);
+        }
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON([
+                'status' => 'success',
+                'data'   => [
+                    'id_estudiante'       => (int)   $estudiante['id_estudiante'],
+                    'nombres'             =>          $estudiante['nombres'],
+                    'apellidos'           =>          $estudiante['apellidos'],
+                    'fecha_nacimiento'    =>          $estudiante['fecha_nacimiento']    ?? null,
+                    'color_fav'           =>          $estudiante['color_fav']           ?? null,
+                    'profesion_futura'    =>          $estudiante['profesion_futura']    ?? null,
+                    'apoderado_nombres'   =>          $estudiante['apoderado_nombres']   ?? null,
+                    'apoderado_apellidos' =>          $estudiante['apoderado_apellidos'] ?? null,
+                    'apoderado_telefono'  =>          $estudiante['apoderado_telefono']  ?? null,
+                    'tipo_relacion'       =>          $estudiante['tipo_relacion']       ?? null,
+                    'productos'           =>          $estudiante['productos'],
+                    'sesiones'            =>          $estudiante['sesiones'],
+                ],
+            ]);
+    }
+
+    /**
      * GET /api/estudiantes?id_promocion=X
      *
      * @return ResponseInterface 200 con la lista de estudiantes | 422 si falta id_promocion.

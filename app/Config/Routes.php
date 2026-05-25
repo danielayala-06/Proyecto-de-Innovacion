@@ -27,7 +27,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/contratos',                      'ContratoController::index');
     $routes->get('/contratos/crear',               'ContratoController::crear');
     $routes->get('/contratos/(:num)',              'ContratoController::generarContrato/$1');
-    $routes->get('/sesiones',                       'SesionController::lista');
+    $routes->get('/promociones',                     'PromocionController::index');
     $routes->get('/contratos/(:num)/sesiones',     'SesionController::index/$1');
     $routes->get('/paquetes',              'PaqueteController::index');
     $routes->get('/clientes',              'ClienteController::index');
@@ -103,6 +103,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth']
 
     // ── Estudiantes ───────────────────────────────────────────────────────────
     $routes->get   ('estudiantes',        'EstudiantesApi::index');
+    $routes->get   ('estudiantes/(:num)', 'EstudiantesApi::show/$1');
     $routes->post  ('estudiantes',        'EstudiantesApi::create');
     $routes->put   ('estudiantes/(:num)', 'EstudiantesApi::update/$1');
     $routes->delete('estudiantes/(:num)', 'EstudiantesApi::delete/$1');
