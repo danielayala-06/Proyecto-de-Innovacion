@@ -81,11 +81,9 @@
                     <div class="col-12 col-md-4">
                         <label>Categoría</label>
                         <select class="form-select" id="pCategoria">
-                            <option value="Quinceañeros">Quinceañeros</option>
                             <option value="Cuadros">Cuadros</option>
                             <option value="Anuarios">Anuarios</option>
                             <option value="Paquetes">Paquetes</option>
-                            <option value="Matrimonios">Matrimonios</option>
                             <option value="Corporativo">Corporativo</option>
                             <option value="Otro">Otro</option>
                         </select>

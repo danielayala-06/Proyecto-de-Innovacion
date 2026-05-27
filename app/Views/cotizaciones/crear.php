@@ -80,10 +80,10 @@
 
                         <!-- PAQUETES -->
                         <fieldset class="col-12 col-md-5">
-                            <legend class="section-divider">Paquetes</legend>
+                            <legend class="section-divider">Productos</legend>
 
                             <button type="button" class="btn-paquete mt-2" id="btn-modal-paquete">
-                                <i class="bi bi-plus-circle me-1"></i> Agregar paquete
+                                <i class="bi bi-plus-circle me-1"></i> Agregar producto
                             </button>
                             <div id="paquetesContainer" class="d-flex flex-column gap-2"></div>
 
@@ -254,7 +254,7 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title">Seleccionar paquete</h6>
+                <h6 class="modal-title">Seleccionar productos</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">

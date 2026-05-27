@@ -25,11 +25,9 @@ import { categoriaDesPaquete, agruparPorNivel, NIVEL_LABEL } from './paquete.sta
  * @type {Object<string, string>}
  */
 const CAT_BADGE_CLASS = {
-    'Quinceañeros': 'cat-quinceaneros',
     'Cuadros':      'cat-cuadros',
     'Anuarios':     'cat-anuarios',
     'Paquetes':     'cat-paquetes',
-    'Matrimonios':  'cat-matrimonios',
     'Corporativo':  'cat-corporativo',
     'Otro':         'cat-otro',
 };
@@ -205,15 +203,21 @@ export const ui = {
 
                     <div class="pc-footer">
                         <div class="pc-price">${formatters.moneda(p.precio)}</div>
-                        <div class="pc-actions">
+                        <div class="pc-actions d-flex justify-content-center gap-2">
                             <button class="btn-icon" onclick="editarPaquete(${p.id_paquete})" title="Editar">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn-icon danger"
+
+                            <div class="form-switch" title="Cambiar estado" onclick="toggleEstado(${p.id_paquete},'${p.estado}')"
+                                    title="${esActivo ? 'Desactivar' : 'Activar'}">
+
+                                <input class="form-check-input ${esActivo ? 'text-danger' : ' text-success'}" type="checkbox" role="switch" style="height:1.7rem;width:3rem;" ${esActivo ? 'checked' : ''}>
+                            </div>
+                            <!--<button class="btn btn-danger btn-icon"
                                     onclick="toggleEstado(${p.id_paquete},'${p.estado}')"
                                     title="${esActivo ? 'Desactivar' : 'Activar'}">
                                 <i class="bi bi-${esActivo ? 'slash-circle' : 'play-circle'}"></i>
-                            </button>
+                            </button>-->
                         </div>
                     </div>
                 </div>`;

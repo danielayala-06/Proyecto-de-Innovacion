@@ -1,0 +1,23 @@
+/* OFF */
+.form-check-input {
+  cursor: pointer;
+  box-shadow: none !important;
+}
+
+/* ON = success */
+.form-check-input:checked {
+  background-color: var(--bs-success);
+  border-color: var(--bs-success);
+}
+
+/* Hover ON */
+.form-check-input:checked:hover {
+  background-color: #157347;
+  border-color: #146c43;
+}
+
+/* Focus */
+.form-check-input:focus {
+  border-color: var(--bs-success);
+  box-shadow: 0 0 0 .25rem rgba(25, 135, 84, 0.25);
+}
