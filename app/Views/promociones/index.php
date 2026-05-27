@@ -52,10 +52,8 @@
                     <option value="Superior">Superior</option>
                     <option value="Otro">Otro</option>
                 </select>
-                <select class="filter-select" id="filterActiva">
-                    <option value="">Todos los estados</option>
-                    <option value="1">Activas</option>
-                    <option value="0">Inactivas</option>
+                <select class="filter-select" id="filterAnio">
+                    <option value="">Todos los años</option>
                 </select>
             </div>
         </div>
@@ -70,7 +68,6 @@
                         <th class="text-uppercase">Promoción</th>
                         <th class="text-uppercase" style="text-align:center;">Estudiantes</th>
                         <th class="text-uppercase" style="text-align:center;">Año</th>
-                        <th class="text-uppercase" style="text-align:center;">Estado</th>
                         <th class="text-uppercase" style="width:130px;text-align:center;">Acciones</th>
                     </tr>
                 </thead>

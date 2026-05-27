@@ -11,7 +11,7 @@ use CodeIgniter\Model;
  * La asociación paquete/producto→regla es many-to-many y vive en `reglas_items`.
  * Esta tabla solo guarda la definición de la regla (condición + beneficio).
  *
- * Tipos de condición: CANTIDAD_MIN | CANTIDAD_MAX.
+ * Tipos de condición: CANTIDAD_MIN | CANTIDAD_MAX | ELEGIBILIDAD_MIN.
  * Tipos de beneficio: producto_gratis | sesion_unica | otro.
  */
 class ReglasPaquetesModel extends Model
@@ -64,13 +64,61 @@ class ReglasPaquetesModel extends Model
     }
 
     /**
+     * Retorna las reglas de todos los paquetes indicados en un solo query (sin N+1).
+     *
+     * @param  int[]  $idsPaquetes
+     * @return array<int, array> Mapa id_paquete → [reglas].
+     */
+    public function reglasParaPaquetesBatch(array $idsPaquetes): array
+    {
+        if (empty($idsPaquetes)) return [];
+
+        $ids  = implode(',', array_map('intval', $idsPaquetes));
+        $rows = $this->db->query("
+            SELECT r.id_regla, r.descripcion, r.tipo_condicion, r.valor_condicion,
+                   r.tipo_beneficio, r.id_producto_beneficio, r.valor_beneficio,
+                   pb.nombre_producto AS nombre_producto_beneficio,
+                   ri.id_referencia  AS id_paquete
+            FROM reglas_paquetes r
+            LEFT JOIN productos pb ON pb.id_producto = r.id_producto_beneficio
+            JOIN reglas_items ri ON ri.id_regla = r.id_regla
+            WHERE ri.tipo_item = 'paquete' AND ri.id_referencia IN ({$ids})
+            ORDER BY ri.id_referencia, r.tipo_condicion, r.valor_condicion
+        ")->getResultArray();
+
+        $result  = [];
+        $vistos  = [];
+
+        foreach ($rows as $row) {
+            $idPaquete = (int) $row['id_paquete'];
+            $idRegla   = (int) $row['id_regla'];
+
+            if (!isset($result[$idPaquete])) {
+                $result[$idPaquete] = [];
+                $vistos[$idPaquete] = [];
+            }
+
+            if (!in_array($idRegla, $vistos[$idPaquete], true)) {
+                $vistos[$idPaquete][]  = $idRegla;
+                $result[$idPaquete][]  = array_merge(
+                    ['id_regla' => $idRegla],
+                    $this->_mapearReglaBase($row)
+                );
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Evalúa las reglas aplicables a una lista de detalles de cotización.
      *
-     *  - CANTIDAD_MAX superada → violación.
-     *  - CANTIDAD_MIN cumplida → activada (beneficio disponible).
+     *  - ELEGIBILIDAD_MIN no alcanzada → violación (bloquea la venta).
+     *  - CANTIDAD_MIN cumplida         → activada (beneficio desbloqueado).
+     *  - CANTIDAD_MAX no alcanzada     → reducción (sesiones extras eliminadas).
      *
      * @param  array $detalles  Filas con tipo_item, id_referencia, cantidad.
-     * @return array{ violaciones: array, activadas: array }
+     * @return array{ violaciones: array, activadas: array, reducciones: array }
      */
     public function evaluarDetalles(array $detalles): array
     {
@@ -78,7 +126,7 @@ class ReglasPaquetesModel extends Model
             $this->_indexarDetalles($detalles);
 
         if (empty($porPaquete) && empty($porProducto)) {
-            return ['violaciones' => [], 'activadas' => []];
+            return ['violaciones' => [], 'activadas' => [], 'reducciones' => []];
         }
 
         $rows      = $this->_consultarReglasParaItems($porPaquete, $porProducto);
@@ -181,24 +229,30 @@ class ReglasPaquetesModel extends Model
     }
 
     /**
-     * Clasifica reglas en violaciones (CANTIDAD_MAX superada) y activadas (CANTIDAD_MIN cumplida).
+     * Clasifica reglas según su tipo_condicion.
      *
-     * @return array{ violaciones: array, activadas: array }
+     *  - ELEGIBILIDAD_MIN no cumplida → violación (bloquea la venta).
+     *  - CANTIDAD_MIN cumplida        → activada (beneficio desbloqueado).
+     *  - CANTIDAD_MAX no alcanzada    → reducción (sesiones extras eliminadas).
+     *
+     * @return array{ violaciones: array, activadas: array, reducciones: array }
      */
     private function _clasificarReglas(array $reglasMap): array
     {
         $violaciones = [];
         $activadas   = [];
+        $reducciones = [];
 
         foreach ($reglasMap as $r) {
             $cant   = $r['cantidad_total'];
             $umbral = $r['valor_condicion'];
 
-            if ($r['tipo_condicion'] === 'CANTIDAD_MAX' && $cant > $umbral) {
+            if ($r['tipo_condicion'] === 'ELEGIBILIDAD_MIN' && $cant < $umbral) {
                 $violaciones[] = [
-                    'descripcion' => $r['descripcion'],
-                    'cantidad'    => $cant,
-                    'limite'      => (int) $umbral,
+                    'tipo_condicion' => 'ELEGIBILIDAD_MIN',
+                    'descripcion'    => $r['descripcion'],
+                    'cantidad'       => $cant,
+                    'limite'         => (int) $umbral,
                 ];
             } elseif ($r['tipo_condicion'] === 'CANTIDAD_MIN' && $cant >= $umbral) {
                 $activadas[] = [
@@ -208,10 +262,17 @@ class ReglasPaquetesModel extends Model
                     'valor_beneficio'           => $r['valor_beneficio'],
                     'descripcion'               => $r['descripcion'],
                 ];
+            } elseif ($r['tipo_condicion'] === 'CANTIDAD_MAX' && $cant < $umbral) {
+                $reducciones[] = [
+                    'tipo_condicion' => 'CANTIDAD_MAX',
+                    'descripcion'    => $r['descripcion'],
+                    'cantidad'       => $cant,
+                    'limite'         => (int) $umbral,
+                ];
             }
         }
 
-        return ['violaciones' => $violaciones, 'activadas' => $activadas];
+        return ['violaciones' => $violaciones, 'activadas' => $activadas, 'reducciones' => $reducciones];
     }
 
     /**

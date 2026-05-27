@@ -245,7 +245,7 @@ class CotizacionService
                 'seccion'         => $seccion,
                 'num_estudiantes' => $numEstudiantes,
                 'anio'            => $anio,
-                'is_active'       => true,
+                'is_active'       => false,
             ]);
 
             $errors = $this->promocionModel->errors();

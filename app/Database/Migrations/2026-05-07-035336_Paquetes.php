@@ -16,7 +16,7 @@ class Paquetes extends Migration
                 ['type'=>'VARCHAR','constraint'=>150
                 ],
             'nivel_disponible'=>
-                ['type'=>'ENUM','constraint'=>['inicial-primaria', 'secundaria', 'postgrado', 'otro'],'default'=>'otro','null'=>false,],
+                ['type'=>'ENUM','constraint'=>['inicial', 'primaria', 'secundaria', 'postgrado', 'otro'],'default'=>'otro','null'=>false,],
             'descripcion'=>
                 ['type'=>'TEXT','null'=>true
                 ],

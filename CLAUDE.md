@@ -80,6 +80,7 @@ Single stylesheet: public/css/styles.css. Uses CSS custom properties for theming
 
 - nombre_user is the login field (not email, not nom_user). Allowed chars: [a-zA-Z0-9._-].
 - Passwords: printable ASCII only ([\x20-\x7E]), min 8 chars.
-- paquetes.nivel_disponible enum: inicial-primaria, secundaria, postgrado, otro. The frontend groups and sorts packages by this field; inactive ones always sort last within each group.
+- paquetes.nivel_disponible enum: inicial, primaria, secundaria, postgrado, otro. Inicial and primaria are distinct levels with separate product catalogs. The frontend groups and sorts packages by this field; inactive ones always sort last within each group.
 - NIVEL_ORDER in paquete.state.js defines the display order — keep it consistent with the enum.
+- reglas_paquetes.tipo_condicion enum: CANTIDAD_MIN, CANTIDAD_MAX, ELEGIBILIDAD_MIN. ELEGIBILIDAD_MIN fires when the group is smaller than the required minimum (blocks the sale); CANTIDAD_MIN fires when the threshold is met (unlocks a benefit); CANTIDAD_MAX fires when the limit is exceeded (violation).
 - The external RENIEC API key is in .env as DECOLECTA.KEY.

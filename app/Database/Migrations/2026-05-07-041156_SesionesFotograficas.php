@@ -25,7 +25,7 @@ class SesionesFotograficas extends Migration
             ],
             'tipo'=>[
                 'type'=>'ENUM',
-                'constraint'=>['exteriores','colegio','otro'],
+                'constraint'=>['exteriores','colegio','estudio', 'otro'],
                 'default'=>'otro',
                 'null'=>false
             ],

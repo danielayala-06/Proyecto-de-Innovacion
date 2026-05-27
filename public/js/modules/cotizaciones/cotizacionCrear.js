@@ -567,29 +567,24 @@ function _renderContainer(containerId, tipo) {
 
 /** @type {Object<string,string>} Etiquetas de nivel para mostrar en el modal. */
 const NIVEL_LABEL = {
-    'inicial-primaria': 'Inicial / Primaria',
-    primaria:           'Inicial / Primaria',
-    inicial:            'Inicial / Primaria',
-    secundaria:         'Secundaria',
-    postgrado:          'Postgrado',
-    otro:               'Otro',
+    inicial:    'Inicial',
+    primaria:   'Primaria',
+    secundaria: 'Secundaria',
+    postgrado:  'Postgrado',
+    otro:       'Otro',
 };
 
 /** @type {string[]} Orden de visualización de niveles en el modal. */
-const NIVEL_ORDER = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
+const NIVEL_ORDER = ['inicial', 'primaria', 'secundaria', 'postgrado', 'otro'];
 
 /** @type {Object<string,string>} Estilos CSS de los badges de nivel. */
 const NIVEL_STYLE = {
-    'inicial-primaria': 'background:#e3f2fd;color:#1565c0',
-    primaria:           'background:#e3f2fd;color:#1565c0',
-    inicial:            'background:#e3f2fd;color:#1565c0',
-    secundaria:         'background:#f3e5f5;color:#6a1b9a',
-    postgrado:          'background:#fce4ec;color:#c62828',
-    otro:               'background:#fff3e0;color:#e65100',
+    inicial:    'background:#fff3e0;color:#e65100',
+    primaria:   'background:#e3f2fd;color:#1565c0',
+    secundaria: 'background:#f3e5f5;color:#6a1b9a',
+    postgrado:  'background:#fce4ec;color:#c62828',
+    otro:       'background:#fafafa;color:#616161',
 };
-
-/** @type {Object<string,string>} Normalización de alias de nivel a clave canónica. */
-const NIVEL_NORMALIZE = { primaria: 'inicial-primaria', inicial: 'inicial-primaria' };
 
 /**
  * Construye el contenido del modal de paquetes agrupando por categoría (tabs)
@@ -605,7 +600,7 @@ function _poblarModalPaquetes(paquetes) {
     if (!tabsEl || !panelsEl) return;
 
     const nivelesPresentes = [...new Set(
-        paquetes.map(p => NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro')
+        paquetes.map(p => p.nivel_disponible || 'otro')
     )];
     const nivelesOrdenados = [
         ...NIVEL_ORDER.filter(n => nivelesPresentes.includes(n)),
@@ -647,7 +642,7 @@ function _poblarModalPaquetes(paquetes) {
     panelsEl.innerHTML = keys.map((cat, i) => {
         const rows = grupos[cat].map(p => {
             const nombre     = (p.nombre_paquete || '').replace(/'/g, "\\'");
-            const nivel      = NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro';
+            const nivel      = p.nivel_disponible || 'otro';
             const badgeStyle = NIVEL_STYLE[nivel] ?? NIVEL_STYLE.otro;
             return `
                 <div class="paquete-option" data-nivel="${nivel}" data-id="${p.id_paquete}"
@@ -753,6 +748,89 @@ function _actualizarBtnConfirmar() {
 }
 
 /**
+ * Evalúa las reglas de los paquetes seleccionados y actualiza el panel de alertas.
+ * - ELEGIBILIDAD_MIN no cumplida → alerta de restricción (rojo).
+ * - CANTIDAD_MIN cumplida        → beneficio desbloqueado (verde).
+ * - CANTIDAD_MIN no cumplida     → sugerencia de cuántos alumnos faltan (azul).
+ * - CANTIDAD_MAX aplica          → aviso de reducción de sesiones (naranja).
+ */
+function _renderReglasAlert() {
+    const zone = document.getElementById('reglas-alert-zone');
+    if (!zone) return;
+
+    if (state.paquetesSeleccionados.size === 0) {
+        zone.style.display = 'none';
+        zone.innerHTML     = '';
+        return;
+    }
+
+    const ALERT_STYLE = {
+        danger:  'background:#fff0f0;border:1px solid #f5c6cb;color:#721c24;',
+        success: 'background:#f0fff4;border:1px solid #c3e6cb;color:#155724;',
+        info:    'background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;',
+        warning: 'background:#fff8ec;border:1px solid #ffd699;color:#7a4f00;',
+    };
+    const BASE_STYLE = 'padding:.35rem .6rem;border-radius:6px;font-size:.74rem;margin-bottom:.25rem;line-height:1.4;display:flex;align-items:flex-start;gap:.4rem;';
+    const ICON = {
+        danger:  '<i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;flex-shrink:0;"></i>',
+        success: '<i class="bi bi-check-circle-fill" style="color:#198754;flex-shrink:0;"></i>',
+        info:    '<i class="bi bi-lightbulb-fill" style="color:#0d6efd;flex-shrink:0;"></i>',
+        warning: '<i class="bi bi-calendar2-x-fill" style="color:#fd7e14;flex-shrink:0;"></i>',
+    };
+
+    const fragments = [];
+
+    state.paquetesSeleccionados.forEach(({ idRef, nombre, el }) => {
+        const qty    = parseInt(el?.querySelector('.po-qty-input')?.value) || 0;
+        const paq    = state.todosPaquetes.find(p => p.id_paquete === idRef);
+        const reglas = paq?.reglas ?? [];
+        if (!reglas.length) return;
+
+        const msgs = [];
+        reglas.forEach(r => {
+            const umbral = parseFloat(r.valor_condicion);
+            if (r.tipo_condicion === 'ELEGIBILIDAD_MIN') {
+                if (qty < umbral) {
+                    msgs.push({ tipo: 'danger', texto: r.descripcion });
+                }
+            } else if (r.tipo_condicion === 'CANTIDAD_MIN') {
+                if (qty >= umbral) {
+                    msgs.push({ tipo: 'success', texto: `Beneficio desbloqueado: ${r.valor_beneficio}` });
+                } else {
+                    const faltan = umbral - qty;
+                    msgs.push({ tipo: 'info', texto: `Con ${faltan} alumno${faltan !== 1 ? 's' : ''} más (≥${umbral}): ${r.valor_beneficio}` });
+                }
+            } else if (r.tipo_condicion === 'CANTIDAD_MAX') {
+                if (qty < umbral) {
+                    msgs.push({ tipo: 'warning', texto: r.descripcion });
+                }
+            }
+        });
+
+        if (!msgs.length) return;
+
+        fragments.push(
+            `<div style="margin-bottom:.4rem;">` +
+            (state.paquetesSeleccionados.size > 1
+                ? `<div style="font-size:.7rem;font-weight:700;color:var(--text-muted);margin-bottom:.2rem;">${nombre}</div>`
+                : '') +
+            msgs.map(m =>
+                `<div style="${BASE_STYLE}${ALERT_STYLE[m.tipo]}">${ICON[m.tipo]}<span>${m.texto}</span></div>`
+            ).join('') +
+            `</div>`
+        );
+    });
+
+    if (fragments.length) {
+        zone.style.display = '';
+        zone.innerHTML     = fragments.join('');
+    } else {
+        zone.style.display = 'none';
+        zone.innerHTML     = '';
+    }
+}
+
+/**
  * Alterna la selección de un paquete en el modal (multi-select).
  * Si ya está seleccionado lo deselecciona; si no, lo agrega al mapa.
  *
@@ -784,6 +862,7 @@ window.seleccionarOpcion = function (el, nombre, precio, idRef) {
     }
 
     _actualizarBtnConfirmar();
+    _renderReglasAlert();
 };
 
 /**
@@ -798,6 +877,7 @@ window.poQtyStep = function (btn, step) {
     const next  = Math.max(1, val + step);
     if (input) input.value = next;
     _actualizarBtnConfirmar();
+    _renderReglasAlert();
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1145,7 +1225,7 @@ async function init() {
     try {
         const [resC, resP] = await Promise.all([
             clienteApi.listar(),
-            paqueteApi.listar({ estado: 'ACTIVO' }),
+            paqueteApi.listar({ estado: 'ACTIVO', con_reglas: 1 }),
         ]);
         state.todosClientes = resC.data ?? [];
         state.todosPaquetes = resP.data ?? [];
@@ -1312,11 +1392,15 @@ async function init() {
             if (numEst > 0) inp.value = numEst;
         });
         _actualizarBtnConfirmar();
+        _renderReglasAlert();
     });
 
     /* 8c. Event delegation: recalcular total al escribir en cualquier qty del modal */
     document.getElementById('catPanelsContainer')?.addEventListener('input', e => {
-        if (e.target.classList.contains('po-qty-input')) _actualizarBtnConfirmar();
+        if (e.target.classList.contains('po-qty-input')) {
+            _actualizarBtnConfirmar();
+            _renderReglasAlert();
+        }
     });
 
     /* 8d. Seleccionar todo el texto al hacer clic/focus en un qty input del modal */

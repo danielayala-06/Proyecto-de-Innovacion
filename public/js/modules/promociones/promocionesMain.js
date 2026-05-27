@@ -24,7 +24,7 @@ const POR_PAG  = 15;
 
 async function init() {
     try {
-        const res = await http.get('api/promociones');
+        const res = await http.get('api/promociones?activa=1');
         _todas = res.data ?? [];
         _renderStats(_todas);
         _aplicarFiltros();
@@ -35,18 +35,31 @@ async function init() {
 
     document.getElementById('searchInput').addEventListener('input',  _onFilter);
     document.getElementById('filterGrado').addEventListener('change', _onFilter);
-    document.getElementById('filterActiva').addEventListener('change', _onFilter);
+    document.getElementById('filterAnio').addEventListener('change',  _onFilter);
+
+    _poblarFiltroAnio();
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
 function _renderStats(lista) {
-    document.getElementById('statTotal').textContent     = lista.length;
-    document.getElementById('statActivas').textContent   = lista.filter(p => p.is_active).length;
+    document.getElementById('statTotal').textContent       = lista.length;
+    document.getElementById('statActivas').textContent     = lista.length;
     document.getElementById('statEstudiantes').textContent = lista.reduce((s, p) => s + (p.num_estudiantes || 0), 0);
 
     const colegiosUnicos = new Set(lista.map(p => p.id_colegio)).size;
-    document.getElementById('statColegios').textContent  = colegiosUnicos;
+    document.getElementById('statColegios').textContent = colegiosUnicos;
+}
+
+function _poblarFiltroAnio() {
+    const sel   = document.getElementById('filterAnio');
+    const anios = [...new Set(_todas.map(p => p.anio).filter(Boolean))].sort((a, b) => b - a);
+    anios.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.textContent = a;
+        sel.appendChild(opt);
+    });
 }
 
 // ─── Filtrado ─────────────────────────────────────────────────────────────────
@@ -57,17 +70,17 @@ function _onFilter() {
 }
 
 function _aplicarFiltros() {
-    const q      = document.getElementById('searchInput').value.trim().toLowerCase();
-    const grado  = document.getElementById('filterGrado').value;
-    const activa = document.getElementById('filterActiva').value;
+    const q    = document.getElementById('searchInput').value.trim().toLowerCase();
+    const grado = document.getElementById('filterGrado').value;
+    const anio  = document.getElementById('filterAnio').value;
 
     const filtradas = _todas.filter(p => {
         if (q) {
             const haystack = [p.nombre, p.nombre_colegio, p.distrito].join(' ').toLowerCase();
             if (!haystack.includes(q)) return false;
         }
-        if (grado  && p.grado     !== grado)          return false;
-        if (activa !== '' && String(p.is_active ? 1 : 0) !== activa) return false;
+        if (grado && p.grado !== grado)        return false;
+        if (anio  && String(p.anio) !== anio)  return false;
         return true;
     });
 
@@ -83,7 +96,7 @@ function _renderTabla(lista) {
     const pagina = lista.slice(inicio, inicio + POR_PAG);
 
     if (!pagina.length) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">
             <i class="bi bi-inbox" style="font-size:1.4rem;"></i><br>Sin resultados
         </td></tr>`;
         return;
@@ -93,10 +106,6 @@ function _renderTabla(lista) {
 }
 
 function _rowHtml(p) {
-    const badgeEstado = p.is_active
-        ? '<span class="badge-aprobada">Activa</span>'
-        : '<span class="badge-rechazada">Inactiva</span>';
-
     const seccion = p.seccion ? ` — Sección ${p.seccion}` : '';
 
     const btnSesiones = `<button class="btn-icon" title="Ver / gestionar sesiones"
@@ -117,7 +126,6 @@ function _rowHtml(p) {
         </td>
         <td style="text-align:center;font-weight:600;">${p.num_estudiantes}</td>
         <td style="text-align:center;color:var(--text-muted);">${p.anio}</td>
-        <td style="text-align:center;">${badgeEstado}</td>
         <td style="text-align:center;">${btnSesiones}</td>
     </tr>`;
 }

@@ -16,6 +16,7 @@ use App\Models\ContratosModel;
 use App\Models\CotizacionesModel;
 use App\Models\CotizacionesDetallesModel;
 use App\Models\PagosModel;
+use App\Models\PromocionesEscolaresModel;
 use App\Models\ReglasPaquetesModel;
 
 /**
@@ -44,15 +45,19 @@ class ContratoService
     /** @var CotizacionesDetallesModel Acceso a los ítems de la cotización. */
     protected CotizacionesDetallesModel $detalleModel;
 
+    /** @var PromocionesEscolaresModel Para activar la promoción al confirmar el contrato. */
+    protected PromocionesEscolaresModel $promocionModel;
+
     /** @var ReglasPaquetesModel Evaluador de reglas de bonificación. */
     protected ReglasPaquetesModel $reglasPaquetesModel;
 
     public function __construct()
     {
-        $this->contratoModel      = new ContratosModel();
-        $this->cotizacionModel    = new CotizacionesModel();
-        $this->pagoModel          = new PagosModel();
-        $this->detalleModel       = new CotizacionesDetallesModel();
+        $this->contratoModel       = new ContratosModel();
+        $this->cotizacionModel     = new CotizacionesModel();
+        $this->pagoModel           = new PagosModel();
+        $this->detalleModel        = new CotizacionesDetallesModel();
+        $this->promocionModel      = new PromocionesEscolaresModel();
         $this->reglasPaquetesModel = new ReglasPaquetesModel();
     }
 
@@ -202,6 +207,12 @@ class ContratoService
             $db->transRollback();
             throw new \RuntimeException(json_encode($this->contratoModel->errors()), 422);
         }
+
+        // Activar la promoción vinculada a esta cotización (se creó en estado inactivo)
+        $this->promocionModel
+            ->where('id_cotizacion', (int) $data['id_cotizacion'])
+            ->set(['is_active' => true])
+            ->update();
 
         $db->transComplete();
 

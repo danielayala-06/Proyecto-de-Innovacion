@@ -291,18 +291,20 @@ function _initForm(cotId, total) {
     });
   }
 
-  document.getElementById('btnGenerar')?.addEventListener('click', () => _submit(cotId, total));
+  document.getElementById('btnGenerar')?.addEventListener('click', () => _abrirConfirmacion(cotId, total));
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MODAL DE CONFIRMACIÓN
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _modalContrato = null;
+
 /**
- * Valida y envía el formulario para crear el contrato.
- * Tras el éxito redirige al listado de contratos con un pequeño delay.
- *
- * @param {number} cotId - ID de la cotización.
- * @param {number} total - Total de la cotización (límite superior del adelanto).
- * @returns {Promise<void>}
+ * Valida el formulario, llena el modal de resumen y lo muestra.
+ * La llamada real a la API ocurre solo cuando el usuario confirma en el modal.
  */
-async function _submit(cotId, total) {
+function _abrirConfirmacion(cotId, total) {
   const adelanto = parseFloat(document.getElementById('contratoAdelanto')?.value) || 0;
   if (!adelanto || adelanto <= 0) {
     alerts.warning('Ingresa un adelanto válido mayor a cero.');
@@ -318,17 +320,63 @@ async function _submit(cotId, total) {
     const hoy      = new Date(); hoy.setHours(0, 0, 0, 0);
     const minFecha = new Date(hoy); minFecha.setDate(hoy.getDate() - 2);
     const selDate  = new Date(fechaFirma + 'T00:00:00');
-    if (selDate > hoy) {
-      alerts.warning('La fecha de pago no puede ser en el futuro.');
-      return;
-    }
-    if (selDate < minFecha) {
-      alerts.warning('La fecha de pago no puede ser anterior a 2 días de hoy.');
-      return;
-    }
+    if (selDate > hoy)      { alerts.warning('La fecha de pago no puede ser en el futuro.'); return; }
+    if (selDate < minFecha) { alerts.warning('La fecha de pago no puede ser anterior a 2 días de hoy.'); return; }
   }
 
-  const formaPago     = document.getElementById('contratoFormaPago')?.value ?? '';
+  const formaPagoSel  = document.getElementById('contratoFormaPago');
+  const formaPagoText = formaPagoSel?.options[formaPagoSel.selectedIndex]?.text ?? '—';
+  const saldo         = total - adelanto;
+  const pct           = total > 0 ? Math.min(100, Math.round((adelanto / total) * 100)) : 0;
+
+  // Llenar resumen en el modal
+  const clienteNombre = document.getElementById('pageTitleCot')?.textContent ?? '';
+  const partes        = clienteNombre.split(' — ');
+  document.getElementById('confCotId').textContent       = partes[0] ?? '';
+  document.getElementById('confClienteNombre').textContent = partes.slice(1).join(' — ') || '—';
+  document.getElementById('confTotalCot').textContent    = formatters.moneda(total);
+  document.getElementById('confAdelanto').textContent    = formatters.moneda(adelanto);
+  document.getElementById('confSaldo').textContent       = formatters.moneda(saldo);
+  document.getElementById('confFecha').textContent       = fechaFirma
+    ? new Date(fechaFirma + 'T00:00:00').toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' })
+    : '—';
+  document.getElementById('confFormaPago').textContent   = formaPagoText;
+  document.getElementById('confPctLabel').textContent    = pct + '%';
+  document.getElementById('confPctBar').style.width      = pct + '%';
+
+  const alerta = document.getElementById('confAlerta');
+  if (adelanto >= total - 0.001) {
+    alerta.style.display     = '';
+    alerta.style.background  = '#f0fff4';
+    alerta.style.border      = '1px solid #c3e6cb';
+    alerta.style.color       = '#155724';
+    alerta.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>El adelanto cubre el total. El contrato quedará sin saldo pendiente.';
+  } else if (pct < 20) {
+    alerta.style.display     = '';
+    alerta.style.background  = '#fff8e1';
+    alerta.style.border      = '1px solid #ffe082';
+    alerta.style.color       = '#795548';
+    alerta.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>El adelanto es menor al 20% del total. Confirma que el monto es correcto.`;
+  } else {
+    alerta.style.display = 'none';
+  }
+
+  // Registrar handler del botón confirmar (solo una vez)
+  const btnConf = document.getElementById('btnConfirmarContrato');
+  const nuevoBtn = btnConf.cloneNode(true);
+  btnConf.replaceWith(nuevoBtn);
+  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoSel?.value ?? ''));
+
+  const modalEl = document.getElementById('modalConfirmarContrato');
+  _modalContrato = _modalContrato ?? new bootstrap.Modal(modalEl);
+  _modalContrato.show();
+}
+
+/**
+ * Envía el contrato a la API tras la confirmación del usuario.
+ * Cierra el modal, deshabilita el botón y redirige al éxito.
+ */
+async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
   const clausulas     = document.getElementById('contratoClausulas')?.value.trim() ?? '';
   const observaciones = document.getElementById('contratoObservaciones')?.value.trim() ?? '';
 
@@ -338,8 +386,10 @@ async function _submit(cotId, total) {
   if (observaciones) obsPartes.push(observaciones);
   const obsTexto = obsPartes.join('\n\n') || null;
 
-  const btn = document.getElementById('btnGenerar');
-  if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
+  const btnConf = document.getElementById('btnConfirmarContrato');
+  const btnGen  = document.getElementById('btnGenerar');
+  if (btnConf) { btnConf.disabled = true; btnConf.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Generando…'; }
+  if (btnGen)  { btnGen.disabled = true; }
 
   try {
     await contratoApi.crear({
@@ -348,11 +398,13 @@ async function _submit(cotId, total) {
       fecha_emision: fechaFirma,
       observaciones: obsTexto,
     });
+    _modalContrato?.hide();
     alerts.ok('Contrato generado correctamente.');
     setTimeout(() => { window.location.href = BASE_URL + 'contratos'; }, 800);
   } catch (e) {
     alerts.error(e.message || 'No se pudo generar el contrato.');
-    if (btn) { btn.disabled = false; btn.textContent = 'Generar contrato'; }
+    if (btnConf) { btnConf.disabled = false; btnConf.innerHTML = '<i class="bi bi-file-earmark-check me-1"></i>Confirmar y generar'; }
+    if (btnGen)  { btnGen.disabled = false; }
   }
 }
 

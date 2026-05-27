@@ -64,12 +64,14 @@ class PaquetesApi extends BaseApiController
             'estado' => $this->request->getGet('estado'),
         ], fn($v) => $v !== null);
 
+        $conReglas = (bool) $this->request->getGet('con_reglas');
+
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON([
                 'status' => 'success',
                 'data'   => $this->paqueteTransformer->transformMany(
-                    $this->paqueteService->listar($filters)
+                    $this->paqueteService->listar($filters, $conReglas)
                 ),
             ]);
     }
@@ -111,7 +113,7 @@ class PaquetesApi extends BaseApiController
 
         $rules = [
             'nombre_paquete'   => 'required|max_length[150]',
-            'nivel_disponible' => 'required|in_list[inicial-primaria,secundaria,postgrado,otro]',
+            'nivel_disponible' => 'required|in_list[inicial,primaria,secundaria,postgrado,otro]',
             'precio'           => 'required|decimal',
             'categoria'        => 'permit_empty|in_list[Cuadros,Anuarios,Paquetes,otros]',
         ];
@@ -147,7 +149,7 @@ class PaquetesApi extends BaseApiController
 
         $rules = [
             'nombre_paquete'   => 'permit_empty|max_length[150]',
-            'nivel_disponible' => 'permit_empty|in_list[inicial-primaria,secundaria,postgrado,otro]',
+            'nivel_disponible' => 'permit_empty|in_list[inicial,primaria,secundaria,postgrado,otro]',
             'precio'           => 'permit_empty|decimal',
             'categoria'        => 'permit_empty|in_list[Cuadros,Anuarios,Paquetes,otros]',
         ];
@@ -268,7 +270,7 @@ class PaquetesApi extends BaseApiController
         $body = $this->request->getJSON(true) ?? [];
 
         $rules = [
-            'tipo_condicion'  => 'required|in_list[CANTIDAD_MIN,CANTIDAD_MAX]',
+            'tipo_condicion'  => 'required|in_list[CANTIDAD_MIN,CANTIDAD_MAX,ELEGIBILIDAD_MIN]',
             'valor_condicion' => 'required|decimal',
             'tipo_beneficio'  => 'required|in_list[producto_gratis,sesion_unica,otro]',
             'descripcion'     => 'required|max_length[300]',

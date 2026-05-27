@@ -186,38 +186,27 @@ class SesionService
             return 0;
         }
 
+        $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
+
+        // Si hay reducción por grupo pequeño, solo se permite la sesión de colegio.
+        if (!empty($evaluacion['reducciones']) && $tipo !== 'colegio') {
+            return 0;
+        }
+
         $configs    = $this->paquetesSesionesModel->configuracionesPorTipo($idsPaquetes, $tipo);
         $permitidas = 0;
         foreach ($configs as $cfg) {
             $permitidas += (int) $cfg['num_sesiones'];
         }
 
-        return $permitidas + $this->_bonificacionesPorCantidad($detalles);
-    }
-
-    /**
-     * Suma las sesiones extra otorgadas por reglas de bonificación de tipo 'sesion_unica'.
-     * Usa evaluarDetalles() para respetar la estructura many-to-many de reglas_items.
-     *
-     * @param  array<int, array<string, mixed>> $detalles Ítems de la cotización.
-     * @return int                                        Bonus de sesiones adicionales.
-     */
-    private function _bonificacionesPorCantidad(array $detalles): int
-    {
-        if (empty($detalles)) {
-            return 0;
-        }
-
-        $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
-        $bonus      = 0;
-
+        $bonus = 0;
         foreach ($evaluacion['activadas'] as $r) {
             if ($r['tipo_beneficio'] === 'sesion_unica') {
                 $bonus++;
             }
         }
 
-        return $bonus;
+        return $permitidas + $bonus;
     }
 
     /**

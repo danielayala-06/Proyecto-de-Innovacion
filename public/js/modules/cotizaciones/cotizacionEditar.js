@@ -42,24 +42,21 @@ const state = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const NIVEL_LABEL = {
-    'inicial-primaria': 'Inicial / Primaria',
-    primaria:           'Inicial / Primaria',
-    inicial:            'Inicial / Primaria',
-    secundaria:         'Secundaria',
-    postgrado:          'Postgrado',
-    otro:               'Otro',
+    inicial:    'Inicial',
+    primaria:   'Primaria',
+    secundaria: 'Secundaria',
+    postgrado:  'Postgrado',
+    otro:       'Otro',
 };
 
-const NIVEL_ORDER     = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
-const NIVEL_STYLE     = {
-    'inicial-primaria': 'background:#e3f2fd;color:#1565c0',
-    primaria:           'background:#e3f2fd;color:#1565c0',
-    inicial:            'background:#e3f2fd;color:#1565c0',
-    secundaria:         'background:#f3e5f5;color:#6a1b9a',
-    postgrado:          'background:#fce4ec;color:#c62828',
-    otro:               'background:#fff3e0;color:#e65100',
+const NIVEL_ORDER = ['inicial', 'primaria', 'secundaria', 'postgrado', 'otro'];
+const NIVEL_STYLE = {
+    inicial:    'background:#fff3e0;color:#e65100',
+    primaria:   'background:#e3f2fd;color:#1565c0',
+    secundaria: 'background:#f3e5f5;color:#6a1b9a',
+    postgrado:  'background:#fce4ec;color:#c62828',
+    otro:       'background:#fafafa;color:#616161',
 };
-const NIVEL_NORMALIZE = { primaria: 'inicial-primaria', inicial: 'inicial-primaria' };
 
 /**
  * Construye el contenido del modal de paquetes agrupando por categoría y nivel.
@@ -74,7 +71,7 @@ function _poblarModalPaquetes(paquetes) {
     if (!tabsEl || !panelsEl) return;
 
     const nivelesPresentes = [...new Set(
-        paquetes.map(p => NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro')
+        paquetes.map(p => p.nivel_disponible || 'otro')
     )];
     const nivelesOrdenados = [
         ...NIVEL_ORDER.filter(n => nivelesPresentes.includes(n)),
@@ -117,7 +114,7 @@ function _poblarModalPaquetes(paquetes) {
     panelsEl.innerHTML = keys.map((cat, i) => {
         const rows = grupos[cat].map(p => {
             const nombre     = (p.nombre_paquete || '').replace(/'/g, "\\'");
-            const nivel      = NIVEL_NORMALIZE[p.nivel_disponible] || p.nivel_disponible || 'otro';
+            const nivel      = p.nivel_disponible || 'otro';
             const badgeStyle = NIVEL_STYLE[nivel] ?? NIVEL_STYLE.otro;
             return `
                 <div class="paquete-option" data-nivel="${nivel}"

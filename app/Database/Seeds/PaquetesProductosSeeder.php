@@ -8,32 +8,96 @@ class PaquetesProductosSeeder extends Seeder
 {
     public function run()
     {
-        // Paquetes: 1=Inicial Básico, 2=Primaria Completo, 3=Secundaria Premium, 4=Secundaria Estándar
-        // Productos: 1=Cuadro Individual, 2=Cuadro Grupal, 3=Anuario Premium, 4=Anuario Básico, 5=Photobook, 6=Llavero
-        $data = [
-            // Paquete 1 - Inicial Básico
-            ['id_paquete' => 1, 'id_producto' => 4, 'cantidad' => 1], // Anuario Básico
-            ['id_paquete' => 1, 'id_producto' => 1, 'cantidad' => 1], // Cuadro Individual
+        $pId = fn(string $n) => (int)($this->db->table('paquetes')
+            ->where('nombre_paquete', $n)->get()->getRowArray()['id_paquete'] ?? 0);
 
-            // Paquete 2 - Primaria Completo
-            ['id_paquete' => 2, 'id_producto' => 3, 'cantidad' => 1], // Anuario Premium
-            ['id_paquete' => 2, 'id_producto' => 1, 'cantidad' => 1], // Cuadro Individual
-            ['id_paquete' => 2, 'id_producto' => 5, 'cantidad' => 1], // Photobook
-            ['id_paquete' => 2, 'id_producto' => 6, 'cantidad' => 2], // Llavero x2
+        $prId = fn(string $n) => (int)($this->db->table('productos')
+            ->where('nombre_producto', $n)->get()->getRowArray()['id_producto'] ?? 0);
 
-            // Paquete 3 - Secundaria Premium
-            ['id_paquete' => 3, 'id_producto' => 3, 'cantidad' => 1], // Anuario Premium
-            ['id_paquete' => 3, 'id_producto' => 1, 'cantidad' => 1], // Cuadro Individual
-            ['id_paquete' => 3, 'id_producto' => 2, 'cantidad' => 1], // Cuadro Grupal
-            ['id_paquete' => 3, 'id_producto' => 5, 'cantidad' => 1], // Photobook
-            ['id_paquete' => 3, 'id_producto' => 6, 'cantidad' => 3], // Llavero x3
+        $links = [
+            // ── Cuadros Inicial → su producto físico correspondiente ──────────
+            ['p' => 'Cuadro Soy una Princesa',         'pr' => 'Cuadro Soy una Princesa',         'q' => 1],
+            ['p' => 'Cuadro Soy un Super Héroe',       'pr' => 'Cuadro Soy un Super Héroe',       'q' => 1],
+            ['p' => 'Cuadro Mi Princesa',               'pr' => 'Cuadro Mi Princesa',               'q' => 1],
+            ['p' => 'Cuadro Soy el Mejor',              'pr' => 'Cuadro Soy el Mejor',              'q' => 1],
+            ['p' => 'Cuadro Princesas Mágicas',         'pr' => 'Cuadro Princesas Mágicas',         'q' => 1],
+            ['p' => 'Cuadro Super Héroe',               'pr' => 'Cuadro Super Héroe',               'q' => 1],
+            ['p' => 'Cuadro Mi Príncipe Super Capy',    'pr' => 'Cuadro Mi Príncipe Super Capy',    'q' => 1],
+            ['p' => 'Cuadro Mi Princesa Capy Princess', 'pr' => 'Cuadro Mi Princesa Capy Princess', 'q' => 1],
+            ['p' => 'Cuadro Barbie Capibara',           'pr' => 'Cuadro Barbie Capibara',           'q' => 1],
+            ['p' => 'Cuadro Avenger',                   'pr' => 'Cuadro Avenger',                   'q' => 1],
 
-            // Paquete 4 - Secundaria Estándar
-            ['id_paquete' => 4, 'id_producto' => 4, 'cantidad' => 1], // Anuario Básico
-            ['id_paquete' => 4, 'id_producto' => 2, 'cantidad' => 1], // Cuadro Grupal
-            ['id_paquete' => 4, 'id_producto' => 6, 'cantidad' => 1], // Llavero
+            // ── Anuarios Inicial → su producto físico ─────────────────────────
+            ['p' => 'Anuario Medium Inicial',      'pr' => 'Anuario Medium Inicial',      'q' => 1],
+            ['p' => 'Anuario Big Inicial',         'pr' => 'Anuario Big Inicial',         'q' => 1],
+            ['p' => 'Anuario Big Premium Inicial', 'pr' => 'Anuario Big Premium Inicial', 'q' => 1],
+
+            // ── Cuadros Primaria → su producto físico ─────────────────────────
+            ['p' => 'Cuadro Maravillas del Mundo',      'pr' => 'Cuadro Maravillas del Mundo',      'q' => 1],
+            ['p' => 'Cuadro Académico',                 'pr' => 'Cuadro Académico',                 'q' => 1],
+            ['p' => 'Cuadro Blanco Premium Brillante',  'pr' => 'Cuadro Blanco Premium Brillante',  'q' => 1],
+            ['p' => 'Cuadro Brillante',                 'pr' => 'Cuadro Brillante',                 'q' => 1],
+            ['p' => 'Cuadro Encajoado',                 'pr' => 'Cuadro Encajoado',                 'q' => 1],
+
+            // ── Anuarios Primaria → su producto físico ────────────────────────
+            ['p' => 'Anuario Small',               'pr' => 'Anuario Small Primaria',       'q' => 1],
+            ['p' => 'Anuario Medium Primaria',     'pr' => 'Anuario Medium Primaria',      'q' => 1],
+            ['p' => 'Anuario Big Primaria',        'pr' => 'Anuario Big Primaria',         'q' => 1],
+            ['p' => 'Anuario Big Premium Primaria','pr' => 'Anuario Big Premium Primaria', 'q' => 1],
+
+            // ── Packs Inicial: anuario Big Inicial + llavero + USB ────────────
+            ['p' => 'Pack Mi Primera Promo',   'pr' => 'Anuario Big Inicial', 'q' => 1],
+            ['p' => 'Pack Mi Primera Promo',   'pr' => 'Anuario Llavero',     'q' => 1],
+            ['p' => 'Pack Mi Primera Promo',   'pr' => 'USB Fotográfico',     'q' => 1],
+
+            ['p' => 'Pack Mis Recuerdos Inicial', 'pr' => 'Anuario Big Inicial', 'q' => 1],
+            ['p' => 'Pack Mis Recuerdos Inicial', 'pr' => 'Anuario Llavero',     'q' => 1],
+            ['p' => 'Pack Mis Recuerdos Inicial', 'pr' => 'USB Fotográfico',     'q' => 1],
+
+            ['p' => 'Pack Premium Inicial', 'pr' => 'Anuario Big Inicial', 'q' => 1],
+            ['p' => 'Pack Premium Inicial', 'pr' => 'Anuario Llavero',     'q' => 1],
+            ['p' => 'Pack Premium Inicial', 'pr' => 'USB Fotográfico',     'q' => 1],
+
+            ['p' => 'Pack Premium Gold Inicial', 'pr' => 'Anuario Big Inicial',    'q' => 1],
+            ['p' => 'Pack Premium Gold Inicial', 'pr' => 'Anuario Llavero',        'q' => 1],
+            ['p' => 'Pack Premium Gold Inicial', 'pr' => 'USB Fotográfico',        'q' => 1],
+            ['p' => 'Pack Premium Gold Inicial', 'pr' => 'Book Anillado de Firma', 'q' => 1],
+
+            // ── Packs Primaria ────────────────────────────────────────────────
+            ['p' => 'Pack Adiós Primaria', 'pr' => 'Anuario Big Primaria', 'q' => 1],
+            ['p' => 'Pack Adiós Primaria', 'pr' => 'Anuario Llavero',      'q' => 1],
+            ['p' => 'Pack Adiós Primaria', 'pr' => 'USB Fotográfico',      'q' => 1],
+
+            ['p' => 'Pack Mis Recuerdos Primaria', 'pr' => 'Anuario Big Primaria',       'q' => 1],
+            ['p' => 'Pack Mis Recuerdos Primaria', 'pr' => 'Cuadro Maravillas del Mundo','q' => 1],
+            ['p' => 'Pack Mis Recuerdos Primaria', 'pr' => 'Anuario Llavero',            'q' => 1],
+            ['p' => 'Pack Mis Recuerdos Primaria', 'pr' => 'USB Fotográfico',            'q' => 1],
+
+            ['p' => 'Pack Premium Primaria', 'pr' => 'Anuario Big Primaria',       'q' => 1],
+            ['p' => 'Pack Premium Primaria', 'pr' => 'Cuadro Maravillas del Mundo','q' => 1],
+            ['p' => 'Pack Premium Primaria', 'pr' => 'Anuario Llavero',            'q' => 1],
+            ['p' => 'Pack Premium Primaria', 'pr' => 'USB Fotográfico',            'q' => 1],
+
+            ['p' => 'Pack Premium Gold Primaria', 'pr' => 'Anuario Big Primaria',   'q' => 1],
+            ['p' => 'Pack Premium Gold Primaria', 'pr' => 'Cuadro Brillante',       'q' => 1],
+            ['p' => 'Pack Premium Gold Primaria', 'pr' => 'Anuario Llavero',        'q' => 1],
+            ['p' => 'Pack Premium Gold Primaria', 'pr' => 'USB Fotográfico',        'q' => 1],
+            ['p' => 'Pack Premium Gold Primaria', 'pr' => 'Book Anillado de Firma', 'q' => 1],
         ];
 
-        $this->db->table('paquetes_productos')->insertBatch($data);
+        $data = [];
+        foreach ($links as $l) {
+            $idP  = $pId($l['p']);
+            $idPr = $prId($l['pr']);
+            if ($idP === 0 || $idPr === 0) {
+                log_message('warning', "[PaquetesProductosSeeder] Skipping link '{$l['p']}' → '{$l['pr']}': ID not found.");
+                continue;
+            }
+            $data[] = ['id_paquete' => $idP, 'id_producto' => $idPr, 'cantidad' => $l['q']];
+        }
+
+        if (!empty($data)) {
+            $this->db->table('paquetes_productos')->insertBatch($data);
+        }
     }
 }

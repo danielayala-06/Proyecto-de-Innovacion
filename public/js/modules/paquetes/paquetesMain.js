@@ -96,6 +96,7 @@ window.abrirNuevo = function () {
     form.limpiar();
     document.getElementById('modalTitulo').textContent = 'Nuevo paquete';
     document.getElementById('btnEliminarModal').style.display = 'none';
+    document.getElementById('sesionesSection').style.display = '';
     _modal?.show();
 };
 
@@ -113,6 +114,7 @@ window.editarPaquete = async function (id) {
         form.poblar(res.data);
         document.getElementById('modalTitulo').textContent = 'Editar paquete';
         document.getElementById('btnEliminarModal').style.display = '';
+        document.getElementById('sesionesSection').style.display = 'none';
         _modal?.show();
     } catch {
         alerts.error('No se pudo cargar el paquete.');
@@ -205,6 +207,10 @@ window.agregarItemModal = function () {
     form.agregarItem();
 };
 
+window.agregarSesionModal = function () {
+    form.agregarSesion();
+};
+
 /**
  * Lee el mini-formulario de regla y la guarda (en edición vía API, en creación en memoria).
  */
@@ -290,5 +296,53 @@ function init() {
     _cargarProductosEnSelect();
     cargarPaquetes();
 }
+
+/**
+ * Adapta el formulario de regla según el tipo de condición elegido.
+ *
+ * - ELEGIBILIDAD_MIN: oculta la sección de beneficio (es solo una restricción)
+ *   y actualiza los placeholders para reflejar que se trata de un requisito mínimo.
+ * - CANTIDAD_MIN / CANTIDAD_MAX: muestra la sección de beneficio normalmente.
+ */
+window.__paqOnCondicionChange = function(tipo) {
+    const wrapBenef   = document.getElementById('wrapRTipoBeneficio');
+    const wrapValBen  = document.getElementById('wrapRValorBeneficio');
+    const wrapProd    = document.getElementById('wrapRProductoBeneficio');
+    const labelValor  = document.getElementById('rValorCondicionLabel');
+    const labelBenef  = document.getElementById('rValorBeneficioLabel');
+    const inputDesc   = document.getElementById('rDescripcion');
+    const selBenef    = document.getElementById('rTipoBeneficio');
+    const inputValBen = document.getElementById('rValorBeneficio');
+
+    if (tipo === 'ELEGIBILIDAD_MIN') {
+        // No tiene beneficio — es una restricción de elegibilidad
+        if (wrapBenef)   wrapBenef.style.display  = 'none';
+        if (wrapValBen)  wrapValBen.style.display  = '';
+        if (wrapProd)    wrapProd.classList.add('d-none');
+        if (labelValor)  labelValor.textContent    = 'Mínimo de alumnos requerido';
+        if (labelBenef)  labelBenef.textContent    = 'Aviso cuando no se cumple';
+        if (inputValBen) inputValBen.placeholder   = 'Ej: Paquete no disponible para grupos menores de 14 alumnos.';
+        if (inputDesc)   inputDesc.placeholder     = 'Ej: Se requieren mínimo 14 alumnos para contratar este paquete.';
+        if (selBenef)    selBenef.value = 'otro';
+    } else if (tipo === 'CANTIDAD_MAX') {
+        // No tiene beneficio — es una reducción de sesiones por grupo pequeño
+        if (wrapBenef)   wrapBenef.style.display  = 'none';
+        if (wrapValBen)  wrapValBen.style.display  = '';
+        if (wrapProd)    wrapProd.classList.add('d-none');
+        if (labelValor)  labelValor.textContent    = 'Máximo de alumnos para aplicar';
+        if (labelBenef)  labelBenef.textContent    = 'Aviso que verá el usuario';
+        if (inputValBen) inputValBen.placeholder   = 'Ej: La sesión se realizará en una sola fecha.';
+        if (inputDesc)   inputDesc.placeholder     = 'Ej: Con menos de 12 alumnos, la sesión se realiza en una sola fecha.';
+        if (selBenef)    selBenef.value = 'otro';
+    } else {
+        if (wrapBenef)   wrapBenef.style.display  = '';
+        if (labelValor)  labelValor.textContent    = 'N.° de alumnos';
+        if (labelBenef)  labelBenef.textContent    = 'Detalle del beneficio';
+        if (inputValBen) inputValBen.placeholder   = 'Ej: Cuadro laminado para el docente';
+        if (inputDesc)   inputDesc.placeholder     = 'Ej: Con 15 o más alumnos, el docente recibe un cuadro laminado.';
+        if (selBenef)    selBenef.value = '';
+        form.toggleBeneficioUI('');
+    }
+};
 
 init();

@@ -22,7 +22,8 @@
                 </select>
                 <select class="filter-select" id="filterNivel">
                     <option value="">Todos los niveles</option>
-                    <option value="inicial-primaria">Inicial / Primaria</option>
+                    <option value="inicial">Inicial</option>
+                    <option value="primaria">Primaria</option>
                     <option value="secundaria">Secundaria</option>
                     <option value="postgrado">Postgrado</option>
                     <option value="otro">Otro</option>
@@ -103,7 +104,8 @@
                         <label>Nivel disponible *</label>
                         <select class="form-select" id="pNivel">
                             <option value="">Seleccionar nivel...</option>
-                            <option value="inicial-primaria">Inicial / Primaria</option>
+                            <option value="inicial">Inicial</option>
+                            <option value="primaria">Primaria</option>
                             <option value="secundaria">Secundaria</option>
                             <option value="postgrado">Postgrado</option>
                             <option value="otro">Otro</option>
@@ -120,6 +122,16 @@
                     </button>
                 </div>
 
+                <!-- Sesiones fotográficas (solo creación) -->
+                <div id="sesionesSection" class="mb-1" style="display:none;">
+                    <hr style="border-color:var(--border);margin:.75rem 0;">
+                    <label style="margin-bottom:8px;">Sesiones fotográficas incluidas</label>
+                    <div id="sesionesContainer"></div>
+                    <button class="btn-add-item" onclick="agregarSesionModal()">
+                        <i class="bi bi-plus"></i> Agregar tipo de sesión
+                    </button>
+                </div>
+
                 <!-- Reglas de bonificación -->
                 <hr style="border-color:var(--border);margin:1rem 0 .75rem;">
                 <label style="margin-bottom:8px;">Reglas y condiciones</label>
@@ -129,33 +141,35 @@
                 <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
                     <div class="row g-2 mb-2">
                         <div class="col-6 col-md-4">
-                            <label style="font-size:.75rem;">Condición</label>
-                            <select class="form-select form-select-sm" id="rTipoCondicion">
-                                <option value="">Tipo...</option>
-                                <option value="CANTIDAD_MIN">≥ cantidad (mínimo)</option>
-                                <option value="CANTIDAD_MAX">máx. cantidad (límite)</option>
+                            <label style="font-size:.75rem;">¿Qué tipo de regla es?</label>
+                            <select class="form-select form-select-sm" id="rTipoCondicion"
+                                    onchange="window.__paqOnCondicionChange(this.value)">
+                                <option value="">— Seleccionar —</option>
+                                <option value="ELEGIBILIDAD_MIN">Mínimo para contratar el paquete</option>
+                                <option value="CANTIDAD_MIN">Bonificación por cantidad de alumnos</option>
+                                <option value="CANTIDAD_MAX">Reducción de sesiones por grupo pequeño</option>
                             </select>
                         </div>
                         <div class="col-6 col-md-2">
-                            <label style="font-size:.75rem;">Valor</label>
+                            <label style="font-size:.75rem;" id="rValorCondicionLabel">N.° de alumnos</label>
                             <input type="number" class="form-control form-control-sm" id="rValorCondicion"
                                    placeholder="Ej: 15" min="1" step="1">
                         </div>
-                        <div class="col-12 col-md-6">
-                            <label style="font-size:.75rem;">Tipo de beneficio</label>
+                        <div class="col-12 col-md-6" id="wrapRTipoBeneficio">
+                            <label style="font-size:.75rem;">¿Qué se entrega?</label>
                             <select class="form-select form-select-sm" id="rTipoBeneficio">
-                                <option value="">Beneficio...</option>
-                                <option value="producto_gratis">Producto gratis</option>
-                                <option value="sesion_unica">Sesión extra</option>
-                                <option value="otro">Otro</option>
+                                <option value="">— Seleccionar —</option>
+                                <option value="producto_gratis">Un producto del catálogo (gratis)</option>
+                                <option value="sesion_unica">Una sesión fotográfica extra</option>
+                                <option value="otro">Otro beneficio (texto libre)</option>
                             </select>
                         </div>
                     </div>
                     <div class="row g-2 mb-2">
                         <div class="col-12 col-md-5" id="wrapRValorBeneficio">
-                            <label style="font-size:.75rem;">Detalle del beneficio</label>
+                            <label style="font-size:.75rem;" id="rValorBeneficioLabel">Detalle del beneficio</label>
                             <input type="text" class="form-control form-control-sm" id="rValorBeneficio"
-                                   placeholder="Ej: Envío gratuito al colegio">
+                                   placeholder="Ej: Cuadro laminado para el docente">
                         </div>
                         <div class="col-12 col-md-5 d-none" id="wrapRProductoBeneficio">
                             <label style="font-size:.75rem;">Producto que se entrega</label>
@@ -164,9 +178,9 @@
                             </select>
                         </div>
                         <div class="col-12 col-md-7">
-                            <label style="font-size:.75rem;">Descripción visible al cliente</label>
+                            <label style="font-size:.75rem;">Mensaje que verá el cliente</label>
                             <input type="text" class="form-control form-control-sm" id="rDescripcion"
-                                   placeholder="Ej: +15 alumnos: cuadro laminado para el docente incluido.">
+                                   placeholder="Ej: Con 15 o más alumnos, el docente recibe un cuadro laminado.">
                         </div>
                     </div>
                     <button class="btn-add-item" onclick="agregarReglaModal()">

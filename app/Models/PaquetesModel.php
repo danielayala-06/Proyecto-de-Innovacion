@@ -6,7 +6,7 @@
  *
  * Modelo para la tabla `paquetes`.
  * Un paquete agrupa productos fotográficos y define las sesiones incluidas
- * según el nivel educativo (inicial-primaria, secundaria, postgrado, otro).
+ * según el nivel educativo (inicial, primaria, secundaria, postgrado, otro).
  */
 
 namespace App\Models;
@@ -17,7 +17,7 @@ use CodeIgniter\Model;
  * Modelo de Paquetes.
  *
  * Tabla: `paquetes` (PK: id_paquete).
- * Niveles disponibles: inicial-primaria | secundaria | postgrado | otro.
+ * Niveles disponibles: inicial | primaria | secundaria | postgrado | otro.
  * Estados: ACTIVO | INACTIVO.
  */
 class PaquetesModel extends Model
@@ -43,7 +43,7 @@ class PaquetesModel extends Model
 
     protected $validationRules = [
         'nombre_paquete'   => 'required|max_length[150]',
-        'nivel_disponible' => 'required|in_list[inicial-primaria,secundaria,postgrado,otro]',
+        'nivel_disponible' => 'required|in_list[inicial,primaria,secundaria,postgrado,otro]',
         'precio'           => 'required|decimal|greater_than_equal_to[0]',
         'categoria'        => 'permit_empty|in_list[Cuadros,Anuarios,Paquetes,otros]',
         'estado'           => 'permit_empty|in_list[ACTIVO,INACTIVO]',

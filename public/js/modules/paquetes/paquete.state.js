@@ -61,7 +61,7 @@ const CAT_KEYS = {
  *
  * @type {string[]}
  */
-export const NIVEL_ORDER = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
+export const NIVEL_ORDER = ['inicial', 'primaria', 'secundaria', 'postgrado', 'otro'];
 
 /**
  * Etiquetas de interfaz para cada valor del ENUM `nivel_disponible`.
@@ -69,10 +69,11 @@ export const NIVEL_ORDER = ['inicial-primaria', 'secundaria', 'postgrado', 'otro
  * @type {Object<string, string>}
  */
 export const NIVEL_LABEL = {
-    'inicial-primaria': 'Inicial / Primaria',
-    'secundaria':       'Secundaria',
-    'postgrado':        'Postgrado',
-    'otro':             'Otro',
+    'inicial':    'Inicial',
+    'primaria':   'Primaria',
+    'secundaria': 'Secundaria',
+    'postgrado':  'Postgrado',
+    'otro':       'Otro',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -31,7 +31,7 @@ class ReglasPaquetes extends Migration
             ],
             'tipo_condicion' => [
                 'type'       => 'ENUM',
-                'constraint' => ['CANTIDAD_MIN', 'CANTIDAD_MAX'],
+                'constraint' => ['CANTIDAD_MIN', 'CANTIDAD_MAX', 'ELEGIBILIDAD_MIN'],
             ],
             'valor_condicion' => [
                 'type'       => 'DECIMAL',

@@ -8,54 +8,56 @@ class CotizacionesDetallesSeeder extends Seeder
 {
     public function run()
     {
-        // id_referencia apunta a id_paquete o id_producto según tipo_item.
-        // Paquetes: 1=Anuario Small(135), 2=Anuario Medium(145), 3=Anuario Big(150), 4=Anuario Big Premium(210)
-        // Productos: 1=Cuadro Individual 30x40, 2=Cuadro Grupal 50x70
+        $pId = fn(string $n) => (int)($this->db->table('paquetes')
+            ->where('nombre_paquete', $n)->get()->getRowArray()['id_paquete'] ?? 0);
+        $prId = fn(string $n) => (int)($this->db->table('productos')
+            ->where('nombre_producto', $n)->get()->getRowArray()['id_producto'] ?? 0);
+
         $data = [
-            // Cotización 1 – Anuario Big × 30 alumnos → 30 × 450 = 13 500
+            // Cotización 1 – Anuario Big Primaria × 30 alumnos
             [
                 'id_cotizacion'   => 1,
                 'tipo_item'       => 'paquete',
-                'id_referencia'   => 3,
-                'descripcion'     => 'Anuario Big para 30 alumnos de 5to de Secundaria',
+                'id_referencia'   => $pId('Anuario Big Primaria'),
+                'descripcion'     => 'Anuario Big Primaria para 30 alumnos de 5to de Secundaria',
                 'cantidad'        => 30,
-                'precio_unitario' => 450.00,
+                'precio_unitario' => 150.00,
             ],
-            // Cotización 2 – Anuario Medium × 30 alumnos → 30 × 280 = 8 400
+            // Cotización 2 – Anuario Medium Primaria × 30 alumnos
             [
                 'id_cotizacion'   => 2,
                 'tipo_item'       => 'paquete',
-                'id_referencia'   => 2,
-                'descripcion'     => 'Anuario Medium para 30 alumnos de 6to de Primaria',
+                'id_referencia'   => $pId('Anuario Medium Primaria'),
+                'descripcion'     => 'Anuario Medium Primaria para 30 alumnos de 6to de Primaria',
                 'cantidad'        => 30,
-                'precio_unitario' => 280.00,
+                'precio_unitario' => 145.00,
             ],
-            // Cotización 3 – Anuario Small × 25 alumnos → 25 × 150 = 3 750
+            // Cotización 3 – Anuario Small × 25 alumnos
             [
                 'id_cotizacion'   => 3,
                 'tipo_item'       => 'paquete',
-                'id_referencia'   => 1,
+                'id_referencia'   => $pId('Anuario Small'),
                 'descripcion'     => 'Anuario Small para 25 alumnos de Inicial',
                 'cantidad'        => 25,
-                'precio_unitario' => 150.00,
+                'precio_unitario' => 135.00,
             ],
-            // Cotización 3 – Cuadro Grupal 50x70 × 5 → 5 × 90 = 450
+            // Cotización 3 – Cuadro Maravillas del Mundo adicional × 5
             [
                 'id_cotizacion'   => 3,
                 'tipo_item'       => 'producto',
-                'id_referencia'   => 2,
-                'descripcion'     => 'Cuadro Grupal 50x70 adicional',
+                'id_referencia'   => $prId('Cuadro Maravillas del Mundo'),
+                'descripcion'     => 'Cuadro Maravillas del Mundo adicional',
                 'cantidad'        => 5,
-                'precio_unitario' => 90.00,
+                'precio_unitario' => 110.00,
             ],
-            // Cotización 4 – Anuario Big Premium × 10 alumnos → 10 × 320 = 3 200
+            // Cotización 4 – Anuario Big Premium Primaria × 10 alumnos
             [
                 'id_cotizacion'   => 4,
                 'tipo_item'       => 'paquete',
-                'id_referencia'   => 4,
-                'descripcion'     => 'Anuario Big Premium para 10 alumnos de Secundaria',
+                'id_referencia'   => $pId('Anuario Big Premium Primaria'),
+                'descripcion'     => 'Anuario Big Premium Primaria para 10 alumnos de Secundaria',
                 'cantidad'        => 10,
-                'precio_unitario' => 320.00,
+                'precio_unitario' => 210.00,
             ],
         ];
 

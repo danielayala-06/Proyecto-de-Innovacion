@@ -13,6 +13,7 @@ namespace App\Services\Paquetes;
 
 use App\Models\PaquetesModel;
 use App\Models\PaquetesProductosModel;
+use App\Models\PaquetesSesionesModel;
 use App\Models\ProductosModel;
 use App\Models\ReglasPaquetesModel;
 use App\Models\ReglasItemsModel;
@@ -40,6 +41,9 @@ class PaqueteService
     /** @var ReglasPaquetesModel Acceso a reglas de bonificación. */
     protected ReglasPaquetesModel $reglasPaquetesModel;
 
+    /** @var PaquetesSesionesModel Acceso a la configuración de sesiones por paquete. */
+    protected PaquetesSesionesModel $paquetesSesionesModel;
+
     /** @var ReglasItemsModel Acceso a la tabla intermedia reglas↔paquetes/productos. */
     protected ReglasItemsModel $reglasItemsModel;
 
@@ -48,11 +52,12 @@ class PaqueteService
 
     public function __construct()
     {
-        $this->paqueteModel         = new PaquetesModel();
-        $this->paqueteProductoModel = new PaquetesProductosModel();
-        $this->reglasPaquetesModel  = new ReglasPaquetesModel();
-        $this->reglasItemsModel     = new ReglasItemsModel();
-        $this->productoModel        = new ProductosModel();
+        $this->paqueteModel            = new PaquetesModel();
+        $this->paqueteProductoModel    = new PaquetesProductosModel();
+        $this->paquetesSesionesModel   = new PaquetesSesionesModel();
+        $this->reglasPaquetesModel     = new ReglasPaquetesModel();
+        $this->reglasItemsModel        = new ReglasItemsModel();
+        $this->productoModel           = new ProductosModel();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -64,14 +69,25 @@ class PaqueteService
      *
      * Filtros admitidos (pasados directamente al model):
      * - estado:            ACTIVO | INACTIVO.
-     * - nivel_disponible:  inicial-primaria | secundaria | postgrado | otro.
+     * - nivel_disponible:  inicial | primaria | secundaria | postgrado | otro.
      *
      * @param  array<string, mixed>     $filters
      * @return array<int, array<string, mixed>>
      */
-    public function listar(array $filters = []): array
+    public function listar(array $filters = [], bool $conReglas = false): array
     {
-        return $this->paqueteModel->listarConConteo($filters);
+        $paquetes = $this->paqueteModel->listarConConteo($filters);
+
+        if ($conReglas && !empty($paquetes)) {
+            $ids              = array_column($paquetes, 'id_paquete');
+            $reglasPorPaquete = $this->reglasPaquetesModel->reglasParaPaquetesBatch($ids);
+            foreach ($paquetes as &$p) {
+                $p['reglas'] = $reglasPorPaquete[$p['id_paquete']] ?? [];
+            }
+            unset($p);
+        }
+
+        return $paquetes;
     }
 
     /**
@@ -142,6 +158,25 @@ class PaqueteService
             if ($this->paqueteProductoModel->insertBatch($items) === false) {
                 $db->transRollback();
                 throw new \RuntimeException('Error al asociar productos al paquete', 500);
+            }
+        }
+
+        if (!empty($data['sesiones'])) {
+            $tiposValidos = ['colegio', 'exteriores', 'estudio', 'otro'];
+            $sesRows = [];
+            foreach ($data['sesiones'] as $s) {
+                $tipo = $s['tipo_sesion'] ?? '';
+                if (!in_array($tipo, $tiposValidos, true)) continue;
+                $sesRows[] = [
+                    'id_paquete'         => $idPaquete,
+                    'tipo_sesion'        => $tipo,
+                    'num_sesiones'       => max(1, (int) ($s['num_sesiones'] ?? 1)),
+                    'lugar_descripcion'  => ($s['lugar_descripcion'] ?? '') ?: null,
+                ];
+            }
+            if (!empty($sesRows) && $this->paquetesSesionesModel->insertBatch($sesRows) === false) {
+                $db->transRollback();
+                throw new \RuntimeException('Error al configurar sesiones del paquete', 500);
             }
         }
 

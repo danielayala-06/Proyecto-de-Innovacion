@@ -280,7 +280,8 @@
                 <div class="nivel-filtro-wrap" id="nivelFiltrosContainer"></div>
                 <div class="cat-tabs" id="catTabsContainer"></div>
                 <div id="catPanelsContainer"></div>
-                <div id="paq-hint" style="font-size:.75rem;color:var(--text-muted);margin-top:.6rem;text-align:center;">
+                <div id="reglas-alert-zone" style="display:none;margin-top:.6rem;"></div>
+                <div id="paq-hint" style="font-size:.75rem;color:var(--text-muted);margin-top:.4rem;text-align:center;">
                     Haz clic en un paquete para seleccionarlo · puedes elegir varios
                 </div>
             </div>

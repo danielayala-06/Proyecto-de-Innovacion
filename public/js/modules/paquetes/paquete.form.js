@@ -48,6 +48,12 @@ let _reglas = [];
  */
 let _reglasPendientes = [];
 
+/**
+ * Configuración de sesiones (solo modo creación).
+ * @type {Array<{tipo_sesion:string, num_sesiones:number, lugar_descripcion:string}>}
+ */
+let _sesiones = [];
+
 /** true cuando el modal está en modo edición (paquete ya existe en BD). */
 let _modoEdicion = false;
 
@@ -64,7 +70,7 @@ let _idPaqueteActual = null;
  *
  * @type {string[]}
  */
-const NIVELES_VALIDOS = ['inicial-primaria', 'secundaria', 'postgrado', 'otro'];
+const NIVELES_VALIDOS = ['inicial', 'primaria', 'secundaria', 'postgrado', 'otro'];
 
 /**
  * Mapeo de valor de select UI → valor ENUM de la BD para `categoria`.
@@ -103,8 +109,60 @@ const _set = (id, v) => { const el = document.getElementById(id); if (el) el.val
 /** Devuelve el `value` recortado del elemento con `id`, o `''` si no existe. */
 const _get = (id)    => document.getElementById(id)?.value?.trim() ?? '';
 
-const TIPO_CONDICION_LABEL = { CANTIDAD_MIN: '≥ cantidad', CANTIDAD_MAX: 'máx. cantidad' };
-const TIPO_BENEFICIO_LABEL  = { producto_gratis: 'Producto gratis', sesion_unica: 'Sesión extra', otro: 'Otro' };
+const TIPO_CONDICION_LABEL = {
+    ELEGIBILIDAD_MIN: 'Mínimo para contratar',
+    CANTIDAD_MIN:     'Bonificación desde',
+    CANTIDAD_MAX:     'Reducción si menos de',
+};
+const TIPO_BENEFICIO_LABEL = { producto_gratis: 'Producto gratis', sesion_unica: 'Sesión extra', otro: 'Mensaje' };
+
+const TIPO_SESION_LABEL = {
+    colegio:    'Colegio',
+    exteriores: 'Exteriores',
+    estudio:    'Estudio',
+    otro:       'Otro',
+};
+
+/** Re-renderiza la tabla de sesiones en #sesionesContainer. */
+function _renderSesiones() {
+    const container = document.getElementById('sesionesContainer');
+    if (!container) return;
+
+    if (!_sesiones.length) {
+        container.innerHTML = '<p class="text-muted" style="font-size:.8rem;margin:0 0 .5rem;">Sin sesiones definidas.</p>';
+        return;
+    }
+
+    container.innerHTML = _sesiones.map((s, i) => `
+        <div class="row g-2 align-items-center mb-1" style="flex-wrap:nowrap;">
+            <div class="col-auto">
+                <select class="form-select form-select-sm" style="min-width:120px;"
+                        onchange="window.__paqSesionTipo(${i}, this.value)">
+                    ${Object.entries(TIPO_SESION_LABEL).map(([v, l]) =>
+                        `<option value="${v}"${s.tipo_sesion === v ? ' selected' : ''}>${l}</option>`
+                    ).join('')}
+                </select>
+            </div>
+            <div class="col-auto">
+                <input type="number" class="form-control form-control-sm" style="width:70px;"
+                       value="${s.num_sesiones}" min="1" max="10"
+                       onchange="window.__paqSesionNum(${i}, this.value)"
+                       placeholder="N.°">
+            </div>
+            <div class="col">
+                <input type="text" class="form-control form-control-sm"
+                       value="${s.lugar_descripcion ?? ''}"
+                       oninput="window.__paqSesionLugar(${i}, this.value)"
+                       placeholder="Descripción del lugar (opcional)">
+            </div>
+            <div class="col-auto">
+                <button type="button" class="btn btn-sm btn-outline-danger" style="padding:.2rem .4rem;"
+                        onclick="window.__paqRemoveSesion(${i})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>`).join('');
+}
 
 /**
  * Re-renderiza el contenedor de reglas `#reglasContainer`.
@@ -125,19 +183,33 @@ function _renderReglas() {
     }
 
     container.innerHTML = todasLasReglas.map(r => {
-        const label    = `${TIPO_CONDICION_LABEL[r.tipo_condicion] ?? r.tipo_condicion} ${r.valor_condicion}`;
-        const benefTipo = TIPO_BENEFICIO_LABEL[r.tipo_beneficio] ?? r.tipo_beneficio;
+        const condLabel = TIPO_CONDICION_LABEL[r.tipo_condicion] ?? r.tipo_condicion;
+        const label     = `${condLabel}: ${r.valor_condicion} alumnos`;
+
+        const esRestriccion = r.tipo_condicion === 'ELEGIBILIDAD_MIN' || r.tipo_condicion === 'CANTIDAD_MAX';
+        const badgeBg = r.tipo_condicion === 'ELEGIBILIDAD_MIN' ? '#dc3545'
+                      : r.tipo_condicion === 'CANTIDAD_MAX'     ? '#fd7e14'
+                      : 'var(--accent)';
+
         const benefDetalle = r.tipo_beneficio === 'producto_gratis'
             ? (r.nombre_producto_beneficio ?? r.valor_beneficio ?? '—')
             : (r.valor_beneficio ?? '—');
+
+        const benefBadge = esRestriccion
+            ? ''
+            : `<span class="badge bg-secondary" style="white-space:nowrap;flex-shrink:0;">
+                   ${TIPO_BENEFICIO_LABEL[r.tipo_beneficio] ?? r.tipo_beneficio}: ${benefDetalle}
+               </span>`;
+
         const eliminar = r.guardada
             ? `onclick="window.__paqEliminarRegla(${r.id_regla})"`
             : `onclick="window.__paqQuitarReglaPendiente(${r._idx})"`;
+
         return `
         <div class="d-flex align-items-start gap-2 mb-2" style="font-size:.8rem;">
-            <span class="badge" style="background:var(--accent);color:#fff;white-space:nowrap;flex-shrink:0;">${label}</span>
+            <span class="badge" style="background:${badgeBg};color:#fff;white-space:nowrap;flex-shrink:0;">${label}</span>
             <span style="color:var(--text-secondary);flex:1;">${r.descripcion}</span>
-            <span class="badge bg-secondary" style="white-space:nowrap;flex-shrink:0;">${benefTipo}: ${benefDetalle}</span>
+            ${benefBadge}
             <button type="button" ${eliminar}
                     style="background:none;border:none;color:var(--red-text,#e57373);cursor:pointer;padding:0 2px;flex-shrink:0;">
                 <i class="bi bi-x-circle"></i>
@@ -182,6 +254,9 @@ function _limpiarFormRegla() {
     ['rTipoCondicion', 'rValorCondicion', 'rTipoBeneficio', 'rValorBeneficio', 'rIdProductoBeneficio', 'rDescripcion']
         .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     _toggleBeneficioUI('');
+    // Restaurar bloque de beneficio por si se ocultó con ELEGIBILIDAD_MIN
+    const wrapBenef = document.getElementById('wrapRTipoBeneficio');
+    if (wrapBenef) wrapBenef.style.display = '';
 }
 
 /**
@@ -227,10 +302,12 @@ export const form = {
         _items = [];
         _reglas = [];
         _reglasPendientes = [];
+        _sesiones = [];
         _modoEdicion = false;
         _idPaqueteActual = null;
         _renderItems();
         _renderReglas();
+        _renderSesiones();
         _limpiarFormRegla();
     },
 
@@ -309,6 +386,7 @@ export const form = {
             descripcion:      lineas.join('\n') || null,
             precio:           parseFloat(_get('pPrecio')),
             categoria:        CAT_DB_MAP[cat] ?? 'otros',
+            sesiones:         _sesiones.length ? _sesiones.map(s => ({ ...s })) : undefined,
         };
     },
 
@@ -351,6 +429,11 @@ export const form = {
         }, 30);
     },
 
+    agregarSesion() {
+        _sesiones.push({ tipo_sesion: 'colegio', num_sesiones: 1, lugar_descripcion: '' });
+        _renderSesiones();
+    },
+
     /**
      * Lee el mini-formulario de regla y agrega la regla a `_reglasPendientes`
      * (modo creación) o devuelve los datos para que el caller la envíe a la API
@@ -363,8 +446,12 @@ export const form = {
     leerReglaForm() {
         const tipo_condicion  = document.getElementById('rTipoCondicion')?.value  ?? '';
         const valor_condicion = parseFloat(document.getElementById('rValorCondicion')?.value ?? '');
-        const tipo_beneficio  = document.getElementById('rTipoBeneficio')?.value  ?? '';
         const descripcion     = (document.getElementById('rDescripcion')?.value   ?? '').trim();
+
+        // ELEGIBILIDAD_MIN y CANTIDAD_MAX no tienen selector de beneficio: se fuerza a 'otro'
+        const tipo_beneficio = (tipo_condicion === 'ELEGIBILIDAD_MIN' || tipo_condicion === 'CANTIDAD_MAX')
+            ? 'otro'
+            : (document.getElementById('rTipoBeneficio')?.value ?? '');
 
         if (!tipo_condicion || !tipo_beneficio) return null;
         if (!valor_condicion || valor_condicion <= 0) return null;
@@ -449,3 +536,8 @@ window.__paqQuitarReglaPendiente = (i) => { _reglasPendientes.splice(i, 1); _ren
 window.__paqEliminarRegla = (idRegla) => {
     if (window.__paqEliminarReglaApi) window.__paqEliminarReglaApi(idRegla);
 };
+
+window.__paqSesionTipo   = (i, v) => { _sesiones[i].tipo_sesion       = v;            };
+window.__paqSesionNum    = (i, v) => { _sesiones[i].num_sesiones       = parseInt(v) || 1; };
+window.__paqSesionLugar  = (i, v) => { _sesiones[i].lugar_descripcion  = v;            };
+window.__paqRemoveSesion = (i)    => { _sesiones.splice(i, 1); _renderSesiones();      };
