@@ -79,4 +79,15 @@ class CotizacionController extends BaseController
 
         return view('cotizaciones/editar', $data);
     }
+
+    public function ver(int $id)
+    {
+        $data = [
+            'header'        => view('Layouts/header'),
+            'footer'        => view('Layouts/footer'),
+            'id_cotizacion' => $id,
+        ];
+
+        return view('cotizaciones/ver', $data);
+    }
 }

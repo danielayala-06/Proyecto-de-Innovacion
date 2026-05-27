@@ -89,11 +89,6 @@ function navActivo(string $ruta, string $segmento): string {
                 </a>
             </li>
             <li>
-                <a href="<?= base_url('/clientes') ?>" class="<?= navActivo('clientes', $segmento) ?>">
-                    <i class="bi bi-people"></i> <span class="nav-label">Clientes</span>
-                </a>
-            </li>
-            <li>
                 <a href="<?= base_url('/paquetes') ?>" class="<?= navActivo('paquetes', $segmento) ?>">
                     <i class="bi bi-box-seam"></i> <span class="nav-label">Paquetes</span>
                 </a>

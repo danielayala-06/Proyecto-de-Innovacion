@@ -130,9 +130,11 @@ export const ui = {
         : `disabled title="Solo se puede editar un contrato vigente"`;
 
       return `
-        <tr onclick="verDetalleContrato(${c.id})">
+        <!--<tr onclick="verDetalleContrato(${c.id})">-->
+        <tr">
           <td><span class="con-codigo">${cod}</span></td>
-          <td><span class="con-cot-ref-small">${cotCod}</span></td>
+          <!--<td><span class="con-cot-ref-small">${cotCod}</span></td>-->
+          <td><a class="con-cot-ref-small btn btn-small" href="${BASE_URL}cotizaciones/${c.id_cotizacion}" onclick="event.stopPropagation()">${cotCod}</a></td>
           <td class="text-uppercase">${c.cliente?.nombre ?? '—'}</td>
           <td style="color:var(--text-muted);">—</td>
           <td>${formatters.moneda(c.total)}</td>
