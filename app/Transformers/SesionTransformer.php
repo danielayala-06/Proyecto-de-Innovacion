@@ -36,9 +36,12 @@ class SesionTransformer extends BaseTransformer
         $data = [
             'id_sesion'         => (int)   $resource['id_sesion'],
             'id_promocion'      => (int)   $resource['id_promocion'],
-            'nombre_promocion'  =>         $resource['nombre_promocion'] ?? null,
-            'grado'             =>         $resource['grado']            ?? null,
-            'nombre_colegio'    =>         $resource['nombre_colegio']   ?? null,
+            'nombre_promocion'  =>         $resource['nombre_promocion']  ?? null,
+            'grado'             =>         $resource['grado']             ?? null,
+            'seccion'           =>         $resource['seccion']           ?? null,
+            'num_estudiantes'   => isset($resource['num_estudiantes']) && $resource['num_estudiantes'] !== null
+                                    ? (int) $resource['num_estudiantes'] : null,
+            'nombre_colegio'    =>         $resource['nombre_colegio']    ?? null,
             'id_contrato'       => isset($resource['id_contrato']) && $resource['id_contrato']
                                     ? (int) $resource['id_contrato'] : null,
             'fecha_hora_sesion' =>         $resource['fecha_hora_sesion'],

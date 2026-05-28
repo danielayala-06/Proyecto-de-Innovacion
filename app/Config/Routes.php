@@ -29,6 +29,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/contratos/crear',               'ContratoController::crear');
     $routes->get('/contratos/(:num)',              'ContratoController::generarContrato/$1');
     $routes->get('/promociones',                     'PromocionController::index');
+    $routes->get('/sesiones',                        'SesionController::lista');
     $routes->get('/contratos/(:num)/sesiones',     'SesionController::index/$1');
     $routes->get('/paquetes',              'PaqueteController::index');
     $routes->get('/clientes',              'ClienteController::index');
@@ -82,6 +83,8 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth']
     $routes->delete('paquetes/(:num)/productos/(:num)',        'PaquetesApi::quitarProducto/$1/$2');
     $routes->post  ('paquetes/(:num)/reglas',                  'PaquetesApi::crearRegla/$1');
     $routes->delete('paquetes/reglas/(:num)',                   'PaquetesApi::eliminarRegla/$1');
+    $routes->post  ('paquetes/(:num)/imagen',                  'PaquetesApi::subirImagen/$1');
+    $routes->delete('paquetes/(:num)/imagen',                  'PaquetesApi::eliminarImagen/$1');
     $routes->get   ('productos',                               'PaquetesApi::indexProductos');
 
     // ── Promociones Escolares ─────────────────────────────────────────────────

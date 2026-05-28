@@ -45,9 +45,9 @@ function inyectarEstilo() {
     @keyframes _toastIn {from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
     ._toast{
       position:fixed;bottom:1.25rem;right:1.25rem;z-index:9999;
-      background:var(--card-bg,#fff);border:1px solid var(--border-color,#ddd);
+      background:var(--bg-elevated,#fff);border:1px solid var(--border-strong,#ccc);
       border-radius:10px;padding:.7rem 1rem;min-width:240px;max-width:340px;
-      box-shadow:0 4px 18px rgba(0,0,0,.18);display:flex;align-items:center;gap:.55rem;
+      box-shadow:0 4px 18px rgba(0,0,0,.25);display:flex;align-items:center;gap:.55rem;
       font-size:.84rem;color:var(--text-primary,#222);
       animation:_toastIn .22s ease;
     }

@@ -180,9 +180,19 @@ export const ui = {
                 const items    = lineas.slice(1);
                 const esActivo = p.estado === 'ACTIVO';
 
+                const imgHtml = p.imagen_url
+                    ? `<div class="pc-img">
+                           <img src="${p.imagen_url}" alt="${p.nombre_paquete}"
+                                loading="lazy" decoding="async">
+                       </div>`
+                    : `<div class="pc-img pc-img-placeholder">
+                           <i class="bi bi-image"></i>
+                       </div>`;
+
                 return `
                 <div class="paquete-card${esActivo ? '' : ' pc-inactivo'}"
                      style="cursor:pointer;" onclick="editarPaquete(${p.id_paquete})">
+                    ${imgHtml}
                     <div class="pc-header">
                         <div>
                             ${_catBadge(p)}

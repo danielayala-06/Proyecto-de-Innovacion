@@ -35,6 +35,14 @@ class SesionController extends BaseController
      * @param  int    $idContrato ID del contrato cuyas sesiones se gestionarán.
      * @return string HTML de la vista renderizada o vista de error 404.
      */
+    public function lista()
+    {
+        return view('sesiones/lista', [
+            'header' => view('Layouts/header'),
+            'footer' => view('Layouts/footer'),
+        ]);
+    }
+
     public function index(int $idContrato)
     {
         $db              = Database::connect();

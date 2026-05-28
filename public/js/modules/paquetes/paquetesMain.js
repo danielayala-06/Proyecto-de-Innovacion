@@ -89,7 +89,7 @@ function _aplicarFiltros() {
 
 /**
  * Abre el modal en modo creación: limpia el formulario y oculta el botón
- * de desactivación.
+ * de desactivación. La zona de imagen solo aplica en edición.
  */
 window.abrirNuevo = function () {
     _idEditando = null;
@@ -97,12 +97,13 @@ window.abrirNuevo = function () {
     document.getElementById('modalTitulo').textContent = 'Nuevo paquete';
     document.getElementById('btnEliminarModal').style.display = 'none';
     document.getElementById('sesionesSection').style.display = '';
+    document.getElementById('pImagenSection').style.display = 'none';
     _modal?.show();
 };
 
 /**
  * Carga los datos del paquete desde la API y abre el modal en modo edición.
- * Muestra el botón de desactivación.
+ * Muestra el botón de desactivación y la zona de imagen.
  *
  * @param {number} id - ID del paquete a editar.
  * @returns {Promise<void>}
@@ -115,6 +116,8 @@ window.editarPaquete = async function (id) {
         document.getElementById('modalTitulo').textContent = 'Editar paquete';
         document.getElementById('btnEliminarModal').style.display = '';
         document.getElementById('sesionesSection').style.display = 'none';
+        document.getElementById('pImagenSection').style.display = '';
+        _actualizarPreviewImagen(res.data.imagen_url ?? null);
         _modal?.show();
     } catch {
         alerts.error('No se pudo cargar el paquete.');
@@ -254,6 +257,55 @@ window.__paqEliminarReglaApi = async function (idRegla) {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// IMAGEN DE PAQUETE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Actualiza la preview de imagen en el modal.
+ * @param {string|null} url - URL de la imagen, o null si no hay imagen.
+ */
+function _actualizarPreviewImagen(url) {
+    const preview     = document.getElementById('pImagenPreview');
+    const placeholder = document.getElementById('pImagenPlaceholder');
+    const acciones    = document.getElementById('pImagenAcciones');
+    if (!preview || !placeholder || !acciones) return;
+
+    if (url) {
+        preview.src          = url;
+        preview.style.display = '';
+        placeholder.style.display = 'none';
+        acciones.style.display    = '';
+    } else {
+        preview.src           = '';
+        preview.style.display = 'none';
+        placeholder.style.display = '';
+        acciones.style.display    = 'none';
+    }
+}
+
+/**
+ * Quita la imagen del paquete en edición (llama al endpoint DELETE).
+ */
+window.quitarImagenPaquete = async function () {
+    if (!_idEditando) return;
+    try {
+        await paqueteApi.eliminarImagen(_idEditando);
+        _actualizarPreviewImagen(null);
+        alerts.ok('Imagen eliminada.');
+        // Actualizar el card en el grid sin recargar todo
+        const idx = state.todos.findIndex(p => p.id_paquete === _idEditando);
+        if (idx !== -1) {
+            state.todos[idx].imagen     = null;
+            state.todos[idx].imagen_url = null;
+            state.filtrados = state.todos.filter(p => state.filtrados.some(f => f.id_paquete === p.id_paquete));
+            ui.renderGrid(state.filtrados);
+        }
+    } catch {
+        alerts.error('No se pudo eliminar la imagen.');
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INICIALIZACIÓN
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -291,6 +343,39 @@ function init() {
 
     document.getElementById('rTipoBeneficio')?.addEventListener('change', e => {
         form.toggleBeneficioUI(e.target.value);
+    });
+
+    document.getElementById('pImagenInput')?.addEventListener('change', async function () {
+        const file = this.files?.[0];
+        if (!file || !_idEditando) return;
+
+        // Mostrar preview local inmediatamente (sin esperar al servidor)
+        const localUrl = URL.createObjectURL(file);
+        _actualizarPreviewImagen(localUrl);
+
+        try {
+            const res = await paqueteApi.subirImagen(_idEditando, file);
+            URL.revokeObjectURL(localUrl);
+            if (res.status === 'success') {
+                _actualizarPreviewImagen(res.imagen_url);
+                alerts.ok('Imagen guardada.');
+                // Actualizar objeto en state para que el grid refleje la imagen
+                const idx = state.todos.findIndex(p => p.id_paquete === _idEditando);
+                if (idx !== -1) {
+                    state.todos[idx].imagen_url = res.imagen_url;
+                    ui.renderGrid(state.filtrados);
+                }
+            } else {
+                _actualizarPreviewImagen(null);
+                alerts.error(res.message || 'Error al subir la imagen.');
+            }
+        } catch {
+            URL.revokeObjectURL(localUrl);
+            _actualizarPreviewImagen(null);
+            alerts.error('Error de red al subir la imagen.');
+        }
+        // Limpiar el input para permitir subir el mismo archivo de nuevo
+        this.value = '';
     });
 
     _cargarProductosEnSelect();

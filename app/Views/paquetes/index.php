@@ -111,6 +111,30 @@
                     </div>
                 </div>
 
+                <!-- Imagen del paquete (solo edición) -->
+                <div id="pImagenSection" class="mb-3" style="display:none;">
+                    <label style="margin-bottom:8px;">Imagen del paquete</label>
+                    <div id="pImagenZone" class="img-upload-zone" onclick="document.getElementById('pImagenInput').click()">
+                        <img id="pImagenPreview" src="" alt="" loading="lazy" decoding="async"
+                             style="display:none;width:100%;height:100%;object-fit:cover;border-radius:8px;">
+                        <div id="pImagenPlaceholder">
+                            <i class="bi bi-cloud-upload" style="font-size:1.5rem;display:block;margin-bottom:.25rem;"></i>
+                            <span style="font-size:.8rem;">Haz clic para subir imagen (JPG, PNG · máx. 5 MB)</span>
+                        </div>
+                    </div>
+                    <input type="file" id="pImagenInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                    <div id="pImagenAcciones" style="display:none;margin-top:.4rem;gap:.5rem;" class="d-flex">
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                onclick="document.getElementById('pImagenInput').click()">
+                            <i class="bi bi-arrow-repeat me-1"></i>Cambiar
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                onclick="quitarImagenPaquete()">
+                            <i class="bi bi-trash me-1"></i>Quitar
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Items del paquete -->
                 <div class="mb-1">
                     <label style="margin-bottom:8px;">Incluye</label>

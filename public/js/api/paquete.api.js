@@ -5,13 +5,15 @@
  * Capa de acceso a la API REST para el recurso Paquetes fotográficos.
  *
  * Endpoints consumidos:
- *  - GET   api/paquetes               → listar paquetes (soporta filtros: estado, nivel)
- *  - GET   api/paquetes/{id}          → detalle con productos y reglas
- *  - POST  api/paquetes               → crear un nuevo paquete
- *  - PUT   api/paquetes/{id}          → actualizar datos del paquete
- *  - PATCH  api/paquetes/{id}/estado         → activar o desactivar (ACTIVO | INACTIVO)
- *  - POST   api/paquetes/{id}/reglas         → crear regla de bonificación
- *  - DELETE api/paquetes/reglas/{rid}        → eliminar regla
+ *  - GET    api/paquetes               → listar paquetes (soporta filtros: estado, nivel)
+ *  - GET    api/paquetes/{id}          → detalle con productos y reglas
+ *  - POST   api/paquetes               → crear un nuevo paquete
+ *  - PUT    api/paquetes/{id}          → actualizar datos del paquete
+ *  - PATCH  api/paquetes/{id}/estado   → activar o desactivar (ACTIVO | INACTIVO)
+ *  - POST   api/paquetes/{id}/reglas   → crear regla de bonificación
+ *  - DELETE api/paquetes/reglas/{rid}  → eliminar regla
+ *  - POST   api/paquetes/{id}/imagen   → subir / reemplazar imagen (multipart)
+ *  - DELETE api/paquetes/{id}/imagen   → eliminar imagen
  */
 
 import { http } from '../utils/http.js';
@@ -36,4 +38,23 @@ export const paqueteApi = {
     crearRegla:    (id, data)    => http.post(`api/paquetes/${id}/reglas`, data),
     /** @param {number} rid - ID de la regla. */
     eliminarRegla: (rid)         => http.delete(`api/paquetes/reglas/${rid}`),
+
+    /**
+     * Sube o reemplaza la imagen de un paquete.
+     * Usa FormData (multipart) en lugar de JSON.
+     * @param {number} id - ID del paquete.
+     * @param {File}   file - Archivo de imagen seleccionado.
+     */
+    subirImagen(id, file) {
+        const fd = new FormData();
+        fd.append('imagen', file);
+        return fetch(`${BASE_URL}api/paquetes/${id}/imagen`, {
+            method: 'POST',
+            body:   fd,
+            credentials: 'same-origin',
+        }).then(r => r.json());
+    },
+
+    /** @param {number} id - ID del paquete. */
+    eliminarImagen: (id) => http.delete(`api/paquetes/${id}/imagen`),
 };

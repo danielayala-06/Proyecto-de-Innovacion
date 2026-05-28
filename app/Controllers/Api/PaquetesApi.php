@@ -18,11 +18,14 @@
  *   DELETE /api/paquetes/{id}/productos/{pid}   → quitar producto del paquete
  *   POST   /api/paquetes/{id}/reglas            → crear regla de bonificación
  *   DELETE /api/paquetes/reglas/{rid}           → eliminar regla
+ *   POST   /api/paquetes/{id}/imagen            → subir / reemplazar imagen
+ *   DELETE /api/paquetes/{id}/imagen            → eliminar imagen
  */
 
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseApiController;
+use App\Models\PaquetesModel;
 use App\Models\ProductosModel;
 use App\Services\Paquetes\PaqueteService;
 use App\Transformers\PaqueteTransformer;
@@ -45,11 +48,22 @@ class PaquetesApi extends BaseApiController
     /** @var ProductosModel Para el endpoint GET /api/productos. */
     protected ProductosModel $productosModel;
 
+    /** @var PaquetesModel Para actualizar el campo imagen directamente. */
+    protected PaquetesModel $paquetesModel;
+
+    /** Directorio de almacenamiento de imágenes de paquetes (dentro de public/). */
+    private const IMG_DIR = 'images/paquetes/';
+
+    /** Dimensiones máximas de la imagen procesada. */
+    private const IMG_MAX_W = 720;
+    private const IMG_MAX_H = 480;
+
     public function __construct()
     {
         $this->paqueteService     = new PaqueteService();
         $this->paqueteTransformer = new PaqueteTransformer();
         $this->productosModel     = new ProductosModel();
+        $this->paquetesModel      = new PaquetesModel();
     }
 
     /**
@@ -333,6 +347,159 @@ class PaquetesApi extends BaseApiController
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON(['status' => 'success', 'message' => 'Regla eliminada']);
+    }
+
+    /**
+     * POST /api/paquetes/{id}/imagen
+     *
+     * Recibe multipart/form-data con el campo `imagen`.
+     * Redimensiona y convierte a WebP (máx. 720×480 px, calidad 82).
+     * Almacena en public/images/paquetes/paq_{id}.webp.
+     *
+     * @param  mixed $id ID del paquete.
+     * @return ResponseInterface 200 con imagen_url | 404 | 422.
+     */
+    public function subirImagen($id)
+    {
+        $paquete = $this->paquetesModel->find((int) $id);
+        if (!$paquete) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
+                ->setJSON(['status' => 'error', 'message' => 'Paquete no encontrado']);
+        }
+
+        $archivo = $this->request->getFile('imagen');
+        if (!$archivo || !$archivo->isValid() || $archivo->hasMoved()) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'Archivo inválido o no recibido']);
+        }
+
+        $mime = $archivo->getMimeType();
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'])) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'Solo se aceptan imágenes JPG, PNG o WebP']);
+        }
+
+        if ($archivo->getSize() > 5 * 1024 * 1024) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'La imagen no puede superar los 5 MB']);
+        }
+
+        $gdDisponible  = function_exists('imagecreatefromjpeg');
+        $ext           = $gdDisponible ? 'webp' : strtolower($archivo->getExtension() ?: 'jpg');
+        $nombreArchivo = 'paq_' . (int) $id . '.' . $ext;
+        $dirAbsoluto   = FCPATH . self::IMG_DIR;
+        $destino       = $dirAbsoluto . $nombreArchivo;
+
+        if (!is_dir($dirAbsoluto)) {
+            mkdir($dirAbsoluto, 0755, true);
+        }
+
+        // Eliminar versión anterior con cualquier extensión
+        foreach (['webp', 'jpg', 'jpeg', 'png'] as $e) {
+            $prev = $dirAbsoluto . 'paq_' . (int) $id . '.' . $e;
+            if (is_file($prev) && $prev !== $destino) {
+                unlink($prev);
+            }
+        }
+
+        try {
+            if ($gdDisponible) {
+                $this->_procesarImagen($archivo->getTempName(), $destino, $mime);
+            } else {
+                $archivo->move($dirAbsoluto, $nombreArchivo);
+            }
+        } catch (\Throwable) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)
+                ->setJSON(['status' => 'error', 'message' => 'Error al procesar la imagen']);
+        }
+
+        $this->paquetesModel->update((int) $id, ['imagen' => $nombreArchivo]);
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON([
+                'status'    => 'success',
+                'message'   => 'Imagen guardada',
+                'imagen_url' => base_url(self::IMG_DIR . $nombreArchivo . '?v=' . time()),
+            ]);
+    }
+
+    /**
+     * DELETE /api/paquetes/{id}/imagen
+     *
+     * Elimina la imagen del paquete del disco y limpia el campo en BD.
+     *
+     * @param  mixed $id ID del paquete.
+     * @return ResponseInterface 200 | 404.
+     */
+    public function eliminarImagen($id)
+    {
+        $paquete = $this->paquetesModel->find((int) $id);
+        if (!$paquete) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)
+                ->setJSON(['status' => 'error', 'message' => 'Paquete no encontrado']);
+        }
+
+        if (!empty($paquete['imagen'])) {
+            $ruta = FCPATH . self::IMG_DIR . $paquete['imagen'];
+            if (is_file($ruta)) {
+                unlink($ruta);
+            }
+        }
+
+        $this->paquetesModel->update((int) $id, ['imagen' => null]);
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON(['status' => 'success', 'message' => 'Imagen eliminada']);
+    }
+
+    /**
+     * Redimensiona y convierte una imagen a WebP usando la extensión GD.
+     *
+     * @param  string $origen   Ruta temporal del archivo subido.
+     * @param  string $destino  Ruta absoluta donde se guardará el WebP.
+     * @param  string $mime     MIME type del archivo original.
+     * @throws \RuntimeException Si GD no está disponible o el procesamiento falla.
+     */
+    private function _procesarImagen(string $origen, string $destino, string $mime): void
+    {
+        if (!function_exists('imagecreatefromjpeg')) {
+            throw new \RuntimeException('La extensión GD no está disponible');
+        }
+
+        $src = match ($mime) {
+            'image/jpeg' => imagecreatefromjpeg($origen),
+            'image/png'  => imagecreatefrompng($origen),
+            'image/webp' => imagecreatefromwebp($origen),
+            default      => throw new \RuntimeException('Tipo de imagen no soportado'),
+        };
+
+        if (!$src) {
+            throw new \RuntimeException('No se pudo leer la imagen');
+        }
+
+        $anchoOrig = imagesx($src);
+        $altoOrig  = imagesy($src);
+
+        $ratio  = min(self::IMG_MAX_W / $anchoOrig, self::IMG_MAX_H / $altoOrig, 1.0);
+        $ancho  = (int) round($anchoOrig * $ratio);
+        $alto   = (int) round($altoOrig  * $ratio);
+
+        $dst = imagecreatetruecolor($ancho, $alto);
+
+        // Relleno blanco para conservar transparencias PNG
+        $blanco = imagecolorallocate($dst, 255, 255, 255);
+        imagefill($dst, 0, 0, $blanco);
+
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $ancho, $alto, $anchoOrig, $altoOrig);
+        imagewebp($dst, $destino, 82);
     }
 
 }

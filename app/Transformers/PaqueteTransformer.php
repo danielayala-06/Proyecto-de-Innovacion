@@ -33,12 +33,15 @@ class PaqueteTransformer extends BaseTransformer
             return [];
         }
 
+        $nombreImagen = $resource['imagen'] ?? null;
+
         $data = [
             'id_paquete'       => (int)   $resource['id_paquete'],
             'nombre_paquete'   =>         $resource['nombre_paquete'],
             'nivel_disponible' =>         $resource['nivel_disponible'],
             'descripcion'      =>         $resource['descripcion'] ?? null,
-            'imagen'           =>         $resource['imagen']      ?? null,
+            'imagen'           =>         $nombreImagen,
+            'imagen_url'       =>         $nombreImagen ? base_url('images/paquetes/' . $nombreImagen) : null,
             'precio'           => (float) $resource['precio'],
             'categoria'        =>         $resource['categoria']   ?? null,
             'estado'           =>         $resource['estado'],

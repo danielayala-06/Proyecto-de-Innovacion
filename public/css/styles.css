@@ -59,6 +59,11 @@
     --cal-cotizacion-bg:   #E4EDF8; --cal-cotizacion-text: #1A3878;
     --cal-contrato-bg:     #E6F5EC; --cal-contrato-text:   #1A5E2E;
     --cal-entrega-bg:      #F0EAF8; --cal-entrega-text:    #481870;
+
+    /* Sesiones */
+    --cal-ses-pendiente-bg:  #FFF3CD; --cal-ses-pendiente-text:  #856404;
+    --cal-ses-finalizado-bg: #E6F5EC; --cal-ses-finalizado-text: #1A5E2E;
+    --cal-ses-cancelado-bg:  #FDECEA; --cal-ses-cancelado-text:  #842029;
 }
 
 /* ── RESET ──────────────────────────────────────────────────────── */
@@ -753,6 +758,52 @@ label {
     filter: grayscale(0.35);
 }
 
+/* Imagen de paquete en el card */
+.pc-img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 10px 10px 0 0;
+    background: var(--bg-surface);
+    flex-shrink: 0;
+}
+.pc-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .3s ease;
+}
+.paquete-card:hover .pc-img img { transform: scale(1.03); }
+.pc-img-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 1.6rem;
+}
+
+/* Zona de upload de imagen en el modal */
+.img-upload-zone {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 2px dashed var(--border-strong);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    overflow: hidden;
+    transition: border-color .18s, background .18s;
+}
+.img-upload-zone:hover {
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+}
+
 /* ══════════════════════════════════════════════════════════════════
    SESIONES
 ══════════════════════════════════════════════════════════════════ */
@@ -999,8 +1050,11 @@ label {
 .cal-filters { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-size: 0.73rem; color: var(--text-muted); }
 .cal-filters label { display: flex; align-items: center; gap: 4px; cursor: pointer; margin-bottom: 0; }
 .legend-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
-.ld-cotizacion { background: var(--cal-cotizacion-bg); border: 1px solid var(--cal-cotizacion-text); }
-.ld-contrato   { background: var(--cal-contrato-bg);   border: 1px solid var(--cal-contrato-text); }
+.ld-cotizacion     { background: var(--cal-cotizacion-bg); border: 1px solid var(--cal-cotizacion-text); }
+.ld-contrato       { background: var(--cal-contrato-bg);   border: 1px solid var(--cal-contrato-text); }
+.ld-ses-pendiente  { background: var(--cal-ses-pendiente-bg);  border: 1px solid var(--cal-ses-pendiente-text); }
+.ld-ses-finalizado { background: var(--cal-ses-finalizado-bg); border: 1px solid var(--cal-ses-finalizado-text); }
+.ld-ses-cancelado  { background: var(--cal-ses-cancelado-bg);  border: 1px solid var(--cal-ses-cancelado-text); }
 .ld-entrega    { background: #f3eafd; border: 1px solid #8a50c0; }
 
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
@@ -1027,10 +1081,13 @@ label {
     margin-bottom: 2px; white-space: nowrap; overflow: hidden;
     text-overflow: ellipsis; cursor: pointer; font-weight: 600;
 }
-.cal-event.cotizacion { background: var(--cal-cotizacion-bg); color: var(--cal-cotizacion-text); }
-.cal-event.contrato   { background: var(--cal-contrato-bg);   color: var(--cal-contrato-text); }
-.cal-event.entrega    { background: #f3eafd; color: #5a2080; }
-.cal-event.more       { background: transparent; color: var(--text-muted); padding: 0 3px; }
+.cal-event.cotizacion    { background: var(--cal-cotizacion-bg); color: var(--cal-cotizacion-text); }
+.cal-event.contrato      { background: var(--cal-contrato-bg);   color: var(--cal-contrato-text); }
+.cal-event.entrega       { background: #f3eafd; color: #5a2080; }
+.cal-event.ses-pendiente  { background: var(--cal-ses-pendiente-bg);  color: var(--cal-ses-pendiente-text); }
+.cal-event.ses-finalizado { background: var(--cal-ses-finalizado-bg); color: var(--cal-ses-finalizado-text); }
+.cal-event.ses-cancelado  { background: var(--cal-ses-cancelado-bg);  color: var(--cal-ses-cancelado-text); }
+.cal-event.more           { background: transparent; color: var(--text-muted); padding: 0 3px; }
 
 .side-card {
     background: var(--bg-surface); border: 1px solid var(--border);
@@ -1064,9 +1121,16 @@ label {
 .ev-type.entrega    { color: #5a2080; }
 
 .type-pill { font-size: 0.61rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; white-space: nowrap; }
-.tp-cotizacion { background: var(--cal-cotizacion-bg); color: var(--cal-cotizacion-text); }
-.tp-contrato   { background: var(--cal-contrato-bg);   color: var(--cal-contrato-text); }
-.tp-entrega    { background: #f3eafd; color: #5a2080; }
+.tp-cotizacion    { background: var(--cal-cotizacion-bg); color: var(--cal-cotizacion-text); }
+.tp-contrato      { background: var(--cal-contrato-bg);   color: var(--cal-contrato-text); }
+.tp-entrega       { background: #f3eafd; color: #5a2080; }
+.tp-ses-pendiente  { background: var(--cal-ses-pendiente-bg);  color: var(--cal-ses-pendiente-text); }
+.tp-ses-finalizado { background: var(--cal-ses-finalizado-bg); color: var(--cal-ses-finalizado-text); }
+.tp-ses-cancelado  { background: var(--cal-ses-cancelado-bg);  color: var(--cal-ses-cancelado-text); }
+
+.ev-type.pendiente  { color: var(--cal-ses-pendiente-text); }
+.ev-type.finalizado { color: var(--cal-ses-finalizado-text); }
+.ev-type.cancelado  { color: var(--cal-ses-cancelado-text); }
 
 .list-month-sep {
     font-size: 0.67rem; color: var(--text-muted); font-weight: 700;
@@ -1275,6 +1339,10 @@ label {
     --cal-cotizacion-bg:   #101A2C; --cal-cotizacion-text: #50A0E0;
     --cal-contrato-bg:     #182A1E; --cal-contrato-text:   #52C876;
     --cal-entrega-bg:      #1E1028; --cal-entrega-text:    #B470E0;
+
+    --cal-ses-pendiente-bg:  #281E08; --cal-ses-pendiente-text:  #E4B028;
+    --cal-ses-finalizado-bg: #182A1E; --cal-ses-finalizado-text: #52C876;
+    --cal-ses-cancelado-bg:  #281414; --cal-ses-cancelado-text:  #E46C6C;
 
     --shadow-sm: 0 1px 4px rgba(0,0,0,.4);
     --shadow-md: 0 4px 14px rgba(0,0,0,.5);

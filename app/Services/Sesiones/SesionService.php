@@ -87,6 +87,8 @@ class SesionService
             ->select('sesiones_fotograficas.*,
                       promociones_escolares.nombre AS nombre_promocion,
                       promociones_escolares.grado,
+                      promociones_escolares.seccion,
+                      promociones_escolares.num_estudiantes,
                       colegios.nombre_colegio,
                       contratos.id_contrato')
             ->join('promociones_escolares',
