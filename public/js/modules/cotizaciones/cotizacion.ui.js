@@ -134,31 +134,26 @@ export const ui = {
       const canContract = estado === 'APROBADA' && !c.tiene_contrato;
 
       return `
-        <tr>
+        <tr style="cursor:pointer;" onclick="verDetalle(${c.id})">
           <td><code style="font-size:.78rem;">${codigo}</code></td>
           <td class= "text-uppercase">${nombre}</td>
           <td>${formatters.moneda(c.total)}</td>
           <td>${badgeEstado(c.estado)}</td>
           <td>${formatters.fecha(c.fecha)}</td>
-          <td class="text-center">
+          <td class="text-center" onclick="event.stopPropagation()">
             <div class="d-flex gap-1 justify-content-center">
-              <button class="btn-accion ver" title="Ver detalle"
-                      onclick="verDetalle(${c.id})">
-                <i class="bi bi-eye"></i>
-              </button>
               ${canEdit ? `
-              <button class="btn-accion" title="Editar cotización"
+              <button class="btn btn-sm btn-outline-warning" title="Editar cotización"
                       onclick="window.location.href='${baseUrl}cotizaciones/editar/${c.id}'">
                 <i class="bi bi-pencil"></i>
               </button>` : ''}
               ${canContract ? `
-              <button class="btn-accion" title="Generar contrato"
-                      style="color:var(--accent);"
+              <button class="btn btn-sm btn-outline-success" title="Generar contrato"
                       onclick="irAGenerarContrato(${c.id})">
                 <i class="bi bi-file-earmark-plus"></i>
               </button>` : ''}
               ${canDel ? `
-              <button class="btn-accion del" title="Rechazar"
+              <button class="btn btn-sm btn-outline-danger" title="Rechazar"
                       onclick="confirmarEliminar(${c.id},'${codigo}')">
                 <i class="bi bi-trash"></i>
               </button>` : ''}

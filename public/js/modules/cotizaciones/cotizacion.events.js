@@ -12,7 +12,7 @@
  * @exports initIndex - Registra los listeners del index (búsqueda y filtro).
  */
 
-import { state, calcularResumenes } from './cotizacion.state.js';
+import { state, calcularResumenes, ordenarPorEstado, ESTADOS_ARCHIVADOS_COT } from './cotizacion.state.js';
 import { ui }                       from './cotizacion.ui.js';
 import { manager }                  from './cotizacion.manager.js';
 import { cotizacionApi }            from '../../api/cotizacion.api.js';
@@ -58,14 +58,24 @@ function _filtrar() {
 
   manager.guardarFiltros({ search, estado });
 
-  state.filtradas = state.filas.filter(c => {
+  // Si el filtro activo es un estado archivado pero están ocultas, lo reseteamos
+  if (!state.mostrarArchivadas && ESTADOS_ARCHIVADOS_COT.has(estado)) {
+    const filterEl = document.getElementById('filterEstado');
+    if (filterEl) filterEl.value = '';
+    estado = '';
+  }
+
+  const filtradas = state.filas.filter(c => {
+    const e        = c.estado?.toUpperCase();
+    const okArch   = state.mostrarArchivadas || !ESTADOS_ARCHIVADOS_COT.has(e);
     const okSearch = !search
       || _nombreCliente(c).toLowerCase().includes(search)
       || String(c.id).includes(search);
-    const okEstado = !estado || c.estado?.toUpperCase() === estado;
-    return okSearch && okEstado;
+    const okEstado = !estado || e === estado;
+    return okArch && okSearch && okEstado;
   });
 
+  state.filtradas = ordenarPorEstado(filtradas);
   state.pagina = 1;
   _renderPagina();
 }
@@ -268,7 +278,22 @@ window.irAGenerarContrato = function (id) {
  *
  * @returns {void}
  */
+function _actualizarBtnArchivadas() {
+  const btn = document.getElementById('btnToggleArchivadas');
+  if (!btn) return;
+  btn.innerHTML = state.mostrarArchivadas
+    ? '<i class="bi bi-eye-slash"></i> Ocultar archivadas'
+    : '<i class="bi bi-archive"></i> Mostrar archivadas';
+  btn.classList.toggle('btn-secondary',  state.mostrarArchivadas);
+  btn.classList.toggle('btn-outline-secondary', !state.mostrarArchivadas);
+}
+
 export function initIndex() {
   document.getElementById('searchInput') ?.addEventListener('input',  _filtrar);
   document.getElementById('filterEstado')?.addEventListener('change', _filtrar);
+  document.getElementById('btnToggleArchivadas')?.addEventListener('click', () => {
+    state.mostrarArchivadas = !state.mostrarArchivadas;
+    _actualizarBtnArchivadas();
+    _filtrar();
+  });
 }

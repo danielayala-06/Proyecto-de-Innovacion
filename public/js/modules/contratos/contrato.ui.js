@@ -130,22 +130,26 @@ export const ui = {
         : `disabled title="Solo se puede editar un contrato vigente"`;
 
       return `
-        <!--<tr onclick="verDetalleContrato(${c.id})">-->
-        <tr">
+        <tr style="cursor:pointer;" onclick="verDetalleContrato(${c.id})">
           <td><span class="con-codigo">${cod}</span></td>
-          <!--<td><span class="con-cot-ref-small">${cotCod}</span></td>-->
           <td><a class="con-cot-ref-small btn btn-small" href="${BASE_URL}cotizaciones/${c.id_cotizacion}" onclick="event.stopPropagation()">${cotCod}</a></td>
-          <td class="text-uppercase">${c.cliente?.nombre ?? '—'}</td>
+          <td>
+            ${c.promocion
+              ? `<span class="text-uppercase fw-semibold" style="font-size:.85rem;">${c.promocion.colegio}</span>
+                 <br><span style="font-size:.75rem;color:var(--text-muted);">
+                   ${[c.promocion.grado, c.promocion.seccion].filter(Boolean).join(' · ')}
+                   ${c.promocion.num_estudiantes ? `· ${c.promocion.num_estudiantes} est.` : ''}
+                 </span>
+                 <br><span class="text-uppercase" style="font-size:.72rem;color:var(--text-muted);">${c.cliente?.nombre ?? '—'}</span>`
+              : `<span class="text-uppercase" style="font-size:.85rem;">${c.cliente?.nombre ?? '—'}</span>`
+            }
+          </td>
           <td style="color:var(--text-muted);">—</td>
           <td>${formatters.moneda(c.total)}</td>
           <td>${badgeEstado(c.estado)}</td>
           <td>${formatters.fecha(c.fecha_creacion)}</td>
-          <td>
+          <td onclick="event.stopPropagation()">
             <div class="con-actions">
-              <button class="btn btn-sm btn-outline-secondary" title="Ver detalle"
-                      onclick="event.stopPropagation();verDetalleContrato(${c.id})">
-                <i class="bi bi-eye"></i>
-              </button>
               <button class="btn btn-sm btn-outline-warning" ${editAttr}>
                 <i class="bi bi-pencil-square"></i>
               </button>
@@ -282,12 +286,23 @@ export const ui = {
           ${badgeEstado(data.estado)}
         </div>
         <div class="col-6">
-          <span style="color:var(--text-muted);">Cliente</span><br>
-          <strong>${data.cliente?.nombre ?? '—'}</strong>
+          <span style="color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;">
+            <i class="bi bi-person-fill me-1"></i>Cliente principal
+          </span><br>
+          <strong>${data.cliente?.nombre ?? '—'}</strong><br>
+          <span style="font-size:.78rem;color:var(--text-muted);">${data.cliente?.telefono ?? '—'}</span>
         </div>
         <div class="col-6">
+          ${data.contacto2 ? `
+          <span style="color:var(--accent);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;font-weight:700;">
+            <i class="bi bi-person-plus-fill me-1"></i>Contacto adicional
+          </span><br>
+          <strong>${data.contacto2.nombre}</strong><br>
+          <span style="font-size:.78rem;color:var(--text-muted);">${data.contacto2.telefono ?? '—'}</span>
+          ` : `
           <span style="color:var(--text-muted);">Teléfono</span><br>
           ${data.cliente?.telefono ?? '—'}
+          `}
         </div>
         <div class="col-6">
           <span style="color:var(--text-muted);">Total contrato</span><br>

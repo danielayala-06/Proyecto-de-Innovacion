@@ -14,7 +14,7 @@
  *  6. Registra los listeners de búsqueda y filtro.
  */
 
-import { state, calcularResumenes } from './cotizacion.state.js';
+import { state, calcularResumenes, ordenarPorEstado, ESTADOS_ARCHIVADOS_COT } from './cotizacion.state.js';
 import { ui }                       from './cotizacion.ui.js';
 import { manager }                  from './cotizacion.manager.js';
 import { initIndex }                from './cotizacion.events.js';
@@ -40,23 +40,23 @@ try {
   const res = await cotizacionApi.listar();
   const cotizaciones = res.data ?? [];
 
-  state.filas     = cotizaciones;
-  state.filtradas = cotizaciones;
+  state.filas = ordenarPorEstado(cotizaciones);
 
-  // Aplicar filtros restaurados antes de renderizar
-  if (pref?.search || pref?.estado) {
-    const search = (pref.search  || '').toLowerCase().trim();
-    const estado = (pref.estado  || '').toUpperCase().trim();
+  // Aplicar filtros restaurados + filtro de archivadas
+  const _search = (pref?.search || '').toLowerCase().trim();
+  const _estado = (pref?.estado || '').toUpperCase().trim();
 
-    state.filtradas = cotizaciones.filter(c => {
-      const nombre   = typeof c.cliente === 'object'
-        ? (c.cliente?.nombre_completo ?? '')
-        : (c.cliente ?? '');
-      const okSearch = !search || nombre.toLowerCase().includes(search) || String(c.id).includes(search);
-      const okEstado = !estado || c.estado?.toUpperCase() === estado;
-      return okSearch && okEstado;
-    });
-  }
+  state.filtradas = state.filas.filter(c => {
+    const e      = c.estado?.toUpperCase();
+    const okArch = state.mostrarArchivadas || !ESTADOS_ARCHIVADOS_COT.has(e);
+    if (!okArch) return false;
+    const nombre   = typeof c.cliente === 'object'
+      ? (c.cliente?.nombre_completo ?? '')
+      : (c.cliente ?? '');
+    const okSearch = !_search || nombre.toLowerCase().includes(_search) || String(c.id).includes(_search);
+    const okEstado = !_estado || e === _estado;
+    return okSearch && okEstado;
+  });
 
   ui.renderStats(calcularResumenes(cotizaciones));
   ui.renderTabla(state.filtradas.slice(0, state.porPagina));

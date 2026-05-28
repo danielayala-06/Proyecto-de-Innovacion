@@ -34,6 +34,8 @@ class ContratosModel extends Model
         'fecha_creacion',
         'adelanto',
         'total',
+        'contacto2_nombre',
+        'contacto2_telefono',
         'observaciones',
         'estado',
         'reglas_aplicadas',
@@ -86,10 +88,17 @@ class ContratosModel extends Model
                 'personas.telefono',
                 'cotizaciones.total_estimado',
                 'cotizaciones.estado AS estado_cotizacion',
+                'colegios.nombre_colegio AS colegio',
+                'pe.grado',
+                'pe.seccion',
+                'pe.num_estudiantes',
             ])
             ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion')
             ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
             ->join('personas',    'personas.id_persona = clientes.id_persona')
+            ->join('promociones_escolares pe', 'pe.id_cotizacion = contratos.id_cotizacion', 'left')
+            ->join('colegios', 'colegios.id_colegio = pe.id_colegio', 'left')
+            ->groupBy('contratos.id_contrato')
             ->orderBy('contratos.fecha_creacion', 'DESC');
 
         if (!empty($filters['estado'])) {
@@ -113,6 +122,7 @@ class ContratosModel extends Model
                 'contratos.fecha_creacion', 'contratos.fecha_emision',
                 'contratos.adelanto', 'contratos.total',
                 'contratos.estado', 'contratos.observaciones',
+                'contratos.contacto2_nombre', 'contratos.contacto2_telefono',
                 "CONCAT(personas.nombres,' ',COALESCE(personas.apellidos,'')) AS cliente",
                 'personas.telefono', 'cotizaciones.total_estimado',
             ])
@@ -145,6 +155,8 @@ class ContratosModel extends Model
                 'contratos.total',
                 'contratos.estado',
                 'contratos.reglas_aplicadas',
+                'contratos.contacto2_nombre',
+                'contratos.contacto2_telefono',
                 "CONCAT(personas.nombres,' ',COALESCE(personas.apellidos,'')) AS cliente",
                 'personas.telefono',
                 'cotizaciones.total_estimado',

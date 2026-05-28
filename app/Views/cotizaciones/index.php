@@ -62,6 +62,9 @@ function fmtFechaCot(?string $f): string {
                         <option value="rechazada">Rechazada</option>
                         <option value="expirada">Expirada</option>
                     </select>
+                    <button id="btnToggleArchivadas" class="btn btn-sm btn-outline-secondary" style="font-size:.78rem;display:flex;align-items:center;gap:5px;">
+                        <i class="bi bi-archive"></i> Mostrar archivadas
+                    </button>
                 </div>
                 <a href="<?= base_url('cotizaciones/crear') ?>" class="btn-nuevo-paquete" style="text-decoration:none;">
                     <i class="bi bi-plus-circle"></i> Nueva cotización

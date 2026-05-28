@@ -195,8 +195,9 @@ $reglasAplicadas = $contrato['reglas_aplicadas'] ?? ['violaciones' => [], 'activ
 $reglasActivadas  = $reglasAplicadas['activadas']   ?? [];
 $reglasLimitadas  = $reglasAplicadas['violaciones'] ?? [];
 
-$nombreCliente   = $promo ? $promo['nombre_promocion'] . ' · ' . $promo['nombre_colegio'] : $contrato['cliente'];
-$direccion       = $promo ? $promo['distrito'] . ', ' . $promo['provincia'] : '—';
+$contacto2Nombre   = $contrato['contacto2_nombre']   ?? null;
+$contacto2Telefono = $contrato['contacto2_telefono'] ?? null;
+
 $firmaNombreCliente = $promo ? $promo['nombre_promocion'] : $contrato['cliente'];
 
 // Qué checkboxes marcar según las categorías de los ítems de la cotización.
@@ -238,28 +239,67 @@ $tieneOtro      = !empty(array_filter($categorias, fn($c) => in_array($c, ['otro
     </div>
 
     <!-- DATOS DEL CLIENTE -->
-    <div class="field-row">
-        <div class="field-label">Cliente:</div>
-        <div class="field-value"><?= esc($nombreCliente) ?></div>
-    </div>
     <div class="two-col">
         <div class="col">
             <div class="field-row">
-                <div class="field-label">Dirección:</div>
-                <div class="field-value"><?= esc($direccion) ?></div>
+                <div class="field-label">Cliente:</div>
+                <div class="field-value"><?= esc($contrato['cliente']) ?></div>
             </div>
         </div>
         <div class="col">
             <div class="field-row">
-                <div class="field-label">Contacto:</div>
+                <div class="field-label">Teléfono:</div>
+                <div class="field-value"><?= esc($contrato['telefono'] ?? '—') ?></div>
+            </div>
+        </div>
+    </div>
+
+    <?php if ($contacto2Nombre): ?>
+    <div class="two-col">
+        <div class="col">
+            <div class="field-row">
+                <div class="field-label">Contacto adicional:</div>
+                <div class="field-value"><?= esc($contacto2Nombre) ?></div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="field-row">
+                <div class="field-label">Teléfono:</div>
+                <div class="field-value"><?= esc($contacto2Telefono ?? '—') ?></div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($promo): ?>
+    <div class="two-col">
+        <div class="col">
+            <div class="field-row">
+                <div class="field-label">Colegio:</div>
+                <div class="field-value"><?= esc($promo['nombre_colegio']) ?></div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="field-row">
+                <div class="field-label">Nivel:</div>
                 <div class="field-value">
-                    <?= esc($contrato['cliente']) ?>
-                    :
-                    <?= esc($contrato['telefono']) ?>
+                    <?php
+                        $nivel = implode(' ', array_filter([
+                            $promo['grado']          ?? '',
+                            $promo['seccion']         ?? '',
+                            $promo['num_estudiantes'] ? '(' . $promo['num_estudiantes'] . ' est.)' : '',
+                        ]));
+                    ?>
+                    <?= esc($nivel ?: '—') ?>
                 </div>
             </div>
         </div>
     </div>
+    <div class="field-row">
+        <div class="field-label">Dirección:</div>
+        <div class="field-value"><?= esc(implode(', ', array_filter([$promo['distrito'] ?? '', $promo['provincia'] ?? ''])) ?: '—') ?></div>
+    </div>
+    <?php endif; ?>
 
     <!-- TIPO DE SERVICIO -->
     <div class="section-title">Tipo de Servicio</div>

@@ -43,7 +43,10 @@ function _param(key) {
  * @returns {string}
  */
 function _isoDate(d) {
-  return d.toISOString().slice(0, 10);
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -263,14 +266,14 @@ function _bloquearFormulario(mensaje) {
  * @returns {void}
  */
 function _initForm(cotId, total) {
-  const hoy  = new Date();
+  const hoy  = new Date(SERVER_TODAY + 'T00:00:00');
   const min2 = new Date(hoy);
   min2.setDate(hoy.getDate() - 2);
 
   const fechaInput = document.getElementById('contratoFechaFirma');
   if (fechaInput) {
-    fechaInput.value = _isoDate(hoy);
-    fechaInput.max   = _isoDate(hoy);
+    fechaInput.value = SERVER_TODAY;
+    fechaInput.max   = SERVER_TODAY;
     fechaInput.min   = _isoDate(min2);
   }
 
@@ -317,12 +320,15 @@ function _abrirConfirmacion(cotId, total) {
 
   const fechaFirma = document.getElementById('contratoFechaFirma')?.value || null;
   if (fechaFirma) {
-    const hoy      = new Date(); hoy.setHours(0, 0, 0, 0);
+    const hoy      = new Date(SERVER_TODAY + 'T00:00:00');
     const minFecha = new Date(hoy); minFecha.setDate(hoy.getDate() - 2);
     const selDate  = new Date(fechaFirma + 'T00:00:00');
     if (selDate > hoy)      { alerts.warning('La fecha de pago no puede ser en el futuro.'); return; }
     if (selDate < minFecha) { alerts.warning('La fecha de pago no puede ser anterior a 2 días de hoy.'); return; }
   }
+
+  const contacto2Nombre   = document.getElementById('contacto2Nombre')?.value.trim()   || null;
+  const contacto2Telefono = document.getElementById('contacto2Telefono')?.value.trim() || null;
 
   const formaPagoSel  = document.getElementById('contratoFormaPago');
   const formaPagoText = formaPagoSel?.options[formaPagoSel.selectedIndex]?.text ?? '—';
@@ -365,7 +371,7 @@ function _abrirConfirmacion(cotId, total) {
   const btnConf = document.getElementById('btnConfirmarContrato');
   const nuevoBtn = btnConf.cloneNode(true);
   btnConf.replaceWith(nuevoBtn);
-  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoSel?.value ?? ''));
+  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoSel?.value ?? '', contacto2Nombre, contacto2Telefono));
 
   const modalEl = document.getElementById('modalConfirmarContrato');
   _modalContrato = _modalContrato ?? new bootstrap.Modal(modalEl);
@@ -376,7 +382,7 @@ function _abrirConfirmacion(cotId, total) {
  * Envía el contrato a la API tras la confirmación del usuario.
  * Cierra el modal, deshabilita el botón y redirige al éxito.
  */
-async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
+async function _submit(cotId, total, adelanto, fechaFirma, formaPago, contacto2Nombre, contacto2Telefono) {
   const clausulas     = document.getElementById('contratoClausulas')?.value.trim() ?? '';
   const observaciones = document.getElementById('contratoObservaciones')?.value.trim() ?? '';
 
@@ -393,10 +399,12 @@ async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
 
   try {
     await contratoApi.crear({
-      id_cotizacion: cotId,
+      id_cotizacion:      cotId,
       adelanto,
-      fecha_emision: fechaFirma,
-      observaciones: obsTexto,
+      fecha_emision:      fechaFirma,
+      observaciones:      obsTexto,
+      contacto2_nombre:   contacto2Nombre,
+      contacto2_telefono: contacto2Telefono,
     });
     _modalContrato?.hide();
     alerts.ok('Contrato generado correctamente.');

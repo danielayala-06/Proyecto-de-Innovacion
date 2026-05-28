@@ -14,7 +14,7 @@
  *     de contrato con esa cotización pre-seleccionada (flujo desde cotizaciones).
  */
 
-import { state, calcularStats }                    from './contrato.state.js';
+import { state, calcularStats, ordenarPorEstado, ESTADOS_ARCHIVADOS_CON }  from './contrato.state.js';
 import { ui }                                       from './contrato.ui.js';
 import { manager }                                  from './contrato.manager.js';
 import { initEvents, _filtrar, abrirConCotizacionId } from './contrato.events.js';
@@ -38,12 +38,23 @@ if (pref?.estado) {
 /* ── 3. Fetch a la API y renderizar ─────────────────────────────────────── */
 try {
   const res = await contratoApi.listar();
-  state.filas     = res.data ?? [];
-  state.filtradas = state.filas;
+  state.filas = ordenarPorEstado(res.data ?? []);
 
-  if (pref?.search || pref?.estado) {
-    _filtrar();
-  }
+  // Aplicar filtros restaurados + filtro de archivadas
+  const _search = (pref?.search || '').toLowerCase().trim();
+  const _estado = (pref?.estado || '').toLowerCase().trim();
+  const _estadoMap = { vigente: 'ACTIVO', completado: 'COMPLETADO', cancelado: 'CANCELADO' };
+
+  state.filtradas = state.filas.filter(c => {
+    const e      = c.estado?.toUpperCase();
+    const okArch = state.mostrarArchivadas || !ESTADOS_ARCHIVADOS_CON.has(e);
+    if (!okArch) return false;
+    const nombre  = (c.cliente?.nombre ?? '').toLowerCase();
+    const cod     = String(c.id);
+    const okSearch = !_search || nombre.includes(_search) || cod.includes(_search);
+    const okEstado = !_estado || e === (_estadoMap[_estado] ?? _estado.toUpperCase());
+    return okSearch && okEstado;
+  });
 
   ui.renderStats(calcularStats(state.filas));
   ui.renderTabla(state.filtradas.slice(0, state.porPagina));

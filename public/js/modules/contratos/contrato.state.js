@@ -23,16 +23,19 @@
  * @property {Object|null}    cotizacionSeleccionada   - Cotización elegida en el modal de selección.
  */
 export const state = {
-  filas:     [],
-  filtradas: [],
-  pagina:    1,
-  porPagina: 10,
-  sortKey:   null,
-  sortDir:   'asc',
+  filas:             [],
+  filtradas:         [],
+  pagina:            1,
+  porPagina:         10,
+  sortKey:           null,
+  sortDir:           'asc',
+  mostrarArchivadas: false,
 
   todasCotizaciones:      [],
   cotizacionSeleccionada: null,
 };
+
+export const ESTADOS_ARCHIVADOS_CON = new Set(['CANCELADO']);
 
 /**
  * Calcula los totales para las tarjetas de estadísticas del index de contratos.
@@ -41,6 +44,16 @@ export const state = {
  * @returns {{ total: number, vigentes: number, completados: number, monto_total: number }}
  *   Resumen con conteos por estado y monto total de contratos.
  */
+const _ESTADO_ORDER_CON = { ACTIVO: 0, COMPLETADO: 1 };
+
+export function ordenarPorEstado(filas) {
+  return [...filas].sort((a, b) => {
+    const oa = _ESTADO_ORDER_CON[a.estado?.toUpperCase()] ?? 2;
+    const ob = _ESTADO_ORDER_CON[b.estado?.toUpperCase()] ?? 2;
+    return oa - ob;
+  });
+}
+
 export function calcularStats(filas) {
   return filas.reduce(
     (acc, c) => {

@@ -21,13 +21,16 @@
  * @property {'asc'|'desc'}  sortDir   - Dirección del ordenamiento activo.
  */
 export const state = {
-  filas:     [],
-  filtradas: [],
-  pagina:    1,
-  porPagina: 10,
-  sortKey:   null,
-  sortDir:   'asc',
+  filas:             [],
+  filtradas:         [],
+  pagina:            1,
+  porPagina:         10,
+  sortKey:           null,
+  sortDir:           'asc',
+  mostrarArchivadas: false,
 };
+
+export const ESTADOS_ARCHIVADOS_COT = new Set(['RECHAZADA', 'EXPIRADA']);
 
 /**
  * Calcula los totales para las tarjetas de estadísticas del index de cotizaciones.
@@ -42,6 +45,16 @@ export const state = {
  *   monto_total: number
  * }} Resumen de conteos por estado y suma de totales estimados.
  */
+const _ESTADO_ORDER_COT = { PENDIENTE: 0, APROBADA: 1 };
+
+export function ordenarPorEstado(filas) {
+  return [...filas].sort((a, b) => {
+    const oa = _ESTADO_ORDER_COT[a.estado?.toUpperCase()] ?? 2;
+    const ob = _ESTADO_ORDER_COT[b.estado?.toUpperCase()] ?? 2;
+    return oa - ob;
+  });
+}
+
 export function calcularResumenes(filas) {
   return filas.reduce(
     (acc, c) => {

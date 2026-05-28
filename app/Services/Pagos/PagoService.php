@@ -152,10 +152,12 @@ class PagoService
             );
         }
 
+        $monto  = round((float) $data['monto'], 2);
+
         $idPago = $this->pagoModel->insert([
             'id_contrato'  => $data['id_contrato'],
             'id_form_pago' => $data['id_form_pago'],
-            'monto'        => $data['monto'],
+            'monto'        => $monto,
             'moneda'       => $data['moneda'] ?? 'PEN',
             'voucher'      => $data['voucher'] ?? null,
             'fecha'        => $fechaStr,
@@ -166,7 +168,7 @@ class PagoService
             throw new \RuntimeException(json_encode($this->pagoModel->errors()), 422);
         }
 
-        $nuevoTotalPagado = (float) $contrato['adelanto'] + $sumPagos + (float) $data['monto'];
+        $nuevoTotalPagado = (float) $contrato['adelanto'] + $sumPagos + $monto;
         $nuevoSaldo       = (float) $contrato['total'] - $nuevoTotalPagado;
 
         if ($nuevoSaldo <= 0) {

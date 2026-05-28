@@ -20,7 +20,7 @@
  * @exports abrirConCotizacionId - Abre el modal 2 pre-seleccionando una cotización por ID.
  */
 
-import { state, calcularStats }  from './contrato.state.js';
+import { state, calcularStats, ordenarPorEstado, ESTADOS_ARCHIVADOS_CON } from './contrato.state.js';
 import { ui }                     from './contrato.ui.js';
 import { manager }                from './contrato.manager.js';
 import { contratoApi }            from '../../api/contrato.api.js';
@@ -50,20 +50,30 @@ function _renderPagina() {
  */
 function _filtrar() {
   const search = (document.getElementById('searchInput')?.value  || '').toLowerCase().trim();
-  const estado = (document.getElementById('filterEstado')?.value || '').toLowerCase().trim();
+  let   estado = (document.getElementById('filterEstado')?.value || '').toLowerCase().trim();
 
   manager.guardarFiltros({ search, estado });
 
+  // Auto-reset if active estado filter is archived and toggle is off
+  if (!state.mostrarArchivadas && ESTADOS_ARCHIVADOS_CON.has(estado.toUpperCase())) {
+    const filterEl = document.getElementById('filterEstado');
+    if (filterEl) filterEl.value = '';
+    estado = '';
+  }
+
   const estadoMap = { vigente: 'ACTIVO', completado: 'COMPLETADO', cancelado: 'CANCELADO' };
 
-  state.filtradas = state.filas.filter(c => {
-    const nombre   = (c.cliente?.nombre ?? '').toLowerCase();
-    const cod      = String(c.id);
+  const filtradas = state.filas.filter(c => {
+    const e       = c.estado?.toUpperCase();
+    const okArch  = state.mostrarArchivadas || !ESTADOS_ARCHIVADOS_CON.has(e);
+    const nombre  = (c.cliente?.nombre ?? '').toLowerCase();
+    const cod     = String(c.id);
     const okSearch = !search || nombre.includes(search) || cod.includes(search);
-    const okEstado = !estado || c.estado?.toUpperCase() === (estadoMap[estado] ?? estado.toUpperCase());
-    return okSearch && okEstado;
+    const okEstado = !estado || e === (estadoMap[estado] ?? estado.toUpperCase());
+    return okArch && okSearch && okEstado;
   });
 
+  state.filtradas = ordenarPorEstado(filtradas);
   state.pagina = 1;
   _renderPagina();
 }
@@ -118,7 +128,7 @@ function _isoDate(d) {
  */
 function _limpiarFormContrato() {
   _editContratoId = null;
-  ['contratoFechaFirma', 'contratoClausulas', 'contratoObservaciones']
+  ['contratoFechaFirma', 'contratoClausulas', 'contratoObservaciones', 'contacto2Nombre', 'contacto2Telefono']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const adelanto  = document.getElementById('contratoAdelanto');
   const formaPago = document.getElementById('contratoFormaPago');
@@ -127,7 +137,7 @@ function _limpiarFormContrato() {
 
   const fechaInput = document.getElementById('contratoFechaFirma');
   if (fechaInput) {
-    const hoy  = new Date();
+    const hoy  = new Date(SERVER_TODAY + 'T00:00:00');
     const min2 = new Date(hoy);
     min2.setDate(hoy.getDate() - 2);
     fechaInput.max = _isoDate(hoy);
@@ -260,7 +270,7 @@ window.confirmarContrato = async function () {
 
   const fechaFirma = document.getElementById('contratoFechaFirma')?.value || null;
   if (fechaFirma) {
-    const hoy      = new Date(); hoy.setHours(0, 0, 0, 0);
+    const hoy      = new Date(SERVER_TODAY + 'T00:00:00');
     const minFecha = new Date(hoy); minFecha.setDate(hoy.getDate() - 2);
     const selDate  = new Date(fechaFirma + 'T00:00:00');
     if (selDate > hoy) {
@@ -276,6 +286,8 @@ window.confirmarContrato = async function () {
   const formaPago     = document.getElementById('contratoFormaPago')?.value     || '';
   const clausulas     = document.getElementById('contratoClausulas')?.value.trim()     || '';
   const observaciones = document.getElementById('contratoObservaciones')?.value.trim() || '';
+  const contacto2Nombre   = document.getElementById('contacto2Nombre')?.value.trim()   || null;
+  const contacto2Telefono = document.getElementById('contacto2Telefono')?.value.trim() || null;
 
   const obsPartes = [];
   if (formaPago)     obsPartes.push(`Forma de pago: ${formaPago}`);
@@ -287,8 +299,10 @@ window.confirmarContrato = async function () {
     if (_editContratoId !== null) {
       await contratoApi.actualizar(_editContratoId, {
         adelanto,
-        fecha_emision: fechaFirma,
-        observaciones: obsTexto,
+        fecha_emision:      fechaFirma,
+        observaciones:      obsTexto,
+        contacto2_nombre:   contacto2Nombre,
+        contacto2_telefono: contacto2Telefono,
       });
       _modal2?.hide();
       alerts.ok('Contrato actualizado correctamente.');
@@ -296,10 +310,12 @@ window.confirmarContrato = async function () {
       const cot = state.cotizacionSeleccionada;
       if (!cot) return;
       await contratoApi.crear({
-        id_cotizacion: cot.id,
+        id_cotizacion:      cot.id,
         adelanto,
-        fecha_emision: fechaFirma,
-        observaciones: obsTexto,
+        fecha_emision:      fechaFirma,
+        observaciones:      obsTexto,
+        contacto2_nombre:   contacto2Nombre,
+        contacto2_telefono: contacto2Telefono,
       });
       _modal2?.hide();
       alerts.ok('Contrato generado correctamente.');
@@ -307,11 +323,9 @@ window.confirmarContrato = async function () {
     }
 
     const res = await contratoApi.listar();
-    state.filas     = res.data ?? [];
-    state.filtradas = state.filas;
-    state.pagina    = 1;
+    state.filas = ordenarPorEstado(res.data ?? []);
     ui.renderStats(calcularStats(state.filas));
-    _renderPagina();
+    _filtrar();
   } catch (e) {
     alerts.error(e.message || 'No se pudo guardar el contrato.');
   }
@@ -338,6 +352,11 @@ window.editarContrato = async function (id) {
     if (fechaInput)    fechaInput.value    = data.fecha_emision ?? '';
     if (adelantoInput) adelantoInput.value = data.adelanto      ?? '';
     if (obsInput)      obsInput.value      = data.observaciones ?? '';
+
+    const c2Nombre   = document.getElementById('contacto2Nombre');
+    const c2Telefono = document.getElementById('contacto2Telefono');
+    if (c2Nombre)   c2Nombre.value   = data.contacto2?.nombre   ?? '';
+    if (c2Telefono) c2Telefono.value = data.contacto2?.telefono ?? '';
 
     // Sin restricción de fechas en modo edición
     if (fechaInput) { fechaInput.min = ''; fechaInput.max = ''; }
@@ -570,11 +589,11 @@ window.abrirModalPago = async function (id) {
 
   const fechaInput = document.getElementById('pagoFecha');
   if (fechaInput) {
-    const hoy  = new Date();
+    const hoy  = new Date(SERVER_TODAY + 'T00:00:00');
     const min3 = new Date(hoy);
     min3.setDate(hoy.getDate() - 3);
-    fechaInput.value = _isoDate(hoy);
-    fechaInput.max   = _isoDate(hoy);
+    fechaInput.value = SERVER_TODAY;
+    fechaInput.max   = SERVER_TODAY;
     fechaInput.min   = _isoDate(min3);
   }
 
@@ -636,7 +655,7 @@ window.confirmarPago = async function () {
     alerts.warning('Selecciona la fecha de pago.');
     return;
   }
-  const hoy      = new Date(); hoy.setHours(0, 0, 0, 0);
+  const hoy      = new Date(SERVER_TODAY + 'T00:00:00');
   const minFecha = new Date(hoy); minFecha.setDate(hoy.getDate() - 3);
   const selDate  = new Date(fecha + 'T00:00:00');
   if (selDate > hoy) {
@@ -679,7 +698,7 @@ window.confirmarPago = async function () {
     }
 
     const resLista = await contratoApi.listar();
-    state.filas = resLista.data ?? [];
+    state.filas = ordenarPorEstado(resLista.data ?? []);
     ui.renderStats(calcularStats(state.filas));
     _filtrar();
   } catch (e) {
@@ -697,11 +716,26 @@ window.confirmarPago = async function () {
  *
  * @returns {void}
  */
+function _actualizarBtnArchivadas() {
+  const btn = document.getElementById('btnToggleArchivadas');
+  if (!btn) return;
+  btn.innerHTML = state.mostrarArchivadas
+    ? '<i class="bi bi-eye-slash"></i> Ocultar archivadas'
+    : '<i class="bi bi-archive"></i> Mostrar archivadas';
+  btn.classList.toggle('btn-secondary',         state.mostrarArchivadas);
+  btn.classList.toggle('btn-outline-secondary', !state.mostrarArchivadas);
+}
+
 export function initEvents() {
   document.getElementById('searchInput') ?.addEventListener('input',  _filtrar);
   document.getElementById('filterEstado')?.addEventListener('change', _filtrar);
   document.getElementById('searchCotModal')?.addEventListener('input', function () {
     ui.renderCotizacionesDisponibles(state.todasCotizaciones, this.value);
+  });
+  document.getElementById('btnToggleArchivadas')?.addEventListener('click', () => {
+    state.mostrarArchivadas = !state.mostrarArchivadas;
+    _actualizarBtnArchivadas();
+    _filtrar();
   });
 }
 

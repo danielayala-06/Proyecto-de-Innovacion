@@ -38,6 +38,9 @@
                         <option value="completado">Completado</option>
                         <option value="cancelado">Cancelado</option>
                     </select>
+                    <button id="btnToggleArchivadas" class="btn btn-sm btn-outline-secondary" style="font-size:.78rem;display:flex;align-items:center;gap:5px;">
+                        <i class="bi bi-archive"></i> Mostrar archivadas
+                    </button>
                 </div>
                 <button class="btn-nuevo-paquete" onclick="abrirModalCotizaciones()">
                     <i class="bi bi-plus-circle"></i> Generar contrato
@@ -122,7 +125,7 @@
                         </div>
                         <div class="col-md-6">
                             <label>Adelanto / pago inicial (S/)</label>
-                            <input type="number" class="form-control" id="contratoAdelanto" placeholder="0.00" min="0">
+                            <input type="number" class="form-control" id="contratoAdelanto" placeholder="0.00" min="0" step="0.01" onwheel="this.blur()">
                         </div>
                         <div class="col-md-6">
                             <label>Forma de pago del saldo</label>
@@ -137,6 +140,14 @@
                             <label>Cláusulas / condiciones adicionales</label>
                             <textarea class="form-control" id="contratoClausulas" rows="3"
                                       placeholder="Ej: El fotógrafo se compromete a entregar las fotos en un plazo máximo de 30 días..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Nombre contacto adicional <span style="color:var(--text-muted);font-weight:400;font-size:.8rem;">(opcional)</span></label>
+                            <input type="text" class="form-control" id="contacto2Nombre" placeholder="Nombre del contacto adicional">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Teléfono contacto adicional <span style="color:var(--text-muted);font-weight:400;font-size:.8rem;">(opcional)</span></label>
+                            <input type="text" class="form-control" id="contacto2Telefono" placeholder="Ej: 987 654 321">
                         </div>
                         <div class="col-12">
                             <label>Observaciones internas</label>
@@ -235,7 +246,7 @@
                         <div class="col-6">
                             <label style="font-size:.8rem;margin-bottom:3px;">Monto a pagar (S/)</label>
                             <input type="number" class="form-control form-control-sm" id="pagoMonto"
-                                   placeholder="0.00" min="0.01" step="0.01">
+                                   placeholder="0.00" min="0.01" step="0.01" onwheel="this.blur()">
                         </div>
                         <div class="col-6">
                             <label style="font-size:.8rem;margin-bottom:3px;">Fecha de pago</label>

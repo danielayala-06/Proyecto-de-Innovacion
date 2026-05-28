@@ -176,8 +176,8 @@ class ContratoService
             throw new \RuntimeException('Ya existe un contrato activo para esta cotización', 409);
         }
 
-        $adelanto = (float) $data['adelanto'];
-        $total    = (float) $cotizacion['total_estimado'];
+        $adelanto = round((float) $data['adelanto'], 2);
+        $total    = round((float) $cotizacion['total_estimado'], 2);
 
         if ($adelanto > $total) {
             throw new \RuntimeException(
@@ -193,14 +193,16 @@ class ContratoService
         $db->transStart();
 
         $idContrato = $this->contratoModel->insert([
-            'id_cotizacion'    => $data['id_cotizacion'],
-            'fecha_creacion'   => date('Y-m-d'),
-            'fecha_emision'    => $data['fecha_emision'] ?? null,
-            'adelanto'         => $adelanto,
-            'total'            => $total,
-            'observaciones'    => $data['observaciones'] ?? null,
-            'estado'           => 'ACTIVO',
-            'reglas_aplicadas' => json_encode($evaluacion, JSON_UNESCAPED_UNICODE) ?: null,
+            'id_cotizacion'     => $data['id_cotizacion'],
+            'fecha_creacion'    => date('Y-m-d'),
+            'fecha_emision'     => $data['fecha_emision']      ?? null,
+            'adelanto'          => $adelanto,
+            'total'             => $total,
+            'contacto2_nombre'  => $data['contacto2_nombre']   ?? null,
+            'contacto2_telefono'=> $data['contacto2_telefono'] ?? null,
+            'observaciones'     => $data['observaciones']      ?? null,
+            'estado'            => 'ACTIVO',
+            'reglas_aplicadas'  => json_encode($evaluacion, JSON_UNESCAPED_UNICODE) ?: null,
         ]);
 
         if ($idContrato === false) {
@@ -258,13 +260,14 @@ class ContratoService
         $updateData = [];
 
         if (isset($data['adelanto'])) {
-            if ((float) $data['adelanto'] > (float) $contrato['total']) {
+            $adelanto = round((float) $data['adelanto'], 2);
+            if ($adelanto > (float) $contrato['total']) {
                 throw new \RuntimeException(
                     'El adelanto no puede superar el total del contrato',
                     422
                 );
             }
-            $updateData['adelanto'] = $data['adelanto'];
+            $updateData['adelanto'] = $adelanto;
         }
 
         if (array_key_exists('fecha_emision', $data)) {
@@ -272,6 +275,12 @@ class ContratoService
         }
         if (array_key_exists('observaciones', $data)) {
             $updateData['observaciones'] = $data['observaciones'];
+        }
+        if (array_key_exists('contacto2_nombre', $data)) {
+            $updateData['contacto2_nombre'] = $data['contacto2_nombre'] ?: null;
+        }
+        if (array_key_exists('contacto2_telefono', $data)) {
+            $updateData['contacto2_telefono'] = $data['contacto2_telefono'] ?: null;
         }
 
         if (!empty($updateData) && $this->contratoModel->update($id, $updateData) === false) {

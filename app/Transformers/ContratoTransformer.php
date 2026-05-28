@@ -46,9 +46,19 @@ class ContratoTransformer extends BaseTransformer
                 'nombre'   => $resource['cliente'],
                 'telefono' => $resource['telefono'],
             ],
+            'contacto2'      => ($resource['contacto2_nombre'] ?? null) ? [
+                'nombre'   => $resource['contacto2_nombre'],
+                'telefono' => $resource['contacto2_telefono'] ?? null,
+            ] : null,
             'cotizacion'     => [
                 'total_estimado' => (float) $resource['total_estimado'],
             ],
+            'promocion'      => !empty($resource['colegio']) ? [
+                'colegio'        => $resource['colegio'],
+                'grado'          => $resource['grado']          ?? null,
+                'seccion'        => $resource['seccion']        ?? null,
+                'num_estudiantes'=> isset($resource['num_estudiantes']) ? (int) $resource['num_estudiantes'] : null,
+            ] : null,
         ];
 
         if (isset($resource['pagos']))             $result['pagos']             = $resource['pagos'];
@@ -67,7 +77,7 @@ class ContratoTransformer extends BaseTransformer
         return [
             'id', 'id_cotizacion', 'fecha_creacion', 'fecha_emision',
             'adelanto', 'total', 'estado', 'observaciones',
-            'cliente', 'cotizacion', 'pagos', 'total_pagado', 'saldo', 'reglas_aplicadas',
+            'cliente', 'contacto2', 'cotizacion', 'promocion', 'pagos', 'total_pagado', 'saldo', 'reglas_aplicadas',
         ];
     }
 }

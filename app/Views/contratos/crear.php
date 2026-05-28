@@ -258,7 +258,7 @@
     
                         <div class="cc-form-group">
                             <label for="contratoAdelanto">Monto (S/.) <span style="color:var(--red-text)">*</span></label>
-                            <input type="number" id="contratoAdelanto" min="1" step="0.01" placeholder="0.00">
+                            <input type="number" id="contratoAdelanto" min="1" step="0.01" placeholder="0.00" onwheel="this.blur()">
                         </div>
     
                         <div class="cc-form-group">
@@ -275,14 +275,27 @@
                     </fieldset>
     
                     <fieldset class="cc-fieldset">
+                        <legend><i class="bi bi-person-plus"></i> Contacto adicional</legend>
+                        <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:12px;">Opcional — persona de contacto adicional para el contrato.</p>
+                        <div class="cc-form-group">
+                            <label for="contacto2Nombre">Nombre</label>
+                            <input type="text" id="contacto2Nombre" placeholder="Nombre del contacto adicional">
+                        </div>
+                        <div class="cc-form-group" style="margin-bottom:0;">
+                            <label for="contacto2Telefono">Teléfono</label>
+                            <input type="text" id="contacto2Telefono" placeholder="Ej: 987 654 321">
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="cc-fieldset">
                         <legend><i class="bi bi-journal-text"></i> Notas del contrato</legend>
                         <div class="w-100 mb-4 shadow border bg-body-tertiary rounded"></div>
-    
+
                         <div class="cc-form-group">
                             <label for="contratoClausulas">Cláusulas adicionales</label>
                             <textarea id="contratoClausulas" placeholder="Condiciones o acuerdos especiales…"></textarea>
                         </div>
-    
+
                         <div class="cc-form-group" style="margin-bottom:0;">
                             <label for="contratoObservaciones">Observaciones</label>
                             <textarea id="contratoObservaciones" placeholder="Notas internas del contrato…"></textarea>

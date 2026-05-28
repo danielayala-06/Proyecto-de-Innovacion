@@ -181,7 +181,8 @@ export const ui = {
                 const esActivo = p.estado === 'ACTIVO';
 
                 return `
-                <div class="paquete-card${esActivo ? '' : ' pc-inactivo'}">
+                <div class="paquete-card${esActivo ? '' : ' pc-inactivo'}"
+                     style="cursor:pointer;" onclick="editarPaquete(${p.id_paquete})">
                     <div class="pc-header">
                         <div>
                             ${_catBadge(p)}
@@ -201,23 +202,14 @@ export const ui = {
                             </div>`).join('')}
                     </div>` : ''}
 
-                    <div class="pc-footer">
+                    <div class="pc-footer" onclick="event.stopPropagation()">
                         <div class="pc-price">${formatters.moneda(p.precio)}</div>
                         <div class="pc-actions d-flex justify-content-center gap-2">
-                            <button class="btn-icon" onclick="editarPaquete(${p.id_paquete})" title="Editar">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-
-                            <div class="form-switch" title="Cambiar estado" onclick="toggleEstado(${p.id_paquete},'${p.estado}')"
-                                    title="${esActivo ? 'Desactivar' : 'Activar'}">
-
-                                <input class="form-check-input ${esActivo ? 'text-danger' : ' text-success'}" type="checkbox" role="switch" style="height:1.7rem;width:3rem;" ${esActivo ? 'checked' : ''}>
+                            <div class="form-switch" title="${esActivo ? 'Desactivar' : 'Activar'}"
+                                 onclick="toggleEstado(${p.id_paquete},'${p.estado}')">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       style="height:1.7rem;width:3rem;" ${esActivo ? 'checked' : ''}>
                             </div>
-                            <!--<button class="btn btn-danger btn-icon"
-                                    onclick="toggleEstado(${p.id_paquete},'${p.estado}')"
-                                    title="${esActivo ? 'Desactivar' : 'Activar'}">
-                                <i class="bi bi-${esActivo ? 'slash-circle' : 'play-circle'}"></i>
-                            </button>-->
                         </div>
                     </div>
                 </div>`;

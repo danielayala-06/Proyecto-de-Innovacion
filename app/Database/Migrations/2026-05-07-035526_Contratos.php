@@ -41,6 +41,16 @@ class Contratos extends Migration
                 'unsigned'=>true,
                 'null'=>false
             ],
+            'contacto2_nombre'=>[
+                'type'=>'VARCHAR',
+                'constraint'=>150,
+                'null'=>true
+            ],
+            'contacto2_telefono'=>[
+                'type'=>'VARCHAR',
+                'constraint'=>20,
+                'null'=>true
+            ],
             'observaciones'=>[
                 'type'=>'TEXT',
                 'null'=>true

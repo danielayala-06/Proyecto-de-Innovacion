@@ -20,6 +20,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= base_url('css/styles.css') ?>">
     <link rel="stylesheet" href="<?= base_url('css/forms.css') ?>">
+    <script>const SERVER_TODAY = "<?= (new DateTime('now', new DateTimeZone('America/Lima')))->format('Y-m-d') ?>";</script>
 </head>
 <body>
 
