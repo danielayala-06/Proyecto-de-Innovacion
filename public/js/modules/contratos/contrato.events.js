@@ -418,26 +418,19 @@ window.verDetalleContrato = async function (id) {
     const res  = await contratoApi.obtener(id);
     const data = res.data;
 
-    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(data);
+    const isActivo = data.estado?.toUpperCase() === 'ACTIVO';
+
+    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(data, id, isActivo);
 
     if (accsEl) {
-      const isActivo = data.estado?.toUpperCase() === 'ACTIVO';
-      accsEl.innerHTML = `
-        <a href="${BASE_URL}contratos/${id}" target="_blank"
-           class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-printer me-1"></i>Imprimir contrato
-        </a>
-        ${isActivo ? `
-        <button class="btn btn-sm btn-outline-success" onclick="abrirModalPago(${id})">
-          <i class="bi bi-cash-coin me-1"></i>Añadir pago
-        </button>
+      accsEl.innerHTML = isActivo ? `
         <button class="btn btn-sm btn-success" onclick="cambiarEstadoContrato(${id},'COMPLETADO')">
           <i class="bi bi-check-circle me-1"></i>Completar
         </button>
         <button class="btn btn-sm btn-outline-danger"
                 onclick="confirmarEliminar(${id},'${formatters.codigo(id)}')">
           <i class="bi bi-x-circle me-1"></i>Cancelar
-        </button>` : ''}`;
+        </button>` : '';
     }
   } catch (e) {
     if (bodyEl) bodyEl.innerHTML =
@@ -689,9 +682,10 @@ window.confirmarPago = async function () {
     _renderHistorialPago(_pagoContratoData.pagos ?? []);
 
     const bodyEl = document.getElementById('detalleBody');
-    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(_pagoContratoData);
+    const _esActivo = _pagoContratoData.estado?.toUpperCase() === 'ACTIVO';
+    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(_pagoContratoData, _pagoContratoId, _esActivo);
 
-    if (_pagoContratoData.estado?.toUpperCase() !== 'ACTIVO') {
+    if (!_esActivo) {
       _modalPago?.hide();
       const accsEl = document.getElementById('detalleAcciones');
       if (accsEl) accsEl.innerHTML = '';

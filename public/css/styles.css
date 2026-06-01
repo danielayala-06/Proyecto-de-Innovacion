@@ -474,6 +474,51 @@ label {
 .btn-icon:hover { background: var(--bg-hover); color: var(--text-primary); }
 .btn-icon.danger:hover { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
 
+/* ══════════════════════════════════════════════════════════════════
+   BOTONES DE ACCIÓN MINIMALISTAS (icon-only)
+   Override global de Bootstrap btn-sm btn-outline-* en todas las vistas.
+   Sin borde, sin fondo — solo el icono con color y hover suave.
+══════════════════════════════════════════════════════════════════ */
+.btn.btn-sm.btn-outline-warning,
+.btn.btn-sm.btn-outline-danger,
+.btn.btn-sm.btn-outline-success,
+.btn.btn-sm.btn-outline-primary,
+.btn.btn-sm.btn-outline-info,
+.btn.btn-sm.btn-outline-secondary {
+    background:  transparent !important;
+    border:      none        !important;
+    box-shadow:  none        !important;
+    padding:     .28rem .38rem;
+    line-height: 1;
+    border-radius: 6px;
+    font-size:   .88rem;
+    transition:  background .15s, color .15s;
+}
+.btn.btn-sm.btn-outline-warning   { color: var(--amber-text,  #d97706) !important; }
+.btn.btn-sm.btn-outline-danger    { color: var(--red-text,    #e57373) !important; }
+.btn.btn-sm.btn-outline-success   { color: var(--green-text,  #4caf50) !important; }
+.btn.btn-sm.btn-outline-primary   { color: var(--accent,      #7c9cbf) !important; }
+.btn.btn-sm.btn-outline-info      { color: #0891b2 !important; }
+.btn.btn-sm.btn-outline-secondary { color: var(--text-muted,  #888)    !important; }
+
+.btn.btn-sm.btn-outline-warning:hover   { background: rgba(217,119,  6,.10) !important; color: var(--amber-text,  #d97706) !important; }
+.btn.btn-sm.btn-outline-danger:hover    { background: rgba(229,115,115,.12) !important; color: var(--red-text,    #e57373) !important; }
+.btn.btn-sm.btn-outline-success:hover   { background: rgba( 76,175, 80,.10) !important; color: var(--green-text,  #4caf50) !important; }
+.btn.btn-sm.btn-outline-primary:hover   { background: rgba(124,156,191,.12) !important; color: var(--accent,      #7c9cbf) !important; }
+.btn.btn-sm.btn-outline-info:hover      { background: rgba(  8,145,178,.10) !important; color: #0891b2 !important; }
+.btn.btn-sm.btn-outline-secondary:hover { background: var(--bg-hover)       !important; color: var(--text-secondary, #555) !important; }
+
+.btn.btn-sm.btn-outline-warning:focus-visible,
+.btn.btn-sm.btn-outline-danger:focus-visible,
+.btn.btn-sm.btn-outline-success:focus-visible,
+.btn.btn-sm.btn-outline-primary:focus-visible,
+.btn.btn-sm.btn-outline-info:focus-visible,
+.btn.btn-sm.btn-outline-secondary:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+    box-shadow: none !important;
+}
+
 /* ── SERVICIOS PRESET ────────────────────────────────────────────── */
 .servicio-preset-btn {
     background: var(--bg-input); border: 1px solid var(--border);

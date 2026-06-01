@@ -319,12 +319,12 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width:540px;">
         <div class="modal-content">
 
-            <div class="modal-header" style="background:var(--sidebar-bg,#1A1814);border-bottom:none;padding:1rem 1.25rem;">
+            <div class="modal-header" style="background:var(--accent,#B49040);border-bottom:none;padding:1rem 1.25rem;border-radius:14px 14px 0 0;">
                 <div>
-                    <h6 class="modal-title mb-0" style="color:var(--sidebar-active-text,#F2E4BC);font-size:1rem;font-weight:700;letter-spacing:.3px;">
+                    <h6 class="modal-title mb-0" style="color:#fff;font-size:1rem;font-weight:700;letter-spacing:.3px;">
                         <i class="bi bi-shield-check me-2"></i>Confirmar generación de contrato
                     </h6>
-                    <p class="mb-0 mt-1" style="font-size:.75rem;color:rgba(255,255,255,.55);">
+                    <p class="mb-0 mt-1" style="font-size:.75rem;color:rgba(255,255,255,.75);">
                         Revisa los montos antes de continuar. Esta acción no se puede deshacer.
                     </p>
                 </div>
@@ -385,9 +385,12 @@
             </div>
 
             <div class="modal-footer" style="border-top:1px solid var(--border-color);padding:.9rem 1.25rem;gap:.5rem;background:var(--bg-surface,#FAFAF8);">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Corregir</button>
+                <button type="button" class="btn btn-sm" data-bs-dismiss="modal"
+                        style="color:var(--text-muted);background:none;border:1px solid var(--border);border-radius:7px;padding:.35rem .85rem;">
+                    <i class="bi bi-arrow-left me-1"></i>Corregir
+                </button>
                 <button type="button" class="btn btn-sm" id="btnConfirmarContrato"
-                        style="background:var(--sidebar-bg,#1A1814);color:var(--sidebar-active-text,#F2E4BC);font-weight:600;">
+                        style="background:var(--accent,#B49040);color:#fff;font-weight:600;border:none;border-radius:7px;padding:.4rem 1.1rem;">
                     <i class="bi bi-file-earmark-check me-1"></i>Confirmar y generar
                 </button>
             </div>

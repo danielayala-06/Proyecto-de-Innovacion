@@ -264,7 +264,7 @@ export const ui = {
    * @param {Array<Object>} [data.pagos=[]] - Historial de pagos del contrato.
    * @returns {string} HTML del contenido del modal de detalle.
    */
-  renderDetalle(data) {
+  renderDetalle(data, id, isActivo) {
     const pagos = data.pagos ?? [];
     const filasPagos = pagos.length
       ? pagos.map(p => `
@@ -275,60 +275,85 @@ export const ui = {
           </tr>`).join('')
       : `<tr><td colspan="3" class="text-center text-muted py-2" style="font-size:.82rem;">Sin pagos registrados</td></tr>`;
 
+    const btnImprimir = `
+      <a href="${BASE_URL}contratos/${id}" target="_blank"
+         style="color:var(--text-muted);font-size:.78rem;display:inline-flex;align-items:center;gap:.3rem;
+                text-decoration:none;padding:.25rem .5rem;border-radius:6px;transition:background .15s;"
+         onmouseover="this.style.background='var(--bg-hover)'"
+         onmouseout="this.style.background=''">
+        <i class="bi bi-printer"></i> Imprimir
+      </a>`;
+
+    const btnAgregarPago = isActivo ? `
+      <button onclick="abrirModalPago(${id})"
+              style="background:none;border:none;cursor:pointer;color:var(--accent);font-size:.75rem;
+                     font-weight:600;display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .4rem;
+                     border-radius:5px;transition:background .15s;"
+              onmouseover="this.style.background='var(--accent-light)'"
+              onmouseout="this.style.background=''">
+        <i class="bi bi-plus-circle"></i> Añadir pago
+      </button>` : '';
+
     return `
-      <div class="row g-2 mb-3" style="font-size:.84rem;">
-        <div class="col-6">
-          <span style="color:var(--text-muted);">Código contrato</span><br>
-          <span class="con-codigo">${formatters.codigo(data.id)}</span>
+      <div style="position:relative;margin-bottom:1rem;">
+        <div style="position:absolute;top:0;right:0;">${btnImprimir}</div>
+        <div class="row g-2" style="font-size:.84rem;">
+          <div class="col-6">
+            <span style="color:var(--text-muted);">Código contrato</span><br>
+            <span class="con-codigo">${formatters.codigo(data.id)}</span>
+          </div>
+          <div class="col-6">
+            <span style="color:var(--text-muted);">Estado</span><br>
+            ${badgeEstado(data.estado)}
+          </div>
+          <div class="col-6">
+            <span style="color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;">
+              <i class="bi bi-person-fill me-1"></i>Cliente principal
+            </span><br>
+            <strong>${data.cliente?.nombre ?? '—'}</strong><br>
+            <span style="font-size:.78rem;color:var(--text-muted);">${data.cliente?.telefono ?? '—'}</span>
+          </div>
+          <div class="col-6">
+            ${data.contacto2 ? `
+            <span style="color:var(--accent);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;font-weight:700;">
+              <i class="bi bi-person-plus-fill me-1"></i>Contacto adicional
+            </span><br>
+            <strong>${data.contacto2.nombre}</strong><br>
+            <span style="font-size:.78rem;color:var(--text-muted);">${data.contacto2.telefono ?? '—'}</span>
+            ` : `
+            <span style="color:var(--text-muted);">Teléfono</span><br>
+            ${data.cliente?.telefono ?? '—'}
+            `}
+          </div>
+          <div class="col-6">
+            <span style="color:var(--text-muted);">Total contrato</span><br>
+            <strong>${formatters.moneda(data.total)}</strong>
+          </div>
+          <div class="col-6">
+            <span style="color:var(--text-muted);">Adelanto pagado</span><br>
+            ${formatters.moneda(data.adelanto)}
+          </div>
+          <div class="col-6">
+            <span style="color:var(--text-muted);">Saldo pendiente</span><br>
+            <strong style="color:var(--amber-text);">${formatters.moneda(data.saldo)}</strong>
+          </div>
+          <div class="col-6">
+            <span style="color:var(--text-muted);">Fecha creación</span><br>
+            ${formatters.fecha(data.fecha_creacion)}
+          </div>
+          ${data.observaciones ? `
+          <div class="col-12">
+            <span style="color:var(--text-muted);">Observaciones</span><br>
+            <span style="font-size:.82rem;white-space:pre-line;">${data.observaciones}</span>
+          </div>` : ''}
         </div>
-        <div class="col-6">
-          <span style="color:var(--text-muted);">Estado</span><br>
-          ${badgeEstado(data.estado)}
-        </div>
-        <div class="col-6">
-          <span style="color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;">
-            <i class="bi bi-person-fill me-1"></i>Cliente principal
-          </span><br>
-          <strong>${data.cliente?.nombre ?? '—'}</strong><br>
-          <span style="font-size:.78rem;color:var(--text-muted);">${data.cliente?.telefono ?? '—'}</span>
-        </div>
-        <div class="col-6">
-          ${data.contacto2 ? `
-          <span style="color:var(--accent);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;font-weight:700;">
-            <i class="bi bi-person-plus-fill me-1"></i>Contacto adicional
-          </span><br>
-          <strong>${data.contacto2.nombre}</strong><br>
-          <span style="font-size:.78rem;color:var(--text-muted);">${data.contacto2.telefono ?? '—'}</span>
-          ` : `
-          <span style="color:var(--text-muted);">Teléfono</span><br>
-          ${data.cliente?.telefono ?? '—'}
-          `}
-        </div>
-        <div class="col-6">
-          <span style="color:var(--text-muted);">Total contrato</span><br>
-          <strong>${formatters.moneda(data.total)}</strong>
-        </div>
-        <div class="col-6">
-          <span style="color:var(--text-muted);">Adelanto pagado</span><br>
-          ${formatters.moneda(data.adelanto)}
-        </div>
-        <div class="col-6">
-          <span style="color:var(--text-muted);">Saldo pendiente</span><br>
-          <strong style="color:var(--amber-text);">${formatters.moneda(data.saldo)}</strong>
-        </div>
-        <div class="col-6">
-          <span style="color:var(--text-muted);">Fecha creación</span><br>
-          ${formatters.fecha(data.fecha_creacion)}
-        </div>
-        ${data.observaciones ? `
-        <div class="col-12">
-          <span style="color:var(--text-muted);">Observaciones</span><br>
-          <span style="font-size:.82rem;white-space:pre-line;">${data.observaciones}</span>
-        </div>` : ''}
       </div>
 
-      <div style="font-size:.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">
-        Historial de pagos
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;">
+          Historial de pagos
+        </span>
+        ${btnAgregarPago}
       </div>
       <div class="table-responsive">
         <table class="table table-sm" style="font-size:.81rem;">
