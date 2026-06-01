@@ -285,11 +285,32 @@
                     Haz clic en un paquete para seleccionarlo · puedes elegir varios
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-primary btn-sm" id="btn-confirmar-paquetes" disabled>
-                    Selecciona un paquete
-                </button>
+            <div class="modal-footer" style="flex-direction:column;align-items:stretch;gap:.5rem;padding:.85rem 1.25rem;">
+                <!-- Confirmación de violaciones (oculta por defecto) -->
+                <div id="paq-viol-confirm" style="display:none;">
+                    <div style="background:#fff0f0;border:1px solid #f5c6cb;border-radius:7px;
+                                padding:.6rem .85rem;font-size:.8rem;color:#721c24;margin-bottom:.5rem;">
+                        <div style="font-weight:700;margin-bottom:.4rem;">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Este paquete tiene condiciones de elegibilidad
+                        </div>
+                        <div id="paq-viol-lista"></div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:.5rem;">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-viol-volver">
+                            <i class="bi bi-arrow-left me-1"></i>Volver
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" id="btn-viol-confirmar">
+                            Agregar de todos modos
+                        </button>
+                    </div>
+                </div>
+                <!-- Footer normal -->
+                <div id="paq-footer-normal" style="display:flex;justify-content:flex-end;gap:.5rem;width:100%;">
+                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary btn-sm" id="btn-confirmar-paquetes" disabled>
+                        Selecciona un paquete
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -343,6 +364,20 @@
                 <div id="conf-tabla-items"
                      style="border:1.5px solid var(--border,#D6D0C8);border-radius:8px;overflow:hidden;">
                     <!-- Poblado por JS -->
+                </div>
+
+                <!-- Violaciones de reglas (si existen) -->
+                <div id="conf-wrap-violaciones" style="display:none;margin-top:.9rem;">
+                    <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;
+                                letter-spacing:.6px;color:#dc3545;margin-bottom:.4rem;">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Advertencias — revisa las cantidades
+                    </div>
+                    <div id="conf-violaciones"
+                         style="background:#fff0f0;border:1.5px solid #f5c6cb;border-radius:8px;
+                                padding:.7rem .9rem;"></div>
+                    <div style="font-size:.74rem;color:#721c24;margin-top:.4rem;padding:0 .2rem;">
+                        Puedes continuar, pero estos paquetes pueden no estar disponibles con la cantidad indicada.
+                    </div>
                 </div>
 
                 <!-- Nota/observaciones (si existen) -->

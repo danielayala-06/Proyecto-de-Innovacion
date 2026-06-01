@@ -754,6 +754,17 @@ function _actualizarBtnConfirmar() {
  * - CANTIDAD_MIN no cumplida     → sugerencia de cuántos alumnos faltan (azul).
  * - CANTIDAD_MAX aplica          → aviso de reducción de sesiones (naranja).
  */
+/**
+ * Aplica el borde de estado al modal de paquetes.
+ * @param {'danger'|'success'|null} estado
+ */
+function _setModalBorde(estado) {
+    const el = document.querySelector('#modalPaquete .modal-content');
+    if (!el) return;
+    el.classList.toggle('modal-content--danger',  estado === 'danger');
+    el.classList.toggle('modal-content--success', estado === 'success');
+}
+
 function _renderReglasAlert() {
     const zone = document.getElementById('reglas-alert-zone');
     if (!zone) return;
@@ -761,6 +772,7 @@ function _renderReglasAlert() {
     if (state.paquetesSeleccionados.size === 0) {
         zone.style.display = 'none';
         zone.innerHTML     = '';
+        _setModalBorde(null);
         return;
     }
 
@@ -778,7 +790,8 @@ function _renderReglasAlert() {
         warning: '<i class="bi bi-calendar2-x-fill" style="color:#fd7e14;flex-shrink:0;"></i>',
     };
 
-    const fragments = [];
+    const fragments  = [];
+    let   hayBloqueo = false;
 
     state.paquetesSeleccionados.forEach(({ idRef, nombre, el }) => {
         const qty    = parseInt(el?.querySelector('.po-qty-input')?.value) || 0;
@@ -786,19 +799,37 @@ function _renderReglasAlert() {
         const reglas = paq?.reglas ?? [];
         if (!reglas.length) return;
 
+        // Para producto_gratis: calcular el umbral máximo cumplido por este paquete.
+        // Solo ese nivel gana; los umbrales inferiores cumplidos se ignoran.
+        const maxGratisUmbral = Math.max(0, ...reglas
+            .filter(r =>
+                r.tipo_condicion   === 'CANTIDAD_MIN' &&
+                r.tipo_beneficio   === 'producto_gratis' &&
+                qty >= parseFloat(r.valor_condicion)
+            )
+            .map(r => parseFloat(r.valor_condicion))
+        );
+
         const msgs = [];
         reglas.forEach(r => {
-            const umbral = parseFloat(r.valor_condicion);
+            const umbral   = parseFloat(r.valor_condicion);
+            const beneficio = r.tipo_beneficio === 'producto_gratis'
+                ? (r.nombre_producto_beneficio || r.valor_beneficio || '—')
+                : (r.valor_beneficio || '—');
+
             if (r.tipo_condicion === 'ELEGIBILIDAD_MIN') {
                 if (qty < umbral) {
                     msgs.push({ tipo: 'danger', texto: r.descripcion });
+                    hayBloqueo = true;
                 }
             } else if (r.tipo_condicion === 'CANTIDAD_MIN') {
                 if (qty >= umbral) {
-                    msgs.push({ tipo: 'success', texto: `Beneficio desbloqueado: ${r.valor_beneficio}` });
+                    // producto_gratis: solo muestra el umbral ganador (el más alto cumplido)
+                    if (r.tipo_beneficio === 'producto_gratis' && umbral < maxGratisUmbral) return;
+                    msgs.push({ tipo: 'success', texto: `Beneficio desbloqueado: ${beneficio}` });
                 } else {
                     const faltan = umbral - qty;
-                    msgs.push({ tipo: 'info', texto: `Con ${faltan} alumno${faltan !== 1 ? 's' : ''} más (≥${umbral}): ${r.valor_beneficio}` });
+                    msgs.push({ tipo: 'info', texto: `Con ${faltan} alumno${faltan !== 1 ? 's' : ''} más (≥${umbral}): ${beneficio}` });
                 }
             } else if (r.tipo_condicion === 'CANTIDAD_MAX') {
                 if (qty < umbral) {
@@ -820,6 +851,8 @@ function _renderReglasAlert() {
             `</div>`
         );
     });
+
+    _setModalBorde(hayBloqueo ? 'danger' : 'success');
 
     if (fragments.length) {
         zone.style.display = '';
@@ -1211,6 +1244,36 @@ function _mostrarModalConfirmacion() {
         }
     }
 
+    // ── Violaciones de reglas ────────────────────────────────────────────────
+    const violaciones = [];
+    state.items.filter(i => i.tipo === 'paquete').forEach(item => {
+        const paq    = state.todosPaquetes.find(p => p.id_paquete === item.idRef);
+        const reglas = paq?.reglas ?? [];
+        reglas.forEach(r => {
+            const umbral = parseFloat(r.valor_condicion);
+            if (r.tipo_condicion === 'ELEGIBILIDAD_MIN' && (item.cantidad ?? 1) < umbral) {
+                violaciones.push({ nombre: item.nombre, cantidad: item.cantidad ?? 1, regla: r });
+            }
+        });
+    });
+
+    const wrapViol = document.getElementById('conf-wrap-violaciones');
+    const violEl   = document.getElementById('conf-violaciones');
+    if (wrapViol && violEl) {
+        if (violaciones.length) {
+            violEl.innerHTML = violaciones.map(v => `
+                <div style="display:flex;gap:.5rem;align-items:flex-start;margin-bottom:.3rem;">
+                    <i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;flex-shrink:0;margin-top:1px;"></i>
+                    <div style="font-size:.8rem;line-height:1.4;">
+                        <strong>${v.nombre}</strong> (${v.cantidad} alumnos): ${v.regla.descripcion}
+                    </div>
+                </div>`).join('');
+            wrapViol.style.display = '';
+        } else {
+            wrapViol.style.display = 'none';
+        }
+    }
+
     _modalConfirmacion?.show();
 }
 
@@ -1365,6 +1428,7 @@ async function init() {
     document.getElementById('btn-modal-paquete')?.addEventListener('click', () => {
         state.paquetesSeleccionados = new Map();
         _nivelFiltro = 'todos';
+        _ocultarConfirmViol();
 
         // Pre-poblar el campo de estudiantes desde el formulario
         const formNumEst    = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
@@ -1418,6 +1482,55 @@ async function init() {
     });
 
     /* 10. Confirmar selección de paquetes (múltiple) */
+
+    /** Devuelve las violaciones ELEGIBILIDAD_MIN de los paquetes actualmente seleccionados. */
+    function _violacionesSeleccionados() {
+        const viol = [];
+        state.paquetesSeleccionados.forEach(({ idRef, nombre, el }) => {
+            const qty    = parseInt(el?.querySelector('.po-qty-input')?.value) || 0;
+            const paq    = state.todosPaquetes.find(p => p.id_paquete === idRef);
+            (paq?.reglas ?? []).forEach(r => {
+                if (r.tipo_condicion === 'ELEGIBILIDAD_MIN' && qty < parseFloat(r.valor_condicion)) {
+                    viol.push({ nombre, cantidad: qty, regla: r });
+                }
+            });
+        });
+        return viol;
+    }
+
+    /** Mueve los paquetes seleccionados a state.items y cierra el modal. */
+    function _ejecutarAgregarPaquetes() {
+        const numEst = _getModalNumEst();
+        state.paquetesSeleccionados.forEach(({ idRef, nombre, precio, el }) => {
+            const cantidad = Math.max(1, parseInt(el.querySelector('.po-qty-input')?.value) || 1);
+            state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad });
+        });
+        const numEstEl = document.getElementById('numEstudiantes');
+        if (numEstEl) numEstEl.value = numEst;
+        _renderContainers();
+        _actualizarResumen();
+        _saveDraft();
+        _ocultarConfirmViol();
+        _modalPaquete?.hide();
+    }
+
+    function _mostrarConfirmViol(violaciones) {
+        const lista = document.getElementById('paq-viol-lista');
+        if (lista) {
+            lista.innerHTML = violaciones.map(v => `
+                <div style="margin-bottom:.25rem;">
+                    <strong>${v.nombre}</strong> (${v.cantidad} alumnos): ${v.regla.descripcion}
+                </div>`).join('');
+        }
+        document.getElementById('paq-footer-normal').style.display  = 'none';
+        document.getElementById('paq-viol-confirm').style.display   = '';
+    }
+
+    function _ocultarConfirmViol() {
+        document.getElementById('paq-viol-confirm').style.display   = 'none';
+        document.getElementById('paq-footer-normal').style.display  = '';
+    }
+
     document.getElementById('btn-confirmar-paquetes')?.addEventListener('click', () => {
         const numEst = _getModalNumEst();
         if (numEst <= 0) {
@@ -1428,27 +1541,23 @@ async function init() {
             alerts.warning('Selecciona al menos un paquete de la lista.');
             return;
         }
-
         const totalQty = _calcularTotalModalQty();
         if (totalQty < numEst) {
             alerts.warning(`La cantidad total seleccionada (${totalQty}) no cubre a todos los estudiantes (${numEst}). Aumenta la cantidad o selecciona más paquetes.`);
             return;
         }
 
-        state.paquetesSeleccionados.forEach(({ idRef, nombre, precio, el }) => {
-            const cantidad = Math.max(1, parseInt(el.querySelector('.po-qty-input')?.value) || 1);
-            state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad });
-        });
+        const violaciones = _violacionesSeleccionados();
+        if (violaciones.length) {
+            _mostrarConfirmViol(violaciones);
+            return;
+        }
 
-        // Copiar el n.° de estudiantes del modal al campo del formulario
-        const numEstEl = document.getElementById('numEstudiantes');
-        if (numEstEl) numEstEl.value = numEst;
-
-        _renderContainers();
-        _actualizarResumen();
-        _saveDraft();
-        _modalPaquete?.hide();
+        _ejecutarAgregarPaquetes();
     });
+
+    document.getElementById('btn-viol-confirmar')?.addEventListener('click', _ejecutarAgregarPaquetes);
+    document.getElementById('btn-viol-volver')?.addEventListener('click', _ocultarConfirmViol);
 
     /* 11. Confirmar servicio personalizado */
     document.getElementById('btn-confirmar-servicio')?.addEventListener('click', () => {

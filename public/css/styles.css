@@ -589,6 +589,19 @@ label {
 .modal-del .modal-content { border-color: var(--red-border); }
 .modal-del .modal-header  { background: var(--red-bg); border-radius: 14px 14px 0 0; }
 
+/* Borde rojo cuando hay violación de regla en el modal de paquetes */
+.modal-content {
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+.modal-content--danger {
+    border: 2px solid #dc3545 !important;
+    box-shadow: 0 0 0 4px rgba(220,53,69,.14), var(--shadow-lg) !important;
+}
+.modal-content--success {
+    border: 2px solid #198754 !important;
+    box-shadow: 0 0 0 4px rgba(25,135,84,.12), var(--shadow-lg) !important;
+}
+
 /* ── NIVEL FILTRO PAQUETES ───────────────────────────────────────── */
 .nivel-filtro-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.9rem; }
 .nivel-filtro-btn {

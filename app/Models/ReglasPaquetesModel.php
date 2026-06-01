@@ -221,8 +221,19 @@ class ReglasPaquetesModel extends Model
 
             $tipo = $row['tipo_item'];
             $id   = (int) $row['id_referencia'];
+            $ref  = $tipo . ':' . $id;
+
+            if (!in_array($ref, $reglasMap[$idRegla]['_refs'], true)) {
+                $reglasMap[$idRegla]['_refs'][] = $ref;
+            }
+
             $reglasMap[$idRegla]['cantidad_total'] +=
                 $tipo === 'paquete' ? ($porPaquete[$id] ?? 0) : ($porProducto[$id] ?? 0);
+        }
+
+        // Normalizar las refs para que sirvan como clave de scope consistente
+        foreach ($reglasMap as &$r) {
+            sort($r['_refs']);
         }
 
         return $reglasMap;
@@ -239,13 +250,17 @@ class ReglasPaquetesModel extends Model
      */
     private function _clasificarReglas(array $reglasMap): array
     {
-        $violaciones = [];
-        $activadas   = [];
-        $reducciones = [];
+        $violaciones   = [];
+        $activadas     = [];
+        $reducciones   = [];
+
+        // Para producto_gratis: acumula candidatos por scope (mismo conjunto de items).
+        // Al final solo el de mayor umbral por scope se activa.
+        $candidatosGratis = [];
 
         foreach ($reglasMap as $r) {
             $cant   = $r['cantidad_total'];
-            $umbral = $r['valor_condicion'];
+            $umbral = (float) $r['valor_condicion'];
 
             if ($r['tipo_condicion'] === 'ELEGIBILIDAD_MIN' && $cant < $umbral) {
                 $violaciones[] = [
@@ -255,13 +270,28 @@ class ReglasPaquetesModel extends Model
                     'limite'         => (int) $umbral,
                 ];
             } elseif ($r['tipo_condicion'] === 'CANTIDAD_MIN' && $cant >= $umbral) {
-                $activadas[] = [
-                    'tipo_beneficio'            => $r['tipo_beneficio'],
-                    'id_producto_beneficio'     => $r['id_producto_beneficio'],
-                    'nombre_producto_beneficio' => $r['nombre_producto_beneficio'],
-                    'valor_beneficio'           => $r['valor_beneficio'],
-                    'descripcion'               => $r['descripcion'],
-                ];
+                if ($r['tipo_beneficio'] === 'producto_gratis') {
+                    // Agrupar por scope: solo gana el umbral más alto cumplido
+                    $scope = implode('|', $r['_refs']);
+                    if (!isset($candidatosGratis[$scope]) || $umbral > $candidatosGratis[$scope]['_umbral']) {
+                        $candidatosGratis[$scope] = [
+                            'tipo_beneficio'            => $r['tipo_beneficio'],
+                            'id_producto_beneficio'     => $r['id_producto_beneficio'],
+                            'nombre_producto_beneficio' => $r['nombre_producto_beneficio'],
+                            'valor_beneficio'           => $r['valor_beneficio'],
+                            'descripcion'               => $r['descripcion'],
+                            '_umbral'                   => $umbral,
+                        ];
+                    }
+                } else {
+                    $activadas[] = [
+                        'tipo_beneficio'            => $r['tipo_beneficio'],
+                        'id_producto_beneficio'     => $r['id_producto_beneficio'],
+                        'nombre_producto_beneficio' => $r['nombre_producto_beneficio'],
+                        'valor_beneficio'           => $r['valor_beneficio'],
+                        'descripcion'               => $r['descripcion'],
+                    ];
+                }
             } elseif ($r['tipo_condicion'] === 'CANTIDAD_MAX' && $cant < $umbral) {
                 $reducciones[] = [
                     'tipo_condicion' => 'CANTIDAD_MAX',
@@ -270,6 +300,17 @@ class ReglasPaquetesModel extends Model
                     'limite'         => (int) $umbral,
                 ];
             }
+        }
+
+        // Agregar solo el beneficio ganador por scope
+        foreach ($candidatosGratis as $c) {
+            $activadas[] = [
+                'tipo_beneficio'            => $c['tipo_beneficio'],
+                'id_producto_beneficio'     => $c['id_producto_beneficio'],
+                'nombre_producto_beneficio' => $c['nombre_producto_beneficio'],
+                'valor_beneficio'           => $c['valor_beneficio'],
+                'descripcion'               => $c['descripcion'],
+            ];
         }
 
         return ['violaciones' => $violaciones, 'activadas' => $activadas, 'reducciones' => $reducciones];
@@ -293,11 +334,11 @@ class ReglasPaquetesModel extends Model
     }
 
     /**
-     * Regla para evaluarDetalles: incluye cantidad_total para la acumulación.
+     * Regla para evaluarDetalles: incluye cantidad_total y refs para la acumulación.
      */
     private function _mapearRegla(array $row): array
     {
-        return array_merge($this->_mapearReglaBase($row), ['cantidad_total' => 0]);
+        return array_merge($this->_mapearReglaBase($row), ['cantidad_total' => 0, '_refs' => []]);
     }
 
     /**
