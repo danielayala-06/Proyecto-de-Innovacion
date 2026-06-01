@@ -44,5 +44,9 @@ class DatabaseSeeder extends Seeder
         // ── Estudiantes ──────────────────────────────────────────────────────
         $this->call('ApoderadosSeeder');   // depende de: personas
         $this->call('EstudiantesSeeder');  // depende de: apoderados, promociones_escolares
+
+        // ── Formularios de promoción escolar (sistema de tokens) ─────────────
+        $this->call('PromPromocionesSeeder'); // depende de: colegios
+        $this->call('PromAlumnosSeeder');     // depende de: prom_promociones
     }
 }

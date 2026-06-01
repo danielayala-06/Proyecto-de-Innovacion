@@ -7,6 +7,15 @@ use CodeIgniter\Router\RouteCollection;
  */
 
 // ============================================================================
+// Formulario público (sin auth — acceso por token único)
+// ============================================================================
+
+$routes->get ('formulario/gracias',          'FormularioController::gracias');
+$routes->get ('formulario/stock/(:num)',     'FormularioController::stock/$1');
+$routes->get ('formulario/(:segment)',       'FormularioController::index/$1');
+$routes->post('formulario/guardar',          'FormularioController::guardar');
+
+// ============================================================================
 // Autenticación (públicas — sin filtro auth)
 // ============================================================================
 
@@ -32,6 +41,15 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/paquetes',              'PaqueteController::index');
     $routes->get('/clientes',              'ClienteController::index');
     $routes->get('/calendario',            'CalendarioController::index');
+
+    // ── Admin formularios ─────────────────────────────────────────────────────
+    $routes->group('admin/formularios', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
+        $routes->get ('/',                    'AdminController::index');
+        $routes->get ('promocion/(:num)',     'AdminController::promocion/$1');
+        $routes->post('alumno/agregar',       'AdminController::agregarAlumno');
+        $routes->post('alumno/importar',      'AdminController::importarAlumnos');
+        $routes->get ('exportar/(:num)',      'AdminController::exportarCsv/$1');
+    });
 
 });
 
