@@ -13,7 +13,7 @@ class PromPromocionModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'colegio_id', 'nombre', 'nivel',
+        'colegio_id', 'id_promocion_escolar', 'token_compartido', 'nombre', 'nivel',
         'cuadros_total', 'cuadros_usados',
         'anuarios_total', 'anuarios_usados',
         'activa', 'created_at',

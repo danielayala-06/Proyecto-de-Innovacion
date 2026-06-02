@@ -13,7 +13,7 @@ class PromAlumnoModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'promocion_id', 'nombre', 'token', 'completado', 'enviado', 'created_at',
+        'promocion_id', 'nombre', 'token', 'completado', 'id_estudiante', 'enviado', 'created_at',
     ];
 
     protected $useTimestamps = false;
