@@ -27,6 +27,11 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# files
+*.jpg
+*.jpeg
+public/images/paquetes/*.png
+
 # Linux
 *~
 
