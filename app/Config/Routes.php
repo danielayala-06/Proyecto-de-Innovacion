@@ -10,10 +10,12 @@ use CodeIgniter\Router\RouteCollection;
 // Formulario público (sin auth — acceso por token único)
 // ============================================================================
 
-$routes->get ('formulario/gracias',          'FormularioController::gracias');
-$routes->get ('formulario/stock/(:num)',     'FormularioController::stock/$1');
-$routes->get ('formulario/(:segment)',       'FormularioController::index/$1');
-$routes->post('formulario/guardar',          'FormularioController::guardar');
+$routes->get ('formulario/gracias',              'FormularioController::gracias');
+$routes->get ('formulario/stock/(:num)',         'FormularioController::stock/$1');
+$routes->get ('formulario/grupo/(:segment)',     'FormularioController::grupoIndex/$1');
+$routes->post('formulario/grupo/guardar',        'FormularioController::grupoGuardar');
+$routes->get ('formulario/(:segment)',           'FormularioController::index/$1');
+$routes->post('formulario/guardar',              'FormularioController::guardar');
 
 // ============================================================================
 // Autenticación (públicas — sin filtro auth)
@@ -51,6 +53,8 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
         $routes->post('alumno/agregar',       'AdminController::agregarAlumno');
         $routes->post('alumno/importar',      'AdminController::importarAlumnos');
         $routes->get ('exportar/(:num)',      'AdminController::exportarCsv/$1');
+        $routes->post('vincular/(:num)',      'AdminController::vincularPromocion/$1');
+        $routes->get ('promo-escolar/(:num)', 'AdminController::irDesdePromocion/$1');
     });
 
 });

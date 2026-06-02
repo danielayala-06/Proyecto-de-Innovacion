@@ -1,180 +1,172 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= esc($promocion['nombre']) ?> — Admin</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<?= $header ?>
+
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size:15px}
 [x-cloak]{display:none!important}
-
-.topbar{background:#1A1714;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.topbar-left{display:flex;align-items:center;gap:.6rem}
-.topbar-dot{width:9px;height:9px;border-radius:50%;background:#B8963E;flex-shrink:0}
-.topbar h1{font-family:'Playfair Display',serif;font-size:1.05rem;color:#F7F4EE;font-weight:700}
-.topbar p{font-size:.7rem;color:#B8963E;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
-.topbar-actions{display:flex;gap:.6rem;flex-wrap:wrap}
-
-.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:opacity .15s,transform .1s}
-.btn:hover{opacity:.88;transform:translateY(-1px)}
-.btn-gold{background:#B8963E;color:#fff}
-.btn-dark{background:#2E2B26;color:#fff}
-.btn-light{background:#F7F4EE;color:#1A1714;border:1.5px solid #D6D0C8}
-.btn-sm{padding:.35rem .7rem;font-size:.75rem;border-radius:7px}
-
-.container{max-width:960px;margin:0 auto;padding:2rem 1.5rem}
-
-/* ── TARJETAS ESTADÍSTICAS ── */
-.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.9rem;margin-bottom:1.75rem}
-@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
-.stat-card{background:#fff;border-radius:14px;padding:1.2rem 1rem;box-shadow:0 2px 10px rgba(0,0,0,.06);text-align:center}
-.stat-num{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;color:#1A1714;line-height:1}
-.stat-num.gold{color:#B8963E}
-.stat-label{font-size:.72rem;color:#6B6460;margin-top:.35rem;text-transform:uppercase;letter-spacing:.05em}
-
-/* ── BARRA DE PROGRESO ── */
-.progress-section{background:#fff;border-radius:14px;padding:1.2rem 1.4rem;margin-bottom:1.75rem;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;font-size:.82rem}
-.prog-bar{height:10px;background:#EDE8DC;border-radius:5px;overflow:hidden}
-.prog-fill{height:100%;background:linear-gradient(90deg,#B8963E,#D4A84B);border-radius:5px;transition:width .5s}
-
-/* ── BÚSQUEDA ── */
-.search-bar{position:relative;margin-bottom:1rem}
-.search-bar input{width:100%;background:#fff;border:1.5px solid #D6D0C8;border-radius:10px;padding:.6rem 1rem .6rem 2.5rem;font-family:'DM Sans',sans-serif;font-size:.88rem;color:#1A1714}
-.search-bar input:focus{outline:none;border-color:#B8963E}
-.search-bar::before{content:'🔍';position:absolute;left:.75rem;top:50%;transform:translateY(-50%);font-size:.85rem}
-
-/* ── TABLA ── */
-.card{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden}
-table{width:100%;border-collapse:collapse}
-thead tr{background:#F7F4EE}
-th{padding:.75rem 1rem;text-align:left;font-size:.7rem;font-weight:600;color:#6B6460;text-transform:uppercase;letter-spacing:.06em}
-td{padding:.8rem 1rem;border-top:1px solid #F7F4EE;font-size:.87rem;vertical-align:middle}
-tr:hover td{background:#FDFCF9}
-.badge{display:inline-flex;align-items:center;padding:.2rem .55rem;border-radius:6px;font-size:.7rem;font-weight:600;letter-spacing:.04em}
-.badge-green{background:#E6F5EC;color:#1A5E2E}
-.badge-amber{background:#F8F0D8;color:#7A5000}
-.link-text{font-size:.72rem;color:#6B6460;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
-
-/* ── MODAL ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem}
-.modal{background:#fff;border-radius:20px;padding:2rem 1.75rem;width:100%;max-width:480px;box-shadow:0 16px 48px rgba(0,0,0,.2)}
-.modal h2{font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:.5rem}
-.modal p{font-size:.82rem;color:#6B6460;margin-bottom:1.25rem}
-.modal textarea{width:100%;border:1.5px solid #D6D0C8;border-radius:10px;padding:.7rem .9rem;font-family:'DM Sans',sans-serif;font-size:.85rem;color:#1A1714;resize:vertical;min-height:160px}
-.modal textarea:focus{outline:none;border-color:#B8963E}
-.modal-footer{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.25rem}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#1A1714;color:#fff;padding:.75rem 1.25rem;border-radius:10px;font-size:.82rem;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:100;display:flex;align-items:center;gap:.5rem}
-.toast.success{background:#1A5E2E}
-.toast.error{background:#7A1A1A}
+.adm-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:.9rem;margin-bottom:1.5rem}
+@media(max-width:700px){.adm-stats{grid-template-columns:repeat(2,1fr)}}
+.adm-stat{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center}
+.adm-stat-num{font-size:1.75rem;font-weight:800;color:var(--text-primary);line-height:1}
+.adm-stat-num.gold{color:var(--accent)}
+.adm-stat-num.green{color:var(--green-text)}
+.adm-stat-num.amber{color:var(--amber-text)}
+.adm-stat-label{font-size:.7rem;color:var(--text-muted);margin-top:.3rem;text-transform:uppercase;letter-spacing:.05em}
+.adm-link-text{font-size:.72rem;color:var(--text-muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.adm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1050;display:flex;align-items:center;justify-content:center;padding:1rem}
+.adm-modal{background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;padding:1.75rem;width:100%;max-width:460px;box-shadow:0 16px 48px rgba(0,0,0,.25)}
+.adm-modal h2{font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:.35rem}
+.adm-modal p{font-size:.82rem;color:var(--text-muted);margin-bottom:1rem}
+.adm-modal textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:.65rem .85rem;font-size:.84rem;color:var(--text-primary);resize:vertical;min-height:140px;font-family:inherit}
+.adm-modal textarea:focus{outline:none;border-color:var(--accent)}
+.adm-modal-footer{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem}
 </style>
-</head>
-<body x-data="adminPanel()" x-init="init()">
 
-<!-- TOPBAR -->
-<div class="topbar">
-    <div class="topbar-left">
-        <div class="topbar-dot"></div>
-        <div>
-            <h1><?= esc($promocion['nombre']) ?></h1>
-            <p><?= esc($promocion['nombre_colegio'] ?? '') ?><?= $promocion['nivel'] ? ' · ' . esc($promocion['nivel']) : '' ?></p>
-        </div>
-    </div>
-    <div class="topbar-actions">
-        <a href="<?= base_url('admin/formularios/exportar/' . $promocion['id']) ?>" class="btn btn-gold">⬇ Exportar CSV</a>
-        <button class="btn btn-dark" @click="abrirImportar()">+ Importar alumnos</button>
-        <a href="<?= base_url('admin/formularios') ?>" class="btn btn-light">← Volver</a>
-    </div>
-</div>
-
+<main class="main-content" id="main-content" x-data="adminPanel()" x-init="init()">
 <div class="container">
 
-    <!-- ESTADÍSTICAS -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-num"><?= $promocion['total_alumnos'] ?></div>
-            <div class="stat-label">Total alumnos</div>
+    <!-- BREADCRUMB + HEADER -->
+    <div class="sesiones-header">
+        <a href="<?= base_url('admin/formularios') ?>" class="btn-back">
+            <i class="bi bi-arrow-left"></i> Formularios
+        </a>
+        <div style="flex:1;">
+            <p class="section-label"><?= esc($promocion['nombre']) ?></p>
+            <div style="font-size:.82rem;color:var(--text-muted);">
+                <?= esc($promocion['nombre_colegio'] ?? '') ?>
+                <?= $promocion['nivel'] ? ' · ' . esc($promocion['nivel']) : '' ?>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:#1A5E2E"><?= $promocion['completados'] ?></div>
-            <div class="stat-label">Completados</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:#7A5000"><?= $promocion['pendientes'] ?></div>
-            <div class="stat-label">Pendientes</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num gold"><?= $stock['cuadros'] ?></div>
-            <div class="stat-label">Cuadros libres</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num gold"><?= $stock['anuarios'] ?></div>
-            <div class="stat-label">Anuarios libres</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <?php if (!empty($sesionesLink)): ?>
+            <a href="<?= esc($sesionesLink) ?>"
+               style="display:inline-flex;align-items:center;gap:.35rem;background:var(--accent);color:#fff;
+                      border:none;border-radius:8px;padding:.4rem .85rem;font-size:.8rem;font-weight:600;
+                      text-decoration:none;cursor:pointer;">
+                <i class="bi bi-camera"></i> Ver sesiones
+            </a>
+            <?php endif; ?>
+            <a href="<?= base_url('admin/formularios/exportar/' . $promocion['id']) ?>"
+               style="display:inline-flex;align-items:center;gap:.35rem;background:var(--bg-input);
+                      border:1px solid var(--border);border-radius:8px;padding:.4rem .85rem;
+                      font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text-primary);">
+                <i class="bi bi-download"></i> Exportar CSV
+            </a>
+            <button @click="abrirImportar()"
+                    style="display:inline-flex;align-items:center;gap:.35rem;background:var(--bg-input);
+                           border:1px solid var(--border);border-radius:8px;padding:.4rem .85rem;
+                           font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text-primary);">
+                <i class="bi bi-upload"></i> Importar alumnos
+            </button>
         </div>
     </div>
 
-    <!-- PROGRESO -->
-    <?php
-        $pct = $promocion['total_alumnos'] > 0
-            ? round(($promocion['completados'] / $promocion['total_alumnos']) * 100)
-            : 0;
-    ?>
-    <div class="progress-section">
-        <div class="prog-header">
-            <span>Progreso de formularios</span>
+    <!-- ENLACE COMPARTIDO -->
+    <div class="cot-table-card mb-3" style="padding:1rem 1.25rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+            <div>
+                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.3rem;">
+                    <i class="bi bi-link-45deg me-1" style="color:var(--accent);"></i>Enlace compartido para alumnos
+                </div>
+                <div style="font-size:.8rem;color:var(--text-secondary);">Comparte este link con todos los alumnos — cada uno completa su propio formulario.</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                <code style="background:var(--bg-input);border:1px solid var(--border);border-radius:7px;padding:.35rem .75rem;font-size:.75rem;color:var(--text-primary);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">
+                    <?= esc($linkCompartido) ?>
+                </code>
+                <button onclick="navigator.clipboard.writeText('<?= esc($linkCompartido) ?>').then(()=>this.textContent='¡Copiado!').catch(()=>{}); setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i> Copiar',2000)"
+                        style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:.38rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;">
+                    <i class="bi bi-clipboard"></i> Copiar
+                </button>
+                <a href="<?= esc($linkCompartido) ?>" target="_blank"
+                   style="color:var(--text-muted);font-size:.8rem;text-decoration:none;display:inline-flex;align-items:center;gap:.25rem;">
+                    <i class="bi bi-box-arrow-up-right"></i> Abrir
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div class="adm-stats">
+        <div class="adm-stat">
+            <div class="adm-stat-num"><?= $promocion['total_alumnos'] ?></div>
+            <div class="adm-stat-label">Total alumnos</div>
+        </div>
+        <div class="adm-stat">
+            <div class="adm-stat-num green"><?= $promocion['completados'] ?></div>
+            <div class="adm-stat-label">Completados</div>
+        </div>
+        <div class="adm-stat">
+            <div class="adm-stat-num amber"><?= $promocion['pendientes'] ?></div>
+            <div class="adm-stat-label">Pendientes</div>
+        </div>
+        <div class="adm-stat">
+            <div class="adm-stat-num gold"><?= $stock['cuadros'] ?></div>
+            <div class="adm-stat-label">Cuadros libres</div>
+        </div>
+        <div class="adm-stat">
+            <div class="adm-stat-num gold"><?= $stock['anuarios'] ?></div>
+            <div class="adm-stat-label">Anuarios libres</div>
+        </div>
+    </div>
+
+    <!-- BARRA DE PROGRESO -->
+    <?php $pct = $promocion['total_alumnos'] > 0
+        ? round(($promocion['completados'] / $promocion['total_alumnos']) * 100) : 0; ?>
+    <div class="cot-table-card mb-3" style="padding:1rem 1.25rem;">
+        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.5rem;">
+            <span style="color:var(--text-muted);">Progreso de formularios</span>
             <strong><?= $pct ?>%</strong>
         </div>
-        <div class="prog-bar"><div class="prog-fill" style="width:<?= $pct ?>%"></div></div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:<?= $pct ?>%;background:var(--accent);border-radius:4px;transition:width .5s;"></div>
+        </div>
     </div>
 
     <!-- BÚSQUEDA + TABLA -->
-    <div class="search-bar">
+    <div class="search-box mb-2" style="max-width:340px;">
         <input type="text" x-model="busqueda" placeholder="Buscar por nombre...">
+        <button class="search-btn"><i class="bi bi-search"></i></button>
     </div>
 
-    <div class="card">
-        <table>
+    <div class="cot-table-card">
+        <div class="table-responsive">
+        <table class="table table-sm" style="font-size:.84rem;">
             <thead>
                 <tr>
                     <th>#</th>
                     <th>Nombre</th>
                     <th>Estado</th>
-                    <th>Enlace</th>
-                    <th style="text-align:right">Acciones</th>
+                    <th>Enlace del formulario</th>
+                    <th class="text-end">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($alumnos as $i => $a): ?>
-                <tr x-show="filtra('<?= esc($a['nombre']) ?>')" x-cloak>
-                    <td style="color:#9E9488"><?= $i + 1 ?></td>
-                    <td style="font-weight:500"><?= esc($a['nombre']) ?></td>
+                <tr x-show="filtra('<?= addslashes(esc($a['nombre'])) ?>')" x-cloak>
+                    <td style="color:var(--text-muted);"><?= $i + 1 ?></td>
+                    <td style="font-weight:500;"><?= esc($a['nombre']) ?></td>
                     <td>
                         <?php if ($a['completado']): ?>
-                            <span class="badge badge-green">✓ Completado</span>
+                            <span class="badge-aprobada">✓ Completado</span>
                         <?php else: ?>
-                            <span class="badge badge-amber">⏳ Pendiente</span>
+                            <span class="badge-pendiente">⏳ Pendiente</span>
                         <?php endif; ?>
                     </td>
                     <td>
-                        <span class="link-text" title="<?= base_url('formulario/' . $a['token']) ?>">
+                        <span class="adm-link-text" title="<?= base_url('formulario/' . $a['token']) ?>">
                             <?= base_url('formulario/' . $a['token']) ?>
                         </span>
                     </td>
-                    <td style="text-align:right">
-                        <button class="btn btn-light btn-sm"
-                            @click="copiarLink('<?= base_url('formulario/' . $a['token']) ?>')">
-                            📋 Copiar
+                    <td class="text-end" style="white-space:nowrap;">
+                        <button onclick="navigator.clipboard.writeText('<?= base_url('formulario/' . $a['token']) ?>')"
+                                style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.8rem;padding:.2rem .4rem;"
+                                title="Copiar enlace">
+                            <i class="bi bi-clipboard"></i>
                         </button>
                         <?php if (!$a['completado']): ?>
-                        <a href="<?= base_url('formulario/' . $a['token']) ?>"
-                           target="_blank" class="btn btn-dark btn-sm" style="margin-left:.3rem">
-                            👁 Ver
+                        <a href="<?= base_url('formulario/' . $a['token']) ?>" target="_blank"
+                           style="color:var(--text-muted);font-size:.8rem;padding:.2rem .4rem;"
+                           title="Abrir formulario">
+                            <i class="bi bi-box-arrow-up-right"></i>
                         </a>
                         <?php endif; ?>
                     </td>
@@ -182,32 +174,34 @@ tr:hover td{background:#FDFCF9}
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
     </div>
 
 </div>
+</main>
 
 <!-- MODAL IMPORTAR -->
-<div class="overlay" x-show="modalImportar" x-cloak @click.self="modalImportar = false">
-    <div class="modal" @click.stop>
-        <h2>Importar alumnos</h2>
+<div class="adm-overlay" x-show="modalImportar" x-cloak @click.self="modalImportar = false">
+    <div class="adm-modal" @click.stop>
+        <h2><i class="bi bi-upload me-2" style="color:var(--accent);"></i>Importar alumnos</h2>
         <p>Escribe un nombre por línea. Se generará un enlace único para cada alumno.</p>
-        <textarea x-model="nombresTexto" placeholder="Juan García Pérez&#10;María López Torres&#10;Carlos Mendoza Lima"></textarea>
-        <div class="modal-footer">
-            <button class="btn btn-light" @click="modalImportar = false">Cancelar</button>
-            <button class="btn btn-gold" @click="importar()" :disabled="importando">
-                <span x-show="!importando">Importar</span>
+        <textarea x-model="nombresTexto"
+                  placeholder="Juan García Pérez&#10;María López Torres&#10;Carlos Mendoza Lima"></textarea>
+        <div class="adm-modal-footer">
+            <button class="btn btn-secondary btn-sm" @click="modalImportar = false">Cancelar</button>
+            <button class="btn btn-sm" @click="importar()" :disabled="importando"
+                    style="background:var(--accent);color:#fff;border:none;font-weight:600;padding:.4rem 1rem;border-radius:7px;">
+                <span x-show="!importando"><i class="bi bi-check-circle me-1"></i>Importar</span>
                 <span x-show="importando">Importando...</span>
             </button>
         </div>
     </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" :class="toast.tipo" x-show="toast.visible" x-cloak x-text="toast.msg"></div>
-
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
-const BASE_URL  = "<?= base_url('') ?>";
-const PROM_ID   = <?= (int) $promocion['id'] ?>;
+const BASE_URL = "<?= base_url('') ?>";
+const PROM_ID  = <?= (int) $promocion['id'] ?>;
 
 function adminPanel() {
     return {
@@ -215,7 +209,6 @@ function adminPanel() {
         modalImportar: false,
         nombresTexto:  '',
         importando:    false,
-        toast:         { visible: false, msg: '', tipo: 'success' },
 
         init() {},
 
@@ -231,14 +224,8 @@ function adminPanel() {
 
         async importar() {
             const nombres = this.nombresTexto
-                .split('\n')
-                .map(n => n.trim())
-                .filter(n => n.length > 0);
-
-            if (nombres.length === 0) {
-                this.showToast('Escribe al menos un nombre.', 'error');
-                return;
-            }
+                .split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            if (!nombres.length) { alert('Escribe al menos un nombre.'); return; }
 
             this.importando = true;
             try {
@@ -248,36 +235,17 @@ function adminPanel() {
                     body:    JSON.stringify({ promocion_id: PROM_ID, nombres }),
                 });
                 const data = await r.json();
-
                 if (data.ok) {
-                    this.showToast(data.insertados.length + ' alumno(s) importados correctamente.', 'success');
                     this.modalImportar = false;
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(() => location.reload(), 400);
                 } else {
-                    this.showToast(data.error || 'Error al importar.', 'error');
+                    alert(data.error || 'Error al importar.');
                 }
-            } catch (e) {
-                this.showToast('Error de conexión.', 'error');
-            } finally {
-                this.importando = false;
-            }
-        },
-
-        async copiarLink(url) {
-            try {
-                await navigator.clipboard.writeText(url);
-                this.showToast('¡Enlace copiado!', 'success');
-            } catch(e) {
-                this.showToast('No se pudo copiar. Copia manualmente.', 'error');
-            }
-        },
-
-        showToast(msg, tipo) {
-            this.toast = { visible: true, msg, tipo };
-            setTimeout(() => { this.toast.visible = false; }, 3000);
+            } catch { alert('Error de conexión.'); }
+            finally  { this.importando = false; }
         },
     };
 }
 </script>
-</body>
-</html>
+
+<?= $footer ?>

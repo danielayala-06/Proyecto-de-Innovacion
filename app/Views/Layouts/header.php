@@ -84,11 +84,7 @@ function navActivo(string $ruta, string $segmento): string {
                     <i class="bi bi-file-earmark-text"></i> <span class="nav-label">Contratos</span>
                 </a>
             </li>
-            <li>
-                <a href="<?= base_url('/sesiones') ?>" class="<?= navActivo('sesiones', $segmento) ?>">
-                    <i class="bi bi-camera"></i> <span class="nav-label">Sesiones</span>
-                </a>
-            </li>
+            
             <li>
                 <a href="<?= base_url('/promociones') ?>" class="<?= navActivo('promociones', $segmento) ?>">
                     <i class="bi bi-mortarboard"></i> <span class="nav-label">Promociones</span>
@@ -103,6 +99,11 @@ function navActivo(string $ruta, string $segmento): string {
             <li>
                 <a href="<?= base_url('/calendario') ?>" class="<?= navActivo('calendario', $segmento) ?>">
                     <i class="bi bi-calendar3"></i> <span class="nav-label">Calendario</span>
+                </a>
+            </li>
+            <li>
+                <a href="<?= base_url('admin/formularios') ?>" class="<?= navActivo('admin', $segmento) ?>">
+                    <i class="bi bi-file-earmark-person"></i> <span class="nav-label">Formularios</span>
                 </a>
             </li>
         </ul>

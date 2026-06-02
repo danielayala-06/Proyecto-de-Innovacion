@@ -114,6 +114,12 @@ function _rowHtml(p) {
            <i class="bi bi-camera-fill"></i>
        </button>`;
 
+    const btnFormularios = `<a class="btn-icon" title="Formularios de alumnos"
+            href="${BASE_URL}index.php/admin/formularios/promo-escolar/${p.id_promocion}"
+            style="color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;">
+           <i class="bi bi-file-earmark-person"></i>
+       </a>`;
+
     return `<tr>
         <td><span class="badge" style="background:var(--bg-hover);color:var(--text-secondary);font-size:.75rem;padding:2px 8px;border-radius:20px;">${_esc(p.grado)}</span></td>
         <td>
@@ -126,7 +132,7 @@ function _rowHtml(p) {
         </td>
         <td style="text-align:center;font-weight:600;">${p.num_estudiantes}</td>
         <td style="text-align:center;color:var(--text-muted);">${p.anio}</td>
-        <td style="text-align:center;">${btnSesiones}</td>
+        <td style="text-align:center;">${btnSesiones}${btnFormularios}</td>
     </tr>`;
 }
 
