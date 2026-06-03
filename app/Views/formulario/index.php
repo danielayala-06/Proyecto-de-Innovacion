@@ -1,3 +1,9 @@
+<?php
+$cuadrosEnContrato  = $productosInfo['tiene_cuadros'];
+$anuariosEnContrato = $productosInfo['tiene_anuarios'];
+$mostrarProductos   = $productosInfo['mostrar_seleccion'];
+$sNum = 0;
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,6 +12,7 @@
 <title>Formulario — <?= esc($alumno['nombre']) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -50,12 +57,18 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
 .producto-card{border:2px solid #E4E0D8;border-radius:14px;padding:1.2rem 1rem;cursor:pointer;transition:border-color .18s,background .18s,opacity .18s;user-select:none;position:relative}
 .producto-card.selected{border-color:#B8963E;background:#FBF7EE}
 .producto-card.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
-.producto-card .prod-icon{font-size:2rem;margin-bottom:.5rem;display:block}
+.producto-card .prod-icon{font-size:2rem;margin-bottom:.5rem;display:block;color:#4A4440}
 .producto-card .prod-name{font-weight:700;font-size:.95rem;color:#1A1714;margin-bottom:.2rem}
 .producto-card .prod-stock{font-size:.75rem;color:#6B6460}
 .producto-card .prod-stock.agotado{color:#c0392b;font-weight:600}
 .prod-check{position:absolute;top:.7rem;right:.7rem;width:22px;height:22px;border:2px solid #D6D0C8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;background:#fff;transition:all .15s}
 .producto-card.selected .prod-check{background:#B8963E;border-color:#B8963E;color:#fff}
+
+/* ── PRODUCTO ÚNICO ── */
+.prod-unico{display:flex;align-items:center;gap:.75rem;background:#FBF7EE;border:1.5px solid #EDE8DC;border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem}
+.prod-unico-icon{font-size:1.75rem}
+.prod-unico-name{font-weight:700;font-size:.95rem;color:#1A1714}
+.prod-unico-label{font-size:.72rem;color:#6B6460;margin-top:1px}
 
 /* ── SUBFIELDS ── */
 .subfield{background:#FBF7EE;border-radius:10px;padding:.9rem 1rem;margin-top:.5rem;border:1.5px solid #EDE8DC}
@@ -89,19 +102,25 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
     </div>
 </div>
 
-<!-- STOCK EN TIEMPO REAL -->
+<!-- STOCK EN TIEMPO REAL (solo productos del contrato) -->
+<?php if ($cuadrosEnContrato || $anuariosEnContrato): ?>
 <div class="stock-banner">
+    <?php if ($cuadrosEnContrato): ?>
     <div class="stock-item">
-        <span>📷 Cuadros disponibles:</span>
+        <span><i class="bi bi-image" style="color:#B8963E"></i> Cuadros disponibles:</span>
         <span class="stock-num" :class="stock.cuadros === 0 ? 'agotado' : ''" x-text="stock.cuadros"></span>
         <span class="stock-badge" :class="stock.cuadros === 0 ? 'agotado' : ''" x-text="stock.cuadros === 0 ? 'AGOTADO' : 'DISPONIBLE'"></span>
     </div>
+    <?php endif; ?>
+    <?php if ($anuariosEnContrato): ?>
     <div class="stock-item">
-        <span>📚 Anuarios disponibles:</span>
+        <span><i class="bi bi-journal-text" style="color:#B8963E"></i> Anuarios disponibles:</span>
         <span class="stock-num" :class="stock.anuarios === 0 ? 'agotado' : ''" x-text="stock.anuarios"></span>
         <span class="stock-badge" :class="stock.anuarios === 0 ? 'agotado' : ''" x-text="stock.anuarios === 0 ? 'AGOTADO' : 'DISPONIBLE'"></span>
     </div>
+    <?php endif; ?>
 </div>
+<?php endif; ?>
 
 <div class="container">
 
@@ -111,7 +130,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
 
     <!-- ── SECCIÓN 1: ALUMNO ──────────────────────────────────────── -->
     <div class="section">
-        <div class="section-title"><span>1</span> Datos del alumno</div>
+        <div class="section-title"><span><?= ++$sNum ?></span> Datos del alumno</div>
 
         <div class="field">
             <label>Nombre completo *</label>
@@ -138,7 +157,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
 
     <!-- ── SECCIÓN 2: TUTOR ──────────────────────────────────────── -->
     <div class="section">
-        <div class="section-title"><span>2</span> Datos del tutor / apoderado</div>
+        <div class="section-title"><span><?= ++$sNum ?></span> Datos del tutor / apoderado</div>
 
         <div class="field">
             <label>Nombre completo del tutor *</label>
@@ -170,7 +189,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
 
     <!-- ── SECCIÓN 3: COLEGIO (solo lectura) ─────────────────────── -->
     <div class="section">
-        <div class="section-title"><span>3</span> Datos del colegio</div>
+        <div class="section-title"><span><?= ++$sNum ?></span> Datos del colegio</div>
 
         <div class="field">
             <label>Colegio</label>
@@ -182,34 +201,66 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
         </div>
     </div>
 
-    <!-- ── SECCIÓN 4: PRODUCTOS ───────────────────────────────────── -->
+    <!-- ── SECCIÓN 4: PRODUCTOS (solo si hay 2+ tipos en el contrato) ── -->
+    <?php if ($cuadrosEnContrato || $anuariosEnContrato): ?>
     <div class="section">
-        <div class="section-title"><span>4</span> Productos</div>
-        <p style="font-size:.82rem;color:#6B6460;margin-bottom:1.1rem">Selecciona lo que deseas adquirir. Los productos con stock agotado no están disponibles.</p>
+        <div class="section-title"><span><?= ++$sNum ?></span> Productos</div>
+
+        <?php if ($mostrarProductos): ?>
+        <!-- Hay cuadros Y anuarios en el contrato: el padre elige -->
+        <p style="font-size:.82rem;color:#6B6460;margin-bottom:1.1rem">Selecciona el producto que deseas adquirir para tu hijo. Los productos con stock agotado no están disponibles.</p>
 
         <div class="productos-grid">
-            <!-- Cuadro -->
             <div class="producto-card"
                  :class="{ selected: form.tiene_cuadro, disabled: stock.cuadros === 0 }"
                  @click="stock.cuadros > 0 && (form.tiene_cuadro = !form.tiene_cuadro)">
-                <span class="prod-check" x-text="form.tiene_cuadro ? '✓' : ''"></span>
-                <span class="prod-icon">🖼️</span>
+                <span class="prod-check"><i class="bi bi-check-lg" x-show="form.tiene_cuadro"></i></span>
+                <i class="bi bi-image-fill prod-icon"></i>
                 <div class="prod-name">Cuadro escolar</div>
                 <div class="prod-stock" :class="stock.cuadros === 0 ? 'agotado' : ''" x-text="stock.cuadros === 0 ? 'Sin stock' : stock.cuadros + ' disponibles'"></div>
             </div>
 
-            <!-- Anuario -->
             <div class="producto-card"
                  :class="{ selected: form.tiene_anuario, disabled: stock.anuarios === 0 }"
                  @click="stock.anuarios > 0 && (form.tiene_anuario = !form.tiene_anuario)">
-                <span class="prod-check" x-text="form.tiene_anuario ? '✓' : ''"></span>
-                <span class="prod-icon">📖</span>
+                <span class="prod-check"><i class="bi bi-check-lg" x-show="form.tiene_anuario"></i></span>
+                <i class="bi bi-journal-text prod-icon"></i>
                 <div class="prod-name">Anuario</div>
                 <div class="prod-stock" :class="stock.anuarios === 0 ? 'agotado' : ''" x-text="stock.anuarios === 0 ? 'Sin stock' : stock.anuarios + ' disponibles'"></div>
             </div>
         </div>
 
-        <!-- Subfields cuadro -->
+        <?php else: ?>
+        <!-- El paquete define el producto del alumno; no hay elección -->
+        <?php if ($cuadrosEnContrato && $anuariosEnContrato): ?>
+        <div class="prod-unico">
+            <span class="prod-unico-icon"><i class="bi bi-image-fill"></i><i class="bi bi-journal-text"></i></span>
+            <div>
+                <div class="prod-unico-name">Cuadro escolar + Anuario</div>
+                <div class="prod-unico-label">Ambos productos incluidos en tu paquete — elige tamaño y modelo a continuación</div>
+            </div>
+        </div>
+        <?php elseif ($cuadrosEnContrato): ?>
+        <div class="prod-unico">
+            <span class="prod-unico-icon"><i class="bi bi-image-fill"></i></span>
+            <div>
+                <div class="prod-unico-name">Cuadro escolar</div>
+                <div class="prod-unico-label">Producto incluido en tu contrato — elige el tamaño a continuación</div>
+            </div>
+        </div>
+        <?php else: ?>
+        <div class="prod-unico">
+            <span class="prod-unico-icon"><i class="bi bi-journal-text"></i></span>
+            <div>
+                <div class="prod-unico-name">Anuario</div>
+                <div class="prod-unico-label">Producto incluido en tu contrato — elige el modelo a continuación</div>
+            </div>
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
+
+        <!-- Subfield cuadro (se muestra si hay cuadros en el contrato y el alumno los eligió/auto-asignó) -->
+        <?php if ($cuadrosEnContrato): ?>
         <div class="subfield" x-show="form.tiene_cuadro" x-transition>
             <div class="field" style="margin-bottom:0">
                 <label>Tamaño del cuadro *</label>
@@ -223,8 +274,10 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
                 <div class="err-msg" x-show="errors.cuadro_tamano" x-text="errors.cuadro_tamano"></div>
             </div>
         </div>
+        <?php endif; ?>
 
-        <!-- Subfields anuario -->
+        <!-- Subfield anuario (se muestra si hay anuarios en el contrato y el alumno los eligió/auto-asignó) -->
+        <?php if ($anuariosEnContrato): ?>
         <div class="subfield" x-show="form.tiene_anuario" x-transition style="margin-top:.75rem">
             <div class="field" style="margin-bottom:0">
                 <label>Modelo de anuario *</label>
@@ -237,11 +290,13 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
                 <div class="err-msg" x-show="errors.anuario_modelo" x-text="errors.anuario_modelo"></div>
             </div>
         </div>
+        <?php endif; ?>
     </div>
+    <?php endif; ?>
 
-    <!-- ── SECCIÓN 5: AUTORIZACIONES ─────────────────────────────── -->
+    <!-- ── SECCIÓN AUTORIZACIONES ─────────────────────────────── -->
     <div class="section">
-        <div class="section-title"><span>5</span> Autorizaciones</div>
+        <div class="section-title"><span><?= ++$sNum ?></span> Autorizaciones</div>
 
         <div class="check-item">
             <input type="checkbox" id="ck-img" x-model="form.acepta_imagenes">
@@ -262,7 +317,7 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
 
     <!-- SUBMIT -->
     <button class="btn-submit" @click="enviar" :disabled="enviando || enviado">
-        <span x-show="!enviando">✉️ Enviar formulario</span>
+        <span x-show="!enviando"><i class="bi bi-send"></i> Enviar formulario</span>
         <span x-show="enviando">Enviando...</span>
     </button>
 
@@ -272,6 +327,10 @@ body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size
 const BASE_URL  = "<?= base_url('') ?>";
 const PROM_ID   = <?= (int) $promocion['id'] ?>;
 const TOKEN     = "<?= esc($alumno['token']) ?>";
+
+const CUADROS_EN_CONTRATO  = <?= $cuadrosEnContrato  ? 'true' : 'false' ?>;
+const ANUARIOS_EN_CONTRATO = <?= $anuariosEnContrato ? 'true' : 'false' ?>;
+const MOSTRAR_PRODUCTOS    = <?= $mostrarProductos   ? 'true' : 'false' ?>;
 
 function formulario() {
     return {
@@ -301,7 +360,11 @@ function formulario() {
         enviado:     false,
 
         init() {
-            // Refrescar stock cada 30 segundos
+            // Cuando no hay selección, los productos del paquete se asignan automáticamente
+            if (!MOSTRAR_PRODUCTOS) {
+                if (CUADROS_EN_CONTRATO)  this.form.tiene_cuadro  = true;
+                if (ANUARIOS_EN_CONTRATO) this.form.tiene_anuario = true;
+            }
             setInterval(() => this.actualizarStock(), 30000);
         },
 
@@ -311,9 +374,11 @@ function formulario() {
                 const data = await r.json();
                 if (data.ok) {
                     this.stock = data.stock;
-                    // Desmarcar productos si se agotaron
-                    if (this.stock.cuadros  === 0) { this.form.tiene_cuadro  = false; }
-                    if (this.stock.anuarios === 0) { this.form.tiene_anuario = false; }
+                    // Solo desmarcar si el padre puede elegir (hay 2+ tipos en el contrato)
+                    if (MOSTRAR_PRODUCTOS) {
+                        if (this.stock.cuadros  === 0) this.form.tiene_cuadro  = false;
+                        if (this.stock.anuarios === 0) this.form.tiene_anuario = false;
+                    }
                 }
             } catch(e) { /* silencioso */ }
         },
@@ -324,7 +389,7 @@ function formulario() {
             if (!this.form.fecha_nacimiento)         e.fecha_nacimiento = 'La fecha de nacimiento es obligatoria.';
             if (!this.form.nombre_tutor.trim())      e.nombre_tutor     = 'El nombre del tutor es obligatorio.';
             if (!this.form.telefono.trim())          e.telefono         = 'El teléfono es obligatorio.';
-            if (this.form.tiene_cuadro && !this.form.cuadro_tamano)   e.cuadro_tamano  = 'Selecciona el tamaño del cuadro.';
+            if (this.form.tiene_cuadro  && !this.form.cuadro_tamano)  e.cuadro_tamano  = 'Selecciona el tamaño del cuadro.';
             if (this.form.tiene_anuario && !this.form.anuario_modelo) e.anuario_modelo = 'Selecciona el modelo del anuario.';
             if (!this.form.acepta_datos)             e.acepta_datos     = 'Debes aceptar la política de datos.';
             this.errors = e;

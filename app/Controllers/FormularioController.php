@@ -41,9 +41,10 @@ class FormularioController extends BaseController
         $stock = $this->promocionModel->stockDisponible((int) $alumno['promocion_id']);
 
         return view('formulario/index', [
-            'alumno'    => $alumno,
-            'promocion' => $promocion,
-            'stock'     => $stock,
+            'alumno'        => $alumno,
+            'promocion'     => $promocion,
+            'stock'         => $stock,
+            'productosInfo' => $this->_productosInfo($promocion),
         ]);
     }
 
@@ -161,9 +162,10 @@ class FormularioController extends BaseController
         $stock = $this->promocionModel->stockDisponible((int) $promocion['id']);
 
         return view('formulario/grupo', [
-            'promocion' => $promocion,
-            'stock'     => $stock,
-            'token'     => $token,
+            'promocion'     => $promocion,
+            'stock'         => $stock,
+            'token'         => $token,
+            'productosInfo' => $this->_productosInfo($promocion),
         ]);
     }
 
@@ -363,6 +365,21 @@ class FormularioController extends BaseController
         } catch (\Throwable) {
             // Fallo silencioso: el formulario ya se guardó; el admin puede re-sincronizar
         }
+    }
+
+    private function _productosInfo(array $promocion): array
+    {
+        if (!empty($promocion['id_promocion_escolar'])) {
+            return $this->promocionModel->productosSeleccionables((int) $promocion['id_promocion_escolar']);
+        }
+
+        $cuadros  = (int) ($promocion['cuadros_total']  ?? 0) > 0;
+        $anuarios = (int) ($promocion['anuarios_total'] ?? 0) > 0;
+        return [
+            'mostrar_seleccion' => $cuadros && $anuarios,
+            'tiene_cuadros'     => $cuadros,
+            'tiene_anuarios'    => $anuarios,
+        ];
     }
 
     private function _json(array $data, int $status = 200)

@@ -84,9 +84,9 @@
     }
     .cb.on { border-color: #1b2d6b; }
     .cb.on::after {
-        content: '✓'; position: absolute;
-        top: -3px; left: 1px;
-        font-size: 11px; font-weight: 900; color: #1b2d6b;
+        content: 'x'; position: absolute;
+        top: -2px; left: 1px;
+        font-size: 10px; font-weight: 900; color: #1b2d6b;
     }
     .svc-qty { font-weight: 700; color: #1b2d6b; }
 

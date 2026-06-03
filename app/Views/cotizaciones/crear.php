@@ -89,6 +89,44 @@
 
                         </fieldset>
 
+                        <!-- CORTESÍAS -->
+                        <fieldset class="col-12 col-md-7">
+                            <legend class="section-divider">
+                                Productos de cortesía
+                                <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;"> — gratuitos</span>
+                            </legend>
+
+                            <div id="cortesiasContainer" class="d-flex flex-column gap-2 mb-1"></div>
+
+                            <!-- Formulario inline para agregar -->
+                            <div id="cortesia-add-wrap" style="display:none;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:.6rem;margin-bottom:.4rem;">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col">
+                                        <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Descripción</label>
+                                        <input type="text" class="form-control form-control-sm" id="cortesiaProducto"
+                                               placeholder="Ej: Cuadro laminado para el docente"
+                                               autocomplete="off">
+                                    </div>
+                                    <div class="col-auto" style="min-width:76px;">
+                                        <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
+                                        <input type="number" class="form-control form-control-sm" id="cortesiaCant" value="1" min="1" max="99">
+                                    </div>
+                                    <div class="col-auto d-flex gap-1">
+                                        <button type="button" class="btn btn-sm btn-primary" id="btn-confirmar-cortesia">
+                                            <i class="bi bi-check2"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary" id="btn-cancelar-cortesia">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn-paquete mt-1" id="btn-agregar-cortesia">
+                                <i class="bi bi-gift me-1"></i> Agregar cortesía
+                            </button>
+                        </fieldset>
+
                         <!-- SERVICIOS -->
                         <!-- <fieldset class="col-12 col-md-7">
                             <legend class="section-divider">Servicios</legend>
@@ -203,6 +241,27 @@
                         <div class="resumen-title">Resumen</div>
                         <div id="resumenItems">
                             <div class="resumen-row" style="color:#666;font-size:0.8rem;justify-content:center;">Sin ítems aún</div>
+                        </div>
+                        <!-- Subtotal (visible solo cuando hay descuento) -->
+                        <div id="resumen-subtotal-row" class="resumen-row mt-1" style="display:none;color:var(--text-muted);font-size:0.78rem;">
+                            <span>Subtotal</span>
+                            <span id="resumenSubtotal"></span>
+                        </div>
+                        <!-- Input de descuento -->
+                        <div class="resumen-row mt-2" style="align-items:center;gap:6px;">
+                            <label for="descuentoMonto" style="font-size:0.75rem;color:var(--text-muted);margin:0;flex:1;white-space:nowrap;">
+                                <i class="bi bi-tag me-1"></i>Descuento (S/)
+                            </label>
+                            <input type="number" id="descuentoMonto" min="0" step="1" value=""
+                                   placeholder="0"
+                                   style="width:72px;border:1px solid var(--border);border-radius:4px;
+                                          padding:2px 6px;font-size:0.78rem;background:var(--bg-input);
+                                          color:var(--text-primary);text-align:right;">
+                        </div>
+                        <!-- Fila de descuento calculado (visible solo cuando hay descuento) -->
+                        <div id="resumen-desc-row" class="resumen-row" style="display:none;font-size:0.78rem;color:var(--green-text,#2e7d32);">
+                            <span>Ahorro</span>
+                            <span id="resumenDescInfo"></span>
                         </div>
                         <div class="resumen-row total mt-2">
                             <span>Total</span>
