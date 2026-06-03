@@ -191,14 +191,6 @@
                     </div>
                 </div>
 
-                <!-- Reglas (si aplica) -->
-                <div class="cv-card" id="cvReglasCard" style="display:none;">
-                    <div class="cv-card-title"><i class="bi bi-award"></i> Reglas y condiciones</div>
-                    <div class="shadow p-3 bg-body-tertiary rounded">
-                        <div id="cvReglas"></div>
-                    </div>
-                </div>
-
             </div>
 
             <!-- ── COLUMNA DERECHA (sticky) ───────────────────────── -->

@@ -832,110 +832,6 @@ function _actualizarBtnConfirmar() {
     }
 }
 
-/**
- * Evalúa las reglas de los paquetes seleccionados y actualiza el panel de alertas.
- * - ELEGIBILIDAD_MIN no cumplida → alerta de restricción (rojo).
- * - CANTIDAD_MIN cumplida        → beneficio desbloqueado (verde).
- * - CANTIDAD_MIN no cumplida     → sugerencia de cuántos alumnos faltan (azul).
- * - CANTIDAD_MAX aplica          → aviso de reducción de sesiones (naranja).
- */
-/**
- * Aplica el borde de estado al modal de paquetes.
- * @param {'danger'|'success'|null} estado
- */
-function _setModalBorde(estado) {
-    const el = document.querySelector('#modalPaquete .modal-content');
-    if (!el) return;
-    el.classList.toggle('modal-content--danger',  estado === 'danger');
-    el.classList.toggle('modal-content--success', estado === 'success');
-}
-
-function _renderReglasAlert() {
-    const zone = document.getElementById('reglas-alert-zone');
-    if (!zone) return;
-
-    if (state.paquetesSeleccionados.size === 0) {
-        zone.style.display = 'none';
-        zone.innerHTML     = '';
-        _setModalBorde(null);
-        return;
-    }
-
-    const ALERT_STYLE = {
-        danger:  'background:#fff0f0;border:1px solid #f5c6cb;color:#721c24;',
-        success: 'background:#f0fff4;border:1px solid #c3e6cb;color:#155724;',
-        info:    'background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;',
-        warning: 'background:#fff8ec;border:1px solid #ffd699;color:#7a4f00;',
-    };
-    const BASE_STYLE = 'padding:.35rem .6rem;border-radius:6px;font-size:.74rem;margin-bottom:.25rem;line-height:1.4;display:flex;align-items:flex-start;gap:.4rem;';
-    const ICON = {
-        danger:  '<i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;flex-shrink:0;"></i>',
-        success: '<i class="bi bi-check-circle-fill" style="color:#198754;flex-shrink:0;"></i>',
-        info:    '<i class="bi bi-lightbulb-fill" style="color:#0d6efd;flex-shrink:0;"></i>',
-        warning: '<i class="bi bi-calendar2-x-fill" style="color:#fd7e14;flex-shrink:0;"></i>',
-    };
-
-    const fragments  = [];
-    let   hayBloqueo = false;
-
-    state.paquetesSeleccionados.forEach(({ idRef, nombre, el }) => {
-        const qty    = parseInt(el?.querySelector('.po-qty-input')?.value) || 0;
-        const paq    = state.todosPaquetes.find(p => p.id_paquete === idRef);
-        const reglas = paq?.reglas ?? [];
-        if (!reglas.length) return;
-
-        // Para producto_gratis: calcular el umbral máximo cumplido por este paquete.
-        // Solo ese nivel gana; los umbrales inferiores cumplidos se ignoran.
-        const maxGratisUmbral = Math.max(0, ...reglas
-            .filter(r =>
-                r.tipo_condicion   === 'CANTIDAD_MIN' &&
-                r.tipo_beneficio   === 'producto_gratis' &&
-                qty >= parseFloat(r.valor_condicion)
-            )
-            .map(r => parseFloat(r.valor_condicion))
-        );
-
-        const msgs = [];
-        reglas.forEach(r => {
-            const umbral = parseFloat(r.valor_condicion);
-
-            if (r.tipo_condicion === 'ELEGIBILIDAD_MIN') {
-                if (qty < umbral) {
-                    msgs.push({ tipo: 'danger', texto: r.descripcion });
-                    hayBloqueo = true;
-                }
-            } else if (r.tipo_condicion === 'CANTIDAD_MAX') {
-                if (qty < umbral) {
-                    msgs.push({ tipo: 'warning', texto: r.descripcion });
-                }
-            }
-            // CANTIDAD_MIN (productos de cortesía) → gestionados en la sección de cortesías
-        });
-
-        if (!msgs.length) return;
-
-        fragments.push(
-            `<div style="margin-bottom:.4rem;">` +
-            (state.paquetesSeleccionados.size > 1
-                ? `<div style="font-size:.7rem;font-weight:700;color:var(--text-muted);margin-bottom:.2rem;">${nombre}</div>`
-                : '') +
-            msgs.map(m =>
-                `<div style="${BASE_STYLE}${ALERT_STYLE[m.tipo]}">${ICON[m.tipo]}<span>${m.texto}</span></div>`
-            ).join('') +
-            `</div>`
-        );
-    });
-
-    _setModalBorde(hayBloqueo ? 'danger' : (state.paquetesSeleccionados.size > 0 ? 'success' : null));
-
-    if (fragments.length) {
-        zone.style.display = '';
-        zone.innerHTML     = fragments.join('');
-    } else {
-        zone.style.display = 'none';
-        zone.innerHTML     = '';
-    }
-}
 
 /**
  * Alterna la selección de un paquete en el modal (multi-select).
@@ -969,7 +865,6 @@ window.seleccionarOpcion = function (el, nombre, precio, idRef) {
     }
 
     _actualizarBtnConfirmar();
-    _renderReglasAlert();
 };
 
 /**
@@ -984,7 +879,6 @@ window.poQtyStep = function (btn, step) {
     const next  = Math.max(1, val + step);
     if (input) input.value = next;
     _actualizarBtnConfirmar();
-    _renderReglasAlert();
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1385,36 +1279,6 @@ function _mostrarModalConfirmacion() {
         }
     }
 
-    // ── Violaciones de reglas ────────────────────────────────────────────────
-    const violaciones = [];
-    state.items.filter(i => i.tipo === 'paquete').forEach(item => {
-        const paq    = state.todosPaquetes.find(p => p.id_paquete === item.idRef);
-        const reglas = paq?.reglas ?? [];
-        reglas.forEach(r => {
-            const umbral = parseFloat(r.valor_condicion);
-            if (r.tipo_condicion === 'ELEGIBILIDAD_MIN' && (item.cantidad ?? 1) < umbral) {
-                violaciones.push({ nombre: item.nombre, cantidad: item.cantidad ?? 1, regla: r });
-            }
-        });
-    });
-
-    const wrapViol = document.getElementById('conf-wrap-violaciones');
-    const violEl   = document.getElementById('conf-violaciones');
-    if (wrapViol && violEl) {
-        if (violaciones.length) {
-            violEl.innerHTML = violaciones.map(v => `
-                <div style="display:flex;gap:.5rem;align-items:flex-start;margin-bottom:.3rem;">
-                    <i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;flex-shrink:0;margin-top:1px;"></i>
-                    <div style="font-size:.8rem;line-height:1.4;">
-                        <strong>${v.nombre}</strong> (${v.cantidad} alumnos): ${v.regla.descripcion}
-                    </div>
-                </div>`).join('');
-            wrapViol.style.display = '';
-        } else {
-            wrapViol.style.display = 'none';
-        }
-    }
-
     _modalConfirmacion?.show();
 }
 
@@ -1597,14 +1461,12 @@ async function init() {
             if (numEst > 0) inp.value = numEst;
         });
         _actualizarBtnConfirmar();
-        _renderReglasAlert();
     });
 
     /* 8c. Event delegation: recalcular total al escribir en cualquier qty del modal */
     document.getElementById('catPanelsContainer')?.addEventListener('input', e => {
         if (e.target.classList.contains('po-qty-input')) {
             _actualizarBtnConfirmar();
-            _renderReglasAlert();
         }
     });
 
@@ -1624,21 +1486,6 @@ async function init() {
 
     /* 10. Confirmar selección de paquetes (múltiple) */
 
-    /** Devuelve las violaciones ELEGIBILIDAD_MIN de los paquetes actualmente seleccionados. */
-    function _violacionesSeleccionados() {
-        const viol = [];
-        state.paquetesSeleccionados.forEach(({ idRef, nombre, el }) => {
-            const qty    = parseInt(el?.querySelector('.po-qty-input')?.value) || 0;
-            const paq    = state.todosPaquetes.find(p => p.id_paquete === idRef);
-            (paq?.reglas ?? []).forEach(r => {
-                if (r.tipo_condicion === 'ELEGIBILIDAD_MIN' && qty < parseFloat(r.valor_condicion)) {
-                    viol.push({ nombre, cantidad: qty, regla: r });
-                }
-            });
-        });
-        return viol;
-    }
-
     /** Mueve los paquetes seleccionados a state.items y cierra el modal. */
     function _ejecutarAgregarPaquetes() {
         const numEst = _getModalNumEst();
@@ -1653,23 +1500,6 @@ async function init() {
         _saveDraft();
         _ocultarConfirmViol();
         _modalPaquete?.hide();
-    }
-
-    function _mostrarConfirmViol(violaciones) {
-        const lista = document.getElementById('paq-viol-lista');
-        if (lista) {
-            lista.innerHTML = violaciones.map(v => `
-                <div style="margin-bottom:.25rem;">
-                    <strong>${v.nombre}</strong> (${v.cantidad} alumnos): ${v.regla.descripcion}
-                </div>`).join('');
-        }
-        document.getElementById('paq-footer-normal').style.display  = 'none';
-        document.getElementById('paq-viol-confirm').style.display   = '';
-    }
-
-    function _ocultarConfirmViol() {
-        document.getElementById('paq-viol-confirm').style.display   = 'none';
-        document.getElementById('paq-footer-normal').style.display  = '';
     }
 
     document.getElementById('btn-confirmar-paquetes')?.addEventListener('click', () => {
@@ -1688,17 +1518,8 @@ async function init() {
             return;
         }
 
-        const violaciones = _violacionesSeleccionados();
-        if (violaciones.length) {
-            _mostrarConfirmViol(violaciones);
-            return;
-        }
-
         _ejecutarAgregarPaquetes();
     });
-
-    document.getElementById('btn-viol-confirmar')?.addEventListener('click', _ejecutarAgregarPaquetes);
-    document.getElementById('btn-viol-volver')?.addEventListener('click', _ocultarConfirmViol);
 
     /* 11. Confirmar servicio personalizado */
     document.getElementById('btn-confirmar-servicio')?.addEventListener('click', () => {
@@ -1778,14 +1599,9 @@ async function init() {
             _modalConfirmacion?.hide();
             alerts.ok('Cotización creada correctamente.');
 
-            const activadas = res.reglas_activadas ?? [];
-            activadas.forEach((r, i) => {
-                setTimeout(() => alerts.info(`Beneficio: ${r.descripcion}`), 600 + i * 400);
-            });
-
             setTimeout(() => {
                 window.location.href = (window.BASE_URL || '/') + 'cotizaciones';
-            }, activadas.length ? 600 + activadas.length * 400 + 1500 : 1100);
+            }, 1100);
 
         } catch (err) {
             _modalConfirmacion?.hide();

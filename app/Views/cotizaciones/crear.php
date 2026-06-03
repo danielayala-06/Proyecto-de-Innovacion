@@ -248,14 +248,14 @@
                             <span id="resumenSubtotal"></span>
                         </div>
                         <!-- Input de descuento -->
-                        <div class="resumen-row mt-2" style="align-items:center;gap:6px;">
-                            <label for="descuentoMonto" style="font-size:0.75rem;color:var(--text-muted);margin:0;flex:1;white-space:nowrap;">
+                        <div class="resumen-row mt-2" style="flex-direction:column;align-items:stretch;gap:4px;">
+                            <label for="descuentoMonto" style="font-size:0.75rem;color:var(--text-muted);margin:0;">
                                 <i class="bi bi-tag me-1"></i>Descuento (S/)
                             </label>
                             <input type="number" id="descuentoMonto" min="0" step="1" value=""
                                    placeholder="0"
-                                   style="width:72px;border:1px solid var(--border);border-radius:4px;
-                                          padding:2px 6px;font-size:0.78rem;background:var(--bg-input);
+                                   style="width:100%;border:1px solid var(--border);border-radius:4px;
+                                          padding:3px 8px;font-size:0.82rem;background:var(--bg-input);
                                           color:var(--text-primary);text-align:right;">
                         </div>
                         <!-- Fila de descuento calculado (visible solo cuando hay descuento) -->
@@ -339,30 +339,11 @@
                 <div class="nivel-filtro-wrap" id="nivelFiltrosContainer"></div>
                 <div class="cat-tabs" id="catTabsContainer"></div>
                 <div id="catPanelsContainer"></div>
-                <div id="reglas-alert-zone" style="display:none;margin-top:.6rem;"></div>
                 <div id="paq-hint" style="font-size:.75rem;color:var(--text-muted);margin-top:.4rem;text-align:center;">
                     Haz clic en un paquete para seleccionarlo · puedes elegir varios
                 </div>
             </div>
             <div class="modal-footer" style="flex-direction:column;align-items:stretch;gap:.5rem;padding:.85rem 1.25rem;">
-                <!-- Confirmación de violaciones (oculta por defecto) -->
-                <div id="paq-viol-confirm" style="display:none;">
-                    <div style="background:#fff0f0;border:1px solid #f5c6cb;border-radius:7px;
-                                padding:.6rem .85rem;font-size:.8rem;color:#721c24;margin-bottom:.5rem;">
-                        <div style="font-weight:700;margin-bottom:.4rem;">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Este paquete tiene condiciones de elegibilidad
-                        </div>
-                        <div id="paq-viol-lista"></div>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;gap:.5rem;">
-                        <button type="button" class="btn btn-secondary btn-sm" id="btn-viol-volver">
-                            <i class="bi bi-arrow-left me-1"></i>Volver
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm" id="btn-viol-confirmar">
-                            Agregar de todos modos
-                        </button>
-                    </div>
-                </div>
                 <!-- Footer normal -->
                 <div id="paq-footer-normal" style="display:flex;justify-content:flex-end;gap:.5rem;width:100%;">
                     <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
@@ -423,20 +404,6 @@
                 <div id="conf-tabla-items"
                      style="border:1.5px solid var(--border,#D6D0C8);border-radius:8px;overflow:hidden;">
                     <!-- Poblado por JS -->
-                </div>
-
-                <!-- Violaciones de reglas (si existen) -->
-                <div id="conf-wrap-violaciones" style="display:none;margin-top:.9rem;">
-                    <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;
-                                letter-spacing:.6px;color:#dc3545;margin-bottom:.4rem;">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Advertencias — revisa las cantidades
-                    </div>
-                    <div id="conf-violaciones"
-                         style="background:#fff0f0;border:1.5px solid #f5c6cb;border-radius:8px;
-                                padding:.7rem .9rem;"></div>
-                    <div style="font-size:.74rem;color:#721c24;margin-top:.4rem;padding:0 .2rem;">
-                        Puedes continuar, pero estos paquetes pueden no estar disponibles con la cantidad indicada.
-                    </div>
                 </div>
 
                 <!-- Nota/observaciones (si existen) -->

@@ -102,14 +102,39 @@ function _tipoBadge(tipo) {
  * @returns {void}
  */
 function _renderPreviewCotizacion(cot, el) {
-  const items = cot.items ?? [];
-  const filas = items.map(it => `
+  const items     = cot.items ?? [];
+  const cortesias = items.filter(it =>
+    it.tipo_item === 'personalizado' && parseFloat(it.precio_unitario) === 0
+  );
+  const regulares = items.filter(it =>
+    !(it.tipo_item === 'personalizado' && parseFloat(it.precio_unitario) === 0)
+  );
+
+  const filas = regulares.map(it => `
     <tr>
       <td>${_tipoBadge(it.tipo_item)}<br><span style="font-size:.83rem;">${it.referencia_nombre ?? it.descripcion}</span></td>
       <td class="text-center py-4">${it.cantidad}</td>
       <td class="py-4" style="text-align:right;">${formatters.moneda(it.precio_unitario)}</td>
       <td class="py-4" style="text-align:right;">${formatters.moneda(it.cantidad * it.precio_unitario)}</td>
     </tr>`).join('');
+
+  const cortesiasBlock = cortesias.length ? `
+    <div style="margin-top:16px;">
+      <div class="cc-section-title" style="margin-bottom:8px;">
+        <i class="bi bi-gift me-2" style="color:var(--accent);"></i>Cortesías incluidas
+      </div>
+      ${cortesias.map(it => {
+        const nombre = String(it.descripcion ?? '').replace(/^\[Cortesía\]\s*/i, '');
+        const badge  = it.cantidad > 1
+          ? `<span style="background:rgba(184,150,62,.15);color:var(--accent);border-radius:12px;padding:2px 9px;font-size:.72rem;font-weight:600;white-space:nowrap;">×${it.cantidad}</span>`
+          : `<span style="background:rgba(184,150,62,.15);color:var(--accent);border-radius:12px;padding:2px 9px;font-size:.72rem;font-weight:600;white-space:nowrap;">Incluido</span>`;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:.8rem;">
+          <span style="color:var(--green-text,#4caf50);font-weight:700;flex-shrink:0;">+</span>
+          <span style="flex:1;color:var(--text-primary);">${nombre}</span>
+          ${badge}
+        </div>`;
+      }).join('')}
+    </div>` : '';
 
   el.innerHTML = `
     <div class="cc-section">
@@ -124,8 +149,8 @@ function _renderPreviewCotizacion(cot, el) {
     <div class="cc-section">
       <div class="cc-section-title"><i class="bi bi-box-seam me-2"></i>Paquetes cotizados</div>
       <div class="w-100 mb-4 shadow border bg-body-tertiary rounded"></div>
-      ${items.length ? `
-        <table class="cc-items-table table table-striped  table-hover bg-body-tertiary">
+      ${regulares.length ? `
+        <table class="cc-items-table table table-striped table-hover bg-body-tertiary">
           <thead>
             <tr>
               <th>Paquetes</th>
@@ -141,61 +166,10 @@ function _renderPreviewCotizacion(cot, el) {
     <div class="cc-total-row">
       <span>Total estimado</span>
       <strong>${formatters.moneda(cot.total)}</strong>
-    </div>`;
-}
-
-/**
- * Renderiza la sección de beneficios activados por las reglas de cantidad.
- *
- * @param {Array} activadas   - Reglas activadas (tipo_beneficio, descripcion, nombre_producto_beneficio, valor_beneficio).
- * @param {Array} violaciones - Reglas que superaron el límite.
- * @param {HTMLElement} container - Contenedor de la cotización donde se inserta el bloque.
- * @returns {void}
- */
-function _rowReglaBase(icon, color, descripcion, badge) {
-  return `<div style="display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-color);font-size:.8rem;">
-    <span style="color:${color};font-weight:700;flex-shrink:0;">${icon}</span>
-    <span style="flex:1;color:var(--text-primary);">${descripcion}</span>
-    ${badge}
-  </div>`;
-}
-
-function _rowActivada(r) {
-  const label = r.nombre_producto_beneficio ?? r.valor_beneficio ?? '';
-  const badge  = label
-    ? `<span style="background:var(--accent-faint,#e8f0fe);color:var(--accent);border-radius:12px;padding:2px 9px;font-size:.72rem;font-weight:600;white-space:nowrap;">${label}</span>`
-    : '';
-  return _rowReglaBase('+', 'var(--green-text,#4caf50)', r.descripcion, badge);
-}
-
-function _rowViolacion(r) {
-  const badge = `<span style="background:#fff0f0;color:var(--red-text,#c0392b);border-radius:12px;padding:2px 9px;font-size:.72rem;font-weight:600;white-space:nowrap;">Límite: ${r.limite} uds.</span>`;
-  return _rowReglaBase('!', 'var(--red-text,#e57373)', r.descripcion, badge);
-}
-
-function _renderReglas(activadas, violaciones, container) {
-  if (!container) return;
-  const existing = container.querySelector('.cc-reglas-block');
-  if (existing) existing.remove();
-
-  if (!activadas.length && !violaciones.length) return;
-
-  const rows = [
-    ...activadas.map(_rowActivada),
-    ...violaciones.map(_rowViolacion),
-  ].join('');
-
-  const block = document.createElement('div');
-  block.className = 'cc-reglas-block';
-  block.style.cssText = 'margin-top:16px;';
-  block.innerHTML = `
-    <div class="cc-section-title" style="margin-bottom:8px;">
-      <i class="bi bi-gift me-2" style="color:var(--accent);"></i>Beneficios y condiciones aplicables
     </div>
-    ${rows}`;
-
-  container.appendChild(block);
+    ${cortesiasBlock}`;
 }
+
 
 /**
  * Renderiza la preview de la promoción escolar vinculada a la cotización.
@@ -462,8 +436,6 @@ async function init() {
 
     if (elCot)  _renderPreviewCotizacion(cot, elCot);
     if (elProm) _renderPreviewPromocion(prom, elProm);
-
-    _renderReglas(cot.reglas_activadas ?? [], cot.reglas_violaciones ?? [], elCot);
 
     const titleEl = document.getElementById('pageTitleCot');
     if (titleEl) titleEl.textContent = formatters.codigo(cot.id) + ' — ' + (cot.cliente?.nombre_completo ?? '');

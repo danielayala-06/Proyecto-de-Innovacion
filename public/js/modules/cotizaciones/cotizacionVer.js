@@ -110,34 +110,6 @@ function _renderPromocion(cot) {
         <div class="cv-row"><span>N.° estudiantes</span><strong>${prom.num_estudiantes ?? '—'}</strong></div>`;
 }
 
-function _renderReglas(cot) {
-    const violaciones = cot.reglas_violaciones ?? [];
-    const activadas   = cot.reglas_activadas   ?? [];
-    const card = document.getElementById('cvReglasCard');
-    const el   = document.getElementById('cvReglas');
-    if (!card || !el) return;
-
-    if (!violaciones.length && !activadas.length) { card.style.display = 'none'; return; }
-
-    card.style.display = '';
-    let html = '';
-
-    violaciones.forEach(r => {
-        html += `<div class="cv-alert-row" style="background:#fff0f0;border:1px solid #f5c6cb;color:#721c24;">
-            <i class="bi bi-exclamation-triangle-fill" style="color:#dc3545;flex-shrink:0;"></i>
-            <span>${r.descripcion}</span>
-        </div>`;
-    });
-
-    activadas.forEach(r => {
-        html += `<div class="cv-alert-row" style="background:#f0fff4;border:1px solid #c3e6cb;color:#155724;">
-            <i class="bi bi-check-circle-fill" style="color:#198754;flex-shrink:0;"></i>
-            <span>${r.descripcion}</span>
-        </div>`;
-    });
-
-    el.innerHTML = html;
-}
 
 function _renderPanel(cot) {
     // Estado
@@ -206,7 +178,6 @@ async function init() {
         _renderCliente(cot);
         _renderItems(cot);
         _renderPromocion(cot);
-        _renderReglas(cot);
         _renderPanel(cot);
     } catch (err) {
         document.getElementById('cvSubtitle').textContent = 'No se pudo cargar la cotización.';
