@@ -450,13 +450,13 @@ function _actualizarResumen() {
 
         let precioLabel;
         if (esCortesia) {
-            precioLabel = `<span style="font-size:.75rem;color:var(--green-text,#4caf50);font-weight:600;">Gratis</span>`;
+            precioLabel = `<span class="resumen-precio" style="font-size:.75rem;color:var(--green-text,#4caf50);font-weight:600;">Gratis</span>`;
         } else {
-            precioLabel = `<span style="white-space:nowrap;font-size:0.78rem;">${cantLabel}${formatters.moneda(subtotal)}</span>`;
+            precioLabel = `<span class="resumen-precio" style="font-size:0.78rem;">${cantLabel}${formatters.moneda(subtotal)}</span>`;
         }
         return `
-        <div class="resumen-row" style="align-items:center;gap:6px;">
-            <span style="flex:1;font-size:0.78rem;">${esCortesia ? '<i class="bi bi-gift" style="color:var(--green-text,#4caf50);margin-right:4px;"></i>' : ''}${item.nombre}</span>
+        <div class="resumen-row">
+            <span class="resumen-nombre" style="font-size:0.78rem;" title="${item.nombre}">${esCortesia ? '<i class="bi bi-gift" style="color:var(--green-text,#4caf50);margin-right:4px;flex-shrink:0;"></i>' : ''}${item.nombre}</span>
             ${precioLabel}
             <button type="button" data-idx="${idx}"
                     style="background:none;border:none;padding:0 2px;color:#e57373;cursor:pointer;font-size:0.78rem;line-height:1;"
@@ -543,10 +543,16 @@ function _renderContainer(containerId, tipo) {
                </div>`
             : (cant > 1 ? `<span style="font-size:0.75rem;color:#888;white-space:nowrap;">×${cant}</span>` : '');
 
+        const nombreEl = tipo === 'paquete' && item.idRef
+            ? `<span class="item-nombre-link" data-idref="${item.idRef}"
+                     style="flex:1;cursor:pointer;"
+                     title="Ver en catálogo">${item.nombre}</span>`
+            : `<span style="flex:1;">${item.nombre}</span>`;
+
         return `
-        <div class="d-flex justify-content-between align-items-center p-2 mt-1"
+        <div class="item-row d-flex justify-content-between align-items-center p-2 mt-1"
              style="border:1px solid var(--border,#dee2e6);border-radius:6px;font-size:0.82rem;gap:8px;">
-            <span style="flex:1;">${item.nombre}</span>
+            ${nombreEl}
             ${cantControl}
             <span class="item-subtotal" data-idx="${idx}"
                   style="font-weight:600;white-space:nowrap;min-width:62px;text-align:right;">
@@ -559,6 +565,11 @@ function _renderContainer(containerId, tipo) {
             </button>
         </div>`;
     }).join('');
+
+    // ── Abrir modal al hacer clic en el nombre (solo paquetes) ──────────────
+    el.querySelectorAll('.item-nombre-link').forEach(span => {
+        span.addEventListener('click', () => _abrirModalPaquetes(parseInt(span.dataset.idref) || null));
+    });
 
     // ── Eliminar ítem ────────────────────────────────────────────────────────
     el.querySelectorAll('.btn-item-del').forEach(btn => {
@@ -1283,6 +1294,63 @@ function _mostrarModalConfirmacion() {
 }
 
 /**
+ * Prepara y abre el modal de paquetes.
+ * Si se pasa scrollToIdRef, cambia a la tab correspondiente y hace scroll al producto.
+ *
+ * @param {number|null} scrollToIdRef - ID del paquete al que debe desplazarse el modal.
+ */
+function _abrirModalPaquetes(scrollToIdRef = null) {
+    state.paquetesSeleccionados = new Map();
+    _nivelFiltro = 'todos';
+
+    const formNumEst    = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
+    const modalNumEstEl = document.getElementById('modalNumEstudiantes');
+    if (modalNumEstEl) modalNumEstEl.value = formNumEst > 0 ? formNumEst : '';
+
+    const defaultQty = formNumEst > 0 ? formNumEst : 1;
+    document.querySelectorAll('.nivel-filtro-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+    document.querySelectorAll('.paquete-option').forEach(o => {
+        o.classList.remove('selected');
+        o.style.display = '';
+        const qi = o.querySelector('.po-qty-input');
+        const id = parseInt(o.dataset.id);
+        const ya = state.items.find(i => i.tipo === 'paquete' && i.idRef === id);
+        if (ya) {
+            o.classList.add('selected');
+            if (qi) { qi.value = ya.cantidad ?? 1; qi.min = 1; qi.max = ''; }
+            state.paquetesSeleccionados.set(id, { idRef: id, nombre: ya.nombre, precio: ya.precio, el: o });
+        } else {
+            if (qi) { qi.value = defaultQty; qi.min = 1; qi.max = ''; }
+        }
+    });
+    _actualizarBtnConfirmar();
+
+    if (scrollToIdRef) {
+        const paqEl   = document.getElementById('modalPaquete');
+        const onShown = () => {
+            paqEl?.removeEventListener('shown.bs.modal', onShown);
+            const target = document.querySelector(`.paquete-option[data-id="${scrollToIdRef}"]`);
+            if (!target) return;
+            // Activar la tab correcta si el producto está en otra categoría
+            const panel = target.closest('.cat-panel');
+            if (panel && !panel.classList.contains('active')) {
+                const catId = panel.id.replace('cat-panel-', '');
+                const tab   = document.querySelector(`.cat-tab[onclick*="'${catId}'"]`);
+                if (tab) window.cambiarCategoria(catId, tab);
+            }
+            target.scrollIntoView({ block: 'nearest' });
+            // Pulso visual para identificar el producto
+            target.style.outline       = '2px solid var(--accent, #B49040)';
+            target.style.outlineOffset = '-2px';
+            setTimeout(() => { target.style.outline = ''; target.style.outlineOffset = ''; }, 1500);
+        };
+        paqEl?.addEventListener('shown.bs.modal', onShown);
+    }
+
+    _modalPaquete?.show();
+}
+
+/**
  * Función principal de inicialización del módulo.
  * Carga datos, puebla los modales, restaura el borrador y registra todos los listeners.
  *
@@ -1430,27 +1498,7 @@ async function init() {
     });
 
     /* 8. Abrir modal paquete */
-    document.getElementById('btn-modal-paquete')?.addEventListener('click', () => {
-        state.paquetesSeleccionados = new Map();
-        _nivelFiltro = 'todos';
-        _ocultarConfirmViol();
-
-        // Pre-poblar el campo de estudiantes desde el formulario
-        const formNumEst    = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
-        const modalNumEstEl = document.getElementById('modalNumEstudiantes');
-        if (modalNumEstEl) modalNumEstEl.value = formNumEst > 0 ? formNumEst : '';
-
-        const defaultQty = formNumEst > 0 ? formNumEst : 1;
-        document.querySelectorAll('.nivel-filtro-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
-        document.querySelectorAll('.paquete-option').forEach(o => {
-            o.classList.remove('selected');
-            o.style.display = '';
-            const qi = o.querySelector('.po-qty-input');
-            if (qi) { qi.value = defaultQty; qi.min = 1; qi.max = ''; }
-        });
-        _actualizarBtnConfirmar();
-        _modalPaquete?.show();
-    });
+    document.getElementById('btn-modal-paquete')?.addEventListener('click', () => _abrirModalPaquetes());
 
     /* 8b. Listener del input de estudiantes en el modal */
     document.getElementById('modalNumEstudiantes')?.addEventListener('input', () => {
@@ -1486,9 +1534,11 @@ async function init() {
 
     /* 10. Confirmar selección de paquetes (múltiple) */
 
-    /** Mueve los paquetes seleccionados a state.items y cierra el modal. */
+    /** Reemplaza los paquetes en state.items con la selección actual del modal y cierra. */
     function _ejecutarAgregarPaquetes() {
         const numEst = _getModalNumEst();
+        // Mantener ítems que no son paquetes (servicios, cortesías) y reemplazar los paquetes
+        state.items = state.items.filter(i => i.tipo !== 'paquete');
         state.paquetesSeleccionados.forEach(({ idRef, nombre, precio, el }) => {
             const cantidad = Math.max(1, parseInt(el.querySelector('.po-qty-input')?.value) || 1);
             state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad, descuento: 0 });
@@ -1498,7 +1548,6 @@ async function init() {
         _renderContainers();
         _actualizarResumen();
         _saveDraft();
-        _ocultarConfirmViol();
         _modalPaquete?.hide();
     }
 

@@ -260,7 +260,7 @@
                         </div>
                         <!-- Fila de descuento calculado (visible solo cuando hay descuento) -->
                         <div id="resumen-desc-row" class="resumen-row" style="display:none;font-size:0.78rem;color:var(--green-text,#2e7d32);">
-                            <span>Ahorro</span>
+                            <span>Descuento</span>
                             <span id="resumenDescInfo"></span>
                         </div>
                         <div class="resumen-row total mt-2">

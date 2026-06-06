@@ -592,13 +592,26 @@ label {
     margin-bottom: 0.9rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border);
 }
 .resumen-row {
-    display: flex; justify-content: space-between; font-size: 0.82rem;
-    color: var(--text-secondary); padding: 6px 0; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.82rem; color: var(--text-secondary);
+    padding: 5px 4px; border-bottom: 1px solid var(--border);
+    border-radius: 5px; transition: background 0.13s;
+    min-width: 0;
 }
+.resumen-row:hover { background: var(--bg-hover, rgba(0,0,0,.05)); }
 .resumen-row:last-child { border-bottom: none; }
+.resumen-row .resumen-nombre {
+    flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.resumen-row .resumen-precio { flex-shrink: 0; white-space: nowrap; }
+.resumen-row .btn-res-del   { flex-shrink: 0; }
 .resumen-row.total { color: var(--text-primary); font-weight: 700; font-size: 0.9rem; }
 .resumen-row span:last-child { color: var(--text-secondary); }
 .resumen-row.total span:last-child { color: var(--accent); }
+
+.item-row { transition: background 0.13s; }
+.item-row:hover { background: var(--bg-hover, rgba(0,0,0,.05)) !important; }
 
 /* ── MODAL ───────────────────────────────────────────────────────── */
 .modal-content {
