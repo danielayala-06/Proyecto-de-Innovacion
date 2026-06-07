@@ -1790,11 +1790,15 @@ async function init() {
             if (state.esNuevoCliente2) {
                 const nombres2   = document.getElementById('nombresCliente2')?.value?.trim();
                 const telefono2  = document.getElementById('telefonoCliente2')?.value?.trim();
-                if (nombres2 && telefono2) {
+                const dni2       = document.getElementById('dniCliente2')?.value?.trim();
+                if (!nombres2)   throw new Error('El nombre del 2.º responsable es obligatorio.');
+                if (!telefono2)  throw new Error('El teléfono del 2.º responsable es obligatorio.');
+                if (!dni2)       throw new Error('El DNI del 2.º responsable es obligatorio.');
+                try {
                     const resC2 = await clienteApi.crear({
                         nombres:             nombres2,
                         apellidos:           document.getElementById('apellidosCliente2')?.value?.trim() || null,
-                        numero_documento:    document.getElementById('dniCliente2')?.value?.trim() || null,
+                        numero_documento:    dni2,
                         tipo_documento:      document.getElementById('tipoDocumento2')?.value ?? 'DNI',
                         telefono:            telefono2,
                         correo:              document.getElementById('emailCliente2')?.value?.trim() || null,
@@ -1802,6 +1806,8 @@ async function init() {
                         acepta_promociones:  false,
                     });
                     document.getElementById('idCliente2').value = resC2.id_cliente;
+                } catch (e) {
+                    throw new Error('Error al registrar el 2.º responsable: ' + (e.message || 'verifica los datos.'));
                 }
             }
 
