@@ -187,7 +187,9 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
             <div class="num-label">N° de contrato</div>
             <div class="num-value"><?= esc($numContrato) ?></div>
             <div class="num-date">
-                <?= date('d') ?> de <?= $mesesEs[(int)date('n')-1] ?> de <?= date('Y') ?>
+                <?php $fc = !empty($contrato['fecha_creacion']) ? $contrato['fecha_creacion'] : date('Y-m-d');
+                      [$fY,$fM,$fD] = explode('-', substr($fc, 0, 10)); ?>
+                <?= (int)$fD ?> de <?= $mesesEs[(int)$fM - 1] ?> de <?= $fY ?>
             </div>
         </div>
     </div>
@@ -332,7 +334,7 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
             <tr>
                 <td colspan="2"></td>
                 <td style="text-align:right;">Total</td>
-                <td style="text-align:right;">S/. <?= number_format($contrato['total_estimado'], 2) ?></td>
+                <td style="text-align:right;">S/. <?= number_format($contrato['total'], 2) ?></td>
             </tr>
         </tfoot>
         <?php endif; ?>
@@ -380,7 +382,7 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
         <div class="price-right">
             <div class="p-row">
                 <div class="p-lbl">Total</div>
-                <div class="p-val">S/. <?= number_format($contrato['total_estimado'], 2) ?></div>
+                <div class="p-val">S/. <?= number_format($contrato['total'], 2) ?></div>
             </div>
             <hr class="p-sep">
             <div class="p-row">
@@ -390,7 +392,7 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
             <hr class="p-sep">
             <div class="p-row saldo">
                 <div class="p-lbl">Saldo</div>
-                <div class="p-val">S/. <?= number_format($contrato['total_estimado'] - $contrato['adelanto'], 2) ?></div>
+                <div class="p-val">S/. <?= number_format($contrato['total'] - $contrato['adelanto'], 2) ?></div>
             </div>
         </div>
     </div>
