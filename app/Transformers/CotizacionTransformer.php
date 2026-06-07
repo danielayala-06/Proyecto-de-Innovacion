@@ -41,12 +41,11 @@ class CotizacionTransformer extends BaseTransformer
             'observaciones'       =>         $resource['cotizacion']['observaciones'],
             'tiene_contrato'      => (bool)  ($resource['cotizacion']['tiene_contrato'] ?? false),
             'cliente'             => $this->includeCliente(),
+            'cliente2'            => $this->includeCliente2(),
             'usuario'             => $this->includeUsuario(),
             'items'               => $this->includeDetalles(),
             'promocion'           => $this->includePromocion(),
             'colegio'             => $this->includeColegio(),
-            'reglas_activadas'    => $resource['reglas_activadas']   ?? [],
-            'reglas_violaciones'  => $resource['reglas_violaciones']  ?? [],
         ];
     }
 
@@ -77,6 +76,25 @@ class CotizacionTransformer extends BaseTransformer
     protected function includeCliente(): array
     {
         $c = $this->resource['cliente'];
+        return [
+            'id'               => (int) $c['id'],
+            'nombre_completo'  =>       $c['nombre_completo'],
+            'tipo_documento'   =>       $c['tipo_documento']   ?? null,
+            'numero_documento' =>       $c['numero_documento'] ?? null,
+            'telefono'         =>       $c['telefono']         ?? null,
+            'correo'           =>       $c['correo']           ?? null,
+        ];
+    }
+
+    /**
+     * Formatea el segundo cliente/responsable (opcional).
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function includeCliente2(): ?array
+    {
+        $c = $this->resource['cliente2'] ?? null;
+        if (!$c) return null;
         return [
             'id'               => (int) $c['id'],
             'nombre_completo'  =>       $c['nombre_completo'],

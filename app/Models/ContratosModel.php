@@ -157,13 +157,19 @@ class ContratosModel extends Model
                 'contratos.reglas_aplicadas',
                 'contratos.contacto2_nombre',
                 'contratos.contacto2_telefono',
-                "CONCAT(personas.nombres,' ',COALESCE(personas.apellidos,'')) AS cliente",
-                'personas.telefono',
+                "CONCAT(p1.nombres,' ',COALESCE(p1.apellidos,'')) AS cliente",
+                'p1.telefono',
                 'cotizaciones.total_estimado',
+                'cotizaciones.id_cliente2',
+                "CONCAT(p2.nombres,' ',COALESCE(p2.apellidos,'')) AS cliente2_nombre",
+                'p2.telefono AS cliente2_telefono',
+                'p2.numero_documento AS cliente2_documento',
             ])
             ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion')
-            ->join('clientes',     'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas',     'personas.id_persona = clientes.id_persona')
+            ->join('clientes c1',  'c1.id_cliente = cotizaciones.id_cliente')
+            ->join('personas p1',  'p1.id_persona = c1.id_persona')
+            ->join('clientes c2',  'c2.id_cliente = cotizaciones.id_cliente2', 'left')
+            ->join('personas p2',  'p2.id_persona = c2.id_persona', 'left')
             ->where('contratos.id_contrato', $id)
             ->first();
 

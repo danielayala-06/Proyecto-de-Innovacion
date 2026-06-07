@@ -30,6 +30,7 @@ class CotizacionesModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = [
         'id_cliente',
+        'id_cliente2',
         'id_usuario',
         'fecha_registro',
         'observaciones',
@@ -66,12 +67,21 @@ class CotizacionesModel extends Model
     public function listarConCliente(): array
     {
         return $this
-            ->select(['cotizaciones.*', 'clientes.id_cliente',
-                      'personas.nombres', 'personas.apellidos', 'usuarios.nombre_user'])
-            ->join('clientes', 'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas', 'personas.id_persona = clientes.id_persona')
-            ->join('usuarios', 'usuarios.id_usuario = cotizaciones.id_usuario')
-            ->orderBy('id_cotizacion', 'DESC')
+            ->select([
+                'cotizaciones.*',
+                'clientes.id_cliente',
+                'p1.nombres', 'p1.apellidos',
+                'usuarios.nombre_user',
+                'c2.id_cliente AS id_cliente2',
+                'p2.nombres AS nombres2', 'p2.apellidos AS apellidos2',
+                'p2.telefono AS telefono2',
+            ])
+            ->join('clientes',     'clientes.id_cliente = cotizaciones.id_cliente')
+            ->join('personas p1',  'p1.id_persona = clientes.id_persona')
+            ->join('usuarios',     'usuarios.id_usuario = cotizaciones.id_usuario')
+            ->join('clientes c2',  'c2.id_cliente = cotizaciones.id_cliente2', 'left')
+            ->join('personas p2',  'p2.id_persona = c2.id_persona', 'left')
+            ->orderBy('cotizaciones.id_cotizacion', 'DESC')
             ->findAll();
     }
 
@@ -84,14 +94,23 @@ class CotizacionesModel extends Model
     public function obtenerConCliente(int $id): ?array
     {
         return $this
-            ->select(['cotizaciones.*', 'clientes.id_cliente',
-                      'personas.nombres', 'personas.apellidos',
-                      'personas.tipo_documento', 'personas.numero_documento',
-                      'personas.telefono', 'personas.correo',
-                      'usuarios.nombre_user'])
-            ->join('clientes', 'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas', 'personas.id_persona = clientes.id_persona')
-            ->join('usuarios', 'usuarios.id_usuario = cotizaciones.id_usuario')
+            ->select([
+                'cotizaciones.*',
+                'clientes.id_cliente',
+                'p1.nombres', 'p1.apellidos',
+                'p1.tipo_documento', 'p1.numero_documento',
+                'p1.telefono', 'p1.correo',
+                'usuarios.nombre_user',
+                'c2.id_cliente AS id_cliente2',
+                'p2.nombres AS nombres2', 'p2.apellidos AS apellidos2',
+                'p2.tipo_documento AS tipo_documento2', 'p2.numero_documento AS numero_documento2',
+                'p2.telefono AS telefono2', 'p2.correo AS correo2',
+            ])
+            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
+            ->join('personas p1', 'p1.id_persona = clientes.id_persona')
+            ->join('usuarios',    'usuarios.id_usuario = cotizaciones.id_usuario')
+            ->join('clientes c2', 'c2.id_cliente = cotizaciones.id_cliente2', 'left')
+            ->join('personas p2', 'p2.id_persona = c2.id_persona', 'left')
             ->find($id);
     }
 
@@ -105,12 +124,20 @@ class CotizacionesModel extends Model
     public function listarAprobadasSinContrato(): array
     {
         return $this
-            ->select(['cotizaciones.*', 'clientes.id_cliente',
-                      'personas.nombres', 'personas.apellidos', 'usuarios.nombre_user'])
-            ->join('clientes',  'clientes.id_cliente  = cotizaciones.id_cliente')
-            ->join('personas',  'personas.id_persona  = clientes.id_persona')
-            ->join('usuarios',  'usuarios.id_usuario  = cotizaciones.id_usuario')
-            ->join('contratos', "contratos.id_cotizacion = cotizaciones.id_cotizacion AND contratos.estado != 'CANCELADO'", 'left')
+            ->select([
+                'cotizaciones.*',
+                'clientes.id_cliente',
+                'p1.nombres', 'p1.apellidos',
+                'usuarios.nombre_user',
+                'c2.id_cliente AS id_cliente2',
+                'p2.nombres AS nombres2', 'p2.apellidos AS apellidos2',
+            ])
+            ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')
+            ->join('personas p1', 'p1.id_persona = clientes.id_persona')
+            ->join('usuarios',    'usuarios.id_usuario = cotizaciones.id_usuario')
+            ->join('clientes c2', 'c2.id_cliente = cotizaciones.id_cliente2', 'left')
+            ->join('personas p2', 'p2.id_persona = c2.id_persona', 'left')
+            ->join('contratos',   "contratos.id_cotizacion = cotizaciones.id_cotizacion AND contratos.estado != 'CANCELADO'", 'left')
             ->where('cotizaciones.estado', 'APROBADA')
             ->where('contratos.id_contrato IS NULL', null, false)
             ->findAll();

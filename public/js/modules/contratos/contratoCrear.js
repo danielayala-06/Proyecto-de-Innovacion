@@ -239,7 +239,7 @@ function _bloquearFormulario(mensaje) {
  * @param {number} total - Total de la cotización (para validar el adelanto).
  * @returns {void}
  */
-function _initForm(cotId, total) {
+function _initForm(cotId, total, prom = null) {
   const hoy  = new Date(SERVER_TODAY + 'T00:00:00');
   const min2 = new Date(hoy);
   min2.setDate(hoy.getDate() - 2);
@@ -254,6 +254,14 @@ function _initForm(cotId, total) {
   const adelantoInput = document.getElementById('contratoAdelanto');
   if (adelantoInput && total) {
     adelantoInput.placeholder = `Máx. ${formatters.moneda(total)}`;
+    const numEst = prom?.num_estudiantes ? parseInt(prom.num_estudiantes) : 0;
+    if (numEst > 0) {
+      const minSugerido = numEst * 10;
+      const hint = document.createElement('p');
+      hint.style.cssText = 'font-size:.75rem;color:var(--accent-text);background:var(--accent-light);border:1px solid var(--accent);border-radius:6px;padding:4px 8px;margin-top:6px;margin-bottom:0;display:inline-flex;align-items:center;gap:5px;';
+      hint.innerHTML = `<i class="bi bi-info-circle-fill"></i>Mínimo sugerido: <strong>${formatters.moneda(minSugerido)}</strong> (${numEst} est. × S/ 10)`;
+      adelantoInput.closest('.cc-form-group')?.appendChild(hint);
+    }
   }
 
   const selectForma = document.getElementById('contratoFormaPago');
@@ -301,9 +309,6 @@ function _abrirConfirmacion(cotId, total) {
     if (selDate < minFecha) { alerts.warning('La fecha de pago no puede ser anterior a 2 días de hoy.'); return; }
   }
 
-  const contacto2Nombre   = document.getElementById('contacto2Nombre')?.value.trim()   || null;
-  const contacto2Telefono = document.getElementById('contacto2Telefono')?.value.trim() || null;
-
   const formaPagoSel  = document.getElementById('contratoFormaPago');
   const formaPagoText = formaPagoSel?.options[formaPagoSel.selectedIndex]?.text ?? '—';
   const saldo         = total - adelanto;
@@ -345,7 +350,7 @@ function _abrirConfirmacion(cotId, total) {
   const btnConf = document.getElementById('btnConfirmarContrato');
   const nuevoBtn = btnConf.cloneNode(true);
   btnConf.replaceWith(nuevoBtn);
-  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoSel?.value ?? '', contacto2Nombre, contacto2Telefono));
+  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoSel?.value ?? ''));
 
   const modalEl = document.getElementById('modalConfirmarContrato');
   _modalContrato = _modalContrato ?? new bootstrap.Modal(modalEl);
@@ -356,7 +361,7 @@ function _abrirConfirmacion(cotId, total) {
  * Envía el contrato a la API tras la confirmación del usuario.
  * Cierra el modal, deshabilita el botón y redirige al éxito.
  */
-async function _submit(cotId, total, adelanto, fechaFirma, formaPago, contacto2Nombre, contacto2Telefono) {
+async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
   const clausulas     = document.getElementById('contratoClausulas')?.value.trim() ?? '';
   const observaciones = document.getElementById('contratoObservaciones')?.value.trim() ?? '';
 
@@ -377,8 +382,6 @@ async function _submit(cotId, total, adelanto, fechaFirma, formaPago, contacto2N
       adelanto,
       fecha_emision:      fechaFirma,
       observaciones:      obsTexto,
-      contacto2_nombre:   contacto2Nombre,
-      contacto2_telefono: contacto2Telefono,
     });
     _modalContrato?.hide();
     alerts.ok('Contrato generado correctamente.');
@@ -449,7 +452,7 @@ async function init() {
       return;
     }
 
-    _initForm(cotId, cot.total);
+    _initForm(cotId, cot.total, prom);
   } catch (e) {
     if (elCot) _renderError(elCot, 'Error al cargar los datos.');
   }

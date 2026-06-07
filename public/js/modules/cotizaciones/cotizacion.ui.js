@@ -232,6 +232,12 @@ export const ui = {
           <span style="color:var(--text-muted);">Fecha</span><br>
           <span>${formatters.fecha(cot.fecha)}</span>
         </div>
+        ${data.cliente2 ? `
+        <div class="col-12" style="padding-top:2px;">
+          <span style="color:var(--text-muted);font-size:.78rem;">2.º Responsable</span><br>
+          <span>${data.cliente2.nombre_completo || '—'}</span>
+          ${data.cliente2.telefono ? `<span style="color:var(--text-muted);font-size:.78rem;margin-left:8px;">${data.cliente2.telefono}</span>` : ''}
+        </div>` : ''}
         ${cot.observaciones ? `
         <div class="col-12">
           <span style="color:var(--text-muted);">Observaciones</span><br>

@@ -4,7 +4,6 @@
  */
 
 import { cotizacionApi } from '../../api/cotizacion.api.js';
-import { formatters }    from '../../utils/formatters.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BADGES / HELPERS
@@ -33,6 +32,7 @@ function _fecha(v)  {
 
 function _renderCliente(cot) {
     const cl  = cot.cliente   ?? {};
+    const cl2 = cot.cliente2  ?? null;
     const col = cot.colegio   ?? null;
     const el  = document.getElementById('cvCliente');
     if (!el) return;
@@ -43,6 +43,17 @@ function _renderCliente(cot) {
 
     if (cl.telefono) html += `<div class="cv-row"><span>Teléfono</span><strong>${cl.telefono}</strong></div>`;
     if (cl.correo)   html += `<div class="cv-row"><span>Correo</span><strong>${cl.correo}</strong></div>`;
+
+    if (cl2) {
+        html += `
+            <div class="cv-section-title" style="margin-top:14px;display:flex;align-items:center;gap:6px;">
+                <i class="bi bi-person-fill" style="font-size:.8rem;"></i> Segundo responsable
+            </div>
+            <div class="cv-row"><span>Nombre</span><strong>${cl2.nombre_completo ?? '—'}</strong></div>`;
+        if (cl2.numero_documento) html += `<div class="cv-row"><span>${cl2.tipo_documento ?? 'Doc.'}</span><strong>${cl2.numero_documento}</strong></div>`;
+        if (cl2.telefono)         html += `<div class="cv-row"><span>Teléfono</span><strong>${cl2.telefono}</strong></div>`;
+        if (cl2.correo)           html += `<div class="cv-row"><span>Correo</span><strong>${cl2.correo}</strong></div>`;
+    }
 
     if (col) {
         html += `

@@ -150,8 +150,11 @@ $reglasAplicadas = $contrato['reglas_aplicadas'] ?? ['violaciones' => [], 'activ
 $reglasActivadas = $reglasAplicadas['activadas']   ?? [];
 $reglasLimitadas = $reglasAplicadas['violaciones'] ?? [];
 
-$contacto2Nombre   = $contrato['contacto2_nombre']   ?? null;
-$contacto2Telefono = $contrato['contacto2_telefono'] ?? null;
+// Segundo responsable: primero el cliente2 de BD, si no el campo libre del contrato
+$cliente2Nombre    = !empty($contrato['cliente2_nombre'])   ? $contrato['cliente2_nombre']   : null;
+$cliente2Telefono  = !empty($contrato['cliente2_telefono']) ? $contrato['cliente2_telefono'] : null;
+$contacto2Nombre   = $cliente2Nombre   ?? ($contrato['contacto2_nombre']   ?? null);
+$contacto2Telefono = $cliente2Telefono ?? ($contrato['contacto2_telefono'] ?? null);
 
 $firmaNombreCliente = $promo ? $promo['nombre_promocion'] : $contrato['cliente'];
 

@@ -1,24 +1,6 @@
 <?= $header ?>
 
-<style>
-[x-cloak]{display:none!important}
-.adm-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:.9rem;margin-bottom:1.5rem}
-@media(max-width:700px){.adm-stats{grid-template-columns:repeat(2,1fr)}}
-.adm-stat{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center}
-.adm-stat-num{font-size:1.75rem;font-weight:800;color:var(--text-primary);line-height:1}
-.adm-stat-num.gold{color:var(--accent)}
-.adm-stat-num.green{color:var(--green-text)}
-.adm-stat-num.amber{color:var(--amber-text)}
-.adm-stat-label{font-size:.7rem;color:var(--text-muted);margin-top:.3rem;text-transform:uppercase;letter-spacing:.05em}
-.adm-link-text{font-size:.72rem;color:var(--text-muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
-.adm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1050;display:flex;align-items:center;justify-content:center;padding:1rem}
-.adm-modal{background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;padding:1.75rem;width:100%;max-width:460px;box-shadow:0 16px 48px rgba(0,0,0,.25)}
-.adm-modal h2{font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:.35rem}
-.adm-modal p{font-size:.82rem;color:var(--text-muted);margin-bottom:1rem}
-.adm-modal textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:.65rem .85rem;font-size:.84rem;color:var(--text-primary);resize:vertical;min-height:140px;font-family:inherit}
-.adm-modal textarea:focus{outline:none;border-color:var(--accent)}
-.adm-modal-footer{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem}
-</style>
+<link rel="stylesheet" href="<?= base_url('css/admin-promocion.css') ?>">
 
 <main class="main-content" id="main-content" x-data="adminPanel()" x-init="init()">
 <div class="container">

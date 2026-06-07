@@ -45,6 +45,8 @@ let _nivelFiltro = 'todos';
 const state = {
     cliente:               null,
     esNuevoCliente:        false,
+    cliente2:              null,
+    esNuevoCliente2:       false,
     items:                 [],
     todosClientes:         [],
     todosPaquetes:         [],
@@ -507,8 +509,7 @@ function _sincronizarNumEstudiantes() {
  * @returns {void}
  */
 function _renderContainers() {
-    _renderContainer('paquetesContainer',  'paquete');
-    _renderContainer('serviciosContainer', 'personalizado');
+    _renderContainer('paquetesContainer', 'paquete');
     _renderCortesiasContainer();
 }
 
@@ -896,22 +897,6 @@ window.poQtyStep = function (btn, step) {
 // MODAL DE SERVICIOS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Inyecta el formulario del modal de servicios personalizados en el panel correspondiente.
- * @returns {void}
- */
-function _inicializarModalServicio() {
-    const panel = document.getElementById('panel-servicios');
-    if (!panel) return;
-    panel.innerHTML = `
-        <div class="mb-2">
-            <label class="form-label" style="font-size:0.85rem;font-weight:500;">
-                Nombre del servicio*
-            </label>
-            <input type="text" class="form-control" id="servicioModalNombre"
-                   placeholder="Ej: Álbum digital, Sesión grupal, CD con fotos...">
-        </div>`;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BORRADOR EN LOCALSTORAGE
@@ -1089,12 +1074,14 @@ function _buildPayload(idCliente) {
         };
     });
 
-    const fechaDate = document.getElementById('fechaInicio-date')?.value ?? '';
-    const fechaHora = document.getElementById('fechaInicio-time')?.value ?? '';
-    const fecha     = fechaDate && fechaHora ? `${fechaDate} ${fechaHora}:00` : (fechaDate || null);
+    const fecha = null;
+
+    const idCliente2Raw = document.getElementById('idCliente2')?.value;
+    const idCliente2    = idCliente2Raw ? parseInt(idCliente2Raw) : null;
 
     return {
         id_cliente:      idCliente,
+        id_cliente2:     idCliente2 || null,
         observaciones:   document.getElementById('notas')?.value?.trim() ?? null,
         total_estimado:  total,
         descuento_monto: descMonto > 0 ? descMonto : null,
@@ -1121,8 +1108,6 @@ function _buildPayload(idCliente) {
 
 /** @type {bootstrap.Modal|null} Modal de selección de paquetes. */
 let _modalPaquete      = null;
-/** @type {bootstrap.Modal|null} Modal de creación de servicio personalizado. */
-let _modalServicio     = null;
 /** @type {bootstrap.Modal|null} Modal de confirmación antes de guardar. */
 let _modalConfirmacion = null;
 
@@ -1293,6 +1278,191 @@ function _mostrarModalConfirmacion() {
     _modalConfirmacion?.show();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SEGUNDO CLIENTE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @type {HTMLElement|null} Dropdown del segundo cliente (creado dinámicamente). */
+let _dropdown2 = null;
+
+function _setCliente2Existente(c) {
+    state.cliente2        = c;
+    state.esNuevoCliente2 = false;
+
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+    set('nombresCliente2',   c.nombres          ?? '');
+    set('apellidosCliente2', c.apellidos        ?? '');
+    set('tipoDocumento2',    c.tipo_documento   ?? 'DNI');
+    set('dniCliente2',       c.numero_documento ?? '');
+    set('telefonoCliente2',  c.telefono         ?? '');
+    set('emailCliente2',     c.correo           ?? '');
+    set('idCliente2',        c.id_cliente       ?? '');
+
+    ['nombresCliente2','apellidosCliente2','tipoDocumento2','dniCliente2','telefonoCliente2','emailCliente2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.tagName === 'SELECT') el.disabled = true; else el.readOnly = true;
+    });
+
+    const fb = document.getElementById('searchFeedback2');
+    if (fb) {
+        fb.style.color = 'var(--green-text,#2e7d32)';
+        fb.innerHTML   = `<i class="bi bi-check-circle-fill me-1"></i>${c.nombres} ${c.apellidos ?? ''} — seleccionado`;
+    }
+    _ocultarDropdown2();
+}
+
+function _setModoNuevoCliente2() {
+    state.cliente2        = null;
+    state.esNuevoCliente2 = true;
+    document.getElementById('idCliente2').value = '';
+    ['nombresCliente2','apellidosCliente2','tipoDocumento2','dniCliente2','telefonoCliente2','emailCliente2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.tagName === 'SELECT') el.disabled = false; else el.readOnly = false;
+    });
+    const fb = document.getElementById('searchFeedback2');
+    if (fb) { fb.style.color = 'var(--text-muted)'; fb.textContent = 'Cliente nuevo — se registrará al guardar'; }
+}
+
+function _limpiarCliente2() {
+    state.cliente2        = null;
+    state.esNuevoCliente2 = false;
+    ['nombresCliente2','apellidosCliente2','dniCliente2','telefonoCliente2','emailCliente2','idCliente2'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    const td2 = document.getElementById('tipoDocumento2');
+    if (td2) { td2.value = 'DNI'; td2.disabled = false; }
+    const fb = document.getElementById('searchFeedback2');
+    if (fb) fb.textContent = '';
+    document.getElementById('searchCliente2').value = '';
+    _ocultarDropdown2();
+}
+
+function _ocultarDropdown2() { if (_dropdown2) _dropdown2.style.display = 'none'; }
+
+function _mostrarDropdown2(resultados) {
+    const wrap = document.querySelector('#cliente2-fields .search-wrap');
+    if (!wrap) return;
+    if (!_dropdown2) {
+        _dropdown2 = document.createElement('div');
+        _dropdown2.style.cssText = `
+            position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:1055;
+            background:var(--bg-elevated);border:1px solid var(--border-color);border-radius:6px;
+            color:var(--text-primary);max-height:180px;overflow-y:auto;
+            box-shadow:0 4px 16px rgba(0,0,0,.25);`;
+        wrap.style.position = 'relative';
+        wrap.appendChild(_dropdown2);
+    }
+
+    if (!resultados.length) {
+        _dropdown2.innerHTML = `<div style="padding:8px 14px;font-size:.82rem;color:var(--text-muted);">Sin resultados.</div>`;
+    } else {
+        _dropdown2.innerHTML = resultados.map(c => `
+            <div class="dd2-item" data-id="${c.id_cliente}"
+                 style="padding:8px 14px;cursor:pointer;font-size:.83rem;border-bottom:1px solid var(--border-color);">
+                <strong style="color:var(--text-primary);">${c.nombres} ${c.apellidos ?? ''}</strong>
+                <small class="d-block" style="color:var(--text-muted);">${c.numero_documento ?? ''} · ${c.telefono ?? ''}</small>
+            </div>`).join('');
+
+        _dropdown2.querySelectorAll('.dd2-item').forEach(el => {
+            el.addEventListener('mouseenter', () => { el.style.background = 'var(--bg-hover)'; });
+            el.addEventListener('mouseleave', () => { el.style.background = ''; });
+            el.addEventListener('mousedown', e => {
+                e.preventDefault();
+                const c = state.todosClientes.find(x => Number(x.id_cliente) === parseInt(el.dataset.id));
+                if (c) _setCliente2Existente(c);
+                _ocultarDropdown2();
+                document.getElementById('searchCliente2').value = '';
+            });
+        });
+    }
+    _dropdown2.style.display = 'block';
+}
+
+function _initSegundoClienteListeners() {
+    const btnToggle  = document.getElementById('btn-toggle-cliente2');
+    const btnQuitar  = document.getElementById('btn-quitar-cliente2');
+    const fields     = document.getElementById('cliente2-fields');
+    const iconToggle = document.getElementById('icon-toggle-cliente2');
+    const lblToggle  = document.getElementById('label-toggle-cliente2');
+
+    const _setToggleActivo = (activo) => {
+        fields.style.display  = activo ? '' : 'none';
+        iconToggle.className  = activo ? 'bi bi-person-check' : 'bi bi-person-plus';
+        lblToggle.textContent = activo ? '✓ 2.º responsable' : '+ 2.º responsable';
+        btnToggle.style.background   = activo ? 'var(--accent)'       : 'var(--accent-light)';
+        btnToggle.style.color        = activo ? '#fff'                 : 'var(--accent-text)';
+        btnToggle.style.borderColor  = activo ? 'var(--accent)'       : 'var(--accent)';
+    };
+
+    btnToggle?.addEventListener('click', () => {
+        const visible = fields.style.display !== 'none';
+        _setToggleActivo(!visible);
+        if (visible) _limpiarCliente2();
+    });
+
+    btnQuitar?.addEventListener('click', () => {
+        _setToggleActivo(false);
+        _limpiarCliente2();
+    });
+
+    const searchInput2 = document.getElementById('searchCliente2');
+    const searchBtn2   = document.getElementById('btnBuscar2');
+
+    const _filtrar2 = q => {
+        q = (q || '').toLowerCase().trim();
+        if (!q) { _ocultarDropdown2(); return; }
+        const res = state.todosClientes.filter(c => {
+            const nombre = `${c.nombres ?? ''} ${c.apellidos ?? ''}`.toLowerCase();
+            return nombre.includes(q)
+                || (c.numero_documento ?? '').toLowerCase().includes(q)
+                || (c.telefono ?? '').includes(q);
+        }).slice(0, 8);
+        _mostrarDropdown2(res);
+    };
+
+    const _doSearch2 = async () => {
+        const q = searchInput2?.value?.trim();
+        if (!q) { _ocultarDropdown2(); return; }
+        const exacto = state.todosClientes.find(c => (c.numero_documento ?? '').toLowerCase() === q.toLowerCase());
+        if (exacto) { _setCliente2Existente(exacto); searchInput2.value = ''; _ocultarDropdown2(); return; }
+
+        if (/^\d{8}$/.test(q)) {
+            const fb = document.getElementById('searchFeedback2');
+            if (fb) fb.textContent = 'Consultando RENIEC...';
+            try {
+                const res = await clienteApi.reniecDni(q);
+                const d   = res.data;
+                ['nombresCliente2','apellidosCliente2','dniCliente2','telefonoCliente2','emailCliente2'].forEach(id => {
+                    const el = document.getElementById(id); if (el) el.value = '';
+                });
+                document.getElementById('nombresCliente2').value   = d.nombres   ?? '';
+                document.getElementById('apellidosCliente2').value = d.apellidos ?? '';
+                document.getElementById('dniCliente2').value       = q;
+                _setModoNuevoCliente2();
+                if (fb) fb.innerHTML = '<i class="bi bi-info-circle me-1"></i>Datos del RENIEC — completa los faltantes';
+                searchInput2.value = '';
+            } catch {
+                _setModoNuevoCliente2();
+                document.getElementById('dniCliente2').value = q;
+                searchInput2.value = '';
+            }
+            return;
+        }
+        _filtrar2(q);
+    };
+
+    searchBtn2?.addEventListener('click', _doSearch2);
+    searchInput2?.addEventListener('input', () => _filtrar2(searchInput2.value));
+    searchInput2?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); _doSearch2(); } });
+    document.addEventListener('click', e => { if (!e.target.closest('#cliente2-fields .search-wrap')) _ocultarDropdown2(); });
+
+    document.getElementById('telefonoCliente2')?.addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 9);
+    });
+}
+
 /**
  * Prepara y abre el modal de paquetes.
  * Si se pasa scrollToIdRef, cambia a la tab correspondiente y hace scroll al producto.
@@ -1372,18 +1542,13 @@ async function init() {
     /* 2. Poblar modal de paquetes agrupado por categoría */
     _poblarModalPaquetes(state.todosPaquetes);
 
-    /* 3. Inicializar modal de servicios */
-    _inicializarModalServicio();
-
-    /* 4. Restaurar borrador */
+    /* 3. Restaurar borrador */
     _restoreDraft(manager.cargar());
 
-    /* 5. Instanciar modales Bootstrap */
+    /* 4. Instanciar modales Bootstrap */
     const paqEl  = document.getElementById('modalPaquete');
-    const srvEl  = document.getElementById('modalServicio');
     const confEl = document.getElementById('modalConfirmacion');
     if (paqEl)  _modalPaquete      = new bootstrap.Modal(paqEl);
-    if (srvEl)  _modalServicio     = new bootstrap.Modal(srvEl);
     if (confEl) _modalConfirmacion = new bootstrap.Modal(confEl);
 
     /* 6a. Teléfono: solo dígitos, feedback en tiempo real */
@@ -1523,16 +1688,7 @@ async function init() {
         if (e.target.classList.contains('po-qty-input')) e.target.select();
     });
 
-    /* 9. Abrir modal servicio */
-    document.getElementById('btn-modal-servicio')?.addEventListener('click', () => {
-        const n = document.getElementById('servicioModalNombre');
-        const p = document.getElementById('servicioModalPrecio');
-        if (n) n.value = '';
-        if (p) p.value = '';
-        _modalServicio?.show();
-    });
-
-    /* 10. Confirmar selección de paquetes (múltiple) */
+    /* 9. Confirmar selección de paquetes (múltiple) */
 
     /** Reemplaza los paquetes en state.items con la selección actual del modal y cierra. */
     function _ejecutarAgregarPaquetes() {
@@ -1570,20 +1726,7 @@ async function init() {
         _ejecutarAgregarPaquetes();
     });
 
-    /* 11. Confirmar servicio personalizado */
-    document.getElementById('btn-confirmar-servicio')?.addEventListener('click', () => {
-        const nombre = document.getElementById('servicioModalNombre')?.value?.trim();
-        const precio = parseFloat(document.getElementById('servicioModalPrecio')?.value || 0);
-        if (!nombre) { alerts.warning('Ingresa el nombre del servicio.'); return; }
-        if (precio <= 0) { alerts.warning('El precio debe ser mayor a 0.'); return; }
-        state.items.push({ tipo: 'personalizado', idRef: null, nombre, precio });
-        _renderContainers();
-        _actualizarResumen();
-        _saveDraft();
-        _modalServicio?.hide();
-    });
-
-    /* 12. Auto-guardar borrador en campos de sesión y colegio */
+    /* 10. Auto-guardar borrador en campos de sesión y colegio */
     ['notas', 'nombreColegio'].forEach(id =>
         document.getElementById(id)?.addEventListener('input', _saveDraft));
     document.getElementById('provinciaColegio')?.addEventListener('change', _saveDraft);
@@ -1643,6 +1786,25 @@ async function init() {
                 idCliente = state.cliente.id_cliente;
             }
 
+            // Registrar segundo cliente nuevo si aplica
+            if (state.esNuevoCliente2) {
+                const nombres2   = document.getElementById('nombresCliente2')?.value?.trim();
+                const telefono2  = document.getElementById('telefonoCliente2')?.value?.trim();
+                if (nombres2 && telefono2) {
+                    const resC2 = await clienteApi.crear({
+                        nombres:             nombres2,
+                        apellidos:           document.getElementById('apellidosCliente2')?.value?.trim() || null,
+                        numero_documento:    document.getElementById('dniCliente2')?.value?.trim() || null,
+                        tipo_documento:      document.getElementById('tipoDocumento2')?.value ?? 'DNI',
+                        telefono:            telefono2,
+                        correo:              document.getElementById('emailCliente2')?.value?.trim() || null,
+                        metodo_comunicacion: 'whatsapp',
+                        acepta_promociones:  false,
+                    });
+                    document.getElementById('idCliente2').value = resC2.id_cliente;
+                }
+            }
+
             const res = await cotizacionApi.crear(_buildPayload(idCliente));
             manager.limpiar();
             _modalConfirmacion?.hide();
@@ -1665,6 +1827,9 @@ async function init() {
             }
         }
     });
+
+    /* Segundo cliente */
+    _initSegundoClienteListeners();
 
     // ── Sección cortesías ─────────────────────────────────────────────────────
     const cortesiaWrap  = document.getElementById('cortesia-add-wrap');

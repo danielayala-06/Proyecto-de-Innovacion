@@ -14,60 +14,7 @@ $sNum = 0;
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'DM Sans',sans-serif;background:#F7F4EE;color:#1A1714;font-size:15px;line-height:1.6}
-.header{background:#1A1714;padding:1.1rem 1.5rem;display:flex;align-items:center;gap:.75rem}
-.header-dot{width:10px;height:10px;border-radius:50%;background:#B8963E;flex-shrink:0}
-.header h1{font-family:'Playfair Display',serif;font-size:1.1rem;color:#F7F4EE;font-weight:700;letter-spacing:.01em}
-.header p{font-size:.72rem;color:#B8963E;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
-.stock-banner{background:#fff;border-bottom:2px solid #F7F4EE;padding:.75rem 1.5rem;display:flex;gap:1.25rem;flex-wrap:wrap}
-.stock-item{display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:#4A4440}
-.stock-num{font-weight:700;font-size:1rem;color:#1A1714}
-.stock-num.agotado{color:#c0392b}
-.stock-badge{background:#B8963E;color:#fff;font-size:.68rem;font-weight:600;padding:.2rem .5rem;border-radius:4px;letter-spacing:.05em}
-.stock-badge.agotado{background:#c0392b}
-.container{max-width:680px;margin:0 auto;padding:1.75rem 1.25rem 4rem}
-.section{background:#fff;border-radius:16px;padding:1.75rem 1.5rem;margin-bottom:1.25rem;box-shadow:0 2px 12px rgba(0,0,0,.06)}
-.section-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1A1714;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:2px solid #F7F4EE;display:flex;align-items:center;gap:.6rem}
-.section-title span{width:24px;height:24px;background:#B8963E;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0}
-.field{margin-bottom:1.1rem}
-.field label{display:block;font-size:.78rem;font-weight:600;color:#4A4440;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.35rem}
-.field input,.field select{width:100%;background:#F7F4EE;border:1.5px solid #E4E0D8;border-radius:10px;padding:.65rem .9rem;font-family:'DM Sans',sans-serif;font-size:.9rem;color:#1A1714;transition:border-color .18s,box-shadow .18s}
-.field input:focus,.field select:focus{outline:none;border-color:#B8963E;box-shadow:0 0 0 3px rgba(184,150,62,.12)}
-.field input.err,.field select.err{border-color:#e74c3c}
-.field .hint{font-size:.72rem;color:#999;margin-top:.25rem}
-.field .err-msg{font-size:.72rem;color:#e74c3c;margin-top:.25rem;display:flex;align-items:center;gap:3px}
-.readonly-val{background:#ECEAE4;border:1.5px solid #D6D0C8;border-radius:10px;padding:.65rem .9rem;font-size:.9rem;color:#6B6460}
-.productos-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.5rem}
-@media(max-width:440px){.productos-grid{grid-template-columns:1fr}}
-.producto-card{border:2px solid #E4E0D8;border-radius:14px;padding:1.2rem 1rem;cursor:pointer;transition:border-color .18s,background .18s,opacity .18s;user-select:none;position:relative}
-.producto-card.selected{border-color:#B8963E;background:#FBF7EE}
-.producto-card.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
-.producto-card .prod-icon{font-size:2rem;margin-bottom:.5rem;display:block;color:#4A4440}
-.producto-card .prod-name{font-weight:700;font-size:.95rem;color:#1A1714;margin-bottom:.2rem}
-.producto-card .prod-stock{font-size:.75rem;color:#6B6460}
-.producto-card .prod-stock.agotado{color:#c0392b;font-weight:600}
-.prod-check{position:absolute;top:.7rem;right:.7rem;width:22px;height:22px;border:2px solid #D6D0C8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;background:#fff;transition:all .15s}
-.producto-card.selected .prod-check{background:#B8963E;border-color:#B8963E;color:#fff}
-.prod-unico{display:flex;align-items:center;gap:.75rem;background:#FBF7EE;border:1.5px solid #EDE8DC;border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem}
-.prod-unico-icon{font-size:1.75rem}
-.prod-unico-name{font-weight:700;font-size:.95rem;color:#1A1714}
-.prod-unico-label{font-size:.72rem;color:#6B6460;margin-top:1px}
-.subfield{background:#FBF7EE;border-radius:10px;padding:.9rem 1rem;margin-top:.5rem;border:1.5px solid #EDE8DC}
-.check-item{display:flex;gap:.75rem;align-items:flex-start;padding:.75rem 0;border-bottom:1px solid #F7F4EE}
-.check-item:last-child{border-bottom:none}
-.check-item input[type=checkbox]{width:18px;height:18px;accent-color:#B8963E;flex-shrink:0;margin-top:2px;cursor:pointer}
-.check-item label{font-size:.85rem;color:#4A4440;cursor:pointer;line-height:1.5}
-.check-item label strong{color:#1A1714}
-.btn-submit{width:100%;background:#B8963E;color:#fff;border:none;border-radius:12px;padding:.9rem;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity .2s,transform .15s;box-shadow:0 4px 16px rgba(184,150,62,.3);letter-spacing:.02em}
-.btn-submit:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
-.btn-submit:disabled{opacity:.5;cursor:not-allowed}
-.alert{border-radius:10px;padding:.75rem 1rem;font-size:.85rem;margin-bottom:1rem;display:flex;gap:.6rem;align-items:flex-start}
-.alert-err{background:#fdf0f0;border:1px solid #f5c6cb;color:#842029}
-.alert-ok{background:#eafaf1;border:1px solid #a3d9b1;color:#145a30}
-</style>
+<link rel="stylesheet" href="<?= base_url('css/formulario.css') ?>">
 </head>
 <body x-data="formularioGrupal()" x-init="init()">
 

@@ -14,7 +14,6 @@
     --bg-elevated:  #FFFFFF;
     --bg-input:     #ECEAE4;
     --bg-hover:     #E4E0D8;
-    --bg-active:    #DAD6CE;
 
     /* Texto */
     --text-primary:     #1C1916;
@@ -32,10 +31,6 @@
     --accent-light: #F4EAD0;
     --accent-text:  #6A5018;
 
-    /* Acento secundario */
-    --accent2:       #8A7050;
-    --accent2-light: #EDE0C8;
-
     /* Sidebar — oscuro en ambos modos */
     --sidebar-bg:          #1A1814;
     --sidebar-link:        #C8BCA8;
@@ -48,7 +43,7 @@
     --green-bg:    #E6F5EC; --green-text: #1A5E2E; --green-border: #9CCEB0;
     --amber-bg:    #F8F0D8; --amber-text: #7A5000; --amber-border: #E4C060;
     --red-bg:      #F8E8E8; --red-text:   #881818; --red-border:   #E4A0A0;
-    --blue-bg:     #E4EDF8; --blue-text:  #1A3878; --blue-border:  #9CBEEC;
+    --blue-bg:     #E4EDF8; --blue-text:  #1A3878;
 
     /* Sombras */
     --shadow-sm:  0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
@@ -58,7 +53,6 @@
     /* Calendario */
     --cal-cotizacion-bg:   #E4EDF8; --cal-cotizacion-text: #1A3878;
     --cal-contrato-bg:     #E6F5EC; --cal-contrato-text:   #1A5E2E;
-    --cal-entrega-bg:      #F0EAF8; --cal-entrega-text:    #481870;
 
     /* Sesiones */
     --cal-ses-pendiente-bg:  #FFF3CD; --cal-ses-pendiente-text:  #856404;
@@ -1377,7 +1371,6 @@ label {
     --bg-elevated:  #262220;
     --bg-input:     #100E0C;
     --bg-hover:     #26221E;
-    --bg-active:    #302C26;
 
     --text-primary:     #F0E8D8;
     --text-secondary:   #C4B490;
@@ -1392,9 +1385,6 @@ label {
     --accent-light: #301E08;
     --accent-text:  #F4D878;
 
-    --accent2:       #9C7E50;
-    --accent2-light: #281A08;
-
     --sidebar-bg:          #0E0C0A;
     --sidebar-link:        #C4B480;
     --sidebar-hover:       #181410;
@@ -1405,11 +1395,10 @@ label {
     --green-bg:    #182A1E; --green-text: #52C876; --green-border: #264A34;
     --amber-bg:    #281E08; --amber-text: #E4B028; --amber-border: #4C3810;
     --red-bg:      #281414; --red-text:   #E46C6C; --red-border:   #4C3434;
-    --blue-bg:     #101A2C; --blue-text:  #50A0E0; --blue-border:  #1C3454;
+    --blue-bg:     #101A2C; --blue-text:  #50A0E0;
 
     --cal-cotizacion-bg:   #101A2C; --cal-cotizacion-text: #50A0E0;
     --cal-contrato-bg:     #182A1E; --cal-contrato-text:   #52C876;
-    --cal-entrega-bg:      #1E1028; --cal-entrega-text:    #B470E0;
 
     --cal-ses-pendiente-bg:  #281E08; --cal-ses-pendiente-text:  #E4B028;
     --cal-ses-finalizado-bg: #182A1E; --cal-ses-finalizado-text: #52C876;

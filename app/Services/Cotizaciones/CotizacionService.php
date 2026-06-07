@@ -179,6 +179,14 @@ class CotizacionService
                 'telefono'         => $row['telefono']         ?? null,
                 'correo'           => $row['correo']           ?? null,
             ],
+            'cliente2' => !empty($row['id_cliente2']) ? [
+                'id'               => (int) $row['id_cliente2'],
+                'nombre_completo'  => trim(($row['nombres2'] ?? '') . ' ' . ($row['apellidos2'] ?? '')),
+                'tipo_documento'   => $row['tipo_documento2']   ?? null,
+                'numero_documento' => $row['numero_documento2'] ?? null,
+                'telefono'         => $row['telefono2']         ?? null,
+                'correo'           => $row['correo2']           ?? null,
+            ] : null,
             'usuario' => [
                 'username' => $row['nombre_user'],
             ],
@@ -235,7 +243,7 @@ class CotizacionService
             $anio    = !empty($sesion['fecha']) ? (int) date('Y', strtotime($sesion['fecha'])) : (int) date('Y');
             $nombre  = !empty($sesion['nombre_promocion'])
                 ? trim($sesion['nombre_promocion'])
-                : ($grado . ($seccion ? ' ' . $seccion : '') . ' · ' . $anio);
+                : ($nombreColegio . ' ' . $grado . ($seccion ? ' ' . $seccion : '') . ' ' . $anio);
 
             $this->promocionModel->insert([
                 'id_colegio'      => $idColegio,
@@ -350,8 +358,7 @@ class CotizacionService
             ? $this->colegioModel->find($promocion['id_colegio'])
             : null;
 
-        $detalles       = $detallesPorCot[$idCotizacion] ?? [];
-        $evaluacion     = $this->reglasPaquetesModel->evaluarDetalles($detalles);
+        $detalles = $detallesPorCot[$idCotizacion] ?? [];
 
         $result = $this->_formatearCotizacion(
             $row,
@@ -360,9 +367,6 @@ class CotizacionService
             $promocion,
             $colegio
         );
-
-        $result['reglas_activadas']  = $evaluacion['activadas'];
-        $result['reglas_violaciones'] = $evaluacion['violaciones'];
 
         return $result;
     }
@@ -407,6 +411,7 @@ class CotizacionService
 
         $idCotizacion = $this->cotizacionModel->insert([
             'id_cliente'     => $data['id_cliente'],
+            'id_cliente2'    => !empty($data['id_cliente2']) ? (int) $data['id_cliente2'] : null,
             'id_usuario'     => $data['id_usuario'],
             'observaciones'  => $data['observaciones'] ?? null,
             'fecha_registro' => date('Y-m-d H:i:s'),
@@ -450,9 +455,7 @@ class CotizacionService
 
         $this->_crearPromocionDesde($idCotizacion, $data);
 
-        $result = $this->obtenerPorId($idCotizacion);
-        $result['reglas_activadas'] = $evaluacion['activadas'];
-        return $result;
+        return $this->obtenerPorId($idCotizacion);
     }
 
     /**
@@ -489,6 +492,9 @@ class CotizacionService
         ];
         if (isset($data['total_estimado'])) {
             $camposUpdate['total_estimado'] = $data['total_estimado'];
+        }
+        if (array_key_exists('id_cliente2', $data)) {
+            $camposUpdate['id_cliente2'] = !empty($data['id_cliente2']) ? (int) $data['id_cliente2'] : null;
         }
         $this->cotizacionModel->update($idCotizacion, $camposUpdate);
 

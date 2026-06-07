@@ -16,7 +16,19 @@
 
                     <!-- ================= CLIENTE ================= -->
                     <fieldset class="mb-4">
-                        <legend class="section-divider">Datos del Cliente</legend>
+                        <legend class="section-divider" style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+                            <span>Datos del Cliente</span>
+                            <button type="button" id="btn-toggle-cliente2"
+                                    style="display:inline-flex;align-items:center;gap:5px;
+                                           background:var(--accent-light);color:var(--accent-text);
+                                           border:1px solid var(--accent);border-radius:6px;
+                                           padding:2px 10px;font-size:.7rem;font-weight:600;
+                                           cursor:pointer;letter-spacing:.02em;white-space:nowrap;
+                                           text-transform:none;">
+                                <i class="bi bi-person-plus" id="icon-toggle-cliente2"></i>
+                                <span id="label-toggle-cliente2">+ 2.º responsable</span>
+                            </button>
+                        </legend>
 
                         <!-- Buscador -->
                         <div class="row g-3 mb-3">
@@ -75,6 +87,62 @@
                         </div>
                     </fieldset>
 
+                    <!-- ================= SEGUNDO CLIENTE (OPCIONAL) ================= -->
+                        <fieldset id="cliente2-fields" style="display:none;margin-top:.75rem;margin-bottom:1.5rem;">
+                            <legend class="section-divider" style="font-size:.75rem;">
+                                Segundo Responsable
+                                <button type="button" id="btn-quitar-cliente2"
+                                        style="background:none;border:none;color:var(--text-muted);
+                                               font-size:.7rem;cursor:pointer;margin-left:8px;">
+                                    <i class="bi bi-x-circle me-1"></i>Quitar
+                                </button>
+                            </legend>
+
+                            <div class="input-group search-wrap mb-3">
+                                <input type="text" class="form-control" id="searchCliente2"
+                                       placeholder="DNI, teléfono o nombre...">
+                                <button class="btn btn-outline-secondary" type="button" id="btnBuscar2">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            <div id="searchFeedback2" class="form-text mb-2"></div>
+
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label for="nombresCliente2" class="form-label">Nombres*</label>
+                                    <input type="text" class="form-control" id="nombresCliente2">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="apellidosCliente2" class="form-label">Apellidos</label>
+                                    <input type="text" class="form-control" id="apellidosCliente2">
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label">Documento</label>
+                                    <div class="input-group">
+                                        <select class="form-select" id="tipoDocumento2" style="max-width:175px;flex-shrink:0;">
+                                            <option value="DNI">DNI</option>
+                                            <option value="CE">Carnet de Extranjería</option>
+                                            <option value="PASAPORTE">Pasaporte</option>
+                                        </select>
+                                        <input type="text" class="form-control" id="dniCliente2"
+                                               placeholder="8 dígitos numéricos" maxlength="12">
+                                    </div>
+                                    <div id="docFeedback2" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="telefonoCliente2" class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" id="telefonoCliente2"
+                                           placeholder="9XXXXXXXX" maxlength="9">
+                                    <div id="telFeedback2" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label for="emailCliente2" class="form-label">Correo electrónico</label>
+                                    <input type="email" class="form-control" id="emailCliente2">
+                                </div>
+                            </div>
+                            <input type="hidden" id="idCliente2">
+                        </fieldset>
+
                     <!-- ================= SERVICIOS Y PAQUETES ================= -->
                     <div class="row g-4">
 
@@ -127,15 +195,6 @@
                             </button>
                         </fieldset>
 
-                        <!-- SERVICIOS -->
-                        <!-- <fieldset class="col-12 col-md-7">
-                            <legend class="section-divider">Servicios</legend>
-                            <button type="button" class="btn-paquete mt-2" id="btn-modal-servicio">
-                                <i class="bi bi-plus-circle me-1"></i> Agregar servicio
-                            </button>
-                            <div id="serviciosContainer" class="d-flex flex-column gap-2"></div>
-
-                        </fieldset> -->
                     </div>
 
                     <!-- ================= COLEGIO ================= -->
@@ -248,15 +307,15 @@
                             <span id="resumenSubtotal"></span>
                         </div>
                         <!-- Input de descuento -->
-                        <div class="resumen-row mt-2" style="flex-direction:column;align-items:stretch;gap:4px;">
-                            <label for="descuentoMonto" style="font-size:0.75rem;color:var(--text-muted);margin:0;">
+                        <div class="resumen-row mt-2" style="align-items:center;gap:8px;">
+                            <label for="descuentoMonto" style="font-size:0.75rem;color:var(--text-muted);margin:0;flex:1;white-space:nowrap;">
                                 <i class="bi bi-tag me-1"></i>Descuento (S/)
                             </label>
                             <input type="number" id="descuentoMonto" min="0" step="1" value=""
                                    placeholder="0"
-                                   style="width:100%;border:1px solid var(--border);border-radius:4px;
+                                   style="width:90px;border:1px solid var(--border);border-radius:4px;
                                           padding:3px 8px;font-size:0.82rem;background:var(--bg-input);
-                                          color:var(--text-primary);text-align:right;">
+                                          color:var(--text-primary);text-align:right;flex-shrink:0;">
                         </div>
                         <!-- Fila de descuento calculado (visible solo cuando hay descuento) -->
                         <div id="resumen-desc-row" class="resumen-row" style="display:none;font-size:0.78rem;color:var(--green-text,#2e7d32);">
@@ -283,30 +342,6 @@
 </div>
 </main>
 
-<!-- MODAL SERVICIOS -->
-<div class="modal fade" id="modalServicio" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h6 class="modal-title">Agregar servicio</h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div id="panel-servicios">
-                    <!-- Cargado por JS -->
-                </div>
-                <div class="mt-3">
-                    <label for="servicioModalPrecio" class="form-label">Precio (S/)</label>
-                    <input type="number" class="form-control" id="servicioModalPrecio" placeholder="0.00" min="0" step="0.01">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary btn->sm" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-primary btn-sm" id="btn-confirmar-servicio">Agregar servicio</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- MODAL PAQUETES POR CATEGORÍA -->
 <div class="modal fade" id="modalPaquete" tabindex="-1">
