@@ -35,6 +35,7 @@ const state = {
     items:               [],
     todosPaquetes:       [],
     paqueteSeleccionado: null,
+    descuentoMonto:      0,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -356,7 +357,8 @@ function _buildPayload() {
             precio_unitario: item.precio,
             subtotal:        item.precio * (item.cantidad ?? 1),
         })),
-        observaciones: document.getElementById('notas')?.value?.trim() || null,
+        descuento_monto: state.descuentoMonto > 0 ? state.descuentoMonto : null,
+        observaciones:   document.getElementById('notas')?.value?.trim() || null,
         promocion: (nombreProm || numEst) ? { nombre: nombreProm, num_estudiantes: numEst } : null,
         colegio:   nombreColegio          ? { nombre: nombreColegio, provincia, distrito }  : null,
     };
@@ -408,7 +410,8 @@ async function init() {
     /* 4. Renderizar info del cliente (solo lectura) */
     _renderClienteInfo(cotizacion.cliente ?? {});
 
-    /* 5. Cargar ítems existentes en el estado interno */
+    /* 5. Cargar ítems y descuento existentes en el estado interno */
+    state.descuentoMonto = parseFloat(cotizacion.descuento_monto) || 0;
     const detalles = cotizacion.detalles ?? cotizacion.items ?? [];
     state.items = detalles.map(d => ({
         tipo:     d.tipo_item ?? 'paquete',

@@ -495,6 +495,9 @@ class CotizacionService
         if (isset($data['total_estimado'])) {
             $camposUpdate['total_estimado'] = $data['total_estimado'];
         }
+        if (array_key_exists('descuento_monto', $data)) {
+            $camposUpdate['descuento_monto'] = isset($data['descuento_monto']) ? (float) $data['descuento_monto'] : null;
+        }
         if (array_key_exists('id_cliente2', $data)) {
             $camposUpdate['id_cliente2'] = !empty($data['id_cliente2']) ? (int) $data['id_cliente2'] : null;
         }
@@ -663,6 +666,9 @@ class CotizacionService
      */
     public function cambiarEstado(int $idCotizacion, string $estado): void
     {
+        if (!$this->cotizacionModel->find($idCotizacion)) {
+            throw new \RuntimeException('Cotización no encontrada', 404);
+        }
         $this->cotizacionModel->update($idCotizacion, ['estado' => $estado]);
     }
 }
