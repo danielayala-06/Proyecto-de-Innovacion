@@ -88,11 +88,6 @@
                         <legend><i class="bi bi-journal-text"></i> Notas del contrato</legend>
                         <div class="w-100 mb-4 shadow border bg-body-tertiary rounded"></div>
 
-                        <div class="cc-form-group">
-                            <label for="contratoClausulas">Cláusulas adicionales</label>
-                            <textarea id="contratoClausulas" placeholder="Condiciones o acuerdos especiales…"></textarea>
-                        </div>
-
                         <div class="cc-form-group" style="margin-bottom:0;">
                             <label for="contratoObservaciones">Observaciones</label>
                             <textarea id="contratoObservaciones" placeholder="Notas internas del contrato…"></textarea>
