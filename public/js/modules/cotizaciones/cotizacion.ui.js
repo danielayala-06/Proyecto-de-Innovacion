@@ -259,6 +259,11 @@ export const ui = {
         </table>
       </div>
 
+      ${cot.descuento_monto > 0 ? `
+      <div class="text-end" style="font-size:.83rem;color:var(--text-muted);">
+        Subtotal: <span>${formatters.moneda((cot.total ?? 0) + cot.descuento_monto)}</span>
+        &nbsp;·&nbsp;<span style="color:#198754;"><i class="bi bi-tag-fill"></i> Descuento: - ${formatters.moneda(cot.descuento_monto)}</span>
+      </div>` : ''}
       <div class="text-end mt-1" style="font-size:.9rem;">
         Total estimado:
         <strong>${formatters.moneda(cot.total ?? cot.total_estimado)}</strong>

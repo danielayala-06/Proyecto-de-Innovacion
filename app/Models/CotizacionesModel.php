@@ -35,6 +35,7 @@ class CotizacionesModel extends Model
         'fecha_registro',
         'observaciones',
         'total_estimado',
+        'descuento_monto',
         'estado',
     ];
 

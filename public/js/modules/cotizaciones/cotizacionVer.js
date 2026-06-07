@@ -87,7 +87,18 @@ function _renderItems(cot) {
         </tr>`;
     }).join('');
 
-    const total = items.reduce((s, it) => s + it.precio_unitario * it.cantidad, 0);
+    const bruto    = items.reduce((s, it) => s + it.precio_unitario * it.cantidad, 0);
+    const descuento = parseFloat(cot.descuento_monto) || 0;
+
+    const descRow = descuento > 0 ? `
+        <div class="cv-total-row" style="border-top:none;padding-top:4px;font-size:.83rem;">
+            <span style="color:var(--text-muted);">Subtotal</span>
+            <span>${_moneda(bruto)}</span>
+        </div>
+        <div class="cv-total-row" style="border-top:none;padding-top:2px;font-size:.83rem;">
+            <span style="color:#198754;"><i class="bi bi-tag-fill"></i> Descuento</span>
+            <span style="color:#198754;">- ${_moneda(descuento)}</span>
+        </div>` : '';
 
     el.innerHTML = `
         <table class="cv-items-table">
@@ -101,9 +112,10 @@ function _renderItems(cot) {
             </thead>
             <tbody>${filas}</tbody>
         </table>
-        <div class="cv-total-row">
+        ${descRow}
+        <div class="cv-total-row" style="${descuento > 0 ? 'padding-top:4px;' : ''}">
             <span>Total cotización</span>
-            <strong>${_moneda(total)}</strong>
+            <strong>${_moneda(cot.total)}</strong>
         </div>`;
 }
 

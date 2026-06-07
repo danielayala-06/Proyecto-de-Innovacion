@@ -134,7 +134,10 @@ class CotizacionesApi extends BaseApiController
                 ->setJSON(['status' => 'error', 'message' => 'El número de estudiantes no puede superar 1000']);
         }
 
-        $body['total_estimado'] = $this->_calcularTotal($body['detalles']);
+        $descuento = max(0.0, (float) ($body['descuento_monto'] ?? 0));
+        $bruto = $this->_calcularTotal($body['detalles']);
+        $body['total_estimado'] = max(0.0, $bruto - $descuento);
+        $body['descuento_monto'] = $descuento > 0 ? $descuento : null;
 
         try {
             $cotizacion = $this->service->crear($body);
@@ -167,7 +170,10 @@ class CotizacionesApi extends BaseApiController
         $body = $this->request->getJSON(true) ?? [];
 
         if (!empty($body['detalles'])) {
-            $body['total_estimado'] = $this->_calcularTotal($body['detalles']);
+            $descuento = max(0.0, (float) ($body['descuento_monto'] ?? 0));
+            $bruto = $this->_calcularTotal($body['detalles']);
+            $body['total_estimado']  = max(0.0, $bruto - $descuento);
+            $body['descuento_monto'] = $descuento > 0 ? $descuento : null;
         }
 
         try {

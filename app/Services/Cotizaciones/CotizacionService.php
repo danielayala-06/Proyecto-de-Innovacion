@@ -164,12 +164,13 @@ class CotizacionService
     ): array {
         return [
             'cotizacion' => [
-                'id'             => (int) $row['id_cotizacion'],
-                'fecha'          => $row['fecha_registro'],
-                'estado'         => $row['estado'],
-                'observaciones'  => $row['observaciones'],
-                'total'          => (float) $row['total_estimado'],
-                'tiene_contrato' => $tieneContrato,
+                'id'              => (int) $row['id_cotizacion'],
+                'fecha'           => $row['fecha_registro'],
+                'estado'          => $row['estado'],
+                'observaciones'   => $row['observaciones'],
+                'total'           => (float) $row['total_estimado'],
+                'descuento_monto' => isset($row['descuento_monto']) ? (float) $row['descuento_monto'] : null,
+                'tiene_contrato'  => $tieneContrato,
             ],
             'cliente' => [
                 'id'               => (int) $row['id_cliente'],
@@ -410,13 +411,14 @@ class CotizacionService
         $db->transStart();
 
         $idCotizacion = $this->cotizacionModel->insert([
-            'id_cliente'     => $data['id_cliente'],
-            'id_cliente2'    => !empty($data['id_cliente2']) ? (int) $data['id_cliente2'] : null,
-            'id_usuario'     => $data['id_usuario'],
-            'observaciones'  => $data['observaciones'] ?? null,
-            'fecha_registro' => date('Y-m-d H:i:s'),
-            'total_estimado' => $data['total_estimado'],
-            'estado'         => 'PENDIENTE',
+            'id_cliente'      => $data['id_cliente'],
+            'id_cliente2'     => !empty($data['id_cliente2']) ? (int) $data['id_cliente2'] : null,
+            'id_usuario'      => $data['id_usuario'],
+            'observaciones'   => $data['observaciones'] ?? null,
+            'fecha_registro'  => date('Y-m-d H:i:s'),
+            'total_estimado'  => $data['total_estimado'],
+            'descuento_monto' => isset($data['descuento_monto']) ? (float) $data['descuento_monto'] : null,
+            'estado'          => 'PENDIENTE',
         ]);
 
         if ($idCotizacion === false) {

@@ -38,6 +38,9 @@ class CotizacionTransformer extends BaseTransformer
             'fecha'               =>         $resource['cotizacion']['fecha'],
             'estado'              =>         $resource['cotizacion']['estado'],
             'total'               => (float) $resource['cotizacion']['total'],
+            'descuento_monto'     => isset($resource['cotizacion']['descuento_monto'])
+                                        ? (float) $resource['cotizacion']['descuento_monto']
+                                        : null,
             'observaciones'       =>         $resource['cotizacion']['observaciones'],
             'tiene_contrato'      => (bool)  ($resource['cotizacion']['tiene_contrato'] ?? false),
             'cliente'             => $this->includeCliente(),
