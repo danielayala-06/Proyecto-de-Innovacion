@@ -93,21 +93,11 @@ class ContratoService
             return null;
         }
 
-        $pagosAdicionales = $this->pagoModel->historialPorContrato($id);
-
-        $adelanto    = (float) $contrato['adelanto'];
+        $pagos       = $this->pagoModel->historialPorContrato($id);
         $total       = (float) $contrato['total'];
-        $sumPagos    = array_sum(array_column($pagosAdicionales, 'monto'));
-        $totalPagado = $adelanto + $sumPagos;
+        $totalPagado = array_sum(array_column($pagos, 'monto'));
 
-        // El adelanto se presenta como primer pago del historial
-        $adelantoEntry = [
-            'fecha'             => $contrato['fecha_creacion'],
-            'monto'             => $adelanto,
-            'nombre_forma_pago' => 'Adelanto inicial',
-        ];
-
-        $contrato['pagos']        = array_merge([$adelantoEntry], $pagosAdicionales);
+        $contrato['pagos']        = $pagos;
         $contrato['total_pagado'] = round($totalPagado, 2);
         $contrato['saldo']        = round($total - $totalPagado, 2);
 
@@ -216,6 +206,18 @@ class ContratoService
             ->set(['is_active' => true])
             ->update();
 
+        // Registrar el adelanto como primer pago real si es mayor a 0
+        if ($adelanto > 0) {
+            $idFormaPago = !empty($data['id_forma_pago']) ? (int) $data['id_forma_pago'] : 1;
+            $this->pagoModel->insert([
+                'id_contrato'  => $idContrato,
+                'id_form_pago' => $idFormaPago,
+                'monto'        => $adelanto,
+                'moneda'       => 'PEN',
+                'fecha'        => date('Y-m-d'),
+            ]);
+        }
+
         $db->transComplete();
 
         if (!$db->transStatus()) {
@@ -302,8 +304,21 @@ class ContratoService
      */
     public function cambiarEstado(int $id, string $estado): void
     {
-        if (!$this->contratoModel->find($id)) {
+        $contrato = $this->contratoModel->find($id);
+        if (!$contrato) {
             throw new \RuntimeException('Contrato no encontrado', 404);
+        }
+
+        $estadoActual = $contrato['estado'];
+        $transicionesInvalidas = [
+            'COMPLETADO' => ['ACTIVO'],
+            'CANCELADO'  => ['ACTIVO', 'COMPLETADO'],
+        ];
+        if (isset($transicionesInvalidas[$estadoActual]) && in_array($estado, $transicionesInvalidas[$estadoActual], true)) {
+            throw new \RuntimeException(
+                "No se puede cambiar un contrato {$estadoActual} a {$estado}",
+                409
+            );
         }
 
         $updateData = ['estado' => $estado];

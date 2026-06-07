@@ -163,6 +163,15 @@ function _renderPreviewCotizacion(cot, el) {
         </table>` : '<p style="font-size:.82rem;color:var(--text-muted);">Sin ítems registrados.</p>'}
     </div>
 
+    ${cot.descuento_monto > 0 ? `
+    <div class="cc-row" style="font-size:.83rem;padding:3px 0;">
+      <span>Subtotal</span>
+      <span>${formatters.moneda((cot.total ?? 0) + cot.descuento_monto)}</span>
+    </div>
+    <div class="cc-row" style="font-size:.83rem;padding:3px 0;">
+      <span style="color:#198754;"><i class="bi bi-tag-fill"></i> Descuento</span>
+      <span style="color:#198754;">− ${formatters.moneda(cot.descuento_monto)}</span>
+    </div>` : ''}
     <div class="cc-total-row">
       <span>Total estimado</span>
       <strong>${formatters.moneda(cot.total)}</strong>
@@ -266,13 +275,13 @@ function _initForm(cotId, total, prom = null) {
 
   const selectForma = document.getElementById('contratoFormaPago');
   if (selectForma) {
-    selectForma.innerHTML = '<option value="">— Cargando... —</option>';
+    selectForma.innerHTML = '<option value="" disabled>— Cargando... —</option>';
     contratoApi.formasPago().then(res => {
       const formas = res.data ?? [];
-      selectForma.innerHTML = '<option value="">— Seleccionar —</option>' +
-        formas.map(f => `<option value="${f.id_form_pago}">${f.nombre_forma_pago}</option>`).join('');
+      selectForma.innerHTML = formas.map(f => `<option value="${f.id_form_pago}">${f.nombre_forma_pago}</option>`).join('');
+      if (formas.length) selectForma.value = formas[0].id_form_pago;
     }).catch(() => {
-      selectForma.innerHTML = '<option value="">— Error al cargar —</option>';
+      selectForma.innerHTML = '<option value="" disabled>— Error al cargar —</option>';
     });
   }
 
@@ -350,7 +359,7 @@ function _abrirConfirmacion(cotId, total) {
   const btnConf = document.getElementById('btnConfirmarContrato');
   const nuevoBtn = btnConf.cloneNode(true);
   btnConf.replaceWith(nuevoBtn);
-  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoSel?.value ?? ''));
+  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoText, formaPagoSel?.value));
 
   const modalEl = document.getElementById('modalConfirmarContrato');
   _modalContrato = _modalContrato ?? new bootstrap.Modal(modalEl);
@@ -361,13 +370,11 @@ function _abrirConfirmacion(cotId, total) {
  * Envía el contrato a la API tras la confirmación del usuario.
  * Cierra el modal, deshabilita el botón y redirige al éxito.
  */
-async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
-  const clausulas     = document.getElementById('contratoClausulas')?.value.trim() ?? '';
+async function _submit(cotId, total, adelanto, fechaFirma, formaPago, idFormaPago) {
   const observaciones = document.getElementById('contratoObservaciones')?.value.trim() ?? '';
 
   const obsPartes = [];
   if (formaPago)     obsPartes.push(`Forma de pago: ${formaPago}`);
-  if (clausulas)     obsPartes.push(`Cláusulas: ${clausulas}`);
   if (observaciones) obsPartes.push(observaciones);
   const obsTexto = obsPartes.join('\n\n') || null;
 
@@ -382,6 +389,7 @@ async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
       adelanto,
       fecha_emision:      fechaFirma,
       observaciones:      obsTexto,
+      id_forma_pago:      idFormaPago ? parseInt(idFormaPago) : null,
     });
     _modalContrato?.hide();
     alerts.ok('Contrato generado correctamente.');
