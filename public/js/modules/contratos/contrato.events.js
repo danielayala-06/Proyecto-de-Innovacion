@@ -20,7 +20,7 @@
  * @exports abrirConCotizacionId - Abre el modal 2 pre-seleccionando una cotización por ID.
  */
 
-import { state, calcularStats, ordenarPorEstado, ESTADOS_ARCHIVADOS_CON } from './contrato.state.js';
+import { state, calcularStats, ESTADOS_ARCHIVADOS_CON } from './contrato.state.js';
 import { ui }                     from './contrato.ui.js';
 import { manager }                from './contrato.manager.js';
 import { contratoApi }            from '../../api/contrato.api.js';
@@ -73,7 +73,7 @@ function _filtrar() {
     return okArch && okSearch && okEstado;
   });
 
-  state.filtradas = ordenarPorEstado(filtradas);
+  state.filtradas = [...filtradas].sort((a, b) => b.id - a.id);
   state.pagina = 1;
   _renderPagina();
 }
@@ -323,7 +323,7 @@ window.confirmarContrato = async function () {
     }
 
     const res = await contratoApi.listar();
-    state.filas = ordenarPorEstado(res.data ?? []);
+    state.filas = [...(res.data ?? [])].sort((a, b) => b.id - a.id);
     ui.renderStats(calcularStats(state.filas));
     _filtrar();
   } catch (e) {
@@ -692,7 +692,7 @@ window.confirmarPago = async function () {
     }
 
     const resLista = await contratoApi.listar();
-    state.filas = ordenarPorEstado(resLista.data ?? []);
+    state.filas = [...(resLista.data ?? [])].sort((a, b) => b.id - a.id);
     ui.renderStats(calcularStats(state.filas));
     _filtrar();
   } catch (e) {

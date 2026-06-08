@@ -14,7 +14,7 @@
  *     de contrato con esa cotización pre-seleccionada (flujo desde cotizaciones).
  */
 
-import { state, calcularStats, ordenarPorEstado, ESTADOS_ARCHIVADOS_CON }  from './contrato.state.js';
+import { state, calcularStats, ESTADOS_ARCHIVADOS_CON }  from './contrato.state.js';
 import { ui }                                       from './contrato.ui.js';
 import { manager }                                  from './contrato.manager.js';
 import { initEvents, _filtrar, abrirConCotizacionId } from './contrato.events.js';
@@ -38,7 +38,7 @@ if (pref?.estado) {
 /* ── 3. Fetch a la API y renderizar ─────────────────────────────────────── */
 try {
   const res = await contratoApi.listar();
-  state.filas = ordenarPorEstado(res.data ?? []);
+  state.filas = [...(res.data ?? [])].sort((a, b) => b.id - a.id);
 
   // Aplicar filtros restaurados + filtro de archivadas
   const _search = (pref?.search || '').toLowerCase().trim();
