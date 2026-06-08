@@ -84,3 +84,7 @@ Single stylesheet: public/css/styles.css. Uses CSS custom properties for theming
 - NIVEL_ORDER in paquete.state.js defines the display order — keep it consistent with the enum.
 - reglas_paquetes.tipo_condicion enum: CANTIDAD_MIN, CANTIDAD_MAX, ELEGIBILIDAD_MIN. ELEGIBILIDAD_MIN fires when the group is smaller than the required minimum (blocks the sale); CANTIDAD_MIN fires when the threshold is met (unlocks a benefit); CANTIDAD_MAX fires when the limit is exceeded (violation).
 - The external RENIEC API key is in .env as DECOLECTA.KEY.
+
+## Pendientes
+
+- **Donald Scarrow 6to — precio de sesiones**: el seeder `ContratosRealSeeder` asignó S/ 210 a "2 Sesiones fotográficas" para cuadrar el total de S/ 3150 (14×140 + 7×140 = 2940; diferencia = 210). Confirmar con el usuario si ese monto es correcto o si las sesiones tienen otro precio, y actualizar el detalle en `cotizaciones_detalles` para la cotización correspondiente (contrato #9).

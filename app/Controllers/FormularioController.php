@@ -332,7 +332,7 @@ class FormularioController extends BaseController
                 'apellidos'        => $tutorApells,
                 'telefono'         => $tel,
                 'correo'           => $body['email'] ?? null,
-                'tipo_documento'   => 'OTRO',
+                'tipo_documento'   => 'CE',
                 'numero_documento' => 'FORM-' . str_pad((int) $alumno['id'], 6, '0', STR_PAD_LEFT),
             ]);
             $idPersona = $db->insertID();

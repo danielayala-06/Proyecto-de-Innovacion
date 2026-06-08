@@ -510,6 +510,7 @@ function _sincronizarNumEstudiantes() {
  */
 function _renderContainers() {
     _renderContainer('paquetesContainer', 'paquete');
+    _renderServiciosContainer();
     _renderCortesiasContainer();
 }
 
@@ -616,6 +617,85 @@ function _renderContainer(containerId, tipo) {
         input.addEventListener('change', () => {
             const idx = parseInt(input.dataset.idx);
             _aplicarCantidad(idx, parseInt(input.value) || 1);
+        })
+    );
+}
+
+/** Renderiza los servicios adicionales (tipo = 'servicio', precio > 0). */
+function _renderServiciosContainer() {
+    const el = document.getElementById('serviciosContainer');
+    if (!el) return;
+
+    const servicios = state.items
+        .map((item, idx) => ({ item, idx }))
+        .filter(({ item }) => item.tipo === 'servicio');
+
+    if (!servicios.length) { el.innerHTML = ''; return; }
+
+    el.innerHTML = servicios.map(({ item, idx }) => {
+        const cant     = item.cantidad ?? 1;
+        const subtotal = item.precio * cant;
+        return `
+        <div class="item-row d-flex justify-content-between align-items-center p-2 mt-1"
+             style="border:1px solid var(--border,#dee2e6);border-radius:6px;font-size:.82rem;gap:8px;">
+            <span style="flex:1;" title="${item.nombre}">${item.nombre}</span>
+            <span style="font-size:.7rem;color:var(--text-muted);white-space:nowrap;">${formatters.moneda(item.precio)}/u</span>
+            <div style="display:flex;align-items:center;gap:2px;">
+                <button type="button" class="po-qty-btn svc-qty-dec" data-idx="${idx}">−</button>
+                <input type="number" class="svc-qty-input" data-idx="${idx}"
+                       value="${cant}" min="1" max="9999"
+                       style="width:46px;height:24px;text-align:center;border:1px solid var(--border);
+                              border-radius:4px;font-size:.78rem;background:var(--bg-input);
+                              color:var(--text-primary);padding:0 2px;">
+                <button type="button" class="po-qty-btn svc-qty-inc" data-idx="${idx}">+</button>
+            </div>
+            <span class="svc-subtotal" data-idx="${idx}"
+                  style="font-weight:600;white-space:nowrap;min-width:62px;text-align:right;">
+                ${formatters.moneda(subtotal)}
+            </span>
+            <button type="button" data-idx="${idx}"
+                    style="background:none;border:none;padding:2px 4px;color:#e57373;cursor:pointer;font-size:.85rem;"
+                    class="btn-svc-del" title="Quitar">
+                <i class="bi bi-trash3"></i>
+            </button>
+        </div>`;
+    }).join('');
+
+    const _aplicarCantSvc = (idx, nuevaCant) => {
+        nuevaCant = Math.min(9999, Math.max(1, nuevaCant));
+        state.items[idx].cantidad = nuevaCant;
+        const inputEl    = el.querySelector(`.svc-qty-input[data-idx="${idx}"]`);
+        const subtotalEl = el.querySelector(`.svc-subtotal[data-idx="${idx}"]`);
+        if (inputEl)    inputEl.value          = nuevaCant;
+        if (subtotalEl) subtotalEl.textContent = formatters.moneda(state.items[idx].precio * nuevaCant);
+        _actualizarResumen();
+        _saveDraft();
+    };
+
+    el.querySelectorAll('.svc-qty-dec').forEach(btn =>
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.idx);
+            _aplicarCantSvc(idx, (state.items[idx].cantidad ?? 1) - 1);
+        })
+    );
+    el.querySelectorAll('.svc-qty-inc').forEach(btn =>
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.idx);
+            _aplicarCantSvc(idx, (state.items[idx].cantidad ?? 1) + 1);
+        })
+    );
+    el.querySelectorAll('.svc-qty-input').forEach(input =>
+        input.addEventListener('change', () => {
+            const idx = parseInt(input.dataset.idx);
+            _aplicarCantSvc(idx, parseInt(input.value) || 1);
+        })
+    );
+    el.querySelectorAll('.btn-svc-del').forEach(btn =>
+        btn.addEventListener('click', () => {
+            state.items.splice(parseInt(btn.dataset.idx), 1);
+            _renderContainers();
+            _actualizarResumen();
+            _saveDraft();
         })
     );
 }
@@ -1023,7 +1103,7 @@ function _validar() {
     }
 
     const itemsPagados = state.items.filter(i => i.tipo !== 'cortesia');
-    if (!itemsPagados.length) return 'Agrega al menos un paquete a la cotización.';
+    if (!itemsPagados.length) return 'Agrega al menos un paquete o servicio a la cotización.';
 
     const numEst = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
     if (numEst <= 0) {
@@ -1065,7 +1145,7 @@ function _buildPayload(idCliente) {
         const pUnit      = esCortesia ? 0 : item.precio;
         const desc       = esCortesia ? `[Cortesía] ${item.nombre}` : item.nombre;
         return {
-            tipo_item:       esCortesia ? 'personalizado' : item.tipo,
+            tipo_item:       item.tipo === 'paquete' ? 'paquete' : 'personalizado',
             id_referencia:   item.idRef ?? null,
             descripcion:     desc,
             cantidad:        cant,
@@ -1876,6 +1956,62 @@ async function init() {
     // Confirmar también con Enter en el input
     cortesiaInput?.addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); _confirmarCortesia(); }
+    });
+
+    // ── Sección servicios adicionales ─────────────────────────────────────────
+    const servicioWrap    = document.getElementById('servicio-add-wrap');
+    const servicioNombre  = document.getElementById('servicioNombre');
+    const servicioPrecio  = document.getElementById('servicioPrecio');
+    const servicioCant    = document.getElementById('servicioCant');
+    const servicioPreview = document.getElementById('servicioSubtotalPreview');
+
+    const _actualizarSubtotalPreview = () => {
+        const precio = parseFloat(servicioPrecio?.value) || 0;
+        const cant   = parseInt(servicioCant?.value) || 1;
+        if (servicioPreview) servicioPreview.textContent = `= ${formatters.moneda(precio * cant)}`;
+    };
+
+    const _limpiarServicioForm = () => {
+        if (servicioNombre)  servicioNombre.value  = '';
+        if (servicioPrecio)  servicioPrecio.value  = '';
+        if (servicioCant)    servicioCant.value    = '1';
+        if (servicioPreview) servicioPreview.textContent = '= S/ 0.00';
+        if (servicioWrap)    servicioWrap.style.display = 'none';
+    };
+
+    const _confirmarServicio = () => {
+        const nombre = servicioNombre?.value?.trim();
+        const precio = parseFloat(servicioPrecio?.value);
+        const cant   = Math.max(1, parseInt(servicioCant?.value) || 1);
+
+        if (!nombre) { alerts.warning('Escribe la descripción del servicio.'); servicioNombre?.focus(); return; }
+        if (!precio || precio <= 0) { alerts.warning('El precio unitario debe ser mayor a 0.'); servicioPrecio?.focus(); return; }
+
+        state.items.push({ tipo: 'servicio', idRef: null, nombre, precio: Math.round(precio * 100) / 100, cantidad: cant });
+        _limpiarServicioForm();
+        _renderContainers();
+        _actualizarResumen();
+        _saveDraft();
+    };
+
+    document.getElementById('btn-agregar-servicio')?.addEventListener('click', () => {
+        if (servicioWrap) servicioWrap.style.display = '';
+        servicioNombre?.focus();
+    });
+    document.getElementById('btn-cancelar-servicio')?.addEventListener('click', _limpiarServicioForm);
+    document.getElementById('btn-confirmar-servicio')?.addEventListener('click', _confirmarServicio);
+
+    servicioPrecio?.addEventListener('input', _actualizarSubtotalPreview);
+    servicioCant?.addEventListener('input',   _actualizarSubtotalPreview);
+
+    servicioNombre?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); servicioPrecio?.focus(); }
+    });
+    servicioPrecio?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); servicioCant?.focus(); }
+    });
+    servicioCant?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); _confirmarServicio(); }
     });
 }
 

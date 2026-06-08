@@ -197,6 +197,51 @@
 
                     </div>
 
+                    <!-- ================= SERVICIOS ADICIONALES ================= -->
+                    <fieldset class="mt-3">
+                        <legend class="section-divider">
+                            Servicios adicionales
+                            <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;"> — precio × cantidad</span>
+                        </legend>
+
+                        <div id="serviciosContainer" class="d-flex flex-column gap-2 mb-1"></div>
+
+                        <div id="servicio-add-wrap" style="display:none;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:.6rem;margin-bottom:.4rem;">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12">
+                                    <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Descripción</label>
+                                    <input type="text" class="form-control form-control-sm" id="servicioNombre"
+                                           placeholder="Ej: Photobook mediano, Fotos en USB..."
+                                           autocomplete="off">
+                                </div>
+                                <div class="col">
+                                    <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Precio unit. (S/)</label>
+                                    <input type="number" class="form-control form-control-sm" id="servicioPrecio"
+                                           min="0.01" step="0.01" placeholder="0.00">
+                                </div>
+                                <div class="col-auto" style="min-width:76px;">
+                                    <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
+                                    <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="9999">
+                                </div>
+                                <div class="col-auto d-flex align-items-end pb-1">
+                                    <span id="servicioSubtotalPreview" style="font-size:.82rem;font-weight:700;color:var(--green-text,#1A5E2E);white-space:nowrap;">= S/ 0.00</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-1 mt-2 justify-content-end">
+                                <button type="button" class="btn btn-sm btn-secondary" id="btn-cancelar-servicio">
+                                    <i class="bi bi-x"></i> Cancelar
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary" id="btn-confirmar-servicio">
+                                    <i class="bi bi-check2"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn-paquete mt-1" id="btn-agregar-servicio">
+                            <i class="bi bi-plus-circle me-1"></i> Agregar servicio
+                        </button>
+                    </fieldset>
+
                     <!-- ================= COLEGIO ================= -->
                     <fieldset class="mt-4">
                         <legend class="section-divider">Institución</legend>

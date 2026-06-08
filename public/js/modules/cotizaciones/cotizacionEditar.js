@@ -184,32 +184,42 @@ window.seleccionarOpcion = function (el, nombre, precio, idRef) {
 // RENDERIZADO DE ÍTEMS
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Re-renderiza el contenedor de ítems de la cotización.
- * @returns {void}
- */
-function _renderContainers() {
-    const el = document.getElementById('paquetesContainer');
+/** Renderiza ítems de un tipo en un contenedor dado (solo botón eliminar). */
+function _renderItemsSimple(containerId, tipo) {
+    const el = document.getElementById(containerId);
     if (!el) return;
 
-    if (!state.items.length) { el.innerHTML = ''; return; }
+    const filtered = state.items
+        .map((item, idx) => ({ item, idx }))
+        .filter(({ item }) => item.tipo === tipo);
 
-    const indexed = state.items.map((item, idx) => ({ item, idx }));
+    if (!filtered.length) { el.innerHTML = ''; return; }
 
-    el.innerHTML = indexed.map(({ item, idx }) => {
+    const esCortesia = tipo === 'cortesia';
+
+    el.innerHTML = filtered.map(({ item, idx }) => {
         const cant     = item.cantidad ?? 1;
         const subtotal = item.precio * cant;
         const cantTag  = cant > 1
-            ? `<span style="font-size:0.75rem;color:#888;white-space:nowrap;">×${cant}</span>`
+            ? `<span style="font-size:.72rem;color:var(--text-muted);white-space:nowrap;">×${cant}</span>`
+            : '';
+        const precioLabel = esCortesia
+            ? `<span style="font-size:.75rem;font-weight:600;color:var(--green-text,#4caf50);">Gratis</span>`
+            : `<span style="font-weight:600;white-space:nowrap;">${formatters.moneda(subtotal)}</span>`;
+        const iconHtml = esCortesia
+            ? `<i class="bi bi-gift" style="color:var(--green-text,#4caf50);flex-shrink:0;"></i>`
             : '';
         return `
         <div class="d-flex justify-content-between align-items-center p-2 mt-1"
-             style="border:1px solid var(--border,#dee2e6);border-radius:6px;font-size:0.82rem;gap:8px;">
+             style="border:1px solid ${esCortesia ? 'var(--green-text,#4caf50)' : 'var(--border,#dee2e6)'};
+                    border-radius:6px;font-size:.82rem;gap:8px;
+                    ${esCortesia ? 'background:rgba(76,175,80,.05);' : ''}">
+            ${iconHtml}
             <span style="flex:1;">${item.nombre}</span>
             ${cantTag}
-            <span style="font-weight:600;white-space:nowrap;">${formatters.moneda(subtotal)}</span>
+            ${precioLabel}
             <button type="button" data-idx="${idx}"
-                    style="background:none;border:none;padding:2px 4px;color:#e57373;cursor:pointer;font-size:0.85rem;"
+                    style="background:none;border:none;padding:2px 4px;color:#e57373;cursor:pointer;font-size:.85rem;"
                     class="btn-item-del" title="Quitar">
                 <i class="bi bi-trash3"></i>
             </button>
@@ -223,6 +233,93 @@ function _renderContainers() {
             _actualizarResumen();
         });
     });
+}
+
+/** Renderiza los servicios adicionales (tipo='servicio') con controles de cantidad. */
+function _renderServiciosContainer() {
+    const el = document.getElementById('serviciosContainer');
+    if (!el) return;
+
+    const servicios = state.items
+        .map((item, idx) => ({ item, idx }))
+        .filter(({ item }) => item.tipo === 'servicio');
+
+    if (!servicios.length) { el.innerHTML = ''; return; }
+
+    el.innerHTML = servicios.map(({ item, idx }) => {
+        const cant     = item.cantidad ?? 1;
+        const subtotal = item.precio * cant;
+        return `
+        <div class="d-flex justify-content-between align-items-center p-2 mt-1"
+             style="border:1px solid var(--border,#dee2e6);border-radius:6px;font-size:.82rem;gap:8px;">
+            <span style="flex:1;" title="${item.nombre}">${item.nombre}</span>
+            <span style="font-size:.7rem;color:var(--text-muted);white-space:nowrap;">${formatters.moneda(item.precio)}/u</span>
+            <div style="display:flex;align-items:center;gap:2px;">
+                <button type="button" class="po-qty-btn svc-qty-dec" data-idx="${idx}">−</button>
+                <input type="number" class="svc-qty-input" data-idx="${idx}"
+                       value="${cant}" min="1" max="9999"
+                       style="width:46px;height:24px;text-align:center;border:1px solid var(--border);
+                              border-radius:4px;font-size:.78rem;background:var(--bg-input);
+                              color:var(--text-primary);padding:0 2px;">
+                <button type="button" class="po-qty-btn svc-qty-inc" data-idx="${idx}">+</button>
+            </div>
+            <span class="svc-subtotal" data-idx="${idx}"
+                  style="font-weight:600;white-space:nowrap;min-width:62px;text-align:right;">
+                ${formatters.moneda(subtotal)}
+            </span>
+            <button type="button" data-idx="${idx}"
+                    style="background:none;border:none;padding:2px 4px;color:#e57373;cursor:pointer;font-size:.85rem;"
+                    class="btn-svc-del" title="Quitar">
+                <i class="bi bi-trash3"></i>
+            </button>
+        </div>`;
+    }).join('');
+
+    const _aplicarCantSvc = (idx, nuevaCant) => {
+        nuevaCant = Math.min(9999, Math.max(1, nuevaCant));
+        state.items[idx].cantidad = nuevaCant;
+        const inputEl    = el.querySelector(`.svc-qty-input[data-idx="${idx}"]`);
+        const subtotalEl = el.querySelector(`.svc-subtotal[data-idx="${idx}"]`);
+        if (inputEl)    inputEl.value          = nuevaCant;
+        if (subtotalEl) subtotalEl.textContent = formatters.moneda(state.items[idx].precio * nuevaCant);
+        _actualizarResumen();
+    };
+
+    el.querySelectorAll('.svc-qty-dec').forEach(btn =>
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.idx);
+            _aplicarCantSvc(idx, (state.items[idx].cantidad ?? 1) - 1);
+        })
+    );
+    el.querySelectorAll('.svc-qty-inc').forEach(btn =>
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.idx);
+            _aplicarCantSvc(idx, (state.items[idx].cantidad ?? 1) + 1);
+        })
+    );
+    el.querySelectorAll('.svc-qty-input').forEach(input =>
+        input.addEventListener('change', () => {
+            const idx = parseInt(input.dataset.idx);
+            _aplicarCantSvc(idx, parseInt(input.value) || 1);
+        })
+    );
+    el.querySelectorAll('.btn-svc-del').forEach(btn =>
+        btn.addEventListener('click', () => {
+            state.items.splice(parseInt(btn.dataset.idx), 1);
+            _renderContainers();
+            _actualizarResumen();
+        })
+    );
+}
+
+/**
+ * Re-renderiza todos los contenedores de ítems.
+ * @returns {void}
+ */
+function _renderContainers() {
+    _renderItemsSimple('paquetesContainer', 'paquete');
+    _renderServiciosContainer();
+    _renderItemsSimple('cortesiasContainer', 'cortesia');
 }
 
 /**
@@ -240,15 +337,19 @@ function _actualizarResumen() {
         return;
     }
 
-    const total = state.items.reduce((s, i) => s + i.precio * (i.cantidad ?? 1), 0);
+    const total = state.items.reduce((s, i) => i.tipo === 'cortesia' ? s : s + i.precio * (i.cantidad ?? 1), 0);
     el.innerHTML = state.items.map((item, idx) => {
-        const cant      = item.cantidad ?? 1;
-        const subtotal  = item.precio * cant;
-        const cantLabel = cant > 1 ? `<span style="color:#888;font-size:0.72rem;">×${cant} </span>` : '';
+        const cant        = item.cantidad ?? 1;
+        const esCortesia  = item.tipo === 'cortesia';
+        const subtotal    = esCortesia ? 0 : item.precio * cant;
+        const cantLabel   = cant > 1 ? `<span style="color:#888;font-size:0.72rem;">×${cant} </span>` : '';
+        const precioLabel = esCortesia
+            ? `<span style="font-size:.75rem;color:var(--green-text,#4caf50);font-weight:600;">Gratis</span>`
+            : `<span style="white-space:nowrap;font-size:0.78rem;">${cantLabel}${formatters.moneda(subtotal)}</span>`;
         return `
         <div class="resumen-row" style="align-items:center;gap:6px;">
-            <span style="flex:1;font-size:0.78rem;">${item.nombre}</span>
-            <span style="white-space:nowrap;font-size:0.78rem;">${cantLabel}${formatters.moneda(subtotal)}</span>
+            <span style="flex:1;font-size:0.78rem;">${esCortesia ? '<i class="bi bi-gift" style="color:var(--green-text,#4caf50);margin-right:3px;"></i>' : ''}${item.nombre}</span>
+            ${precioLabel}
             <button type="button" data-idx="${idx}"
                     style="background:none;border:none;padding:0 2px;color:#e57373;cursor:pointer;font-size:0.78rem;line-height:1;"
                     class="btn-res-del" title="Quitar">
@@ -350,12 +451,12 @@ function _buildPayload() {
 
     return {
         detalles: state.items.map(item => ({
-            tipo_item:       item.tipo,
+            tipo_item:       item.tipo === 'paquete' ? 'paquete' : 'personalizado',
             id_referencia:   item.idRef ?? null,
-            descripcion:     item.nombre,
+            descripcion:     item.tipo === 'cortesia' ? `[Cortesía] ${item.nombre}` : item.nombre,
             cantidad:        item.cantidad ?? 1,
-            precio_unitario: item.precio,
-            subtotal:        item.precio * (item.cantidad ?? 1),
+            precio_unitario: item.tipo === 'cortesia' ? 0 : item.precio,
+            subtotal:        item.tipo === 'cortesia' ? 0 : item.precio * (item.cantidad ?? 1),
         })),
         descuento_monto: state.descuentoMonto > 0 ? state.descuentoMonto : null,
         observaciones:   document.getElementById('notas')?.value?.trim() || null,
@@ -413,13 +514,26 @@ async function init() {
     /* 5. Cargar ítems y descuento existentes en el estado interno */
     state.descuentoMonto = parseFloat(cotizacion.descuento_monto) || 0;
     const detalles = cotizacion.detalles ?? cotizacion.items ?? [];
-    state.items = detalles.map(d => ({
-        tipo:     d.tipo_item ?? 'paquete',
-        idRef:    d.id_referencia ?? null,
-        nombre:   d.descripcion ?? d.referencia_nombre ?? '—',
-        precio:   parseFloat(d.precio_unitario) || 0,
-        cantidad: d.cantidad ?? 1,
-    }));
+    state.items = detalles.map(d => {
+        const tipoItem = d.tipo_item ?? 'paquete';
+        const precio   = parseFloat(d.precio_unitario) || 0;
+        const desc     = d.descripcion ?? d.referencia_nombre ?? '—';
+        let tipo;
+        if (tipoItem === 'paquete') {
+            tipo = 'paquete';
+        } else if (precio === 0 || desc.startsWith('[Cortesía]')) {
+            tipo = 'cortesia';
+        } else {
+            tipo = 'servicio';
+        }
+        return {
+            tipo,
+            idRef:    d.id_referencia ?? null,
+            nombre:   desc.replace(/^\[Cortesía\]\s*/, ''),
+            precio,
+            cantidad: d.cantidad ?? 1,
+        };
+    });
 
     /* 6. Poblar modal de paquetes */
     _poblarModalPaquetes(state.todosPaquetes);
@@ -462,6 +576,80 @@ async function init() {
         _actualizarResumen();
         _modalPaquete?.hide();
     });
+
+    /* 11b. Servicios adicionales */
+    const servicioWrap    = document.getElementById('servicio-add-wrap');
+    const servicioNombre  = document.getElementById('servicioNombre');
+    const servicioPrecio  = document.getElementById('servicioPrecio');
+    const servicioCant    = document.getElementById('servicioCant');
+    const servicioPreview = document.getElementById('servicioSubtotalPreview');
+
+    const _actualizarSubtotalPreview = () => {
+        const precio = parseFloat(servicioPrecio?.value) || 0;
+        const cant   = parseInt(servicioCant?.value) || 1;
+        if (servicioPreview) servicioPreview.textContent = `= ${formatters.moneda(precio * cant)}`;
+    };
+
+    const _limpiarServicioForm = () => {
+        if (servicioNombre)  servicioNombre.value  = '';
+        if (servicioPrecio)  servicioPrecio.value  = '';
+        if (servicioCant)    servicioCant.value    = '1';
+        if (servicioPreview) servicioPreview.textContent = '= S/ 0.00';
+        if (servicioWrap)    servicioWrap.style.display = 'none';
+    };
+
+    const _confirmarServicio = () => {
+        const nombre = servicioNombre?.value?.trim();
+        const precio = parseFloat(servicioPrecio?.value);
+        const cant   = Math.max(1, parseInt(servicioCant?.value) || 1);
+        if (!nombre) { alerts.warning('Escribe la descripción del servicio.'); servicioNombre?.focus(); return; }
+        if (!precio || precio <= 0) { alerts.warning('El precio unitario debe ser mayor a 0.'); servicioPrecio?.focus(); return; }
+        state.items.push({ tipo: 'servicio', idRef: null, nombre, precio: Math.round(precio * 100) / 100, cantidad: cant });
+        _limpiarServicioForm();
+        _renderContainers();
+        _actualizarResumen();
+    };
+
+    document.getElementById('btn-agregar-servicio')?.addEventListener('click', () => {
+        if (servicioWrap) servicioWrap.style.display = '';
+        servicioNombre?.focus();
+    });
+    document.getElementById('btn-cancelar-servicio')?.addEventListener('click', _limpiarServicioForm);
+    document.getElementById('btn-confirmar-servicio')?.addEventListener('click', _confirmarServicio);
+    servicioPrecio?.addEventListener('input', _actualizarSubtotalPreview);
+    servicioCant?.addEventListener('input',   _actualizarSubtotalPreview);
+    servicioNombre?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); servicioPrecio?.focus(); } });
+    servicioPrecio?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); servicioCant?.focus(); } });
+    servicioCant?.addEventListener('keydown',   e => { if (e.key === 'Enter') { e.preventDefault(); _confirmarServicio(); } });
+
+    /* 11c. Cortesías */
+    const cortesiaWrap  = document.getElementById('cortesia-add-wrap');
+    const cortesiaInput = document.getElementById('cortesiaProducto');
+    const cortesiaCant  = document.getElementById('cortesiaCant');
+
+    const _limpiarCortesiaForm = () => {
+        if (cortesiaInput) cortesiaInput.value = '';
+        if (cortesiaCant)  cortesiaCant.value  = '1';
+        if (cortesiaWrap)  cortesiaWrap.style.display = 'none';
+    };
+
+    const _confirmarCortesia = () => {
+        const nombre = cortesiaInput?.value?.trim();
+        const cant   = Math.max(1, parseInt(cortesiaCant?.value) || 1);
+        if (!nombre) { alerts.warning('Escribe el nombre del producto de cortesía.'); cortesiaInput?.focus(); return; }
+        state.items.push({ tipo: 'cortesia', idRef: null, nombre, precio: 0, cantidad: cant });
+        _limpiarCortesiaForm();
+        _renderContainers();
+        _actualizarResumen();
+    };
+
+    document.getElementById('btn-agregar-cortesia')?.addEventListener('click', () => {
+        if (cortesiaWrap) cortesiaWrap.style.display = '';
+        cortesiaInput?.focus();
+    });
+    document.getElementById('btn-cancelar-cortesia')?.addEventListener('click', _limpiarCortesiaForm);
+    document.getElementById('btn-confirmar-cortesia')?.addEventListener('click', _confirmarCortesia);
+    cortesiaInput?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); _confirmarCortesia(); } });
 
     /* 12. Envío del formulario */
     document.getElementById('form-cotizacion')?.addEventListener('submit', async e => {
