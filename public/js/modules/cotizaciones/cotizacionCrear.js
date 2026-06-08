@@ -821,11 +821,15 @@ function _poblarModalPaquetes(paquetes) {
             const nombre     = (p.nombre_paquete || '').replace(/'/g, "\\'");
             const nivel      = p.nivel_disponible || 'otro';
             const badgeStyle = NIVEL_STYLE[nivel] ?? NIVEL_STYLE.otro;
+            const descRaw  = p.descripcion || '';
+            const descHtml = descRaw.replace(/\n/g, '<br>');
+            const descAttr = descRaw.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             return `
                 <div class="paquete-option" data-nivel="${nivel}" data-id="${p.id_paquete}"
                      onclick="seleccionarOpcion(this,'${nombre}',${p.precio ?? 0},${p.id_paquete})">
                     <div class="po-left">
                         <div class="po-name">${p.nombre_paquete}</div>
+                        ${descHtml ? `<div class="po-desc" title="${descAttr}">${descHtml}</div>` : ''}
                         <span class="nivel-badge" style="${badgeStyle}">${NIVEL_LABEL[nivel] ?? nivel}</span>
                     </div>
                     <span class="po-price">${formatters.moneda(p.precio ?? 0)}</span>
@@ -1008,6 +1012,11 @@ function _saveDraft() {
             provincia: document.getElementById('provinciaColegio')?.value ?? '',
             distrito:  document.getElementById('distritoColegio')?.value  ?? '',
         },
+        promocion: {
+            nombre:  document.getElementById('nombreProm')?.value?.trim()  ?? '',
+            grado:   document.getElementById('gradoProm')?.value           ?? '',
+            seccion: document.getElementById('seccionProm')?.value?.trim() ?? '',
+        },
     });
 }
 
@@ -1068,6 +1077,15 @@ function _restoreDraft(borrador) {
                 if (dc && borrador.colegio.distrito) dc.value = borrador.colegio.distrito;
             }, 60);
         }
+    }
+
+    if (borrador.promocion) {
+        const np = document.getElementById('nombreProm');
+        const gp = document.getElementById('gradoProm');
+        const sp = document.getElementById('seccionProm');
+        if (np && borrador.promocion.nombre)  np.value = borrador.promocion.nombre;
+        if (gp && borrador.promocion.grado)   gp.value = borrador.promocion.grado;
+        if (sp && borrador.promocion.seccion) sp.value = borrador.promocion.seccion;
     }
 }
 
@@ -1254,7 +1272,7 @@ function _mostrarModalConfirmacion() {
                 <div style="padding:.55rem 1rem;">
                     ${esDestacado
                         ? `<i class="bi bi-box-seam me-1" style="color:var(--accent,#B49040);font-size:.8rem;"></i>`
-                        : `<i class="bi bi-tools me-1" style="color:var(--text-muted,#7C7468);font-size:.8rem;"></i>`}
+                        : `<i class="bi bi-camera2 me-1" style="color:var(--text-muted,#7C7468);font-size:.8rem;"></i>`}
                     <span style="font-size:.82rem;font-weight:${esDestacado ? '600' : '400'};
                                  color:var(--text-primary,#1C1916);">${item.nombre}</span>
                 </div>
@@ -1806,11 +1824,12 @@ async function init() {
         _ejecutarAgregarPaquetes();
     });
 
-    /* 10. Auto-guardar borrador en campos de sesión y colegio */
-    ['notas', 'nombreColegio'].forEach(id =>
+    /* 10. Auto-guardar borrador en campos de sesión, colegio y promoción */
+    ['notas', 'nombreColegio', 'nombreProm', 'seccionProm'].forEach(id =>
         document.getElementById(id)?.addEventListener('input', _saveDraft));
     document.getElementById('provinciaColegio')?.addEventListener('change', _saveDraft);
     document.getElementById('distritoColegio')?.addEventListener('change', _saveDraft);
+    document.getElementById('gradoProm')?.addEventListener('change', _saveDraft);
 
     CAMPOS_CLIENTE_IDS.forEach(id =>
         document.getElementById(id)?.addEventListener('input', () => {

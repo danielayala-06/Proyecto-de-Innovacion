@@ -117,11 +117,15 @@ function _poblarModalPaquetes(paquetes) {
             const nombre     = (p.nombre_paquete || '').replace(/'/g, "\\'");
             const nivel      = p.nivel_disponible || 'otro';
             const badgeStyle = NIVEL_STYLE[nivel] ?? NIVEL_STYLE.otro;
+            const descRaw  = p.descripcion || '';
+            const descHtml = descRaw.replace(/\n/g, '<br>');
+            const descAttr = descRaw.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             return `
                 <div class="paquete-option" data-nivel="${nivel}"
                      onclick="seleccionarOpcion(this,'${nombre}',${p.precio ?? 0},${p.id_paquete})">
-                    <div>
+                    <div class="po-left">
                         <div class="po-name">${p.nombre_paquete}</div>
+                        ${descHtml ? `<div class="po-desc" title="${descAttr}">${descHtml}</div>` : ''}
                         <span class="nivel-badge" style="${badgeStyle}">${NIVEL_LABEL[nivel] ?? nivel}</span>
                     </div>
                     <span class="po-price">${formatters.moneda(p.precio ?? 0)}</span>

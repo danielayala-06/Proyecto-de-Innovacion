@@ -689,16 +689,21 @@ label {
 .paquete-option {
     background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px;
     padding: 11px 13px; margin-bottom: 7px; cursor: pointer;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: flex-start; justify-content: space-between;
     transition: border-color 0.15s, background 0.15s;
+    min-height: 60px;
 }
 .paquete-option:hover { background: var(--bg-hover); border-color: var(--accent); }
 .paquete-option.selected { border-color: var(--accent); background: var(--accent-light); }
 .po-left  { flex: 1; min-width: 0; }
 .po-name  { font-size: 0.85rem; color: var(--text-primary); font-weight: 600; margin-bottom: 2px; }
-.po-desc  { font-size: 0.74rem; color: var(--text-muted); }
-.po-price { font-size: 0.86rem; color: var(--accent); font-weight: 700; white-space: nowrap; margin-left: 12px; }
-.po-check { color: var(--accent); margin-left: 8px; display: none; flex-shrink: 0; }
+.po-desc  {
+    font-size: 0.74rem; color: var(--text-muted); margin-top: 3px; line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.po-price { font-size: 0.86rem; color: var(--accent); font-weight: 700; white-space: nowrap; margin-left: 12px; padding-top: 1px; }
+.po-check { color: var(--accent); margin-left: 8px; display: none; flex-shrink: 0; padding-top: 2px; }
 .paquete-option.selected .po-check { display: block; }
 
 /* ── CONTROL DE CANTIDAD INLINE (selección múltiple de paquetes) ─── */

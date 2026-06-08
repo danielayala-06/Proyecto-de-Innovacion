@@ -201,7 +201,6 @@
                     <fieldset class="mt-3">
                         <legend class="section-divider">
                             Servicios adicionales
-                            <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;"> — precio × cantidad</span>
                         </legend>
 
                         <div id="serviciosContainer" class="d-flex flex-column gap-2 mb-1"></div>
