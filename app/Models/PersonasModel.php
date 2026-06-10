@@ -46,8 +46,8 @@ class PersonasModel extends Model
         'apellidos'        => 'permit_empty|max_length[100]',
         'telefono'         => 'required|exact_length[9]',
         'correo'           => 'permit_empty|valid_email|max_length[150]',
-        'tipo_documento'   => 'required|in_list[DNI,CE,PASAPORTE]',
-        'numero_documento' => 'required|min_length[6]|max_length[20]',
+        'tipo_documento'   => 'permit_empty|in_list[DNI,CE,PASAPORTE]',
+        'numero_documento' => 'permit_empty|max_length[20]',
     ];
     protected $validationMessages = [
         'nombres' => [
@@ -63,9 +63,6 @@ class PersonasModel extends Model
         ],
         'tipo_documento' => [
             'in_list' => 'El tipo de documento no es válido. Use: DNI, CE o PASAPORTE.',
-        ],
-        'numero_documento' => [
-            'required' => 'El número de documento es obligatorio.',
         ],
     ];
     protected $skipValidation       = false;

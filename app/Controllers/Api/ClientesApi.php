@@ -101,8 +101,8 @@ class ClientesApi extends BaseApiController
             'apellidos'           => 'permit_empty|max_length[100]',
             'telefono'            => 'required|exact_length[9]',
             'correo'              => 'permit_empty|valid_email|max_length[150]',
-            'numero_documento'    => 'required|max_length[50]',
-            'tipo_documento'      => 'required|in_list[DNI,CE,PASAPORTE]',
+            'numero_documento'    => 'permit_empty|max_length[50]',
+            'tipo_documento'      => 'permit_empty|in_list[DNI,CE,PASAPORTE]',
             'metodo_comunicacion' => 'permit_empty|in_list[correo,whatsapp,llamada,otro]',
         ];
 
@@ -112,7 +112,7 @@ class ClientesApi extends BaseApiController
                 ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
         }
 
-        if ($this->clienteService->existeDocumento($body['numero_documento'], $body['tipo_documento'])) {
+        if (!empty($body['numero_documento']) && $this->clienteService->existeDocumento($body['numero_documento'], $body['tipo_documento'] ?? 'DNI')) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_CONFLICT)
                 ->setJSON(['status' => 'error', 'message' => 'Ya existe un cliente con ese número de documento']);

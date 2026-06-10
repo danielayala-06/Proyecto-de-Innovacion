@@ -92,8 +92,8 @@ class ClienteService
             'telefono'         => $data['telefono'],
             'correo'           => $data['correo']           ?? null,
             'tel_alternativo'  => $data['tel_alternativo']  ?? null,
-            'numero_documento' => $data['numero_documento'],
-            'tipo_documento'   => $data['tipo_documento'],
+            'numero_documento' => !empty($data['numero_documento']) ? $data['numero_documento'] : null,
+            'tipo_documento'   => !empty($data['tipo_documento'])   ? $data['tipo_documento']   : null,
         ]);
 
         if ($idPersona === false) {
