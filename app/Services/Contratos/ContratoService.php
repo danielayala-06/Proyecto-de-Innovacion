@@ -338,6 +338,10 @@ class ContratoService
             $updateData['fecha_emision'] = date('Y-m-d');
         }
 
+        if ($estado === 'CANCELADO') {
+            $updateData['archivado'] = 1;
+        }
+
         if ($this->contratoModel->update($id, $updateData) === false) {
             throw new \RuntimeException(json_encode($this->contratoModel->errors()), 422);
         }

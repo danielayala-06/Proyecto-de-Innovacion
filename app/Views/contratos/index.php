@@ -190,17 +190,19 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h6 class="modal-title" style="color:var(--red-text);font-size:0.88rem;">
-                        <i class="bi bi-exclamation-triangle me-2"></i>Eliminar contrato
+                        <i class="bi bi-x-circle me-2"></i>Cancelar contrato
                     </h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="font-size:0.85rem;color:var(--text-secondary);">
-                    ¿Eliminar el contrato <strong id="confirmCod" style="color:var(--text-primary);"></strong>?
-                    Esta acción no se puede deshacer.
+                    ¿Estás seguro de que deseas cancelar el contrato <strong id="confirmCod" style="color:var(--text-primary);"></strong>?
+                    El contrato quedará archivado y no se podrá reactivar.
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-danger btn-sm" onclick="eliminarContrato()">Sí, eliminar</button>
+                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Volver</button>
+                    <button class="btn btn-danger btn-sm" onclick="eliminarContrato()">
+                        <i class="bi bi-x-circle me-1"></i>Sí, cancelar contrato
+                    </button>
                 </div>
             </div>
         </div>

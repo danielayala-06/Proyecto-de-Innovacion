@@ -1321,9 +1321,11 @@ label {
 }
 .con-table-card thead th:hover { color: var(--accent); }
 .con-table-card thead th.sorted { color: var(--accent); }
-.con-table-card tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.12s; }
+.con-table-card tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s, box-shadow 0.15s, opacity 0.15s; }
 .con-table-card tbody tr:last-child { border-bottom: none; }
-.con-table-card tbody tr:hover { background: var(--bg-hover); }
+.con-table-card tbody tr:hover { background: var(--bg-hover); box-shadow: inset 3px 0 0 var(--accent); }
+.con-table-card tbody tr.con-row-cancelado { opacity: .55; }
+.con-table-card tbody tr.con-row-cancelado:hover { opacity: .75; }
 .con-table-card tbody td { padding: 11px 14px; vertical-align: middle; }
 
 .con-codigo {

@@ -122,16 +122,18 @@ export const ui = {
     }
 
     tbody.innerHTML = filas.map(c => {
-      const cod        = formatters.codigo(c.id);
-      const cotCod     = c.id_cotizacion ? formatters.codigo(c.id_cotizacion) : '—';
-      const isActivo   = c.estado?.toUpperCase() === 'ACTIVO';
-      const canArchive = !isActivo;
-      const editAttr   = isActivo
+      const cod         = formatters.codigo(c.id);
+      const cotCod      = c.id_cotizacion ? formatters.codigo(c.id_cotizacion) : '—';
+      const isActivo    = c.estado?.toUpperCase() === 'ACTIVO';
+      const isCancelado = c.estado?.toUpperCase() === 'CANCELADO';
+      const canArchive  = !isActivo;
+      const editAttr    = isActivo
         ? `onclick="event.stopPropagation();editarContrato(${c.id})"  title="Corregir contrato"`
         : `disabled title="Solo se puede editar un contrato vigente"`;
+      const rowClass    = isCancelado ? 'con-row con-row-cancelado' : 'con-row';
 
       return `
-        <tr style="cursor:pointer;" onclick="verDetalleContrato(${c.id})">
+        <tr class="${rowClass}" onclick="verDetalleContrato(${c.id})">
           <td><span class="con-codigo">${cod}</span></td>
           <td><a class="con-cot-ref-small btn btn-small" href="${BASE_URL}cotizaciones/${c.id_cotizacion}" onclick="event.stopPropagation()">${cotCod}</a></td>
           <td>

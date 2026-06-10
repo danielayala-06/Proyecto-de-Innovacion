@@ -532,11 +532,11 @@ window.eliminarContrato = async function () {
     alerts.ok('Contrato cancelado.');
 
     const row = state.filas.find(c => c.id == _pendingId);
-    if (row) row.estado = 'CANCELADO';
+    if (row) { row.estado = 'CANCELADO'; row.archivado = true; }
     _pendingId = null;
 
     ui.renderStats(calcularStats(state.filas));
-    _renderPagina();
+    _filtrar();
   } catch (e) {
     alerts.error(e.message || 'No se pudo cancelar el contrato.');
   }
