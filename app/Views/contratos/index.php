@@ -178,8 +178,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="detalleBody"></div>
-                <div class="modal-footer">
-                    <div class="d-flex gap-2" id="detalleAcciones"></div>
+                <div class="modal-footer justify-content-between align-items-center">
+                    <div id="detalleAccionesDanger"></div>
+                    <div class="d-flex gap-2 align-items-center" id="detalleAcciones"></div>
                 </div>
             </div>
         </div>

@@ -457,16 +457,18 @@ let _modalDet = null;
 window.verDetalleContrato = async function (id) {
   if (!_modalDet) _modalDet = new bootstrap.Modal(document.getElementById('modalDetalle'));
 
-  const bodyEl  = document.getElementById('detalleBody');
-  const titleEl = document.getElementById('detalleTitle');
-  const accsEl  = document.getElementById('detalleAcciones');
+  const bodyEl    = document.getElementById('detalleBody');
+  const titleEl   = document.getElementById('detalleTitle');
+  const accsEl    = document.getElementById('detalleAcciones');
+  const dangerEl  = document.getElementById('detalleAccionesDanger');
 
   if (titleEl) titleEl.textContent = `Contrato ${formatters.codigo(id)}`;
   if (bodyEl)  bodyEl.innerHTML = `
     <div class="text-center py-3">
       <div class="spinner-border spinner-border-sm" role="status"></div>
     </div>`;
-  if (accsEl) accsEl.innerHTML = '';
+  if (accsEl)   accsEl.innerHTML  = '';
+  if (dangerEl) dangerEl.innerHTML = '';
 
   _modalDet.show();
 
@@ -478,25 +480,30 @@ window.verDetalleContrato = async function (id) {
 
     if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(data, id, isActivo);
 
-    if (accsEl) {
-      const saldo         = data.saldo ?? 0;
-      const saldado       = saldo <= 0.001;
-      accsEl.innerHTML = isActivo ? `
-        ${saldado
-          ? `<button class="btn btn-sm btn-success" onclick="cambiarEstadoContrato(${id},'COMPLETADO')">
-               <i class="bi bi-check-circle me-1"></i>Completar
-             </button>`
-          : `<button class="btn btn-sm btn-success" disabled
-                     title="Aún hay un saldo pendiente de ${formatters.moneda(saldo)}">
-               <i class="bi bi-check-circle me-1"></i>Completar
-             </button>
-             <small style="display:block;color:var(--red-text);font-size:.72rem;margin-top:4px;">
-               <i class="bi bi-exclamation-circle"></i> Saldo pendiente: ${formatters.moneda(saldo)}
-             </small>`}
-        <button class="btn btn-sm btn-outline-danger"
-                onclick="confirmarEliminar(${id},'${formatters.codigo(id)}')">
-          <i class="bi bi-x-circle me-1"></i>Cancelar
-        </button>` : '';
+    if (isActivo) {
+      const saldo   = data.saldo ?? 0;
+      const saldado = saldo <= 0.001;
+
+      // Botón principal (derecha): Completar
+      accsEl.innerHTML = saldado
+        ? `<button class="btn btn-sm btn-success" onclick="cambiarEstadoContrato(${id},'COMPLETADO')">
+             <i class="bi bi-check-circle me-1"></i>Completar
+           </button>`
+        : `<span style="font-size:.72rem;color:var(--red-text);">
+             <i class="bi bi-exclamation-circle"></i> Saldo pendiente: ${formatters.moneda(saldo)}
+           </span>
+           <button class="btn btn-sm btn-success" disabled
+                   title="Aún hay saldo pendiente de ${formatters.moneda(saldo)}">
+             <i class="bi bi-check-circle me-1"></i>Completar
+           </button>`;
+
+      // Acción destructiva (izquierda): link de texto discreto
+      dangerEl.innerHTML =
+        `<button class="btn btn-link btn-sm text-danger p-0"
+                 style="font-size:.78rem;text-decoration:none;"
+                 onclick="confirmarEliminar(${id},'${formatters.codigo(id)}')">
+           <i class="bi bi-x-circle me-1"></i>Cancelar contrato
+         </button>`;
     }
   } catch (e) {
     if (bodyEl) bodyEl.innerHTML =
@@ -865,8 +872,10 @@ async function _ejecutarPago() {
     const esActivo = _pagoContratoData.estado?.toUpperCase() === 'ACTIVO';
     if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(_pagoContratoData, _pagoPayload.id_contrato, esActivo);
     if (!esActivo) {
-      const accsEl = document.getElementById('detalleAcciones');
-      if (accsEl) accsEl.innerHTML = '';
+      const accsEl   = document.getElementById('detalleAcciones');
+      const dangerEl = document.getElementById('detalleAccionesDanger');
+      if (accsEl)   accsEl.innerHTML   = '';
+      if (dangerEl) dangerEl.innerHTML = '';
     }
 
     const resLista = await contratoApi.listar();
