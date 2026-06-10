@@ -73,7 +73,7 @@
                             <i class="bi bi-plus-circle"></i>Agregar sesión
                         </button>
                         <p style="font-size:.73rem;color:var(--text-muted);margin:.4rem 0 0;">
-                            Máximo 3 sesiones &middot; las fechas pueden coordinarse después.
+                            Máximo 3 sesiones &middot; horario permitido: 7:00 a.m. – 8:00 p.m. &middot; hasta 10 meses desde hoy.
                         </p>
                     </fieldset>
 

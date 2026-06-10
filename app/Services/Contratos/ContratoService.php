@@ -159,11 +159,14 @@ class ContratoService
 
         $existente = $this->contratoModel
             ->where('id_cotizacion', $data['id_cotizacion'])
-            ->where('estado', 'ACTIVO')
+            ->where('estado !=', 'CANCELADO')
             ->first();
 
         if ($existente) {
-            throw new \RuntimeException('Ya existe un contrato activo para esta cotización', 409);
+            throw new \RuntimeException(
+                'Ya existe un contrato vigente para esta cotización. Solo se puede generar uno nuevo si el contrato anterior fue cancelado.',
+                409
+            );
         }
 
         $adelanto = round((float) $data['adelanto'], 2);
@@ -210,7 +213,13 @@ class ContratoService
 
         if ($idContrato === false) {
             $db->transRollback();
-            throw new \RuntimeException(json_encode($this->contratoModel->errors()), 422);
+            $modelErrors = $this->contratoModel->errors();
+            if (!empty($modelErrors)) {
+                throw new \RuntimeException(implode(' | ', $modelErrors), 422);
+            }
+            $dbErr = $this->contratoModel->db->error();
+            $msg   = !empty($dbErr['message']) ? $dbErr['message'] : 'Error al registrar el contrato';
+            throw new \RuntimeException($msg, 500);
         }
 
         // Activar la promoción vinculada a esta cotización (se creó en estado inactivo)
@@ -235,18 +244,34 @@ class ContratoService
         $sesionesInput = $data['sesiones'] ?? [];
         if (!empty($sesionesInput) && is_array($sesionesInput) && $promocion !== null) {
             $tiposValidos = ['exteriores', 'colegio', 'estudio', 'otro'];
+            $hoy          = new \DateTime('today');
+            $maxFecha     = (new \DateTime('today'))->modify('+10 months');
             $sesionModel  = new \App\Models\SesionesFotograficasModel();
             foreach (array_slice($sesionesInput, 0, 3) as $s) {
                 $fecha = trim($s['fecha_hora_sesion'] ?? '');
                 $tipo  = $s['tipo'] ?? 'otro';
-                if ($fecha && in_array($tipo, $tiposValidos)) {
-                    $sesionModel->insert([
-                        'id_promocion'      => (int) $promocion['id_promocion'],
-                        'fecha_hora_sesion' => $fecha,
-                        'tipo'              => $tipo,
-                        'estado'            => 'pendiente',
-                    ]);
+                if (!$fecha || !in_array($tipo, $tiposValidos)) continue;
+                $dt = \DateTime::createFromFormat('Y-m-d H:i:s', $fecha);
+                if (!$dt) continue;
+                if ($dt < $hoy) {
+                    $db->transRollback();
+                    throw new \RuntimeException('Las sesiones no pueden tener fecha en el pasado', 422);
                 }
+                if ($dt > $maxFecha) {
+                    $db->transRollback();
+                    throw new \RuntimeException('Las sesiones no pueden programarse con más de 10 meses de anticipación', 422);
+                }
+                $hora = (int) $dt->format('G');
+                if ($hora < 7 || $hora > 20) {
+                    $db->transRollback();
+                    throw new \RuntimeException('El horario de las sesiones debe ser entre las 7:00 a.m. y las 8:00 p.m.', 422);
+                }
+                $sesionModel->insert([
+                    'id_promocion'      => (int) $promocion['id_promocion'],
+                    'fecha_hora_sesion' => $fecha,
+                    'tipo'              => $tipo,
+                    'estado'            => 'pendiente',
+                ]);
             }
         }
 

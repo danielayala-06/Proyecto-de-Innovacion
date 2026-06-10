@@ -240,6 +240,14 @@ function _bloquearFormulario(mensaje) {
 
 let _sesionIdx = 0;
 
+/** Límites de fecha para sesiones: hoy como mínimo, +10 meses como máximo. */
+function _limitesSesion() {
+  const hoy = new Date(SERVER_TODAY + 'T00:00:00');
+  const max = new Date(hoy);
+  max.setMonth(hoy.getMonth() + 10);
+  return { hoy, max };
+}
+
 function _updateBtnAgregar() {
   const container = document.getElementById('sesionesContainer');
   const btn       = document.getElementById('btnAgregarSesion');
@@ -251,12 +259,16 @@ function _agregarSesion() {
   const container = document.getElementById('sesionesContainer');
   if (!container || container.querySelectorAll('.sesion-row').length >= 3) return;
   const idx = ++_sesionIdx;
+  const { hoy, max } = _limitesSesion();
+  const minStr = SERVER_TODAY + 'T00:00';
+  const maxStr = max.toISOString().slice(0, 16);
+
   const row = document.createElement('div');
   row.className     = 'sesion-row';
   row.dataset.idx   = idx;
   row.style.cssText = 'display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin-bottom:.5rem;';
   row.innerHTML = `
-    <input type="datetime-local" id="sesionFecha-${idx}"
+    <input type="datetime-local" id="sesionFecha-${idx}" min="${minStr}" max="${maxStr}"
            style="flex:1;min-width:140px;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;font-size:.83rem;background:var(--bg-input,#fff);color:var(--text-primary);">
     <select id="sesionTipo-${idx}"
             style="width:120px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;font-size:.83rem;background:var(--bg-input,#fff);color:var(--text-primary);">
@@ -271,6 +283,17 @@ function _agregarSesion() {
       <i class="bi bi-trash3"></i>
     </button>`;
   container.appendChild(row);
+
+  // Feedback visual en tiempo real
+  const input = document.getElementById(`sesionFecha-${idx}`);
+  input?.addEventListener('change', function () {
+    if (!this.value) { this.style.borderColor = ''; return; }
+    const sel  = new Date(this.value);
+    const hora = parseInt(this.value.slice(11, 13), 10);
+    const ok   = sel >= hoy && sel <= max && hora >= 7 && hora <= 20;
+    this.style.borderColor = ok ? 'var(--green-text,#2e7d32)' : 'var(--red-text,#dc3545)';
+  });
+
   _updateBtnAgregar();
 }
 
@@ -413,6 +436,25 @@ function _abrirConfirmacion(cotId, total) {
     const selDate  = new Date(fechaFirma + 'T00:00:00');
     if (selDate > hoy)      { alerts.warning('La fecha de pago no puede ser en el futuro.'); return; }
     if (selDate < minFecha) { alerts.warning('La fecha de pago no puede ser anterior a 2 días de hoy.'); return; }
+  }
+
+  // Validar fechas y horarios de sesiones ingresadas
+  const { hoy: hoyS, max: maxS } = _limitesSesion();
+  for (const s of _recolectarSesiones()) {
+    const d    = new Date(s.fecha_hora_sesion.replace(' ', 'T'));
+    const hora = d.getHours();
+    if (d < hoyS) {
+      alerts.warning('Una sesión tiene fecha en el pasado. Corrígela antes de continuar.');
+      return;
+    }
+    if (d > maxS) {
+      alerts.warning('Una sesión supera el límite de 10 meses desde hoy. Corrígela antes de continuar.');
+      return;
+    }
+    if (hora < 7 || hora > 20) {
+      alerts.warning('El horario de las sesiones debe ser entre las 7:00 a.m. y las 8:00 p.m.');
+      return;
+    }
   }
 
   const formaPagoSel  = document.getElementById('contratoFormaPago');
