@@ -137,6 +137,6 @@ function fmtFechaCot(?string $f): string {
     <script>
         const BASE_URL = "<?= base_url('') ?>";
     </script>
-    <script type="module" src="<?= base_url('js/modules/cotizaciones/cotizacionesIndex.js') ?>"></script>
+    <script type="module" src="<?= base_url('js/modules/cotizaciones/cotizacionesIndex.js') . '?v=' . filemtime(FCPATH . 'js/modules/cotizaciones/cotizacionesIndex.js') ?>"></script>
 
 <?= $footer ?>

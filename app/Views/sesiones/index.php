@@ -234,6 +234,6 @@
         'nombre_paquete'    => $c['nombre_paquete'],
     ], $sesionesConfig)) ?>;
 </script>
-<script type="module" src="<?= base_url('js/modules/sesiones/sesionesMain.js') ?>"></script>
+<script type="module" src="<?= base_url('js/modules/sesiones/sesionesMain.js') . '?v=' . filemtime(FCPATH . 'js/modules/sesiones/sesionesMain.js') ?>"></script>
 
 <?= $footer ?>

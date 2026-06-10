@@ -281,6 +281,6 @@
 <script>
     const BASE_URL       = "<?= base_url('') ?>";
 </script>
-<script type="module" src="<?= base_url('js/modules/contratos/contratosIndexMain.js') ?>"></script>
+<script type="module" src="<?= base_url('js/modules/contratos/contratosIndexMain.js') . '?v=' . filemtime(FCPATH . 'js/modules/contratos/contratosIndexMain.js') ?>"></script>
 
 <?= $footer ?>

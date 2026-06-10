@@ -90,6 +90,6 @@
 </main>
 
 <script>const BASE_URL = "<?= base_url('') ?>";const COT_ID = <?= (int) $id_cotizacion ?>;</script>
-<script type="module" src="<?= base_url('js/modules/cotizaciones/cotizacionVer.js') ?>"></script>
+<script type="module" src="<?= base_url('js/modules/cotizaciones/cotizacionVer.js') . '?v=' . filemtime(FCPATH . 'js/modules/cotizaciones/cotizacionVer.js') ?>"></script>
 
 <?= $footer ?>

@@ -396,10 +396,10 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <!-- N.° de estudiantes -->
-                <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.9rem;
+                <!-- Fila: N.° de estudiantes (izq) | filtros de nivel (der) -->
+                <div style="display:flex;align-items:flex-end;gap:1rem;margin-bottom:.9rem;
                             padding-bottom:.8rem;border-bottom:1px solid var(--border-color,#dde3ee);">
-                    <div style="flex:1;">
+                    <div>
                         <label for="modalNumEstudiantes"
                                style="font-size:.78rem;font-weight:700;color:var(--text-primary,#333);
                                       margin-bottom:.3rem;display:block;">
@@ -409,13 +409,15 @@
                         <input type="number" id="modalNumEstudiantes" class="form-control form-control-sm"
                                min="1" max="1000" placeholder="Ej: 30"
                                style="max-width:140px;">
+                        <div id="modal-est-hint"
+                             style="font-size:.7rem;color:var(--text-muted,#888);margin-top:.25rem;line-height:1.3;">
+                            Máx. por paquete = n.° de estudiantes.
+                        </div>
                     </div>
-                    <div id="modal-est-hint"
-                         style="font-size:.72rem;color:var(--text-muted,#888);line-height:1.4;max-width:200px;padding-top:.25rem;">
-                        La cantidad máxima por paquete se limita a este número.
+                    <div style="flex:1;display:flex;justify-content:flex-end;align-items:flex-end;">
+                        <div class="nivel-filtro-wrap" id="nivelFiltrosContainer" style="margin-bottom:0;"></div>
                     </div>
                 </div>
-                <div class="nivel-filtro-wrap" id="nivelFiltrosContainer"></div>
                 <div class="cat-tabs" id="catTabsContainer"></div>
                 <div id="catPanelsContainer"></div>
                 <div id="paq-hint" style="font-size:.75rem;color:var(--text-muted);margin-top:.4rem;text-align:center;">
@@ -637,6 +639,6 @@
 })();
 </script>
 
-<script type="module" src="<?= base_url('js/main.js')?>"></script>
+<script type="module" src="<?= base_url('js/main.js') . '?v=' . filemtime(FCPATH . 'js/main.js') ?>"></script>
 
 <?= $footer ?>

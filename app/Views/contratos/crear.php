@@ -191,6 +191,6 @@
 </div>
 
 <script>const BASE_URL = "<?= base_url('') ?>";</script>
-<script type="module" src="<?= base_url('js/modules/contratos/contratoCrear.js') ?>"></script>
+<script type="module" src="<?= base_url('js/modules/contratos/contratoCrear.js') . '?v=' . filemtime(FCPATH . 'js/modules/contratos/contratoCrear.js') ?>"></script>
 
 <?= $footer ?>

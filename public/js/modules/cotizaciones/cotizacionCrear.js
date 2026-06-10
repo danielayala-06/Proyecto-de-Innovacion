@@ -1039,7 +1039,8 @@ function _restoreDraft(borrador) {
         _setClienteExistente(borrador.cliente);
     } else if (borrador.esNuevoCliente && borrador.camposCliente) {
         const c = borrador.camposCliente;
-        _llenarCamposCliente({ contacto: c.contacto, tipoDoc: c.tipoDoc ?? 'DNI', dni: c.dni, telefono: c.telefono, correo: c.correo });
+        const contacto = c.contacto ?? `${c.nombres ?? ''} ${c.apellidos ?? ''}`.trim();
+        _llenarCamposCliente({ contacto, tipoDoc: c.tipoDoc ?? 'DNI', dni: c.dni, telefono: c.telefono, correo: c.correo });
         _setModoNuevoCliente();
     }
 
@@ -1649,7 +1650,7 @@ async function init() {
     if (paqEl)  _modalPaquete      = new bootstrap.Modal(paqEl);
     if (confEl) _modalConfirmacion = new bootstrap.Modal(confEl);
 
-    /* 6a. Contacto: solo letras y tildes */
+    /* 6a. Contacto: solo letras y tildes; activa modo nuevo si el usuario escribe directo */
     document.getElementById('contactoCliente')?.addEventListener('input', function () {
         this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]/g, '');
         const fb = document.getElementById('contactoFeedback');
@@ -1661,13 +1662,19 @@ async function init() {
                 fb.textContent = '';
             }
         }
+        if (!state.cliente && !state.esNuevoCliente && this.value.trim()) {
+            _setModoNuevoCliente();
+        }
         if (state.esNuevoCliente) _saveDraft();
     });
 
-    /* 6b. Teléfono: solo dígitos, feedback en tiempo real */
+    /* 6b. Teléfono: solo dígitos; activa modo nuevo si el usuario escribe directo */
     document.getElementById('telefonoCliente')?.addEventListener('input', function () {
         this.value = this.value.replace(/\D/g, '').slice(0, 9);
         _validarTel();
+        if (!state.cliente && !state.esNuevoCliente && this.value.trim()) {
+            _setModoNuevoCliente();
+        }
     });
 
     /* 6b. Tipo de documento: actualizar placeholder y limpiar campo */

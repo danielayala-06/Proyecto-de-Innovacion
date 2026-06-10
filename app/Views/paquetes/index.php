@@ -243,6 +243,6 @@
 </div>
 
 <script>const BASE_URL = "<?= base_url('') ?>"</script>
-<script type="module" src="<?= base_url('js/modules/paquetes/paquetesMain.js') ?>"></script>
+<script type="module" src="<?= base_url('js/modules/paquetes/paquetesMain.js') . '?v=' . filemtime(FCPATH . 'js/modules/paquetes/paquetesMain.js') ?>"></script>
 
 <?= $footer ?>

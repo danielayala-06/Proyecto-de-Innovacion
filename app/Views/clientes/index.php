@@ -140,6 +140,6 @@
 <script>
     const BASE_URL      = "<?= base_url('') ?>";
 </script>
-<script type="module" src="<?= base_url('js/modules/clientes/clientesIndexMain.js') ?>"></script>
+<script type="module" src="<?= base_url('js/modules/clientes/clientesIndexMain.js') . '?v=' . filemtime(FCPATH . 'js/modules/clientes/clientesIndexMain.js') ?>"></script>
 
 <?= $footer ?>
