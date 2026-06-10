@@ -612,6 +612,31 @@ window.abrirModalPago = async function (id) {
   }
 
   ['pagoMonto', 'pagoVoucher'].forEach(fid => { const el = document.getElementById(fid); if (el) el.value = ''; });
+  const avisoMonto = document.getElementById('pagoMontoAviso');
+  if (avisoMonto) avisoMonto.style.display = 'none';
+  const btnReg = document.getElementById('btnRegistrarPago');
+  if (btnReg) { btnReg.disabled = false; }
+  const mEl = document.getElementById('pagoMonto');
+  if (mEl) mEl.style.borderColor = '';
+
+  const montoInput = document.getElementById('pagoMonto');
+  if (montoInput && !montoInput.dataset.avisoWired) {
+    montoInput.dataset.avisoWired = '1';
+    montoInput.addEventListener('input', () => {
+      const val    = parseFloat(montoInput.value) || 0;
+      const saldo  = _pagoContratoData?.saldo ?? 0;
+      const aviso  = document.getElementById('pagoMontoAviso');
+      const btnReg = document.getElementById('btnRegistrarPago');
+      const invalido = val > 0 && saldo > 0 && val > saldo + 0.001;
+      if (aviso) {
+        aviso.textContent   = invalido ? `El monto ingresado supera el saldo pendiente del contrato (${formatters.moneda(saldo)}). Por favor ingresa un monto menor o igual al saldo.` : '';
+        aviso.style.display = invalido ? '' : 'none';
+      }
+      montoInput.style.borderColor = invalido ? 'var(--red-text, #dc3545)' : '';
+      if (btnReg) btnReg.disabled  = invalido;
+    });
+  }
+
   const selectForma = document.getElementById('pagoFormaPago');
   if (selectForma) selectForma.innerHTML = '<option value="">— Cargando... —</option>';
 
@@ -635,6 +660,16 @@ window.abrirModalPago = async function (id) {
         <option value="otro">Otro…</option>`;
 
       const inputOtro = document.getElementById('pagoFormaPagoOtro');
+      if (inputOtro) {
+        inputOtro.addEventListener('input', () => {
+          const pos = inputOtro.selectionStart;
+          const limpio = inputOtro.value.replace(/[^\p{L}\s\/\-\.]/gu, '');
+          if (limpio !== inputOtro.value) {
+            inputOtro.value = limpio;
+            inputOtro.setSelectionRange(pos - 1, pos - 1);
+          }
+        });
+      }
       selectForma.addEventListener('change', () => {
         if (inputOtro) {
           inputOtro.style.display = selectForma.value === 'otro' ? '' : 'none';
@@ -650,81 +685,113 @@ window.abrirModalPago = async function (id) {
   }
 };
 
+let _modalConfirmarPago = null;
+let _pagoPayload        = null;
+let _pagoConfirmado     = false;
+
 /**
- * Valida y envía el formulario de pago. Si el contrato queda saldado,
- * cierra el modal de pago automáticamente y limpia las acciones del detalle.
+ * Valida el formulario y abre el mini-modal de confirmación con el resumen.
  */
-window.confirmarPago = async function () {
+window.confirmarPago = function () {
   const monto   = parseFloat(document.getElementById('pagoMonto')?.value) || 0;
   const formaEl = document.getElementById('pagoFormaPago');
   const forma   = formaEl?.value ?? '';
   const fecha   = document.getElementById('pagoFecha')?.value ?? '';
   const voucher = document.getElementById('pagoVoucher')?.value.trim() || null;
 
-  if (!monto || monto <= 0) {
-    alerts.warning('Ingresa un monto válido mayor a cero.');
-    return;
-  }
+  if (!monto || monto <= 0) { alerts.warning('Ingresa un monto válido mayor a cero.'); return; }
   const saldo = _pagoContratoData?.saldo ?? 0;
-  if (monto > saldo + 0.001) {
-    alerts.warning(`El monto (${formatters.moneda(monto)}) supera el saldo pendiente (${formatters.moneda(saldo)}).`);
-    return;
-  }
-  if (!forma) {
-    alerts.warning('Selecciona una forma de pago.');
-    return;
-  }
+  if (monto > saldo + 0.001) { alerts.warning('El monto supera el saldo pendiente.'); return; }
+  if (!forma) { alerts.warning('Selecciona una forma de pago.'); return; }
+
   const esOtro    = forma === 'otro';
   const otroTexto = document.getElementById('pagoFormaPagoOtro')?.value.trim() || '';
-  if (esOtro && !otroTexto) {
-    alerts.warning('Especifica el método de pago.');
-    return;
-  }
+  if (esOtro && !otroTexto) { alerts.warning('Especifica el método de pago.'); return; }
+  if (esOtro && !/^[\p{L}\s\/\-\.]+$/u.test(otroTexto)) { alerts.warning('El método de pago solo puede contener letras.'); return; }
   const formaPago = esOtro ? otroTexto : forma;
 
-  if (!fecha) {
-    alerts.warning('Selecciona la fecha de pago.');
-    return;
-  }
+  if (!fecha) { alerts.warning('Selecciona la fecha de pago.'); return; }
   const hoy      = new Date(SERVER_TODAY + 'T00:00:00');
   const minFecha = new Date(hoy); minFecha.setDate(hoy.getDate() - 3);
   const selDate  = new Date(fecha + 'T00:00:00');
-  if (selDate > hoy) {
-    alerts.warning('La fecha de pago no puede ser en el futuro.');
-    return;
-  }
-  if (selDate < minFecha) {
-    alerts.warning('La fecha de pago no puede ser anterior a 3 días de hoy.');
-    return;
-  }
+  if (selDate > hoy)      { alerts.warning('La fecha de pago no puede ser en el futuro.'); return; }
+  if (selDate < minFecha) { alerts.warning('La fecha de pago no puede ser anterior a 3 días de hoy.'); return; }
+
+  // Guardar payload para usarlo al confirmar
+  _pagoPayload = { id_contrato: _pagoContratoId, forma_pago: formaPago, monto, fecha, voucher, moneda: 'PEN' };
+
+  // Llenar resumen del mini-modal
+  document.getElementById('cpMonto').textContent  = formatters.moneda(monto);
+  document.getElementById('cpForma').textContent  = formaPago;
+  document.getElementById('cpFecha').textContent  = new Date(fecha + 'T00:00:00')
+    .toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' });
+  document.getElementById('cpVoucher').textContent = voucher || '—';
+  document.getElementById('cpSaldo').textContent   = formatters.moneda(saldo - monto);
+
+  // Registrar handler del botón confirmar (solo una vez por apertura)
+  const btnEj  = document.getElementById('btnEjecutarPago');
+  btnEj.disabled  = false;
+  btnEj.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirmar y registrar';
+  const newBtn = btnEj.cloneNode(true);
+  btnEj.replaceWith(newBtn);
+  newBtn.addEventListener('click', _ejecutarPago);
+
+  _pagoConfirmado = false;
+  _modalConfirmarPago = _modalConfirmarPago ?? new bootstrap.Modal(document.getElementById('modalConfirmarPago'));
+
+  // Ocultar modal de pago y oscurecer el modal de fondo mientras confirma
+  const modalPagoEl   = document.getElementById('modalPago');
+  const modalDetalleEl = document.getElementById('modalDetalle');
+  modalPagoEl.style.opacity = '0';
+  if (modalDetalleEl) modalDetalleEl.style.filter = 'brightness(0.35)';
+
+  document.getElementById('modalConfirmarPago').addEventListener('hidden.bs.modal', () => {
+    if (!_pagoConfirmado) {
+      modalPagoEl.style.opacity = '';
+      if (modalDetalleEl) modalDetalleEl.style.filter = '';
+    }
+  }, { once: true });
+
+  _modalConfirmarPago.show();
+};
+
+/**
+ * Ejecuta el pago contra la API tras la confirmación del usuario.
+ */
+async function _ejecutarPago() {
+  const btnEj = document.getElementById('btnEjecutarPago');
+  if (btnEj) { btnEj.disabled = true; btnEj.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Registrando…'; }
 
   try {
-    await contratoApi.registrarPago({
-      id_contrato: _pagoContratoId,
-      forma_pago:  formaPago,
-      monto,
-      fecha,
-      voucher,
-      moneda: 'PEN',
-    });
+    await contratoApi.registrarPago(_pagoPayload);
 
+    _pagoConfirmado = true;
+    _modalConfirmarPago?.hide();
+    _modalPago?.hide();
+    document.getElementById('modalPago').style.opacity = '';
+    const detEl = document.getElementById('modalDetalle');
+    if (detEl) detEl.style.filter = '';
     alerts.ok('Pago registrado correctamente.');
 
-    document.getElementById('pagoMonto').value = '';
+    // Limpiar campos
+    const montoEl = document.getElementById('pagoMonto');
+    if (montoEl) { montoEl.value = ''; montoEl.style.borderColor = ''; }
+    const avisoEl = document.getElementById('pagoMontoAviso');
+    if (avisoEl) avisoEl.style.display = 'none';
+    const btnRegEl = document.getElementById('btnRegistrarPago');
+    if (btnRegEl) btnRegEl.disabled = false;
     if (document.getElementById('pagoVoucher')) document.getElementById('pagoVoucher').value = '';
 
-    const resContrato = await contratoApi.obtener(_pagoContratoId);
+    const resContrato = await contratoApi.obtener(_pagoPayload.id_contrato);
     _pagoContratoData = resContrato.data;
 
     _setResumenPago(_pagoContratoData);
     _renderHistorialPago(_pagoContratoData.pagos ?? []);
 
-    const bodyEl = document.getElementById('detalleBody');
-    const _esActivo = _pagoContratoData.estado?.toUpperCase() === 'ACTIVO';
-    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(_pagoContratoData, _pagoContratoId, _esActivo);
-
-    if (!_esActivo) {
-      _modalPago?.hide();
+    const bodyEl   = document.getElementById('detalleBody');
+    const esActivo = _pagoContratoData.estado?.toUpperCase() === 'ACTIVO';
+    if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(_pagoContratoData, _pagoPayload.id_contrato, esActivo);
+    if (!esActivo) {
       const accsEl = document.getElementById('detalleAcciones');
       if (accsEl) accsEl.innerHTML = '';
     }
@@ -735,8 +802,9 @@ window.confirmarPago = async function () {
     _filtrar();
   } catch (e) {
     alerts.error(e.message || 'No se pudo registrar el pago.');
+    if (btnEj) { btnEj.disabled = false; btnEj.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirmar y registrar'; }
   }
-};
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INICIALIZACIÓN PÚBLICA

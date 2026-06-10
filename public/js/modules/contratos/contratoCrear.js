@@ -301,6 +301,16 @@ function _initForm(cotId, total, prom = null) {
       <option value="otro">Otro…</option>`;
     selectForma.value = 'Efectivo';
 
+    if (inputOtro) {
+      inputOtro.addEventListener('input', () => {
+        const pos = inputOtro.selectionStart;
+        const limpio = inputOtro.value.replace(/[^\p{L}\s\/\-\.]/gu, '');
+        if (limpio !== inputOtro.value) {
+          inputOtro.value = limpio;
+          inputOtro.setSelectionRange(pos - 1, pos - 1);
+        }
+      });
+    }
     selectForma.addEventListener('change', () => {
       if (inputOtro) inputOtro.style.display = selectForma.value === 'otro' ? '' : 'none';
     });
@@ -341,9 +351,16 @@ function _abrirConfirmacion(cotId, total) {
 
   const formaPagoSel  = document.getElementById('contratoFormaPago');
   const esOtro        = formaPagoSel?.value === 'otro';
-  const formaPagoText = esOtro
-    ? (document.getElementById('contratoFormaPagoOtro')?.value.trim() || 'Otro')
-    : (formaPagoSel?.value ?? 'Efectivo');
+  const otroVal       = document.getElementById('contratoFormaPagoOtro')?.value.trim() || '';
+  if (esOtro && !otroVal) {
+    alerts.warning('Especifica el método de pago.');
+    return;
+  }
+  if (esOtro && !/^[\p{L}\s\/\-\.]+$/u.test(otroVal)) {
+    alerts.warning('El método de pago solo puede contener letras.');
+    return;
+  }
+  const formaPagoText = esOtro ? otroVal : (formaPagoSel?.value ?? 'Efectivo');
   const saldo         = total - adelanto;
   const pct           = total > 0 ? Math.min(100, Math.round((adelanto / total) * 100)) : 0;
 

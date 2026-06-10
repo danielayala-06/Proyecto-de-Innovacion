@@ -82,8 +82,8 @@
                                 <option value="">— Cargando... —</option>
                             </select>
                             <input type="text" id="contratoFormaPagoOtro"
-                                   placeholder="Especifica el método de pago…"
-                                   style="display:none;margin-top:6px;">
+                                   placeholder="Ej: Tarjeta, Depósito BCP…"
+                                   maxlength="60" style="display:none;margin-top:6px;">
                         </div>
                     </fieldset>
     

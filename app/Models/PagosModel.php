@@ -42,14 +42,16 @@ class PagosModel extends Model
 
     protected $validationRules = [
         'id_contrato' => 'required|is_natural_no_zero',
-        'forma_pago'  => 'permit_empty|max_length[60]',
+        'forma_pago'  => 'required|max_length[60]|regex_match[/^[\p{L}\s\/\-\.]+$/u]',
         'monto'       => 'required|decimal|greater_than[0]',
         'moneda'      => 'required|in_list[PEN,USD,EUR]',
         'fecha'       => 'required|valid_date',
     ];
     protected $validationMessages = [
-        'monto' => [
-            'greater_than' => 'El monto debe ser mayor a cero.',
+        'monto'      => ['greater_than' => 'El monto debe ser mayor a cero.'],
+        'forma_pago' => [
+            'required'    => 'La forma de pago es obligatoria.',
+            'regex_match' => 'La forma de pago solo puede contener letras.',
         ],
     ];
     protected $skipValidation       = false;

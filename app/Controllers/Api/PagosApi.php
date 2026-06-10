@@ -101,7 +101,7 @@ class PagosApi extends BaseApiController
 
         $rules = [
             'id_contrato' => 'required|integer',
-            'forma_pago'  => 'permit_empty|max_length[60]',
+            'forma_pago'  => 'required|max_length[60]',
             'monto'       => 'required|decimal|greater_than[0]',
             'moneda'      => 'permit_empty|in_list[PEN,USD,EUR]',
         ];

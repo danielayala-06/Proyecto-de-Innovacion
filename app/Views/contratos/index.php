@@ -206,6 +206,34 @@
         </div>
     </div>
     <!-- MODAL 5: REGISTRAR PAGO -->
+    <!-- Confirmación de pago -->
+    <div class="modal fade" id="modalConfirmarPago" tabindex="-1" style="z-index:1060;" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:360px;">
+            <div class="modal-content">
+                <div class="modal-header" style="background:var(--accent-light);border-bottom:1px solid var(--accent);">
+                    <h6 class="modal-title"><i class="bi bi-shield-check me-2" style="color:var(--accent-text);"></i>Confirmar pago</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="font-size:.88rem;">
+                    <p style="color:var(--text-muted);margin-bottom:12px;">Revisa los datos antes de registrar. Esta acción no se puede deshacer fácilmente.</p>
+                    <table style="width:100%;border-collapse:collapse;">
+                        <tr><td style="padding:5px 0;color:var(--text-muted);width:45%;">Monto</td>       <td id="cpMonto"  style="font-weight:700;color:var(--green-text);"></td></tr>
+                        <tr><td style="padding:5px 0;color:var(--text-muted);">Forma de pago</td>         <td id="cpForma"  style="font-weight:600;"></td></tr>
+                        <tr><td style="padding:5px 0;color:var(--text-muted);">Fecha</td>                 <td id="cpFecha"  style="font-weight:600;"></td></tr>
+                        <tr><td style="padding:5px 0;color:var(--text-muted);">Voucher / ref.</td>        <td id="cpVoucher"style="color:var(--text-muted);font-style:italic;"></td></tr>
+                        <tr><td style="padding:5px 0;color:var(--text-muted);">Saldo restante</td>        <td id="cpSaldo"  style="font-weight:700;color:var(--amber-text);"></td></tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Corregir</button>
+                    <button class="btn btn-success btn-sm" id="btnEjecutarPago">
+                        <i class="bi bi-check-circle me-1"></i>Confirmar y registrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="modalPago" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
             <div class="modal-content">
@@ -247,6 +275,7 @@
                             <label style="font-size:.8rem;margin-bottom:3px;">Monto a pagar (S/)</label>
                             <input type="number" class="form-control form-control-sm" id="pagoMonto"
                                    placeholder="0.00" min="0.01" step="0.01" onwheel="this.blur()">
+                            <p id="pagoMontoAviso" style="display:none;font-size:.75rem;color:var(--red-text,#dc3545);margin:4px 0 0;"></p>
                         </div>
                         <div class="col-6">
                             <label style="font-size:.8rem;margin-bottom:3px;">Fecha de pago</label>
@@ -258,7 +287,8 @@
                                 <option value="">— Seleccionar —</option>
                             </select>
                             <input type="text" class="form-control form-control-sm mt-1" id="pagoFormaPagoOtro"
-                                   placeholder="Especifica el método de pago…" style="display:none;">
+                                   placeholder="Ej: Tarjeta, Depósito BCP…"
+                                   maxlength="60" style="display:none;">
                         </div>
                         <div class="col-12">
                             <label style="font-size:.8rem;margin-bottom:3px;">
@@ -272,7 +302,7 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
-                    <button class="btn btn-success btn-sm" onclick="confirmarPago()">
+                    <button class="btn btn-success btn-sm" id="btnRegistrarPago" onclick="confirmarPago()">
                         <i class="bi bi-check-circle me-1"></i>Registrar pago
                     </button>
                 </div>
