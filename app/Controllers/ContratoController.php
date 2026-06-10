@@ -82,10 +82,19 @@ class ContratoController extends BaseController
             return view('errors/html/error_404', ['message' => 'Contrato no encontrado']);
         }
 
-        // Título del archivo: contrato-AAAA-NNNN (año 4 dígitos, ID 4 dígitos con ceros)
-        $titulo = 'contrato-'
-            . str_pad(date('y'), 4, '0', STR_PAD_LEFT) . '-'
-            . str_pad($contrato['id_contrato'], 4, '0', STR_PAD_LEFT);
+        // Nombre del archivo basado en el cliente/colegio
+        $promo = $contrato['promociones'][0] ?? null;
+        if ($promo && !empty($promo['nombre_colegio'])) {
+            $partes = [strtoupper($promo['nombre_colegio'])];
+            if (!empty($promo['grado']))   $partes[] = $promo['grado'];
+            if (!empty($promo['seccion'])) $partes[] = $promo['seccion'];
+            $partes[] = !empty($contrato['fecha_creacion']) ? substr($contrato['fecha_creacion'], 0, 4) : date('Y');
+            $titulo = implode('_', $partes);
+        } else {
+            $titulo = $contrato['cliente'] ?? ('contrato-' . $contrato['id_contrato']);
+        }
+        // Eliminar caracteres no válidos en nombres de archivo
+        $titulo = preg_replace('/[\/\\\\:*?"<>|]/', '', $titulo);
 
         // Renderiza la plantilla HTML del contrato
         $html = view('pdf/contrato', [
