@@ -60,6 +60,7 @@ class ContratoTransformer extends BaseTransformer
                 'seccion'        => $resource['seccion']        ?? null,
                 'num_estudiantes'=> isset($resource['num_estudiantes']) ? (int) $resource['num_estudiantes'] : null,
             ] : null,
+            'primera_sesion' => $resource['primera_sesion'] ?? null,
         ];
 
         if (isset($resource['pagos']))             $result['pagos']             = $resource['pagos'];

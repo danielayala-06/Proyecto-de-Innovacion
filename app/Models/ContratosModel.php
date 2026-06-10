@@ -93,6 +93,11 @@ class ContratosModel extends Model
                 'pe.grado',
                 'pe.seccion',
                 'pe.num_estudiantes',
+                "(SELECT MIN(sf.fecha_hora_sesion)
+                   FROM sesiones_fotograficas sf
+                   JOIN promociones_escolares pe2 ON pe2.id_promocion = sf.id_promocion
+                   WHERE pe2.id_cotizacion = contratos.id_cotizacion
+                     AND sf.estado != 'cancelado') AS primera_sesion",
             ])
             ->join('cotizaciones', 'cotizaciones.id_cotizacion = contratos.id_cotizacion')
             ->join('clientes',    'clientes.id_cliente = cotizaciones.id_cliente')

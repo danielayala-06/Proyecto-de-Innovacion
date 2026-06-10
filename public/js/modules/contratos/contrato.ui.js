@@ -147,7 +147,11 @@ export const ui = {
               : `<span class="text-uppercase" style="font-size:.85rem;">${c.cliente?.nombre ?? '—'}</span>`
             }
           </td>
-          <td style="color:var(--text-muted);">—</td>
+          <td style="color:var(--text-muted);">
+            ${c.primera_sesion
+                ? formatters.fecha(c.primera_sesion.split(' ')[0])
+                : '—'}
+          </td>
           <td>${formatters.moneda(c.total)}</td>
           <td>${badgeEstado(c.estado)}</td>
           <td>${formatters.fecha(c.fecha_creacion)}</td>
