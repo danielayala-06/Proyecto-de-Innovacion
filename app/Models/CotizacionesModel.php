@@ -37,6 +37,7 @@ class CotizacionesModel extends Model
         'total_estimado',
         'descuento_monto',
         'estado',
+        'archivado',
     ];
 
     protected bool $allowEmptyInserts = false;

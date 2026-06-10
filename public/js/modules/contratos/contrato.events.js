@@ -65,7 +65,7 @@ function _filtrar() {
 
   const filtradas = state.filas.filter(c => {
     const e       = c.estado?.toUpperCase();
-    const okArch  = state.mostrarArchivadas || !ESTADOS_ARCHIVADOS_CON.has(e);
+    const okArch  = state.mostrarArchivadas || (!ESTADOS_ARCHIVADOS_CON.has(e) && !c.archivado);
     const nombre  = (c.cliente?.nombre ?? '').toLowerCase();
     const cod     = String(c.id);
     const okSearch = !search || nombre.includes(search) || cod.includes(search);
@@ -444,6 +444,27 @@ window.verDetalleContrato = async function (id) {
  * @param {number} id     - ID del contrato.
  * @param {string} estado - Nuevo estado (COMPLETADO | CANCELADO).
  */
+/**
+ * Alterna el flag archivado de un contrato y actualiza la tabla localmente.
+ *
+ * @param {number}  id        - ID del contrato.
+ * @param {boolean} archivado - Valor actual (true = está archivado).
+ */
+window.archivarContrato = async function (id, archivado) {
+  try {
+    const res = await contratoApi.archivar(id);
+    alerts.ok(res.message ?? (archivado ? 'Contrato desarchivado.' : 'Contrato archivado.'));
+
+    const row = state.filas.find(c => c.id == id);
+    if (row) row.archivado = res.archivado;
+
+    ui.renderStats(calcularStats(state.filas));
+    _filtrar();
+  } catch (e) {
+    alerts.error(e.message || 'No se pudo archivar el contrato.');
+  }
+};
+
 window.cambiarEstadoContrato = async function (id, estado) {
   try {
     await contratoApi.cambiarEstado(id, estado);

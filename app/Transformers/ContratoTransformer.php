@@ -41,6 +41,7 @@ class ContratoTransformer extends BaseTransformer
             'adelanto'       => (float) $resource['adelanto'],
             'total'          => (float) $resource['total'],
             'estado'         =>         $resource['estado'],
+            'archivado'      => (bool)  ($resource['archivado'] ?? false),
             'observaciones'  =>         $resource['observaciones'] ?? null,
             'cliente'        => [
                 'nombre'   => $resource['cliente'],

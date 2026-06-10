@@ -132,6 +132,7 @@ export const ui = {
       const canEdit     = estado === 'PENDIENTE';
       const canDel      = estado === 'PENDIENTE';
       const canContract = estado === 'APROBADA' && !c.tiene_contrato;
+      const canArchive  = estado !== 'PENDIENTE';
 
       return `
         <tr style="cursor:pointer;" onclick="verDetalle(${c.id})">
@@ -151,6 +152,12 @@ export const ui = {
               <button class="btn btn-sm btn-outline-success" title="Generar contrato"
                       onclick="irAGenerarContrato(${c.id})">
                 <i class="bi bi-file-earmark-plus"></i>
+              </button>` : ''}
+              ${canArchive ? `
+              <button class="btn btn-sm ${c.archivado ? 'btn-secondary' : 'btn-outline-secondary'}"
+                      title="${c.archivado ? 'Desarchivar' : 'Archivar'}"
+                      onclick="archivarCotizacion(${c.id}, ${c.archivado ? 'true' : 'false'})">
+                <i class="bi ${c.archivado ? 'bi-archive-fill' : 'bi-archive'}"></i>
               </button>` : ''}
               ${canDel ? `
               <button class="btn btn-sm btn-outline-danger" title="Rechazar"

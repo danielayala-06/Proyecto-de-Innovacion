@@ -171,10 +171,11 @@ class CotizacionService
                 'total'           => (float) $row['total_estimado'],
                 'descuento_monto' => isset($row['descuento_monto']) ? (float) $row['descuento_monto'] : null,
                 'tiene_contrato'  => $tieneContrato,
+                'archivado'       => (bool) ($row['archivado'] ?? false),
             ],
             'cliente' => [
                 'id'               => (int) $row['id_cliente'],
-                'nombre_completo'  => trim($row['nombres'] . ' ' . $row['apellidos']),
+                'nombre_completo'  => trim(($row['nombres'] ?? '') . ' ' . ($row['apellidos'] ?? '')),
                 'tipo_documento'   => $row['tipo_documento']   ?? null,
                 'numero_documento' => $row['numero_documento'] ?? null,
                 'telefono'         => $row['telefono']         ?? null,
@@ -670,5 +671,28 @@ class CotizacionService
             throw new \RuntimeException('Cotización no encontrada', 404);
         }
         $this->cotizacionModel->update($idCotizacion, ['estado' => $estado]);
+    }
+
+    /**
+     * Alterna el flag `archivado` de una cotización.
+     *
+     * @param  int  $id ID de la cotización.
+     * @return bool     Nuevo valor de archivado (true = archivada).
+     *
+     * @throws \RuntimeException 404 si no existe.
+     * @throws \RuntimeException 409 si el estado es PENDIENTE.
+     */
+    public function archivar(int $id): bool
+    {
+        $row = $this->cotizacionModel->find($id);
+        if (!$row) {
+            throw new \RuntimeException('Cotización no encontrada', 404);
+        }
+        if ($row['estado'] === 'PENDIENTE') {
+            throw new \RuntimeException('No se puede archivar una cotización pendiente.', 409);
+        }
+        $nuevo = $row['archivado'] ? 0 : 1;
+        $this->cotizacionModel->update($id, ['archivado' => $nuevo]);
+        return (bool) $nuevo;
     }
 }

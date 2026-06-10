@@ -151,6 +151,31 @@ class ContratosApi extends BaseApiController
     }
 
     /**
+     * PATCH /api/contratos/{id}/archivar
+     *
+     * Alterna el flag `archivado` del contrato. No permitido en ACTIVO.
+     *
+     * @param  mixed $id ID del contrato.
+     * @return ResponseInterface 200 | 404 | 409.
+     */
+    public function archivar($id)
+    {
+        try {
+            $archivado = $this->contratoService->archivar((int) $id);
+        } catch (\RuntimeException $e) {
+            return $this->serviceError($e);
+        }
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON([
+                'status'    => 'success',
+                'archivado' => $archivado,
+                'message'   => $archivado ? 'Contrato archivado.' : 'Contrato desarchivado.',
+            ]);
+    }
+
+    /**
      * PATCH /api/contratos/{id}
      *
      * Body: { adelanto?, fecha_emision?, observaciones? }

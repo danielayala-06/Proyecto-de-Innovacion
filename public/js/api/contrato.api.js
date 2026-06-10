@@ -41,4 +41,6 @@ export const contratoApi = {
   registrarPago: (data)        => http.post('api/pagos', data),
   /** @returns {Promise<Object>} Catálogo de formas de pago disponibles. */
   formasPago:    ()            => http.get('api/formas-pago'),
+  /** @param {number} id - ID del contrato. Alterna flag archivado (no disponible en ACTIVO). */
+  archivar:      (id)          => http.patch(`api/contratos/${id}/archivar`, {}),
 };

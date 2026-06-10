@@ -77,15 +77,17 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth']
     $routes->get   ('cotizaciones/(:num)',         'CotizacionesApi::show/$1');
     $routes->post  ('cotizaciones',               'CotizacionesApi::create');
     $routes->put   ('cotizaciones/(:num)',         'CotizacionesApi::update/$1');
-    $routes->patch ('cotizaciones/(:num)/estado',  'CotizacionesApi::cambiarEstado/$1');
-    $routes->delete('cotizaciones/(:num)',         'CotizacionesApi::delete/$1');
+    $routes->patch ('cotizaciones/(:num)/estado',   'CotizacionesApi::cambiarEstado/$1');
+    $routes->patch ('cotizaciones/(:num)/archivar', 'CotizacionesApi::archivar/$1');
+    $routes->delete('cotizaciones/(:num)',          'CotizacionesApi::delete/$1');
 
     // ── Contratos ─────────────────────────────────────────────────────────────
     $routes->get   ('contratos',               'ContratosApi::index');
     $routes->get   ('contratos/(:num)',         'ContratosApi::show/$1');
     $routes->post  ('contratos',               'ContratosApi::create');
     $routes->patch ('contratos/(:num)',         'ContratosApi::update/$1');
-    $routes->patch ('contratos/(:num)/estado',  'ContratosApi::cambiarEstado/$1');
+    $routes->patch ('contratos/(:num)/estado',   'ContratosApi::cambiarEstado/$1');
+    $routes->patch ('contratos/(:num)/archivar', 'ContratosApi::archivar/$1');
 
     // ── Pagos ─────────────────────────────────────────────────────────────────
     $routes->get   ('pagos',          'PagosApi::index');

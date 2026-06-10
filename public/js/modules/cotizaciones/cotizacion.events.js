@@ -67,7 +67,7 @@ function _filtrar() {
 
   const filtradas = state.filas.filter(c => {
     const e        = c.estado?.toUpperCase();
-    const okArch   = state.mostrarArchivadas || !ESTADOS_ARCHIVADOS_COT.has(e);
+    const okArch   = state.mostrarArchivadas || (!ESTADOS_ARCHIVADOS_COT.has(e) && !c.archivado);
     const okSearch = !search
       || _nombreCliente(c).toLowerCase().includes(search)
       || String(c.id).includes(search);
@@ -256,6 +256,27 @@ window.aprobarCotizacion = async function (id) {
     _renderPagina();
   } catch (e) {
     alerts.error(e.message || 'No se pudo aprobar la cotización.');
+  }
+};
+
+/**
+ * Alterna el flag archivado de una cotización y actualiza la tabla localmente.
+ *
+ * @param {number}  id         - ID de la cotización.
+ * @param {boolean} archivado  - Valor actual (true = está archivada).
+ */
+window.archivarCotizacion = async function (id, archivado) {
+  try {
+    const res = await cotizacionApi.archivar(id);
+    alerts.ok(res.message ?? (archivado ? 'Cotización desarchivada.' : 'Cotización archivada.'));
+
+    const row = state.filas.find(c => c.id === id);
+    if (row) row.archivado = res.archivado;
+
+    ui.renderStats(calcularResumenes(state.filas));
+    _filtrar();
+  } catch (e) {
+    alerts.error(e.message || 'No se pudo archivar la cotización.');
   }
 };
 

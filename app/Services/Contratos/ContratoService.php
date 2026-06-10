@@ -332,6 +332,29 @@ class ContratoService
         }
     }
 
+    /**
+     * Alterna el flag `archivado` de un contrato.
+     *
+     * @param  int  $id ID del contrato.
+     * @return bool     Nuevo valor de archivado (true = archivado).
+     *
+     * @throws \RuntimeException 404 si no existe.
+     * @throws \RuntimeException 409 si el estado es ACTIVO.
+     */
+    public function archivar(int $id): bool
+    {
+        $row = $this->contratoModel->find($id);
+        if (!$row) {
+            throw new \RuntimeException('Contrato no encontrado', 404);
+        }
+        if ($row['estado'] === 'ACTIVO') {
+            throw new \RuntimeException('No se puede archivar un contrato vigente.', 409);
+        }
+        $nuevo = $row['archivado'] ? 0 : 1;
+        $this->contratoModel->update($id, ['archivado' => $nuevo]);
+        return (bool) $nuevo;
+    }
+
     public function obtenerDataContratoPDF(int $id)
     {
         return $this->contratoModel->obtenerDataPDFContrato($id);

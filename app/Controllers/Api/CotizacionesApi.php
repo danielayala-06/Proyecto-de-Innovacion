@@ -259,6 +259,31 @@ class CotizacionesApi extends BaseApiController
     }
 
     /**
+     * PATCH /api/cotizaciones/{id}/archivar
+     *
+     * Alterna el flag `archivado` de la cotización. No permitido en PENDIENTE.
+     *
+     * @param  mixed $id ID de la cotización.
+     * @return ResponseInterface 200 | 404 | 409.
+     */
+    public function archivar($id)
+    {
+        try {
+            $archivado = $this->service->archivar((int) $id);
+        } catch (\RuntimeException $e) {
+            return $this->serviceError($e);
+        }
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON([
+                'status'    => 'success',
+                'archivado' => $archivado,
+                'message'   => $archivado ? 'Cotización archivada.' : 'Cotización desarchivada.',
+            ]);
+    }
+
+    /**
      * DELETE /api/cotizaciones/{id}
      *
      * Cambia el estado a RECHAZADA. Solo funciona en cotizaciones PENDIENTES.

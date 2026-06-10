@@ -122,10 +122,11 @@ export const ui = {
     }
 
     tbody.innerHTML = filas.map(c => {
-      const cod      = formatters.codigo(c.id);
-      const cotCod   = c.id_cotizacion ? formatters.codigo(c.id_cotizacion) : '—';
-      const isActivo = c.estado?.toUpperCase() === 'ACTIVO';
-      const editAttr = isActivo
+      const cod        = formatters.codigo(c.id);
+      const cotCod     = c.id_cotizacion ? formatters.codigo(c.id_cotizacion) : '—';
+      const isActivo   = c.estado?.toUpperCase() === 'ACTIVO';
+      const canArchive = !isActivo;
+      const editAttr   = isActivo
         ? `onclick="event.stopPropagation();editarContrato(${c.id})"  title="Corregir contrato"`
         : `disabled title="Solo se puede editar un contrato vigente"`;
 
@@ -158,6 +159,12 @@ export const ui = {
                  onclick="event.stopPropagation()">
                 <i class="bi bi-camera"></i>
               </a>
+              ${canArchive ? `
+              <button class="btn btn-sm ${c.archivado ? 'btn-secondary' : 'btn-outline-secondary'}"
+                      title="${c.archivado ? 'Desarchivar' : 'Archivar'}"
+                      onclick="event.stopPropagation();archivarContrato(${c.id}, ${c.archivado ? 'true' : 'false'})">
+                <i class="bi ${c.archivado ? 'bi-archive-fill' : 'bi-archive'}"></i>
+              </button>` : ''}
             </div>
           </td>
         </tr>`;

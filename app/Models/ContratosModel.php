@@ -39,6 +39,7 @@ class ContratosModel extends Model
         'observaciones',
         'estado',
         'reglas_aplicadas',
+        'archivado',
     ];
 
     protected bool $allowEmptyInserts = false;

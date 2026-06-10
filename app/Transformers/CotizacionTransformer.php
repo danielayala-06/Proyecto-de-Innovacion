@@ -43,6 +43,7 @@ class CotizacionTransformer extends BaseTransformer
                                         : null,
             'observaciones'       =>         $resource['cotizacion']['observaciones'],
             'tiene_contrato'      => (bool)  ($resource['cotizacion']['tiene_contrato'] ?? false),
+            'archivado'           => (bool)  ($resource['cotizacion']['archivado']       ?? false),
             'cliente'             => $this->includeCliente(),
             'cliente2'            => $this->includeCliente2(),
             'usuario'             => $this->includeUsuario(),

@@ -33,4 +33,6 @@ export const cotizacionApi = {
   cambiarEstado: (id, estado)  => http.patch(`api/cotizaciones/${id}/estado`, { estado }),
   /** @param {number} id - ID de la cotización (solo en estado PENDIENTE). */
   eliminar:      (id)          => http.delete(`api/cotizaciones/${id}`),
+  /** @param {number} id - ID de la cotización. Alterna flag archivado (no disponible en PENDIENTE). */
+  archivar:      (id)          => http.patch(`api/cotizaciones/${id}/archivar`, {}),
 };
