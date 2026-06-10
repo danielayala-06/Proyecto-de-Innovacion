@@ -48,17 +48,24 @@
                         <!-- Datos -->
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
-                                <label for="nombresCliente" class="form-label">Nombres*</label>
-                                <input type="text" class="form-control" id="nombresCliente" name="nombres_cliente">
+                                <label for="contactoCliente" class="form-label">Nombre de contacto*</label>
+                                <input type="text" class="form-control" id="contactoCliente" name="contacto_cliente"
+                                       placeholder="Ej: María García" autocomplete="off">
+                                <div id="contactoFeedback" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label for="apellidosCliente" class="form-label">Apellidos*</label>
-                                <input type="text" class="form-control" id="apellidosCliente" name="apellidos_cliente">
+                                <label for="telefonoCliente" class="form-label">Teléfono*</label>
+                                <input type="text" class="form-control" id="telefonoCliente"
+                                       name="telefono" placeholder="9XXXXXXXX" maxlength="9">
+                                <div id="telFeedback" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Documento*</label>
+                                <label class="form-label">
+                                    Documento
+                                    <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;">(opcional)</span>
+                                </label>
                                 <div class="input-group">
                                     <select class="form-select" id="tipoDocumento" name="tipo_documento"
                                             style="max-width:175px;flex-shrink:0;">
@@ -71,13 +78,6 @@
                                            maxlength="12">
                                 </div>
                                 <div id="docFeedback" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
-                            </div>
-
-                            <div class="col-12 col-md-6">
-                                <label for="telefonoCliente" class="form-label">Teléfono*</label>
-                                <input type="text" class="form-control" id="telefonoCliente"
-                                       name="telefono" placeholder="9XXXXXXXX" maxlength="9">
-                                <div id="telFeedback" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
                             </div>
 
                             <div class="col-12 col-md-6">
@@ -109,15 +109,21 @@
 
                             <div class="row g-3">
                                 <div class="col-12 col-md-6">
-                                    <label for="nombresCliente2" class="form-label">Nombres*</label>
-                                    <input type="text" class="form-control" id="nombresCliente2">
+                                    <label for="contactoCliente2" class="form-label">Nombre de contacto*</label>
+                                    <input type="text" class="form-control" id="contactoCliente2"
+                                           placeholder="Ej: Carlos Pérez" autocomplete="off">
                                 </div>
                                 <div class="col-12 col-md-6">
-                                    <label for="apellidosCliente2" class="form-label">Apellidos</label>
-                                    <input type="text" class="form-control" id="apellidosCliente2">
+                                    <label for="telefonoCliente2" class="form-label">Teléfono</label>
+                                    <input type="text" class="form-control" id="telefonoCliente2"
+                                           placeholder="9XXXXXXXX" maxlength="9">
+                                    <div id="telFeedback2" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
                                 </div>
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label">Documento</label>
+                                    <label class="form-label">
+                                        Documento
+                                        <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;">(opcional)</span>
+                                    </label>
                                     <div class="input-group">
                                         <select class="form-select" id="tipoDocumento2" style="max-width:175px;flex-shrink:0;">
                                             <option value="DNI">DNI</option>
@@ -128,12 +134,6 @@
                                                placeholder="8 dígitos numéricos" maxlength="12">
                                     </div>
                                     <div id="docFeedback2" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <label for="telefonoCliente2" class="form-label">Teléfono</label>
-                                    <input type="text" class="form-control" id="telefonoCliente2"
-                                           placeholder="9XXXXXXXX" maxlength="9">
-                                    <div id="telFeedback2" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label for="emailCliente2" class="form-label">Correo electrónico</label>
