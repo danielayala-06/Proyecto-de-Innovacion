@@ -215,6 +215,16 @@ class ContratosModel extends Model
             ->where('pe.id_cotizacion', $idCot)
             ->get()->getResultArray();
 
+        // Sesiones fotográficas vinculadas a la promoción de esta cotización.
+        $contrato['sesiones'] = $this->db
+            ->table('sesiones_fotograficas sf')
+            ->select(['sf.fecha_hora_sesion', 'sf.tipo', 'sf.estado'])
+            ->join('promociones_escolares pe', 'pe.id_promocion = sf.id_promocion')
+            ->where('pe.id_cotizacion', $idCot)
+            ->orderBy('sf.fecha_hora_sesion', 'ASC')
+            ->limit(3)
+            ->get()->getResultArray();
+
         return $contrato;
     }
 }

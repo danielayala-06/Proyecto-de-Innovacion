@@ -9,24 +9,19 @@
 
     body {
         font-family: Arial, sans-serif;
-        font-size: 10.5px;
+        font-size: 15px;
         color: #1a1a1a;
         line-height: 1.45;
     }
 
-    .page {
-        width: 76%;
-        margin: 20px auto;
-        background: #fff;
-        padding: 8mm 14mm 12mm;
-    }
+    .page { padding: 13mm 13mm 13mm 26mm; }
 
     /* ── HEADER ───────────────────────────────────────────────── */
     .header {
         display: table;
         width: 100%;
-        padding-bottom: 10px;
-        margin-bottom: 14px;
+        padding-bottom: 14px;
+        margin-bottom: 22px;
         border-bottom: 1px solid #1b2d6b;
     }
     .header::after { content:''; display:table; clear:both; }
@@ -35,111 +30,110 @@
         vertical-align: middle;
     }
     .h-center { text-align: center; }
-    .h-right  { text-align: right; width: 130px; white-space: nowrap; }
+    .h-right  { text-align: right; width: 140px; white-space: nowrap; }
 
     .logo-name {
         font-family: Georgia, serif;
-        font-size: 19px; font-weight: bold; font-style: italic;
+        font-size: 18px; font-weight: bold; font-style: italic;
         color: #1b2d6b; line-height: 1.1;
     }
-    .logo-sub  { font-size: 7px; letter-spacing: 2.5px; color: #1b2d6b; text-transform: lowercase; }
-    .logo-info { font-size: 7.5px; color: #666; margin-top: 4px; line-height: 1.7; }
+    .logo-sub  { font-size: 7.5px; letter-spacing: 2.5px; color: #1b2d6b; text-transform: lowercase; }
+    .logo-info { font-size: 8px; color: #666; margin-top: 4px; line-height: 1.7; }
 
     .title-doc  {
         font-family: Georgia, serif;
-        font-size: 22px; font-weight: 900;
+        font-size: 21px; font-weight: 900;
         letter-spacing: 6px; color: #1b2d6b;
         text-transform: uppercase;
     }
-    .title-sub  { font-size: 7.5px; color: #888; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+    .title-sub  { font-size: 8px; color: #888; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
 
-    .num-label  { font-size: 7px; color: #999; text-transform: uppercase; letter-spacing: 1px; }
-    .num-value  { font-size: 20px; font-weight: 900; color: #c0392b; letter-spacing: 1px; }
-    .num-date   { font-size: 8px; color: #888; margin-top: 3px; }
+    .num-label  { font-size: 7.5px; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+    .num-value  { font-size: 19px; font-weight: 900; color: #c0392b; letter-spacing: 1px; }
+    .num-date   { font-size: 8.5px; color: #888; margin-top: 3px; }
 
     /* ── SECTION TITLE ────────────────────────────────────────── */
     .sec {
-        font-size: 7.5px; font-weight: 700; letter-spacing: 2px;
+        font-size: 8px; font-weight: 700; letter-spacing: 2px;
         text-transform: uppercase; color: #1b2d6b;
         border-bottom: 1px solid #1b2d6b;
-        padding-bottom: 2px; margin: 12px 0 8px;
+        padding-bottom: 4px; margin: 24px 0 13px;
     }
 
     /* ── FIELD ROWS ───────────────────────────────────────────── */
-    .row2 { display: table; width: 100%; margin-bottom: 8px; }
+    .row2 { display: table; width: 100%; margin-bottom: 10px; }
     .col2 { display: table-cell; width: 50%; }
-    .col2:first-child { padding-right: 16px; }
+    .col2:first-child { padding-right: 14px; }
 
-    .field { display: table; width: 100%; border-bottom: 1px solid #bbb; margin-bottom: 8px; }
+    .field { display: table; width: 100%; border-bottom: 1px solid #bbb; margin-bottom: 13px; }
     .fl    { display: table-cell; font-weight: 700; font-size: 9px; white-space: nowrap; padding-right: 6px; color: #555; width: 1%; text-transform: uppercase; letter-spacing: .3px; }
-    .fv    { display: table-cell; font-size: 10.5px; font-weight: 700; color: #1b2d6b; padding-bottom: 1px; }
+    .fv    { display: table-cell; font-size: 11.5px; font-weight: 700; color: #1b2d6b; padding-bottom: 1px; }
 
     /* ── CHECKBOXES ───────────────────────────────────────────── */
     .svc-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-    .svc-table td { padding: 3px 6px; font-size: 10px; width: 25%; }
+    .svc-table td { padding: 5px 5px; font-size: 11px; width: 25%; }
     .cb {
-        display: inline-block; width: 11px; height: 11px;
+        display: inline-block; width: 14px; height: 14px;
         border: 1.5px solid #888; vertical-align: middle;
-        position: relative; margin-right: 4px;
+        margin-right: 4px;
+        text-align: center; line-height: 14px;
     }
-    .cb.on { border-color: #1b2d6b; }
-    .cb.on::after {
-        content: 'x'; position: absolute;
-        top: -2px; left: 1px;
-        font-size: 10px; font-weight: 900; color: #1b2d6b;
+    .cb.on {
+        border-color: #1b2d6b;
+        font-family: Arial, sans-serif; font-size: 12px;
+        font-weight: 900; color: #1b2d6b;
     }
     .svc-qty { font-weight: 700; color: #1b2d6b; }
 
     /* ── SESIONES ─────────────────────────────────────────────── */
-    .ses-row { display: table; width: 100%; margin-bottom: 7px; }
-    .ses-l   { display: table-cell; font-weight: 700; font-size: 9.5px; white-space: nowrap; padding-right: 8px; color: #444; }
-    .ses-v   { display: table-cell; border-bottom: 1px solid #aaa; }
+    .ses-row { display: table; width: 100%; margin-bottom: 11px; }
+    .ses-l   { display: table-cell; font-weight: 700; font-size: 11px; white-space: nowrap; padding-right: 8px; color: #444; }
+    .ses-v   { display: table-cell; border-bottom: 1px solid #aaa; padding-bottom: 3px; }
 
     /* ── ITEMS TABLE ──────────────────────────────────────────── */
-    .items { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 9px; }
+    .items { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 10.5px; }
     .items thead tr { background: #1b2d6b; color: #fff; }
-    .items th { padding: 4px 7px; font-weight: 700; font-size: 7.5px; letter-spacing: .5px; text-transform: uppercase; }
+    .items th { padding: 9px 8px; font-weight: 700; font-size: 8.5px; letter-spacing: .5px; text-transform: uppercase; }
     .items tbody tr:nth-child(even) { background: #f4f6fb; }
-    .items td { padding: 4px 7px; border-bottom: 1px solid #e0e4ef; }
-    .items tfoot td { border-top: 1.5px solid #1b2d6b; font-weight: 900; font-size: 10px; padding: 5px 7px; color: #1b2d6b; }
+    .items td { padding: 10px 8px; border-bottom: 1px solid #e0e4ef; line-height: 1.5; }
+    .items tfoot td { border-top: 1.5px solid #1b2d6b; font-weight: 900; font-size: 11px; padding: 9px 8px; color: #1b2d6b; }
 
     /* ── PRECIO BLOCK ─────────────────────────────────────────── */
-    .price-grid { display: table; width: 100%; margin-top: 10px; }
-    .price-left  { display: table-cell; vertical-align: top; padding-right: 16px; }
-    .price-right { display: table-cell; vertical-align: middle; width: 180px; }
+    .price-grid { display: table; width: 100%; margin-top: 28px; }
+    .price-left  { display: table-cell; vertical-align: top; padding-right: 14px; }
+    .price-right { display: table-cell; vertical-align: middle; width: 185px; }
 
-    .p-row { display: table; width: 100%; margin-bottom: 6px; }
+    .p-row { display: table; width: 100%; margin-bottom: 8px; }
     .p-lbl { display: table-cell; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #555; }
-    .p-val { display: table-cell; text-align: right; font-size: 13px; font-weight: 900; color: #1b2d6b; }
-    .p-sep { border: none; border-top: 1px solid #c5cde0; margin: 4px 0 10px; }
+    .p-val { display: table-cell; text-align: right; font-size: 14px; font-weight: 900; color: #1b2d6b; }
+    .p-sep { border: none; border-top: 1px solid #c5cde0; margin: 5px 0 12px; }
     .p-row.saldo .p-lbl { color: #1b2d6b; font-size: 10px; }
-    .p-row.saldo .p-val { font-size: 16px; color: #1b2d6b; }
+    .p-row.saldo .p-val { font-size: 18px; color: #1b2d6b; }
 
     /* ── CLAUSULAS ────────────────────────────────────────────── */
-    .clausulas-box { border: 1px solid #c5cde0; border-radius: 5px; padding: 8px 11px; }
-    .clausulas-title { font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1b2d6b; margin-bottom: 6px; }
-    .clausulas-box ol { padding-left: 14px; }
-    .clausulas-box ol li { font-size: 8px; line-height: 1.6; color: #333; margin-bottom: 1px; }
+    .clausulas-box { border: 1px solid #c5cde0; border-radius: 5px; padding: 12px 14px; }
+    .clausulas-title { font-size: 8.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1b2d6b; margin-bottom: 8px; }
+    .clausulas-box ol { padding-left: 13px; }
+    .clausulas-box ol li { font-size: 8.5px; line-height: 2; color: #333; margin-bottom: 5px; }
 
     /* ── REGLAS ───────────────────────────────────────────────── */
-    .reglas-box { border: 1px solid #c5cde0; border-radius: 5px; padding: 6px 10px; margin-bottom: 10px; background: #f8f9fd; }
-    .reglas-title { font-size: 7.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1b2d6b; margin-bottom: 5px; }
+    .reglas-box { border: 1px solid #c5cde0; border-radius: 5px; padding: 5px 9px; margin-bottom: 8px; background: #f8f9fd; }
+    .reglas-title { font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1b2d6b; margin-bottom: 4px; }
     .rr { display: table; width: 100%; margin-bottom: 3px; }
-    .ri { display: table-cell; width: 12px; font-size: 9px; font-weight: 900; color: #1b2d6b; }
-    .rt { display: table-cell; font-size: 8.5px; color: #333; line-height: 1.4; }
-    .rb { display: inline-block; background: #dce3f3; color: #1b2d6b; font-size: 7px; font-weight: 700; border-radius: 8px; padding: 1px 6px; margin-left: 4px; vertical-align: middle; }
+    .ri { display: table-cell; width: 12px; font-size: 10px; font-weight: 900; color: #1b2d6b; }
+    .rt { display: table-cell; font-size: 9.5px; color: #333; line-height: 1.4; }
+    .rb { display: inline-block; background: #dce3f3; color: #1b2d6b; font-size: 8px; font-weight: 700; border-radius: 8px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
     .rb.lim { background: #f8d7da; color: #842029; }
 
     /* ── FIRMAS ───────────────────────────────────────────────── */
     .sigs { display: table; width: 100%; margin-top: 36px; }
-    .sig  { display: table-cell; text-align: center; width: 50%; padding: 0 24px; vertical-align: bottom; }
-    .sig-space { height: 52px; }
-    .sig-line  { border-top: 1.5px solid #444; margin-bottom: 5px; }
-    .sig-role  { font-size: 7.5px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #888; }
-    .sig-name  { font-size: 10.5px; font-weight: 700; color: #1a1a1a; margin-top: 2px; }
-    .sig-dni   { font-size: 7.5px; color: #aaa; margin-top: 6px; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
+    .sig  { display: table-cell; text-align: center; width: 50%; padding: 0 22px; vertical-align: bottom; }
+    .sig-space { height: 65px; }
+    .sig-line  { border-top: 1.5px solid #444; margin-bottom: 4px; }
+    .sig-role  { font-size: 8px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #888; }
+    .sig-name  { font-size: 11.5px; font-weight: 700; color: #1a1a1a; margin-top: 2px; }
 
-    @page { margin: 10mm 12mm; }
+    @page { margin: 0; }
 </style>
 <body>
 <?php
@@ -158,7 +152,7 @@ $contacto2Telefono = $cliente2Telefono ?? ($contrato['contacto2_telefono'] ?? nu
 
 $firmaNombreCliente = $promo ? $promo['nombre_promocion'] : $contrato['cliente'];
 
-$categorias     = array_map('strtolower', array_column($detalles, 'categoria'));
+$categorias     = array_map(fn($c) => strtolower($c ?? ''), array_column($detalles, 'categoria'));
 $tieneAnuarios  = !empty(array_filter($categorias, fn($c) => in_array($c, ['anuarios','anuario','paquetes'])));
 $tieneCuadros   = !empty(array_filter($categorias, fn($c) => in_array($c, ['cuadros','cuadro'])));
 $tienePhotobook = in_array('photobook', $categorias);
@@ -193,9 +187,6 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
             </div>
         </div>
     </div>
-
-    <!-- PARTES -->
-    <div class="sec">Partes</div>
 
     <?php if ($promo): ?>
     <div class="row2">
@@ -266,28 +257,28 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
     <table class="svc-table">
         <tr>
             <td>
-                <span class="cb <?= $tieneAnuarios ? 'on' : '' ?>"></span> Anuarios
+                <span class="cb <?= $tieneAnuarios ? 'on' : '' ?>"><?= $tieneAnuarios ? 'x' : '' ?></span> Anuarios
                 <?php if ($tieneAnuarios):
                     $c = array_sum(array_column(array_filter($detalles, fn($d) => in_array(strtolower($d['categoria'] ?? ''), ['anuarios','anuario','paquetes'])), 'cantidad')); ?>
                     &nbsp;<span class="svc-qty"><?= $c ?></span>
                 <?php endif; ?>
             </td>
             <td>
-                <span class="cb <?= $tieneCuadros ? 'on' : '' ?>"></span> Cuadros
+                <span class="cb <?= $tieneCuadros ? 'on' : '' ?>"><?= $tieneCuadros ? 'x' : '' ?></span> Cuadros
                 <?php if ($tieneCuadros):
                     $c = array_sum(array_column(array_filter($detalles, fn($d) => in_array(strtolower($d['categoria'] ?? ''), ['cuadros','cuadro'])), 'cantidad')); ?>
                     &nbsp;<span class="svc-qty"><?= $c ?></span>
                 <?php endif; ?>
             </td>
             <td>
-                <span class="cb <?= $tienePhotobook ? 'on' : '' ?>"></span> Photobook
+                <span class="cb <?= $tienePhotobook ? 'on' : '' ?>"><?= $tienePhotobook ? 'x' : '' ?></span> Photobook
                 <?php if ($tienePhotobook):
                     $c = array_sum(array_column(array_filter($detalles, fn($d) => strtolower($d['categoria'] ?? '') === 'photobook'), 'cantidad')); ?>
                     &nbsp;<span class="svc-qty"><?= $c ?></span>
                 <?php endif; ?>
             </td>
             <td>
-                <span class="cb <?= $tieneOtro ? 'on' : '' ?>"></span> Otro
+                <span class="cb <?= $tieneOtro ? 'on' : '' ?>"><?= $tieneOtro ? 'x' : '' ?></span> Otro
                 <?php if ($tieneOtro):
                     $c = array_sum(array_column(array_filter($detalles, fn($d) => in_array(strtolower($d['categoria'] ?? ''), ['otro','otros','personalizado'])), 'cantidad')); ?>
                     &nbsp;<span class="svc-qty"><?= $c ?></span>
@@ -296,14 +287,25 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
         </tr>
     </table>
 
+    <?php
+    $sesiones  = $contrato['sesiones'] ?? [];
+    $tipoLabel = ['estudio' => 'Estudio', 'colegio' => 'Colegio', 'exteriores' => 'Exteriores', 'otro' => 'Otro'];
+    $numSes    = max(count($sesiones), 2);
+    for ($i = 0; $i < $numSes; $i++):
+        $s     = $sesiones[$i] ?? null;
+        $fecha = '';
+        if ($s) {
+            $dt    = new \DateTime($s['fecha_hora_sesion']);
+            $fecha = $dt->format('d') . ' de ' . $mesesEs[(int)$dt->format('m') - 1] . ' de ' . $dt->format('Y')
+                   . ', ' . $dt->format('H:i') . ' h'
+                   . ' — ' . ($tipoLabel[$s['tipo']] ?? ucfirst($s['tipo']));
+        }
+    ?>
     <div class="ses-row">
-        <div class="ses-l">Fecha de sesión 1:</div>
-        <div class="ses-v">&nbsp;</div>
+        <div class="ses-l">Fecha de sesión <?= $i + 1 ?>:</div>
+        <div class="ses-v"><?= $fecha ? esc($fecha) : '&nbsp;' ?></div>
     </div>
-    <div class="ses-row">
-        <div class="ses-l">Fecha de sesión 2:</div>
-        <div class="ses-v">&nbsp;</div>
-    </div>
+    <?php endfor; ?>
 
     <!-- DETALLE -->
     <div class="sec">Detalle del Servicio</div>
@@ -318,6 +320,7 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
         </thead>
         <tbody>
             <?php foreach ($detalles as $item): ?>
+            <?php if ($item['tipo_item'] === 'personalizado' && (float)$item['precio_unitario'] === 0.0) continue; ?>
             <tr>
                 <td style="text-align:center;"><?= esc($item['cantidad']) ?></td>
                 <td><?= esc($item['descripcion']) ?></td>
@@ -399,19 +402,12 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
 
     <!-- FIRMAS -->
     <div class="sigs">
-        <div class="sig">
-            <div class="sig-space"></div>
-            <div class="sig-line"></div>
-            <div class="sig-role">El Cliente</div>
-            <div class="sig-name"><?= esc($contrato['cliente']) ?></div>
-            <div class="sig-dni">D.N.I.: ___________________________</div>
-        </div>
+        <div class="sig"></div>
         <div class="sig">
             <div class="sig-space"></div>
             <div class="sig-line"></div>
             <div class="sig-role">El Prestador</div>
             <div class="sig-name">Quique Ronceros · Fotografía</div>
-            <div class="sig-dni">D.N.I.: ___________________________</div>
         </div>
     </div>
 
