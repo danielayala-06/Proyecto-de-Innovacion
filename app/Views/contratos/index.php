@@ -126,6 +126,7 @@
                         <div class="col-md-6">
                             <label>Adelanto / pago inicial (S/)</label>
                             <input type="number" class="form-control" id="contratoAdelanto" placeholder="0.00" min="0" step="0.01" onwheel="this.blur()">
+                            <p id="contratoAdelantoAviso" style="display:none;font-size:.75rem;color:var(--red-text,#dc3545);margin:4px 0 0;"></p>
                         </div>
                         <div class="col-md-6">
                             <label>Forma de pago del saldo</label>

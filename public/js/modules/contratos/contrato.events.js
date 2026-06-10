@@ -85,6 +85,18 @@ function _filtrar() {
 /** @type {number|null} ID del contrato en edición, o `null` si se está creando. */
 let _editContratoId = null;
 
+/** @type {number} Total del contrato en edición, para validar adelanto. */
+let _editContratoTotal = 0;
+
+/** @type {number} Adelanto mínimo requerido (S/ 10 × alumnos, mínimo S/ 50). */
+let _editContratoMin = 0;
+
+/** @type {number} Número de estudiantes del contrato en edición. */
+let _editContratoAlumnos = 0;
+
+/** @type {Function|null} Listener activo del input adelanto (para poder removerlo). */
+let _adelantoInputHandler = null;
+
 /**
  * Ajusta los textos del modal 2 según el modo de operación.
  *
@@ -267,6 +279,17 @@ window.confirmarContrato = async function () {
     alerts.warning('Ingresa un adelanto válido.');
     return;
   }
+  if (_editContratoId !== null && _editContratoTotal > 0 && adelanto > _editContratoTotal + 0.001) {
+    alerts.warning(`El adelanto no puede superar el total del contrato (${formatters.moneda(_editContratoTotal)}).`);
+    return;
+  }
+  if (_editContratoId !== null && _editContratoMin > 0 && adelanto < _editContratoMin - 0.001) {
+    const msg = _editContratoAlumnos > 0
+      ? `El adelanto mínimo es ${formatters.moneda(_editContratoMin)} (S/ 10 × ${_editContratoAlumnos} alumnos).`
+      : `El adelanto mínimo es ${formatters.moneda(_editContratoMin)}.`;
+    alerts.warning(msg);
+    return;
+  }
 
   const fechaFirma = document.getElementById('contratoFechaFirma')?.value || null;
   if (fechaFirma) {
@@ -344,14 +367,47 @@ window.editarContrato = async function (id) {
   try {
     const res    = await contratoApi.obtener(id);
     const data   = res.data;
-    _editContratoId = id;
+    _editContratoId      = id;
+    _editContratoTotal   = parseFloat(data.total) || 0;
+    _editContratoAlumnos = parseInt(data.promocion?.num_estudiantes ?? 0);
+    _editContratoMin     = _editContratoAlumnos > 0
+      ? Math.max(50, _editContratoAlumnos * 10)
+      : 50;
 
     const fechaInput    = document.getElementById('contratoFechaFirma');
     const adelantoInput = document.getElementById('contratoAdelanto');
     const obsInput      = document.getElementById('contratoObservaciones');
+    const aviso         = document.getElementById('contratoAdelantoAviso');
+    const btnSubmit     = document.getElementById('btnSubmitContrato');
+
+    // Resetear estado previo del aviso
+    if (aviso)         { aviso.textContent = ''; aviso.style.display = 'none'; }
+    if (adelantoInput) adelantoInput.style.borderColor = '';
+    if (btnSubmit)     btnSubmit.disabled = false;
+
     if (fechaInput)    fechaInput.value    = data.fecha_emision ?? '';
     if (adelantoInput) adelantoInput.value = data.adelanto      ?? '';
     if (obsInput)      obsInput.value      = data.observaciones ?? '';
+
+    // Validación en tiempo real del adelanto
+    if (adelantoInput) {
+      if (_adelantoInputHandler) adelantoInput.removeEventListener('input', _adelantoInputHandler);
+      _adelantoInputHandler = () => {
+        const val       = parseFloat(adelantoInput.value) || 0;
+        const excede    = _editContratoTotal > 0 && val > _editContratoTotal + 0.001;
+        const bajMin    = val > 0 && val < _editContratoMin - 0.001;
+        const invalido  = excede || bajMin;
+        let msg = '';
+        if (excede)  msg = `El adelanto no puede superar el total del contrato (${formatters.moneda(_editContratoTotal)}).`;
+        else if (bajMin) msg = _editContratoAlumnos > 0
+          ? `El adelanto mínimo es ${formatters.moneda(_editContratoMin)} (S/ 10 × ${_editContratoAlumnos} alumnos).`
+          : `El adelanto mínimo es ${formatters.moneda(_editContratoMin)}.`;
+        if (aviso)     { aviso.textContent = msg; aviso.style.display = invalido ? '' : 'none'; }
+        if (adelantoInput) adelantoInput.style.borderColor = invalido ? 'var(--red-text, #dc3545)' : '';
+        if (btnSubmit) btnSubmit.disabled = invalido;
+      };
+      adelantoInput.addEventListener('input', _adelantoInputHandler);
+    }
 
     const c2Nombre   = document.getElementById('contacto2Nombre');
     const c2Telefono = document.getElementById('contacto2Telefono');
@@ -605,7 +661,13 @@ window.abrirModalPago = async function (id) {
   _pagoContratoId   = id;
   _pagoContratoData = null;
 
-  if (!_modalPago) _modalPago = new bootstrap.Modal(document.getElementById('modalPago'));
+  if (!_modalPago) {
+    const modalPagoEl    = document.getElementById('modalPago');
+    const modalDetalleEl = document.getElementById('modalDetalle');
+    _modalPago = new bootstrap.Modal(modalPagoEl);
+    modalPagoEl.addEventListener('show.bs.modal',   () => { modalDetalleEl.style.filter = 'brightness(0.35) blur(2px)'; });
+    modalPagoEl.addEventListener('hidden.bs.modal', () => { modalDetalleEl.style.filter = ''; });
+  }
 
   const titleEl = document.getElementById('pagoTitle');
   if (titleEl) titleEl.innerHTML =
@@ -750,15 +812,16 @@ window.confirmarPago = function () {
   _modalConfirmarPago = _modalConfirmarPago ?? new bootstrap.Modal(document.getElementById('modalConfirmarPago'));
 
   // Ocultar modal de pago y oscurecer el modal de fondo mientras confirma
-  const modalPagoEl   = document.getElementById('modalPago');
+  const modalPagoEl    = document.getElementById('modalPago');
   const modalDetalleEl = document.getElementById('modalDetalle');
   modalPagoEl.style.opacity = '0';
-  if (modalDetalleEl) modalDetalleEl.style.filter = 'brightness(0.35)';
+  if (modalDetalleEl) modalDetalleEl.style.filter = 'brightness(0.35) blur(2px)';
 
   document.getElementById('modalConfirmarPago').addEventListener('hidden.bs.modal', () => {
     if (!_pagoConfirmado) {
+      // Vuelve al estado "modalPago abierto": restaura opacidad pero mantiene el oscurecimiento
       modalPagoEl.style.opacity = '';
-      if (modalDetalleEl) modalDetalleEl.style.filter = '';
+      if (modalDetalleEl) modalDetalleEl.style.filter = 'brightness(0.35) blur(2px)';
     }
   }, { once: true });
 

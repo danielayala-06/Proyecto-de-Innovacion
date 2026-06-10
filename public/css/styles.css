@@ -1371,6 +1371,9 @@ label {
 /* ── TABLA RESPONSIVA ────────────────────────────────────────────── */
 .table-responsive-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+/* ── STACKING DE MODALES ─────────────────────────────────────────── */
+#modalDetalle { transition: filter 0.25s ease; }
+
 /* ── TEMA OSCURO ─────────────────────────────────────────────────── */
 [data-theme="dark"] {
     --bg-page:      #141210;

@@ -176,6 +176,19 @@ class ContratoService
             );
         }
 
+        $promocion    = $this->promocionModel->porCotizacion((int) $data['id_cotizacion']);
+        $numAlumnos   = (int) ($promocion['num_estudiantes'] ?? 0);
+        $adelantoMin  = $numAlumnos > 0 ? max(50, $numAlumnos * 10) : 50;
+
+        if ($adelanto < $adelantoMin) {
+            throw new \RuntimeException(
+                $numAlumnos > 0
+                    ? "El adelanto mínimo es S/ {$adelantoMin} (S/ 10 × {$numAlumnos} alumnos)"
+                    : "El adelanto mínimo es S/ {$adelantoMin}",
+                422
+            );
+        }
+
         $detalles   = $this->detalleModel->where('id_cotizacion', (int) $data['id_cotizacion'])->findAll();
         $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
 
@@ -259,17 +272,33 @@ class ContratoService
             throw new \RuntimeException('Solo se puede editar contratos ACTIVOS', 409);
         }
 
-        $updateData = [];
+        $updateData    = [];
+        $nuevoAdelanto = null;
 
         if (isset($data['adelanto'])) {
-            $adelanto = round((float) $data['adelanto'], 2);
-            if ($adelanto > (float) $contrato['total']) {
+            $nuevoAdelanto = round((float) $data['adelanto'], 2);
+
+            if ($nuevoAdelanto > (float) $contrato['total']) {
                 throw new \RuntimeException(
                     'El adelanto no puede superar el total del contrato',
                     422
                 );
             }
-            $updateData['adelanto'] = $adelanto;
+
+            $promocion   = $this->promocionModel->porCotizacion((int) $contrato['id_cotizacion']);
+            $numAlumnos  = (int) ($promocion['num_estudiantes'] ?? 0);
+            $adelantoMin = $numAlumnos > 0 ? max(50, $numAlumnos * 10) : 50;
+
+            if ($nuevoAdelanto < $adelantoMin) {
+                throw new \RuntimeException(
+                    $numAlumnos > 0
+                        ? "El adelanto mínimo es S/ {$adelantoMin} (S/ 10 × {$numAlumnos} alumnos)"
+                        : "El adelanto mínimo es S/ {$adelantoMin}",
+                    422
+                );
+            }
+
+            $updateData['adelanto'] = $nuevoAdelanto;
         }
 
         if (array_key_exists('fecha_emision', $data)) {
@@ -285,8 +314,38 @@ class ContratoService
             $updateData['contacto2_telefono'] = $data['contacto2_telefono'] ?: null;
         }
 
+        $db = $this->contratoModel->db;
+        $db->transStart();
+
         if (!empty($updateData) && $this->contratoModel->update($id, $updateData) === false) {
+            $db->transRollback();
             throw new \RuntimeException(json_encode($this->contratoModel->errors()), 422);
+        }
+
+        // Sincronizar el registro de pago de adelanto cuando cambia el monto
+        if ($nuevoAdelanto !== null) {
+            $adelantoPago = $this->pagoModel->adelantoPorContrato($id);
+            if ($adelantoPago !== null) {
+                if ($nuevoAdelanto > 0) {
+                    $this->pagoModel->update($adelantoPago['id_pago'], ['monto' => $nuevoAdelanto]);
+                } else {
+                    $this->pagoModel->delete($adelantoPago['id_pago']);
+                }
+            } elseif ($nuevoAdelanto > 0) {
+                $this->pagoModel->skipValidation(true)->insert([
+                    'id_contrato' => $id,
+                    'forma_pago'  => 'Efectivo',
+                    'monto'       => $nuevoAdelanto,
+                    'moneda'      => 'PEN',
+                    'fecha'       => date('Y-m-d'),
+                ]);
+            }
+        }
+
+        $db->transComplete();
+
+        if (!$db->transStatus()) {
+            throw new \RuntimeException('Error al actualizar el contrato', 500);
         }
     }
 
@@ -323,7 +382,7 @@ class ContratoService
 
         if ($estado === 'COMPLETADO') {
             $sumPagos = $this->pagoModel->sumarPorContrato($id);
-            $saldo    = (float) $contrato['total'] - (float) $contrato['adelanto'] - $sumPagos;
+            $saldo    = (float) $contrato['total'] - $sumPagos;
             if ($saldo > 0.01) {
                 throw new \RuntimeException(
                     sprintf('No se puede completar el contrato con saldo pendiente de S/ %.2f', $saldo),

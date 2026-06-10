@@ -121,9 +121,17 @@ class PagosModel extends Model
     public function historialPorContrato(int $idContrato): array
     {
         return $this
-            ->select('pagos.fecha, pagos.monto, pagos.forma_pago')
+            ->select('pagos.id_pago, pagos.fecha, pagos.monto, pagos.forma_pago')
             ->where('pagos.id_contrato', $idContrato)
-            ->orderBy('pagos.fecha', 'ASC')
+            ->orderBy('pagos.id_pago', 'ASC')
             ->findAll();
+    }
+
+    /**
+     * Retorna el pago de adelanto de un contrato (el primero registrado por id).
+     */
+    public function adelantoPorContrato(int $idContrato): ?array
+    {
+        return $this->where('id_contrato', $idContrato)->orderBy('id_pago', 'ASC')->first() ?: null;
     }
 }
