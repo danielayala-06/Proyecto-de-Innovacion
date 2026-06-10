@@ -266,10 +266,28 @@ function _initForm(cotId, total, prom = null) {
     const numEst = prom?.num_estudiantes ? parseInt(prom.num_estudiantes) : 0;
     if (numEst > 0) {
       const minSugerido = numEst * 10;
+
       const hint = document.createElement('p');
       hint.style.cssText = 'font-size:.75rem;color:var(--accent-text);background:var(--accent-light);border:1px solid var(--accent);border-radius:6px;padding:4px 8px;margin-top:6px;margin-bottom:0;display:inline-flex;align-items:center;gap:5px;';
       hint.innerHTML = `<i class="bi bi-info-circle-fill"></i>Mínimo sugerido: <strong>${formatters.moneda(minSugerido)}</strong> (${numEst} est. × S/ 10)`;
       adelantoInput.closest('.cc-form-group')?.appendChild(hint);
+
+      const _actualizarColorAdelanto = () => {
+        const val = parseFloat(adelantoInput.value) || 0;
+        if (!val) {
+          adelantoInput.style.borderColor = '';
+          adelantoInput.style.color       = '';
+        } else if (val >= minSugerido) {
+          adelantoInput.style.borderColor = 'var(--green-text, #2e7d32)';
+          adelantoInput.style.color       = 'var(--green-text, #2e7d32)';
+        } else {
+          adelantoInput.style.borderColor = '#f59e0b';
+          adelantoInput.style.color       = '#b45309';
+        }
+      };
+
+      adelantoInput.addEventListener('input', _actualizarColorAdelanto);
+      adelantoInput.addEventListener('change', _actualizarColorAdelanto);
     }
   }
 
