@@ -128,7 +128,7 @@ class PaquetesApi extends BaseApiController
         $rules = [
             'nombre_paquete'   => 'required|max_length[150]',
             'nivel_disponible' => 'required|in_list[inicial,primaria,secundaria,postgrado,otro]',
-            'precio'           => 'required|decimal',
+            'precio'           => 'required|decimal|greater_than[0]',
             'categoria'        => 'permit_empty|in_list[Cuadros,Anuarios,Paquetes,otros]',
         ];
 
@@ -164,7 +164,7 @@ class PaquetesApi extends BaseApiController
         $rules = [
             'nombre_paquete'   => 'permit_empty|max_length[150]',
             'nivel_disponible' => 'permit_empty|in_list[inicial,primaria,secundaria,postgrado,otro]',
-            'precio'           => 'permit_empty|decimal',
+            'precio'           => 'permit_empty|decimal|greater_than[0]',
             'categoria'        => 'permit_empty|in_list[Cuadros,Anuarios,Paquetes,otros]',
         ];
 

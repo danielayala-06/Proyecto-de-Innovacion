@@ -96,7 +96,8 @@
                 <div class="row g-3 mb-3">
                     <div class="col-6 col-md-4">
                         <label>Precio (S/)</label>
-                        <input type="number" class="form-control" id="pPrecio" placeholder="0.00" min="0" step="0.01">
+                        <input type="number" class="form-control" id="pPrecio" placeholder="0.00" min="0.01" step="0.01"
+                               oninput="if(parseFloat(this.value)<0)this.value=''">
                     </div>
                     <div class="col-6 col-md-8">
                         <label>Nivel disponible *</label>

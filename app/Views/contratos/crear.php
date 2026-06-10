@@ -83,7 +83,8 @@
     
                         <div class="cc-form-group">
                             <label for="contratoAdelanto">Monto (S/.) <span style="color:var(--red-text)">*</span></label>
-                            <input type="number" id="contratoAdelanto" min="1" step="0.01" placeholder="0.00" onwheel="this.blur()">
+                            <input type="number" id="contratoAdelanto" min="0.01" step="0.01" placeholder="0.00" onwheel="this.blur()"
+                                   oninput="if(parseFloat(this.value)<0)this.value=''">
                         </div>
     
                         <div class="cc-form-group">

@@ -121,7 +121,8 @@
                         </div>
                         <div class="col-md-6">
                             <label>Adelanto / pago inicial (S/)</label>
-                            <input type="number" class="form-control" id="contratoAdelanto" placeholder="0.00" min="0" step="0.01" onwheel="this.blur()">
+                            <input type="number" class="form-control" id="contratoAdelanto" placeholder="0.00" min="0.01" step="0.01" onwheel="this.blur()"
+                                   oninput="if(parseFloat(this.value)<0)this.value=''">
                             <p id="contratoAdelantoAviso" style="display:none;font-size:.75rem;color:var(--red-text,#dc3545);margin:4px 0 0;"></p>
                         </div>
                         <div class="col-md-6">
@@ -274,7 +275,8 @@
                         <div class="col-6">
                             <label style="font-size:.8rem;margin-bottom:3px;">Monto a pagar (S/)</label>
                             <input type="number" class="form-control form-control-sm" id="pagoMonto"
-                                   placeholder="0.00" min="0.01" step="0.01" onwheel="this.blur()">
+                                   placeholder="0.00" min="0.01" step="0.01" onwheel="this.blur()"
+                                   oninput="if(parseFloat(this.value)<0)this.value=''">
                             <p id="pagoMontoAviso" style="display:none;font-size:.75rem;color:var(--red-text,#dc3545);margin:4px 0 0;"></p>
                         </div>
                         <div class="col-6">

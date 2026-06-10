@@ -63,7 +63,8 @@
                             <div class="col">
                                 <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Precio unit. (S/)</label>
                                 <input type="number" class="form-control form-control-sm" id="servicioPrecio"
-                                       min="0.01" step="0.01" placeholder="0.00">
+                                       min="0.01" step="0.01" placeholder="0.00"
+                                       oninput="if(parseFloat(this.value)<0)this.value=''">
                             </div>
                             <div class="col-auto" style="min-width:76px;">
                                 <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>

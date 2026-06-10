@@ -216,7 +216,8 @@
                                 <div class="col">
                                     <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Precio unit. (S/)</label>
                                     <input type="number" class="form-control form-control-sm" id="servicioPrecio"
-                                           min="0.01" step="0.01" placeholder="0.00">
+                                           min="0.01" step="0.01" placeholder="0.00"
+                                           oninput="if(parseFloat(this.value)<0)this.value=''">
                                 </div>
                                 <div class="col-auto" style="min-width:76px;">
                                     <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
@@ -356,7 +357,7 @@
                                 <i class="bi bi-tag me-1"></i>Descuento (S/)
                             </label>
                             <input type="number" id="descuentoMonto" min="0" step="1" value=""
-                                   placeholder="0"
+                                   placeholder="0" oninput="if(parseFloat(this.value)<0)this.value=''"
                                    style="width:90px;border:1px solid var(--border);border-radius:4px;
                                           padding:3px 8px;font-size:0.82rem;background:var(--bg-input);
                                           color:var(--text-primary);text-align:right;flex-shrink:0;">

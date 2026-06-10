@@ -402,6 +402,12 @@ class CotizacionService
             throw new \RuntimeException('El número de estudiantes es obligatorio y debe estar entre 1 y 1000', 422);
         }
 
+        foreach ($data['detalles'] ?? [] as $detalle) {
+            if ((float) ($detalle['precio_unitario'] ?? 0) < 0) {
+                throw new \RuntimeException('El precio unitario de los ítems no puede ser negativo.', 422);
+            }
+        }
+
         $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($data['detalles'] ?? []);
         if (!empty($evaluacion['violaciones'])) {
             $msgs = implode('; ', array_column($evaluacion['violaciones'], 'descripcion'));
@@ -485,6 +491,12 @@ class CotizacionService
 
         if ($cotizacion['estado'] !== 'PENDIENTE') {
             throw new \RuntimeException('Solo se puede editar una cotización PENDIENTE', 409);
+        }
+
+        foreach ($data['detalles'] ?? [] as $detalle) {
+            if ((float) ($detalle['precio_unitario'] ?? 0) < 0) {
+                throw new \RuntimeException('El precio unitario de los ítems no puede ser negativo.', 422);
+            }
         }
 
         $db = $this->cotizacionModel->db;
