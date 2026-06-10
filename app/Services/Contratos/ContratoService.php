@@ -208,13 +208,13 @@ class ContratoService
 
         // Registrar el adelanto como primer pago real si es mayor a 0
         if ($adelanto > 0) {
-            $idFormaPago = !empty($data['id_forma_pago']) ? (int) $data['id_forma_pago'] : 1;
+            $formaPago = !empty($data['forma_pago']) ? trim($data['forma_pago']) : 'Efectivo';
             $this->pagoModel->insert([
-                'id_contrato'  => $idContrato,
-                'id_form_pago' => $idFormaPago,
-                'monto'        => $adelanto,
-                'moneda'       => 'PEN',
-                'fecha'        => date('Y-m-d'),
+                'id_contrato' => $idContrato,
+                'forma_pago'  => $formaPago,
+                'monto'       => $adelanto,
+                'moneda'      => 'PEN',
+                'fecha'       => date('Y-m-d'),
             ]);
         }
 

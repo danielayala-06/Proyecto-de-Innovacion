@@ -292,14 +292,17 @@ function _initForm(cotId, total, prom = null) {
   }
 
   const selectForma = document.getElementById('contratoFormaPago');
+  const inputOtro   = document.getElementById('contratoFormaPagoOtro');
   if (selectForma) {
-    selectForma.innerHTML = '<option value="" disabled>— Cargando... —</option>';
-    contratoApi.formasPago().then(res => {
-      const formas = res.data ?? [];
-      selectForma.innerHTML = formas.map(f => `<option value="${f.id_form_pago}">${f.nombre_forma_pago}</option>`).join('');
-      if (formas.length) selectForma.value = formas[0].id_form_pago;
-    }).catch(() => {
-      selectForma.innerHTML = '<option value="" disabled>— Error al cargar —</option>';
+    selectForma.innerHTML = `
+      <option value="Efectivo">Efectivo</option>
+      <option value="Yape">Yape</option>
+      <option value="Plin">Plin</option>
+      <option value="otro">Otro…</option>`;
+    selectForma.value = 'Efectivo';
+
+    selectForma.addEventListener('change', () => {
+      if (inputOtro) inputOtro.style.display = selectForma.value === 'otro' ? '' : 'none';
     });
   }
 
@@ -337,7 +340,10 @@ function _abrirConfirmacion(cotId, total) {
   }
 
   const formaPagoSel  = document.getElementById('contratoFormaPago');
-  const formaPagoText = formaPagoSel?.options[formaPagoSel.selectedIndex]?.text ?? '—';
+  const esOtro        = formaPagoSel?.value === 'otro';
+  const formaPagoText = esOtro
+    ? (document.getElementById('contratoFormaPagoOtro')?.value.trim() || 'Otro')
+    : (formaPagoSel?.value ?? 'Efectivo');
   const saldo         = total - adelanto;
   const pct           = total > 0 ? Math.min(100, Math.round((adelanto / total) * 100)) : 0;
 
@@ -377,7 +383,7 @@ function _abrirConfirmacion(cotId, total) {
   const btnConf = document.getElementById('btnConfirmarContrato');
   const nuevoBtn = btnConf.cloneNode(true);
   btnConf.replaceWith(nuevoBtn);
-  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoText, formaPagoSel?.value));
+  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoText));
 
   const modalEl = document.getElementById('modalConfirmarContrato');
   _modalContrato = _modalContrato ?? new bootstrap.Modal(modalEl);
@@ -388,7 +394,7 @@ function _abrirConfirmacion(cotId, total) {
  * Envía el contrato a la API tras la confirmación del usuario.
  * Cierra el modal, deshabilita el botón y redirige al éxito.
  */
-async function _submit(cotId, total, adelanto, fechaFirma, formaPago, idFormaPago) {
+async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
   const observaciones = document.getElementById('contratoObservaciones')?.value.trim() ?? '';
 
   const obsPartes = [];
@@ -403,11 +409,11 @@ async function _submit(cotId, total, adelanto, fechaFirma, formaPago, idFormaPag
 
   try {
     await contratoApi.crear({
-      id_cotizacion:      cotId,
+      id_cotizacion: cotId,
       adelanto,
-      fecha_emision:      fechaFirma,
-      observaciones:      obsTexto,
-      id_forma_pago:      idFormaPago ? parseInt(idFormaPago) : null,
+      forma_pago:    formaPago || 'Efectivo',
+      fecha_emision: fechaFirma,
+      observaciones: obsTexto,
     });
     _modalContrato?.hide();
     alerts.ok('Contrato generado correctamente.');

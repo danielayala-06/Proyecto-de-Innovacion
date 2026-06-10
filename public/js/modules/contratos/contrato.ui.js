@@ -277,7 +277,7 @@ export const ui = {
       ? pagos.map(p => `
           <tr>
             <td>${formatters.fecha(p.fecha)}</td>
-            <td>${p.nombre_forma_pago ?? '—'}</td>
+            <td>${p.forma_pago ?? '—'}</td>
             <td class="text-end">${formatters.moneda(p.monto)}</td>
           </tr>`).join('')
       : `<tr><td colspan="3" class="text-center text-muted py-2" style="font-size:.82rem;">Sin pagos registrados</td></tr>`;

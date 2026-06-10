@@ -39,10 +39,9 @@ class PagoTransformer extends BaseTransformer
             'fecha'             =>         $resource['fecha'],
             'monto'             => (float) $resource['monto'],
             'moneda'            =>         $resource['moneda'],
-            'voucher'           =>         $resource['voucher']           ?? null,
-            'nombre_forma_pago' =>         $resource['nombre_forma_pago'] ?? null,
-            'tipo_pago'         =>         $resource['tipo_pago']         ?? null,
-            'cliente'           =>         $resource['cliente']           ?? null,
+            'voucher'    =>  $resource['voucher']    ?? null,
+            'forma_pago' =>  $resource['forma_pago'] ?? null,
+            'cliente'    =>  $resource['cliente']    ?? null,
         ];
 
         if (isset($resource['total']))           $data['total']           = (float) $resource['total'];
@@ -58,7 +57,7 @@ class PagoTransformer extends BaseTransformer
     {
         return [
             'id_pago', 'id_contrato', 'fecha', 'monto', 'moneda', 'voucher',
-            'nombre_forma_pago', 'tipo_pago', 'cliente', 'total', 'estado_contrato',
+            'forma_pago', 'cliente', 'total', 'estado_contrato',
         ];
     }
 }

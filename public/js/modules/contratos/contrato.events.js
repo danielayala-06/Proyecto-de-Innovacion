@@ -569,7 +569,7 @@ function _renderHistorialPago(pagos) {
   const rows = pagos.map(p => `
     <tr style="border-top:1px solid var(--border-color);">
       <td style="padding:4px 8px;">${formatters.fecha(p.fecha)}</td>
-      <td style="padding:4px 8px;">${p.nombre_forma_pago ?? '—'}</td>
+      <td style="padding:4px 8px;">${p.forma_pago ?? '—'}</td>
       <td style="padding:4px 8px;text-align:right;">${formatters.moneda(p.monto)}</td>
     </tr>`).join('');
   el.innerHTML = `
@@ -622,17 +622,25 @@ window.abrirModalPago = async function (id) {
   _modalPago.show();
 
   try {
-    const [resContrato, resFormas] = await Promise.all([
-      contratoApi.obtener(id),
-      contratoApi.formasPago(),
-    ]);
+    const resContrato = await contratoApi.obtener(id);
 
     _pagoContratoData = resContrato.data;
 
     if (selectForma) {
-      const formas = resFormas.data ?? [];
-      selectForma.innerHTML = '<option value="">— Seleccionar —</option>' +
-        formas.map(f => `<option value="${f.id_form_pago}">${f.nombre_forma_pago}</option>`).join('');
+      selectForma.innerHTML = `
+        <option value="">— Seleccionar —</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="Yape">Yape</option>
+        <option value="Plin">Plin</option>
+        <option value="otro">Otro…</option>`;
+
+      const inputOtro = document.getElementById('pagoFormaPagoOtro');
+      selectForma.addEventListener('change', () => {
+        if (inputOtro) {
+          inputOtro.style.display = selectForma.value === 'otro' ? '' : 'none';
+          if (selectForma.value !== 'otro') inputOtro.value = '';
+        }
+      });
     }
 
     _setResumenPago(_pagoContratoData);
@@ -648,7 +656,8 @@ window.abrirModalPago = async function (id) {
  */
 window.confirmarPago = async function () {
   const monto   = parseFloat(document.getElementById('pagoMonto')?.value) || 0;
-  const forma   = document.getElementById('pagoFormaPago')?.value ?? '';
+  const formaEl = document.getElementById('pagoFormaPago');
+  const forma   = formaEl?.value ?? '';
   const fecha   = document.getElementById('pagoFecha')?.value ?? '';
   const voucher = document.getElementById('pagoVoucher')?.value.trim() || null;
 
@@ -665,6 +674,14 @@ window.confirmarPago = async function () {
     alerts.warning('Selecciona una forma de pago.');
     return;
   }
+  const esOtro    = forma === 'otro';
+  const otroTexto = document.getElementById('pagoFormaPagoOtro')?.value.trim() || '';
+  if (esOtro && !otroTexto) {
+    alerts.warning('Especifica el método de pago.');
+    return;
+  }
+  const formaPago = esOtro ? otroTexto : forma;
+
   if (!fecha) {
     alerts.warning('Selecciona la fecha de pago.');
     return;
@@ -683,8 +700,8 @@ window.confirmarPago = async function () {
 
   try {
     await contratoApi.registrarPago({
-      id_contrato:  _pagoContratoId,
-      id_form_pago: parseInt(forma),
+      id_contrato: _pagoContratoId,
+      forma_pago:  formaPago,
       monto,
       fecha,
       voucher,

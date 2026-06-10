@@ -257,6 +257,8 @@
                             <select class="form-select form-select-sm" id="pagoFormaPago">
                                 <option value="">— Seleccionar —</option>
                             </select>
+                            <input type="text" class="form-control form-control-sm mt-1" id="pagoFormaPagoOtro"
+                                   placeholder="Especifica el método de pago…" style="display:none;">
                         </div>
                         <div class="col-12">
                             <label style="font-size:.8rem;margin-bottom:3px;">

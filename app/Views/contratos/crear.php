@@ -81,6 +81,9 @@
                             <select id="contratoFormaPago">
                                 <option value="">— Cargando... —</option>
                             </select>
+                            <input type="text" id="contratoFormaPagoOtro"
+                                   placeholder="Especifica el método de pago…"
+                                   style="display:none;margin-top:6px;">
                         </div>
                     </fieldset>
     
@@ -141,7 +144,7 @@
                 <div style="border:1px solid var(--border-color);border-radius:8px;overflow:hidden;margin-bottom:1rem;">
                     <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border-color);">
                         <div style="padding:.75rem 1rem;border-right:1px solid var(--border-color);">
-                            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.25rem;">Adelanto a cobrar</p>
+                            <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.25rem;">Adelanto recibido</p>
                             <p id="confAdelanto" style="font-size:1.35rem;font-weight:800;color:#198754;margin:0;"></p>
                         </div>
                         <div style="padding:.75rem 1rem;">

@@ -13,7 +13,7 @@
  *   GET    /api/pagos/{id}           → detalle de un pago
  *   POST   /api/pagos                → registrar nuevo pago
  *   DELETE /api/pagos/{id}           → anular pago
- *   GET    /api/formas-pago          → catálogo de formas de pago
+ *   DELETE /api/pagos/{id}           → anular pago
  */
 
 namespace App\Controllers\Api;
@@ -89,7 +89,7 @@ class PagosApi extends BaseApiController
     /**
      * POST /api/pagos
      *
-     * Body: { id_contrato, id_form_pago, monto, moneda?, voucher?, fecha? }
+     * Body: { id_contrato, forma_pago?, monto, moneda?, voucher?, fecha? }
      *
      * Cuando el monto excede el saldo, el 409 incluye el campo `saldo` para informar al cliente.
      *
@@ -100,10 +100,10 @@ class PagosApi extends BaseApiController
         $body = $this->request->getJSON(true) ?? [];
 
         $rules = [
-            'id_contrato'  => 'required|integer',
-            'id_form_pago' => 'required|integer',
-            'monto'        => 'required|decimal|greater_than[0]',
-            'moneda'       => 'permit_empty|in_list[PEN,USD,EUR]',
+            'id_contrato' => 'required|integer',
+            'forma_pago'  => 'permit_empty|max_length[60]',
+            'monto'       => 'required|decimal|greater_than[0]',
+            'moneda'      => 'permit_empty|in_list[PEN,USD,EUR]',
         ];
 
         if (!$this->validateData($body, $rules)) {
@@ -148,18 +148,6 @@ class PagosApi extends BaseApiController
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON(['status' => 'success', 'message' => 'Pago anulado']);
-    }
-
-    /**
-     * GET /api/formas-pago
-     *
-     * @return ResponseInterface 200 con la lista de formas de pago ordenadas alfabéticamente.
-     */
-    public function formasPago()
-    {
-        return $this->response
-            ->setStatusCode(ResponseInterface::HTTP_OK)
-            ->setJSON(['status' => 'success', 'data' => $this->pagoService->formasPago()]);
     }
 
 }

@@ -13,7 +13,6 @@ namespace App\Services\Pagos;
 
 use App\Models\PagosModel;
 use App\Models\ContratosModel;
-use App\Models\FormasPagoModel;
 
 /**
  * Servicio de Pagos.
@@ -33,14 +32,10 @@ class PagoService
     /** @var ContratosModel Acceso a la tabla `contratos`. */
     protected ContratosModel $contratoModel;
 
-    /** @var FormasPagoModel Acceso al catálogo de formas de pago. */
-    protected FormasPagoModel $formasPagoModel;
-
     public function __construct()
     {
-        $this->pagoModel       = new PagosModel();
-        $this->contratoModel   = new ContratosModel();
-        $this->formasPagoModel = new FormasPagoModel();
+        $this->pagoModel     = new PagosModel();
+        $this->contratoModel = new ContratosModel();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -69,16 +64,6 @@ class PagoService
         return $this->pagoModel->obtenerConDetalle($id);
     }
 
-    /**
-     * Retorna el catálogo de formas de pago ordenadas alfabéticamente.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function formasPago(): array
-    {
-        return $this->formasPagoModel->listarTodos();
-    }
-
     // ─────────────────────────────────────────────────────────────────────────
     // ESCRITURA
     // ─────────────────────────────────────────────────────────────────────────
@@ -93,7 +78,7 @@ class PagoService
      * 4. Si el saldo resultante es ≤ 0, el contrato pasa a COMPLETADO automáticamente.
      *
      * @param  array<string, mixed> $data Campos requeridos:
-     *                                    id_contrato, id_form_pago, monto, fecha?,
+     *                                    id_contrato, forma_pago, monto, fecha?,
      *                                    moneda?, voucher?
      * @return array{id_pago: int, total_pagado: float, saldo: float, completado: bool}
      *
@@ -155,12 +140,12 @@ class PagoService
         $monto  = round((float) $data['monto'], 2);
 
         $idPago = $this->pagoModel->insert([
-            'id_contrato'  => $data['id_contrato'],
-            'id_form_pago' => $data['id_form_pago'],
-            'monto'        => $monto,
-            'moneda'       => $data['moneda'] ?? 'PEN',
-            'voucher'      => $data['voucher'] ?? null,
-            'fecha'        => $fechaStr,
+            'id_contrato' => $data['id_contrato'],
+            'forma_pago'  => !empty($data['forma_pago']) ? trim($data['forma_pago']) : null,
+            'monto'       => $monto,
+            'moneda'      => $data['moneda'] ?? 'PEN',
+            'voucher'     => $data['voucher'] ?? null,
+            'fecha'       => $fechaStr,
         ]);
 
         if ($idPago === false) {

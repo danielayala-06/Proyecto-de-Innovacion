@@ -94,7 +94,6 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth']
     $routes->get   ('pagos/(:num)',   'PagosApi::show/$1');
     $routes->post  ('pagos',          'PagosApi::create');
     $routes->delete('pagos/(:num)',   'PagosApi::delete/$1');
-    $routes->get   ('formas-pago',    'PagosApi::formasPago');
     $routes->get   ('reniec/dni',     'ReniecApi::dni');
 
     // ── Paquetes ──────────────────────────────────────────────────────────────
