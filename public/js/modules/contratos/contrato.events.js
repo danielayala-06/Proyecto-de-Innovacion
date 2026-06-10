@@ -423,10 +423,20 @@ window.verDetalleContrato = async function (id) {
     if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(data, id, isActivo);
 
     if (accsEl) {
+      const saldo         = data.saldo ?? 0;
+      const saldado       = saldo <= 0.001;
       accsEl.innerHTML = isActivo ? `
-        <button class="btn btn-sm btn-success" onclick="cambiarEstadoContrato(${id},'COMPLETADO')">
-          <i class="bi bi-check-circle me-1"></i>Completar
-        </button>
+        ${saldado
+          ? `<button class="btn btn-sm btn-success" onclick="cambiarEstadoContrato(${id},'COMPLETADO')">
+               <i class="bi bi-check-circle me-1"></i>Completar
+             </button>`
+          : `<button class="btn btn-sm btn-success" disabled
+                     title="Aún hay un saldo pendiente de ${formatters.moneda(saldo)}">
+               <i class="bi bi-check-circle me-1"></i>Completar
+             </button>
+             <small style="display:block;color:var(--red-text);font-size:.72rem;margin-top:4px;">
+               <i class="bi bi-exclamation-circle"></i> Saldo pendiente: ${formatters.moneda(saldo)}
+             </small>`}
         <button class="btn btn-sm btn-outline-danger"
                 onclick="confirmarEliminar(${id},'${formatters.codigo(id)}')">
           <i class="bi bi-x-circle me-1"></i>Cancelar

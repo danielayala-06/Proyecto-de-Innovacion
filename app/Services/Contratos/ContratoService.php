@@ -321,6 +321,17 @@ class ContratoService
             );
         }
 
+        if ($estado === 'COMPLETADO') {
+            $sumPagos = $this->pagoModel->sumarPorContrato($id);
+            $saldo    = (float) $contrato['total'] - (float) $contrato['adelanto'] - $sumPagos;
+            if ($saldo > 0.01) {
+                throw new \RuntimeException(
+                    sprintf('No se puede completar el contrato con saldo pendiente de S/ %.2f', $saldo),
+                    409
+                );
+            }
+        }
+
         $updateData = ['estado' => $estado];
 
         if ($estado === 'COMPLETADO') {
