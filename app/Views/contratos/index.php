@@ -19,10 +19,6 @@
                     <div class="stat-icon green"><i class="bi bi-check2-all"></i></div>
                     <div><div class="stat-label">Completados</div><div class="stat-value" id="statCompletados" style="color:var(--green-text);">0</div></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon gold"><i class="bi bi-cash-coin"></i></div>
-                    <div><div class="stat-label">Monto total</div><div class="stat-value" id="statMonto" style="color:var(--accent);font-size:1.15rem;">S/ 0</div></div>
-                </div>
             </div>
 
             <!-- TOOLBAR -->
