@@ -575,6 +575,10 @@ async function init() {
         if (!state.paqueteSeleccionado) { alerts.warning('Selecciona un paquete de la lista.'); return; }
         const { idRef, nombre, precio } = state.paqueteSeleccionado;
         const cantidad = Math.max(1, parseInt(document.getElementById('paqueteCantidad')?.value) || 1);
+        const numEst   = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
+        if (numEst > 50) {
+            if (!confirm(`Está a punto de agregar paquetes para ${numEst} estudiantes. ¿Está seguro de continuar?`)) return;
+        }
         state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad });
         _renderContainers();
         _actualizarResumen();

@@ -128,10 +128,10 @@ class CotizacionesApi extends BaseApiController
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
                 ->setJSON(['status' => 'error', 'message' => 'El número de estudiantes es obligatorio y debe ser mayor a 0']);
         }
-        if ($numEstudiantes > 1000) {
+        if ($numEstudiantes > 100) {
             return $this->response
                 ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
-                ->setJSON(['status' => 'error', 'message' => 'El número de estudiantes no puede superar 1000']);
+                ->setJSON(['status' => 'error', 'message' => 'El número de estudiantes no puede superar 100']);
         }
 
         $descuento = max(0.0, (float) ($body['descuento_monto'] ?? 0));

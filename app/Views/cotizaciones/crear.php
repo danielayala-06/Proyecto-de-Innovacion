@@ -64,7 +64,7 @@
                             <div class="col-12 col-md-6">
                                 <label class="form-label">
                                     Documento
-                                    <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;">(opcional)</span>
+                                    <span style="font-size:.72rem;color:var(--text-muted);font-weight:250;">(opcional)</span>
                                 </label>
                                 <div class="input-group">
                                     <select class="form-select" id="tipoDocumento" name="tipo_documento"
@@ -122,7 +122,7 @@
                                 <div class="col-12 col-md-6">
                                     <label class="form-label">
                                         Documento
-                                        <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;">(opcional)</span>
+                                        <span style="font-size:.72rem;color:var(--text-muted);font-weight:250;">(opcional)</span>
                                     </label>
                                     <div class="input-group">
                                         <select class="form-select" id="tipoDocumento2" style="max-width:175px;flex-shrink:0;">
@@ -161,7 +161,7 @@
                         <fieldset class="col-12 col-md-7">
                             <legend class="section-divider">
                                 Productos de cortesía
-                                <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;"> — gratuitos</span>
+                                <span style="font-size:.72rem;color:var(--text-muted);font-weight:250;"> — gratuitos</span>
                             </legend>
 
                             <div id="cortesiasContainer" class="d-flex flex-column gap-2 mb-1"></div>
@@ -362,6 +362,9 @@
                                           padding:3px 8px;font-size:0.82rem;background:var(--bg-input);
                                           color:var(--text-primary);text-align:right;flex-shrink:0;">
                         </div>
+                        <!-- Aviso de descuento elevado -->
+                        <div id="descuento-aviso" style="display:none;font-size:.72rem;color:#d97706;
+                             margin-top:4px;line-height:1.4;"></div>
                         <!-- Fila de descuento calculado (visible solo cuando hay descuento) -->
                         <div id="resumen-desc-row" class="resumen-row" style="display:none;font-size:0.78rem;color:var(--green-text,#2e7d32);">
                             <span>Descuento</span>
@@ -408,8 +411,22 @@
                             N.° de estudiantes
                         </label>
                         <input type="number" id="modalNumEstudiantes" class="form-control form-control-sm"
-                               min="1" max="1000" placeholder="Ej: 30"
-                               style="max-width:140px;">
+                               min="1" max="100" placeholder="Ej: 30"
+                               style="max-width:140px;"
+                               oninput="
+                                   const n = parseInt(this.value) || 0;
+                                   if (this.value !== '' && (n < 1 || n > 100)) this.value = n > 100 ? 100 : '';
+                                   const h = document.getElementById('modal-est-hint');
+                                   const v = parseInt(this.value) || 0;
+                                   if (h) {
+                                       if (v > 50) {
+                                           h.innerHTML = '<i class=\'bi bi-exclamation-triangle-fill\' style=\'color:#d97706;\'></i> Está ingresando más de 50 estudiantes. ¿Está seguro de continuar?';
+                                           h.style.color = '#d97706';
+                                       } else {
+                                           h.innerHTML = 'Máx. por paquete = n.° de estudiantes.';
+                                           h.style.color = 'var(--text-muted,#888)';
+                                       }
+                                   }">
                         <div id="modal-est-hint"
                              style="font-size:.7rem;color:var(--text-muted,#888);margin-top:.25rem;line-height:1.3;">
                             Máx. por paquete = n.° de estudiantes.

@@ -47,7 +47,7 @@
                 <fieldset class="mt-3">
                     <legend class="section-divider">
                         Servicios adicionales
-                        <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;"> — precio × cantidad</span>
+                        <span style="font-size:.72rem;color:var(--text-muted);font-weight:250;"> — precio × cantidad</span>
                     </legend>
 
                     <div id="serviciosContainer" class="d-flex flex-column gap-2 mb-1"></div>
@@ -93,7 +93,7 @@
                 <fieldset class="mt-3">
                     <legend class="section-divider">
                         Productos de cortesía
-                        <span style="font-size:.72rem;color:var(--text-muted);font-weight:400;"> — gratuitos</span>
+                        <span style="font-size:.72rem;color:var(--text-muted);font-weight:250;"> — gratuitos</span>
                     </legend>
 
                     <div id="cortesiasContainer" class="d-flex flex-column gap-2 mb-1"></div>
@@ -169,7 +169,22 @@
                         <div class="col-12 col-md-5">
                             <label for="numEstudiantes" class="form-label">N.° estudiantes</label>
                             <input type="number" class="form-control" id="numEstudiantes"
-                                   name="num_estudiantes" min="1" max="500" placeholder="0">
+                                   name="num_estudiantes" min="1" max="100" placeholder="0"
+                                   oninput="
+                                       const n = parseInt(this.value) || 0;
+                                       if (this.value !== '' && (n < 1 || n > 100)) this.value = n > 100 ? 100 : '';
+                                       const h = document.getElementById('numEstudiantesHint');
+                                       const v = parseInt(this.value) || 0;
+                                       if (h) {
+                                           if (v > 50) {
+                                               h.innerHTML = '<i class=\'bi bi-exclamation-triangle-fill\' style=\'color:#d97706;\'></i> Está ingresando más de 50 estudiantes. ¿Está seguro de continuar?';
+                                               h.style.display = 'block';
+                                           } else {
+                                               h.style.display = 'none';
+                                           }
+                                       }">
+                            <div id="numEstudiantesHint"
+                                 style="display:none;font-size:.72rem;color:#d97706;margin-top:.25rem;line-height:1.3;"></div>
                         </div>
                     </div>
                 </fieldset>

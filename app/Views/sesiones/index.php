@@ -84,7 +84,7 @@
                 </div>
                 <div class="mb-3">
                     <label>Hora</label>
-                    <input type="time" class="form-control" id="sfHora" value="08:00" min="07:00" max="20:00">
+                    <input type="time" class="form-control" id="sfHora" value="09:00" min="09:00" max="20:00">
                 </div>
                 <div class="mb-3">
                     <label>Observaciones</label>

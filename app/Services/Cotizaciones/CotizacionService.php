@@ -398,8 +398,8 @@ class CotizacionService
     public function crear(array $data): array
     {
         $numEstudiantes = (int) (($data['sesion'] ?? [])['num_estudiantes'] ?? 0);
-        if ($numEstudiantes <= 0 || $numEstudiantes > 1000) {
-            throw new \RuntimeException('El número de estudiantes es obligatorio y debe estar entre 1 y 1000', 422);
+        if ($numEstudiantes <= 0 || $numEstudiantes > 100) {
+            throw new \RuntimeException('El número de estudiantes es obligatorio y debe estar entre 1 y 100', 422);
         }
 
         foreach ($data['detalles'] ?? [] as $detalle) {

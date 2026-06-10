@@ -401,11 +401,20 @@ function _precioFinal(item) {
  * @param {number} totalBruto - Suma de ítems antes del descuento.
  */
 function _actualizarDescuentoUI(totalBruto) {
+    // Recortar descuento si supera el 30% (p.ej. el usuario eliminó ítems)
+    const limite50 = totalBruto > 0 ? Math.floor(totalBruto * 0.3) : 0;
+    if (totalBruto > 0 && (state.descuentoMonto ?? 0) > limite50) {
+        state.descuentoMonto = limite50;
+        const inp = document.getElementById('descuentoMonto');
+        if (inp) inp.value = limite50 > 0 ? limite50 : '';
+    }
+
     const descMonto   = state.descuentoMonto ?? 0;
     const subtotalRow = document.getElementById('resumen-subtotal-row');
     const subtotalEl  = document.getElementById('resumenSubtotal');
     const descRow     = document.getElementById('resumen-desc-row');
     const descInfoEl  = document.getElementById('resumenDescInfo');
+    const aviso       = document.getElementById('descuento-aviso');
 
     if (descMonto > 0 && totalBruto > 0) {
         const pct = Math.round((descMonto / totalBruto) * 100);
@@ -413,9 +422,18 @@ function _actualizarDescuentoUI(totalBruto) {
         if (subtotalEl)  subtotalEl.textContent = formatters.moneda(totalBruto);
         if (descRow)     descRow.style.display = '';
         if (descInfoEl)  descInfoEl.textContent = `−${formatters.moneda(descMonto)} (${pct}%)`;
+        if (aviso) {
+            if (pct > 25) {
+                aviso.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ¿Seguro de aplicar un descuento mayor al 25%? El precio total quedaría en <strong>${formatters.moneda(totalBruto - descMonto)}</strong>.`;
+                aviso.style.display = 'block';
+            } else {
+                aviso.style.display = 'none';
+            }
+        }
     } else {
         if (subtotalRow) subtotalRow.style.display = 'none';
         if (descRow)     descRow.style.display = 'none';
+        if (aviso)       aviso.style.display = 'none';
     }
 }
 
@@ -922,8 +940,8 @@ function _actualizarBtnConfirmar() {
 
     if (hint) {
         hint.innerHTML = alcanza
-            ? `Total: <strong style="color:#198754">${totalQty}</strong> / ${numEst} — <i class="bi bi-check-circle-fill" style="color:#198754;"></i>`
-            : `Total: <strong style="color:#dc3545">${totalQty}</strong> / ${numEst} estudiantes — selecciona más o aumenta la cantidad`;
+            ? `<i class="bi bi-check-circle-fill" style="color:#198754;"></i> <strong style="color:#198754;">${totalQty} paquetes</strong> cubren a los ${numEst} estudiantes`
+            : `<i class="bi bi-exclamation-circle-fill" style="color:#dc3545;"></i> Seleccionados: <strong style="color:#dc3545;">${totalQty}</strong> — faltan <strong>${numEst - totalQty}</strong> para cubrir a los ${numEst} estudiantes`;
     }
 }
 
@@ -1129,7 +1147,7 @@ function _validar() {
     if (numEst <= 0) {
         return 'El n.° de estudiantes es obligatorio. Agrégalo al seleccionar paquetes desde el modal.';
     }
-    if (numEst > 1000) {
+    if (numEst > 500) {
         return 'El n.° de estudiantes no puede superar 1000.';
     }
 
@@ -1846,6 +1864,10 @@ async function init() {
             return;
         }
 
+        if (numEst > 50) {
+            if (!confirm(`Está a punto de agregar paquetes para ${numEst} estudiantes. ¿Está seguro de continuar?`)) return;
+        }
+
         _ejecutarAgregarPaquetes();
     });
 
@@ -1862,11 +1884,35 @@ async function init() {
         })
     );
 
-    /* 13a. Descuento global: solo enteros, no mayor al total bruto */
+    /* 13a. Descuento global: máx. 30% del total bruto; aviso si supera 25% */
     document.getElementById('descuentoMonto')?.addEventListener('input', function () {
         let val = Math.floor(Math.abs(parseFloat(this.value) || 0));
+
+        const totalBruto = state.items.reduce((s, i) => i.tipo === 'cortesia' ? s : s + i.precio * (i.cantidad ?? 1), 0);
+        const limite50   = Math.floor(totalBruto * 0.3);
+
+        if (totalBruto > 0 && val > limite50) {
+            val = limite50;
+            this.value = val;
+        }
+
         this.value = val > 0 ? val : '';
         state.descuentoMonto = val;
+
+        const aviso = document.getElementById('descuento-aviso');
+        if (aviso && totalBruto > 0 && val > 0) {
+            const pct = (val / totalBruto) * 100;
+            if (pct > 25) {
+                const totalConDesc = formatters.moneda(totalBruto - val);
+                aviso.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ¿Seguro de aplicar un descuento mayor al 25%? El precio total quedaría en <strong>${totalConDesc}</strong>.`;
+                aviso.style.display = 'block';
+            } else {
+                aviso.style.display = 'none';
+            }
+        } else if (aviso) {
+            aviso.style.display = 'none';
+        }
+
         _actualizarResumen();
         _saveDraft();
     });
