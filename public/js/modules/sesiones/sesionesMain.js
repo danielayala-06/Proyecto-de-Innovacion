@@ -75,28 +75,13 @@ async function cargarPromocion(idPromocion) {
         state.estudiantes[idPromocion] = res.data ?? [];
     } catch { state.estudiantes[idPromocion] = []; }
 
-    const tipos = [...new Set((CONFIG_SESIONES || []).map(c => c.tipo_sesion))];
-    state.limites[idPromocion] = {};
-    for (const tipo of tipos) {
-        try {
-            const r = await sesionApi.limite(idPromocion, tipo);
-            state.limites[idPromocion][tipo] = r.data;
-        } catch {
-            state.limites[idPromocion][tipo] = { permitidas: 0, usadas: 0, puede_crear: false };
-        }
-    }
+    const sesiones      = state.sesiones[idPromocion] ?? [];
+    const totalActivas  = sesiones.filter(s => s.estado !== 'cancelado').length;
+    const puedeAgregar  = totalActivas < 3;
 
     ui.renderTabs(state.promociones, idPromocion);
-    ui.renderSesiones(
-        state.sesiones[idPromocion],
-        state.limites[idPromocion],
-        CONFIG_SESIONES || []
-    );
+    ui.renderSesiones(sesiones, puedeAgregar);
     ui.renderEstudiantes(state.estudiantes[idPromocion], idPromocion);
-
-    document.querySelectorAll('.btn-add-sesion').forEach(btn => {
-        btn.addEventListener('click', () => abrirNuevaSesion(btn.dataset.tipo));
-    });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -41,8 +41,17 @@ export const sesionForm = {
         document.getElementById('sfId').value            = '';
         document.getElementById('sfTipo').value          = tipo;
         document.getElementById('sfFecha').value         = '';
-        document.getElementById('sfHora').value          = '';
+        document.getElementById('sfHora').value          = '08:00';
         document.getElementById('sfObservaciones').value = '';
+
+        // Restricciones de fecha: hoy → +10 meses
+        const hoy = new Date();
+        const max = new Date(hoy);
+        max.setMonth(max.getMonth() + 10);
+        const toISO = d => d.toISOString().split('T')[0];
+        const sfFecha = document.getElementById('sfFecha');
+        sfFecha.min = toISO(hoy);
+        sfFecha.max = toISO(max);
     },
 
     /**
@@ -93,10 +102,26 @@ export const sesionForm = {
      * @returns {string|null} Mensaje de error si falla la validación, o `null` si es válido.
      */
     validar() {
-        const fecha = document.getElementById('sfFecha').value;
         const tipo  = document.getElementById('sfTipo').value;
+        const fecha = document.getElementById('sfFecha').value;
+        const hora  = document.getElementById('sfHora').value || '08:00';
+
         if (!tipo)  return 'Selecciona el tipo de sesión.';
         if (!fecha) return 'La fecha es obligatoria.';
+
+        const dt  = new Date(`${fecha}T${hora}`);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+
+        if (dt < hoy) return 'La fecha de la sesión no puede ser en el pasado.';
+
+        const max = new Date(hoy);
+        max.setMonth(max.getMonth() + 10);
+        if (dt > max) return 'La sesión no puede programarse con más de 10 meses de anticipación.';
+
+        const h = dt.getHours();
+        if (h < 7 || h >= 20) return 'El horario debe ser entre las 7:00 a.m. y las 8:00 p.m.';
+
         return null;
     },
 

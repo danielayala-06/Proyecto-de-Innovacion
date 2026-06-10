@@ -251,13 +251,17 @@ class SesionService
             throw new \RuntimeException('Promoción no encontrada', 404);
         }
 
-        $limite = $this->calcularLimite($idPromocion, $tipo);
-        if (!$limite['puede_crear']) {
-            throw new \RuntimeException(
-                "Límite de sesiones tipo «{$tipo}» alcanzado ({$limite['usadas']}/{$limite['permitidas']}).",
-                409
-            );
+        // Límite total de 3 sesiones (no canceladas) por promoción
+        $totalActivas = (int) $this->sesionModel
+            ->where('id_promocion', $idPromocion)
+            ->where('estado !=', 'cancelado')
+            ->countAllResults();
+
+        if ($totalActivas >= 3) {
+            throw new \RuntimeException('Se alcanzó el límite máximo de 3 sesiones por contrato.', 409);
         }
+
+        $this->_validarFecha($data['fecha_hora_sesion'] ?? '');
 
         $id = $this->sesionModel->insert([
             'id_promocion'      => $idPromocion,
@@ -272,6 +276,36 @@ class SesionService
         }
 
         return $id;
+    }
+
+    /**
+     * Valida que la fecha/hora de sesión cumpla las reglas de negocio:
+     * no puede ser en el pasado, no más de 10 meses de anticipación,
+     * y el horario debe estar entre las 7:00 y las 20:00.
+     *
+     * @throws \RuntimeException 422 si alguna regla no se cumple.
+     */
+    private function _validarFecha(string $fecha): void
+    {
+        $dt = \DateTime::createFromFormat('Y-m-d H:i:s', $fecha);
+        if (!$dt) {
+            throw new \RuntimeException('Formato de fecha inválido (Y-m-d H:i:s).', 422);
+        }
+
+        $hoy = new \DateTime('today');
+        $max = (new \DateTime('today'))->modify('+10 months');
+
+        if ($dt < $hoy) {
+            throw new \RuntimeException('La fecha de la sesión no puede ser en el pasado.', 422);
+        }
+        if ($dt > $max) {
+            throw new \RuntimeException('La sesión no puede programarse con más de 10 meses de anticipación.', 422);
+        }
+
+        $hora = (int) $dt->format('G');
+        if ($hora < 7 || $hora >= 20) {
+            throw new \RuntimeException('El horario debe ser entre las 7:00 a.m. y las 8:00 p.m.', 422);
+        }
     }
 
     /**
@@ -296,10 +330,15 @@ class SesionService
             throw new \RuntimeException('No se puede editar una sesión finalizada', 409);
         }
 
-        $update = array_filter([
-            'fecha_hora_sesion' => $data['fecha_hora_sesion'] ?? null,
-            'observaciones'     => $data['observaciones']     ?? null,
-        ], fn($v) => $v !== null);
+        $update = [];
+
+        if (!empty($data['fecha_hora_sesion'])) {
+            $this->_validarFecha($data['fecha_hora_sesion']);
+            $update['fecha_hora_sesion'] = $data['fecha_hora_sesion'];
+        }
+        if (array_key_exists('observaciones', $data)) {
+            $update['observaciones'] = $data['observaciones'];
+        }
 
         if (!empty($update) && $this->sesionModel->update($id, $update) === false) {
             throw new \RuntimeException(json_encode($this->sesionModel->errors()), 422);

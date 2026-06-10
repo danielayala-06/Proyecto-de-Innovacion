@@ -93,36 +93,34 @@ export const ui = {
      * @param {Array<Object>} configTipos  - Configuración de tipos desde `paquetes_sesiones`.
      * @returns {void}
      */
-    renderSesiones(sesiones, limites, configTipos) {
+    renderSesiones(sesiones, puedeAgregar) {
         const container = document.getElementById('sesionesContainer');
         if (!container) return;
 
-        const tiposDisponibles = [...new Set(configTipos.map(c => c.tipo_sesion))];
+        const totalActivas = sesiones.filter(s => s.estado !== 'cancelado').length;
+        const pct = Math.round((totalActivas / 3) * 100);
 
-        const limiteBars = tiposDisponibles.map(tipo => {
-            const lim  = limites[tipo] ?? { permitidas: 0, usadas: 0, puede_crear: false };
-            const pct  = lim.permitidas ? Math.round((lim.usadas / lim.permitidas) * 100) : 0;
-            const cls  = lim.puede_crear ? '' : 'full';
-            return `
+        const header = `
             <div class="limite-bar">
                 <div class="limite-info">
-                    ${_tipoBadge(tipo)}
-                    <span class="limite-count">${lim.usadas} / ${lim.permitidas} sesiones</span>
-                    ${lim.puede_crear
-                        ? `<button class="btn-add-sesion btn-icon" data-tipo="${tipo}" title="Nueva sesión de ${TIPO_LABEL[tipo]}">
-                               <i class="bi bi-plus-circle"></i>
+                    <span class="limite-count">
+                        <i class="bi bi-camera"></i>
+                        Sesiones activas: <strong>${totalActivas} / 3</strong>
+                    </span>
+                    ${puedeAgregar
+                        ? `<button class="btn-add-sesion btn-icon" onclick="abrirNuevaSesion()" title="Nueva sesión">
+                               <i class="bi bi-plus-circle"></i> Nueva sesión
                            </button>`
                         : `<span class="limite-agotado"><i class="bi bi-lock-fill"></i> Límite alcanzado</span>`}
                 </div>
-                <div class="limite-progress ${cls}">
+                <div class="limite-progress${totalActivas >= 3 ? ' full' : ''}">
                     <div class="limite-fill" style="width:${pct}%"></div>
                 </div>
             </div>`;
-        }).join('');
 
         if (!sesiones.length) {
             container.innerHTML = `
-                <div class="limite-bars">${limiteBars}</div>
+                <div class="limite-bars">${header}</div>
                 <div class="empty-state" style="padding:2rem;">
                     <i class="bi bi-calendar-x"></i>
                     No hay sesiones registradas para esta promoción.
@@ -165,7 +163,7 @@ export const ui = {
             </div>`).join('');
 
         container.innerHTML = `
-            <div class="limite-bars">${limiteBars}</div>
+            <div class="limite-bars">${header}</div>
             <div class="sesiones-lista">${cards}</div>`;
     },
 
