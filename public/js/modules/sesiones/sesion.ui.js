@@ -108,14 +108,35 @@ export const ui = {
                         Sesiones activas: <strong>${totalActivas} / 3</strong>
                     </span>
                     ${puedeAgregar
-                        ? `<button class="btn-add-sesion btn-icon" onclick="abrirNuevaSesion()" title="Nueva sesión">
+                        ? `<button class="btn-add-sesion btn-icon" onclick="abrirNuevaSesion()" title="Nueva sesión" style="margin-left:auto;">
                                <i class="bi bi-plus-circle"></i> Nueva sesión
                            </button>`
-                        : `<span class="limite-agotado"><i class="bi bi-lock-fill"></i> Límite alcanzado</span>`}
+                        : `<span class="limite-agotado" style="margin-left:auto;"><i class="bi bi-lock-fill"></i> Límite alcanzado</span>`}
                 </div>
                 <div class="limite-progress${totalActivas >= 3 ? ' full' : ''}">
                     <div class="limite-fill" style="width:${pct}%"></div>
                 </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:6px 0 4px;">
+                <span style="font-size:.75rem;color:var(--text-muted);">Ordenar por</span>
+                <select id="sesionSortCampo"
+                        onchange="ordenarSesiones()"
+                        style="font-size:.78rem;padding:3px 8px;border-radius:6px;
+                               border:1px solid var(--border-color);background:var(--bg-surface);
+                               color:var(--text-primary);cursor:pointer;">
+                    <option value="sesion">Fecha sesión</option>
+                    <option value="creacion">Fecha creación</option>
+                </select>
+                <button id="sesionSortAsc" onclick="ordenarSesiones('asc')" title="Ascendente"
+                        style="padding:3px 7px;border-radius:6px;border:1px solid var(--border-color);
+                               background:var(--bg-surface);color:var(--text-primary);cursor:pointer;font-size:.8rem;line-height:1;">
+                    <i class="bi bi-arrow-up"></i>
+                </button>
+                <button id="sesionSortDesc" onclick="ordenarSesiones('desc')" title="Descendente"
+                        style="padding:3px 7px;border-radius:6px;border:1px solid var(--border-color);
+                               background:var(--bg-surface);color:var(--text-primary);cursor:pointer;font-size:.8rem;line-height:1;">
+                    <i class="bi bi-arrow-down"></i>
+                </button>
             </div>`;
 
         if (!sesiones.length) {

@@ -123,14 +123,11 @@ class EstudiantesApi extends BaseApiController
     {
         $body  = $this->request->getJSON(true) ?? [];
         $rules = [
-            'id_promocion'               => 'required|integer|is_natural_no_zero',
-            'estudiante.nombres'         => 'required|max_length[30]',
-            'estudiante.apellidos'       => 'required|max_length[30]',
-            'apoderado.nombres'          => 'required|max_length[100]',
-            'apoderado.telefono'         => 'required|exact_length[9]',
-            'apoderado.tipo_documento'   => 'required|in_list[DNI,CE,PASAPORTE]',
-            'apoderado.numero_documento' => 'required|min_length[6]|max_length[20]',
-            'apoderado.tipo_relacion'    => 'required|in_list[padre,madre,hermano,otro]',
+            'id_promocion'            => 'required|integer|is_natural_no_zero',
+            'estudiante.nombres'      => 'required|max_length[100]',
+            'apoderado.nombres'       => 'required|max_length[100]',
+            'apoderado.telefono'      => 'required|exact_length[9]|regex_match[/^\d{9}$/]',
+            'apoderado.tipo_relacion' => 'required|in_list[padre,madre,hermano,otro]',
         ];
 
         if (!$this->validateData($body, $rules)) {

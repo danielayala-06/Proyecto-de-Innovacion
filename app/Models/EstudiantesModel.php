@@ -42,7 +42,7 @@ class EstudiantesModel extends Model
 
     protected $validationRules = [
         'nombres'          => 'required|max_length[100]',
-        'apellidos'        => 'required|max_length[100]',
+        'apellidos'        => 'permit_empty|max_length[100]',
         'fecha_nacimiento' => 'permit_empty|valid_date',
         'id_apoderado'     => 'required|is_natural_no_zero',
         'id_promocion'     => 'required|is_natural_no_zero',

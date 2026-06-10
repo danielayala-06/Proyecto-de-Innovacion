@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
 
         // ── Contratos, pagos y sesiones ──────────────────────────────────────
         $this->call('ContratosSeeder');            // depende de: cotizaciones
-        $this->call('PagosSeeder');                // depende de: contratos, formas_pago
+        $this->call('PagosSeeder');                // depende de: contratos
         $this->call('SesionesFotograficasSeeder'); // depende de: promociones_escolares
 
         // ── Estudiantes ──────────────────────────────────────────────────────

@@ -18,20 +18,20 @@ class PagosSeeder extends Seeder
         //   + pago 1 300 → saldo pendiente 1 400
         $data = [
             [
-                'fecha'        => '2026-05-01',
-                'monto'        => 4000.00,
-                'moneda'       => 'PEN',
-                'voucher'      => 'BCP-2026050198765',
-                'id_form_pago' => 2,
-                'id_contrato'  => 1,
+                'fecha'       => '2026-05-01',
+                'monto'       => 4000.00,
+                'moneda'      => 'PEN',
+                'voucher'     => 'BCP-2026050198765',
+                'forma_pago'  => 'Yape',
+                'id_contrato' => 1,
             ],
             [
-                'fecha'        => '2026-05-10',
-                'monto'        => 1300.00,
-                'moneda'       => 'PEN',
-                'voucher'      => 'IBK-20260510-112233',
-                'id_form_pago' => 3,
-                'id_contrato'  => 2,
+                'fecha'       => '2026-05-10',
+                'monto'       => 1300.00,
+                'moneda'      => 'PEN',
+                'voucher'     => 'IBK-20260510-112233',
+                'forma_pago'  => 'Plin',
+                'id_contrato' => 2,
             ],
         ];
 

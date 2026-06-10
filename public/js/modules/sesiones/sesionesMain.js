@@ -50,6 +50,31 @@ let _modalEstudiante = null;
 /** @type {bootstrap.Offcanvas|null} Offcanvas de gestión de asistencia. */
 let _offcanvas       = null;
 
+/** Estado del ordenamiento de sesiones. */
+let _sortCampo = 'sesion';   // 'sesion' | 'creacion'
+let _sortDir   = 'asc';      // 'asc' | 'desc'
+
+function _aplicarOrden(sesiones) {
+    return [...sesiones].sort((a, b) => {
+        const va = _sortCampo === 'sesion' ? a.fecha_hora_sesion : a.id_sesion;
+        const vb = _sortCampo === 'sesion' ? b.fecha_hora_sesion : b.id_sesion;
+        const d  = _sortDir === 'asc' ? 1 : -1;
+        return va < vb ? -d : va > vb ? d : 0;
+    });
+}
+
+function _sincronizarControles() {
+    const sel = document.getElementById('sesionSortCampo');
+    if (sel) sel.value = _sortCampo;
+
+    const btnAsc  = document.getElementById('sesionSortAsc');
+    const btnDesc = document.getElementById('sesionSortDesc');
+    const activeStyle  = 'background:var(--accent);color:#fff;border-color:var(--accent);';
+    const defaultStyle = 'background:var(--bg-surface);color:var(--text-primary);';
+    if (btnAsc)  btnAsc.style.cssText  += _sortDir === 'asc'  ? activeStyle : defaultStyle;
+    if (btnDesc) btnDesc.style.cssText += _sortDir === 'desc' ? activeStyle : defaultStyle;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // CARGA POR PROMOCIÓN
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,14 +100,29 @@ async function cargarPromocion(idPromocion) {
         state.estudiantes[idPromocion] = res.data ?? [];
     } catch { state.estudiantes[idPromocion] = []; }
 
-    const sesiones      = state.sesiones[idPromocion] ?? [];
+    const sesiones      = _aplicarOrden(state.sesiones[idPromocion] ?? []);
     const totalActivas  = sesiones.filter(s => s.estado !== 'cancelado').length;
     const puedeAgregar  = totalActivas < 3;
 
     ui.renderTabs(state.promociones, idPromocion);
     ui.renderSesiones(sesiones, puedeAgregar);
+    _sincronizarControles();
     ui.renderEstudiantes(state.estudiantes[idPromocion], idPromocion);
 }
+
+window.ordenarSesiones = function (dir) {
+    // Si se pasa dirección, actualízala; si no, solo recampo desde el select
+    if (dir === 'asc' || dir === 'desc') {
+        _sortDir = dir;
+    }
+    const sel = document.getElementById('sesionSortCampo');
+    if (sel) _sortCampo = sel.value;
+
+    const sesiones     = _aplicarOrden(state.sesiones[state.activePromocion] ?? []);
+    const totalActivas = sesiones.filter(s => s.estado !== 'cancelado').length;
+    ui.renderSesiones(sesiones, totalActivas < 3);
+    _sincronizarControles();
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SESIONES — FUNCIONES GLOBALES

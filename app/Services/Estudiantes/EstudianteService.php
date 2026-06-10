@@ -147,11 +147,9 @@ class EstudianteService
         // 1. Persona del apoderado
         $idPersona = $this->personaModel->insert([
             'nombres'          => $apData['nombres'],
-            'apellidos'        => $apData['apellidos']        ?? null,
+            'apellidos'        => '',
             'telefono'         => $apData['telefono'],
-            'correo'           => $apData['correo']           ?? null,
-            'tipo_documento'   => $apData['tipo_documento'],
-            'numero_documento' => $apData['numero_documento'],
+            'correo'           => $apData['correo'] ?? null,
         ]);
 
         if ($idPersona === false) {
@@ -171,11 +169,29 @@ class EstudianteService
         }
 
         // 3. Estudiante
+        if (!empty($esData['fecha_nacimiento'])) {
+            $fn = \DateTime::createFromFormat('Y-m-d', $esData['fecha_nacimiento']);
+            if (!$fn) {
+                $db->transRollback();
+                throw new \RuntimeException('Formato de fecha de nacimiento inválido (Y-m-d).', 422);
+            }
+            $hoy = new \DateTime('today');
+            $min = (new \DateTime('today'))->modify('-30 years');
+            if ($fn > $hoy) {
+                $db->transRollback();
+                throw new \RuntimeException('La fecha de nacimiento no puede ser en el futuro.', 422);
+            }
+            if ($fn < $min) {
+                $db->transRollback();
+                throw new \RuntimeException('El estudiante no puede tener más de 30 años.', 422);
+            }
+        }
+
         $idEstudiante = $this->estudianteModel->insert([
             'id_apoderado'     => $idApoderado,
             'id_promocion'     => $idPromocion,
             'nombres'          => $esData['nombres'],
-            'apellidos'        => $esData['apellidos'],
+            'apellidos'        => null,
             'fecha_nacimiento' => $esData['fecha_nacimiento'] ?? null,
             'color_fav'        => $esData['color_fav']        ?? null,
             'profesion_futura' => $esData['profesion_futura'] ?? null,

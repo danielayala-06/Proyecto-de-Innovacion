@@ -195,7 +195,7 @@ window.sortBy = function (key) {
     cotizacionCod:'id_cotizacion',
     cliente:      'cliente',
     tipoEvento:   'tipo_evento',
-    fechaEvento:  'fecha_evento',
+    fechaEvento:  'primera_sesion',
     total:        'total',
     estado:       'estado',
     creado:       'fecha_creacion',

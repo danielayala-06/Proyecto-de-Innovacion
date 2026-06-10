@@ -112,13 +112,9 @@
                 <!-- Datos del estudiante -->
                 <p class="form-section-label"><i class="bi bi-person-badge"></i> Datos del estudiante</p>
                 <div class="row g-3 mb-3">
-                    <div class="col-12 col-md-6">
-                        <label>Nombres *</label>
-                        <input type="text" class="form-control" id="efNombres" maxlength="30">
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label>Apellidos *</label>
-                        <input type="text" class="form-control" id="efApellidos" maxlength="30">
+                    <div class="col-12">
+                        <label>Nombre completo *</label>
+                        <input type="text" class="form-control" id="efNombreCompleto" maxlength="100" placeholder="Ej: Tony Quispe Mamani">
                     </div>
                     <div class="col-12 col-md-4">
                         <label>Fecha de nacimiento</label>
@@ -137,36 +133,16 @@
                 <!-- Datos del apoderado -->
                 <p class="form-section-label"><i class="bi bi-person-fill"></i> Datos del apoderado</p>
                 <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <label>Nombres *</label>
-                        <input type="text" class="form-control" id="apNombres" maxlength="100">
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label>Apellidos</label>
-                        <input type="text" class="form-control" id="apApellidos" maxlength="100">
-                    </div>
-                    <div class="col-6 col-md-4">
-                        <label>Tipo de documento *</label>
-                        <select class="form-select" id="apDocTipo">
-                            <option value="">--</option>
-                            <option value="DNI">DNI</option>
-                            <option value="CE">CE</option>
-                            <option value="PASAPORTE">Pasaporte</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-md-4">
-                        <label>Nº documento *</label>
-                        <input type="text" class="form-control" id="apDocNum" maxlength="20">
+                    <div class="col-12 col-md-8">
+                        <label>Nombre completo *</label>
+                        <input type="text" class="form-control" id="apNombreCompleto" maxlength="100" placeholder="Ej: Mirian Tasayco Murillo">
                     </div>
                     <div class="col-12 col-md-4">
                         <label>Teléfono * (9 dígitos)</label>
-                        <input type="tel" class="form-control" id="apTelefono" maxlength="9" pattern="\d{9}">
+                        <input type="tel" class="form-control" id="apTelefono" maxlength="9" pattern="\d{9}"
+                               oninput="this.value=this.value.replace(/\D/g,'')">
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label>Correo</label>
-                        <input type="email" class="form-control" id="apCorreo" maxlength="150">
-                    </div>
-                    <div class="col-12 col-md-6">
+                    <div class="col-12 col-md-4">
                         <label>Relación con el estudiante *</label>
                         <select class="form-select" id="apRelacion">
                             <option value="">--</option>
@@ -175,6 +151,10 @@
                             <option value="hermano">Hermano/a</option>
                             <option value="otro">Otro</option>
                         </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label>Correo</label>
+                        <input type="email" class="form-control" id="apCorreo" maxlength="150">
                     </div>
                 </div>
             </div>

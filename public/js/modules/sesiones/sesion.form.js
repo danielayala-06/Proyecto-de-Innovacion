@@ -153,12 +153,18 @@ export const estudianteForm = {
      * @returns {void}
      */
     limpiar() {
-        ['efNombres','efApellidos','efNacimiento','efColor','efProfesion',
-         'apNombres','apApellidos','apTelefono','apDocTipo','apDocNum',
-         'apCorreo','apRelacion'].forEach(id => {
+        ['efNombreCompleto','efNacimiento','efColor','efProfesion',
+         'apNombreCompleto','apTelefono','apCorreo','apRelacion'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
+
+        // Fecha de nacimiento: no futura, no más de 120 años atrás
+        const hoy = new Date();
+        const min = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
+        const toISO = d => d.toISOString().split('T')[0];
+        const ef = document.getElementById('efNacimiento');
+        if (ef) { ef.min = toISO(min); ef.max = toISO(hoy); }
     },
 
     /**
@@ -189,20 +195,18 @@ export const estudianteForm = {
         return {
             id_promocion: idPromocion,
             estudiante: {
-                nombres:          document.getElementById('efNombres').value.trim(),
-                apellidos:        document.getElementById('efApellidos').value.trim(),
+                nombres:          document.getElementById('efNombreCompleto').value.trim(),
+                apellidos:        null,
                 fecha_nacimiento: document.getElementById('efNacimiento').value || null,
                 color_fav:        document.getElementById('efColor').value.trim()     || null,
                 profesion_futura: document.getElementById('efProfesion').value.trim() || null,
             },
             apoderado: {
-                nombres:          document.getElementById('apNombres').value.trim(),
-                apellidos:        document.getElementById('apApellidos').value.trim() || null,
-                telefono:         document.getElementById('apTelefono').value.trim(),
-                tipo_documento:   document.getElementById('apDocTipo').value,
-                numero_documento: document.getElementById('apDocNum').value.trim(),
-                correo:           document.getElementById('apCorreo').value.trim()  || null,
-                tipo_relacion:    document.getElementById('apRelacion').value,
+                nombres:       document.getElementById('apNombreCompleto').value.trim(),
+                apellidos:     null,
+                telefono:      document.getElementById('apTelefono').value.trim(),
+                correo:        document.getElementById('apCorreo').value.trim() || null,
+                tipo_relacion: document.getElementById('apRelacion').value,
             },
         };
     },
@@ -215,17 +219,24 @@ export const estudianteForm = {
      */
     validar() {
         const reqs = {
-            efNombres:   'El nombre del estudiante es obligatorio.',
-            efApellidos: 'Los apellidos del estudiante son obligatorios.',
-            apNombres:   'El nombre del apoderado es obligatorio.',
-            apTelefono:  'El teléfono del apoderado es obligatorio.',
-            apDocTipo:   'El tipo de documento del apoderado es obligatorio.',
-            apDocNum:    'El número de documento del apoderado es obligatorio.',
-            apRelacion:  'La relación con el estudiante es obligatoria.',
+            efNombreCompleto: 'El nombre completo del estudiante es obligatorio.',
+            apNombreCompleto: 'El nombre completo del apoderado es obligatorio.',
+            apTelefono:       'El teléfono del apoderado es obligatorio.',
+            apRelacion:       'La relación con el estudiante es obligatoria.',
         };
         for (const [id, msg] of Object.entries(reqs)) {
             if (!document.getElementById(id)?.value.trim()) return msg;
         }
+
+        const nacimiento = document.getElementById('efNacimiento').value;
+        if (nacimiento) {
+            const fn  = new Date(nacimiento + 'T00:00:00');
+            const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+            const min = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
+            if (fn > hoy) return 'La fecha de nacimiento no puede ser en el futuro.';
+            if (fn < min) return 'El estudiante no puede tener más de 30 años.';
+        }
+
         const tel = document.getElementById('apTelefono').value.trim();
         if (!/^\d{9}$/.test(tel)) return 'El teléfono debe tener exactamente 9 dígitos.';
         return null;
