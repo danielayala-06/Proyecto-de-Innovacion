@@ -341,7 +341,7 @@ window.verDetalleEstudiante = async function(idEstudiante) {
         const res = await estudianteApi.obtener(idEstudiante);
         const e   = res.data;
 
-        titulo.textContent = `${e.apellidos}, ${e.nombres}`;
+        titulo.textContent = e.apellidos ? `${e.apellidos}, ${e.nombres}` : e.nombres;
 
         // ── Sección: datos personales ──────────────────────────────────────────
         const colorChip = e.color_fav

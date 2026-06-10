@@ -206,9 +206,9 @@ export const ui = {
 
         const rows = estudiantes.map(e => `
             <div class="estudiante-row" style="cursor:pointer;" onclick="verDetalleEstudiante(${e.id_estudiante})">
-                <div class="estudiante-avatar">${e.nombres[0]}${e.apellidos[0]}</div>
+                <div class="estudiante-avatar">${(e.nombres ?? '?')[0]}${e.apellidos ? e.apellidos[0] : (e.nombres?.[1] ?? '')}</div>
                 <div class="estudiante-info">
-                    <div class="estudiante-nombre">${e.apellidos}, ${e.nombres}</div>
+                    <div class="estudiante-nombre">${e.apellidos ? `${e.apellidos}, ` : ''}${e.nombres}</div>
                     <div class="estudiante-apoderado">
                         <i class="bi bi-person-fill"></i>
                         ${e.apoderado_nombres} ${e.apoderado_apellidos ?? ''}
@@ -248,8 +248,8 @@ export const ui = {
 
         const enRows = sesion.asistencia.map(a => `
             <div class="asistencia-row">
-                <div class="estudiante-avatar sm">${a.nombres[0]}${a.apellidos[0]}</div>
-                <span class="flex-1">${a.apellidos}, ${a.nombres}</span>
+                <div class="estudiante-avatar sm">${(a.nombres ?? '?')[0]}${a.apellidos ? a.apellidos[0] : (a.nombres?.[1] ?? '')}</div>
+                <span class="flex-1">${a.apellidos ? `${a.apellidos}, ` : ''}${a.nombres}</span>
                 <div class="asistencia-btns">
                     <button class="btn-asistencia ${a.asistio === 1 ? 'active-ok' : ''}"
                             onclick="marcarAsistencia(${sesion.id_sesion},${a.id_estudiante},1)" title="Asistió">
@@ -269,8 +269,8 @@ export const ui = {
             <div class="asistencia-section-title">Agregar a la sesión</div>
             ${disponibles.map(e => `
             <div class="asistencia-row dim">
-                <div class="estudiante-avatar sm">${e.nombres[0]}${e.apellidos[0]}</div>
-                <span class="flex-1">${e.apellidos}, ${e.nombres}</span>
+                <div class="estudiante-avatar sm">${(e.nombres ?? '?')[0]}${e.apellidos ? e.apellidos[0] : (e.nombres?.[1] ?? '')}</div>
+                <span class="flex-1">${e.apellidos ? `${e.apellidos}, ` : ''}${e.nombres}</span>
                 <button class="btn-icon success sm" onclick="agregarAAsistencia(${sesion.id_sesion},${e.id_estudiante})" title="Agregar">
                     <i class="bi bi-plus-circle"></i>
                 </button>
