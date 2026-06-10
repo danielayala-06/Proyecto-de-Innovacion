@@ -231,6 +231,25 @@ class ContratoService
             ]);
         }
 
+        // Registrar sesiones opcionales vinculadas a la promoción
+        $sesionesInput = $data['sesiones'] ?? [];
+        if (!empty($sesionesInput) && is_array($sesionesInput) && $promocion !== null) {
+            $tiposValidos = ['exteriores', 'colegio', 'estudio', 'otro'];
+            $sesionModel  = new \App\Models\SesionesFotograficasModel();
+            foreach (array_slice($sesionesInput, 0, 3) as $s) {
+                $fecha = trim($s['fecha_hora_sesion'] ?? '');
+                $tipo  = $s['tipo'] ?? 'otro';
+                if ($fecha && in_array($tipo, $tiposValidos)) {
+                    $sesionModel->insert([
+                        'id_promocion'      => (int) $promocion['id_promocion'],
+                        'fecha_hora_sesion' => $fecha,
+                        'tipo'              => $tipo,
+                        'estado'            => 'pendiente',
+                    ]);
+                }
+            }
+        }
+
         $db->transComplete();
 
         if (!$db->transStatus()) {

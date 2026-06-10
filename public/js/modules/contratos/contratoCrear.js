@@ -235,6 +235,59 @@ function _bloquearFormulario(mensaje) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SESIONES FOTOGRÁFICAS (opcional)
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _sesionIdx = 0;
+
+function _updateBtnAgregar() {
+  const container = document.getElementById('sesionesContainer');
+  const btn       = document.getElementById('btnAgregarSesion');
+  if (!container || !btn) return;
+  btn.style.display = container.querySelectorAll('.sesion-row').length >= 3 ? 'none' : '';
+}
+
+function _agregarSesion() {
+  const container = document.getElementById('sesionesContainer');
+  if (!container || container.querySelectorAll('.sesion-row').length >= 3) return;
+  const idx = ++_sesionIdx;
+  const row = document.createElement('div');
+  row.className     = 'sesion-row';
+  row.dataset.idx   = idx;
+  row.style.cssText = 'display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin-bottom:.5rem;';
+  row.innerHTML = `
+    <input type="datetime-local" id="sesionFecha-${idx}"
+           style="flex:1;min-width:140px;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;font-size:.83rem;background:var(--bg-input,#fff);color:var(--text-primary);">
+    <select id="sesionTipo-${idx}"
+            style="width:120px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;font-size:.83rem;background:var(--bg-input,#fff);color:var(--text-primary);">
+      <option value="estudio">Estudio</option>
+      <option value="colegio">Colegio</option>
+      <option value="exteriores">Exteriores</option>
+      <option value="otro">Otro</option>
+    </select>
+    <button type="button" data-action="del-sesion" data-idx="${idx}"
+            style="flex-shrink:0;background:none;border:1px solid var(--red-text,#dc3545);color:var(--red-text,#dc3545);border-radius:6px;padding:.3rem .55rem;cursor:pointer;"
+            title="Quitar sesión">
+      <i class="bi bi-trash3"></i>
+    </button>`;
+  container.appendChild(row);
+  _updateBtnAgregar();
+}
+
+function _recolectarSesiones() {
+  const container = document.getElementById('sesionesContainer');
+  if (!container) return [];
+  const sesiones = [];
+  for (const row of container.querySelectorAll('.sesion-row')) {
+    const idx   = row.dataset.idx;
+    const fecha = document.getElementById(`sesionFecha-${idx}`)?.value;
+    const tipo  = document.getElementById(`sesionTipo-${idx}`)?.value || 'otro';
+    if (fecha) sesiones.push({ fecha_hora_sesion: fecha.replace('T', ' ') + ':00', tipo });
+  }
+  return sesiones;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // FORMULARIO
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -315,6 +368,19 @@ function _initForm(cotId, total, prom = null) {
       if (inputOtro) inputOtro.style.display = selectForma.value === 'otro' ? '' : 'none';
     });
   }
+
+  // Sesiones fotográficas
+  const sesContainer = document.getElementById('sesionesContainer');
+  const btnAgregar   = document.getElementById('btnAgregarSesion');
+  if (sesContainer) {
+    sesContainer.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action="del-sesion"]');
+      if (!btn) return;
+      sesContainer.querySelector(`[data-idx="${btn.dataset.idx}"]`)?.remove();
+      _updateBtnAgregar();
+    });
+  }
+  if (btnAgregar) btnAgregar.addEventListener('click', _agregarSesion);
 
   document.getElementById('btnGenerar')?.addEventListener('click', () => _abrirConfirmacion(cotId, total));
 }
@@ -412,12 +478,7 @@ function _abrirConfirmacion(cotId, total) {
  * Cierra el modal, deshabilita el botón y redirige al éxito.
  */
 async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
-  const observaciones = document.getElementById('contratoObservaciones')?.value.trim() ?? '';
-
-  const obsPartes = [];
-  if (formaPago)     obsPartes.push(`Forma de pago: ${formaPago}`);
-  if (observaciones) obsPartes.push(observaciones);
-  const obsTexto = obsPartes.join('\n\n') || null;
+  const obsTexto = formaPago ? `Forma de pago: ${formaPago}` : null;
 
   const btnConf = document.getElementById('btnConfirmarContrato');
   const btnGen  = document.getElementById('btnGenerar');
@@ -431,6 +492,7 @@ async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
       forma_pago:    formaPago || 'Efectivo',
       fecha_emision: fechaFirma,
       observaciones: obsTexto,
+      sesiones:      _recolectarSesiones(),
     });
     _modalContrato?.hide();
     alerts.ok('Contrato generado correctamente.');

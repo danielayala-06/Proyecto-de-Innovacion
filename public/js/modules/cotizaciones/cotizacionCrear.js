@@ -1696,15 +1696,19 @@ async function init() {
             : this.value.replace(/[^A-Za-z0-9]/g, '').slice(0, maxlen);
         _validarDoc();
 
-        if (state.cliente || state.esNuevoCliente) {
+        if (state.cliente) {
+            // Cliente confirmado editando su DNI (campo debería ser readonly, pero por si acaso)
             const valorActual = this.value;
             _limpiarCliente();
             this.value = valorActual;
             _validarDoc();
+        } else if (state.esNuevoCliente && !this.value.trim()) {
+            // DNI vaciado en modo nuevo-cliente → resetear para permitir buscar de nuevo
+            _limpiarCliente();
         }
     });
     dniInput?.addEventListener('blur', () => {
-        if (state.cliente || state.esNuevoCliente) return;
+        if (state.cliente) return;
         const dni = dniInput.value.trim();
         if (!dni) return;
 
@@ -1712,7 +1716,7 @@ async function init() {
         const encontrado = _buscarPorDni(dni);
         if (encontrado) {
             _setClienteExistente(encontrado);
-        } else {
+        } else if (!state.esNuevoCliente) {
             _setModoNuevoCliente();
         }
     });

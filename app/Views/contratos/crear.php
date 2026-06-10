@@ -63,6 +63,21 @@
                 <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
 
                     <fieldset class="cc-fieldset">
+                        <legend><i class="bi bi-camera"></i> Sesiones fotográficas <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);">(opcional)</span></legend>
+                        <div class="w-100 mb-4 shadow border bg-body-tertiary rounded"></div>
+
+                        <div id="sesionesContainer"></div>
+
+                        <button type="button" id="btnAgregarSesion"
+                                style="margin-top:.35rem;font-size:.78rem;display:flex;align-items:center;gap:5px;padding:.3rem .75rem;">
+                            <i class="bi bi-plus-circle"></i>Agregar sesión
+                        </button>
+                        <p style="font-size:.73rem;color:var(--text-muted);margin:.4rem 0 0;">
+                            Máximo 3 sesiones &middot; las fechas pueden coordinarse después.
+                        </p>
+                    </fieldset>
+
+                    <fieldset class="cc-fieldset">
                         <legend><i class="bi bi-cash-coin"></i> Pago del adelanto</legend>
                         <div class="w-100 mb-4 shadow border bg-body-tertiary rounded"></div>
     
@@ -87,15 +102,6 @@
                         </div>
                     </fieldset>
     
-                    <fieldset class="cc-fieldset">
-                        <legend><i class="bi bi-journal-text"></i> Notas del contrato</legend>
-                        <div class="w-100 mb-4 shadow border bg-body-tertiary rounded"></div>
-
-                        <div class="cc-form-group" style="margin-bottom:0;">
-                            <label for="contratoObservaciones">Observaciones</label>
-                            <textarea id="contratoObservaciones" placeholder="Notas internas del contrato…"></textarea>
-                        </div>
-                    </fieldset>
                 </div>
 
 
