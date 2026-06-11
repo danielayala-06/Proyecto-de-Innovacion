@@ -99,7 +99,7 @@ class ContratosApi extends BaseApiController
 
         $rules = [
             'id_cotizacion' => 'required|integer',
-            'adelanto'      => 'required|decimal|greater_than_equal_to[0]',
+            'adelanto'      => 'required|decimal|greater_than[0]',
         ];
 
         if (!$this->validateData($body, $rules)) {

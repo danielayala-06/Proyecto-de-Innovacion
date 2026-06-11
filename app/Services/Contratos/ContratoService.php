@@ -228,17 +228,15 @@ class ContratoService
             ->set(['is_active' => true])
             ->update();
 
-        // Registrar el adelanto como primer pago real si es mayor a 0
-        if ($adelanto > 0) {
-            $formaPago = !empty($data['forma_pago']) ? trim($data['forma_pago']) : 'Efectivo';
-            $this->pagoModel->insert([
-                'id_contrato' => $idContrato,
-                'forma_pago'  => $formaPago,
-                'monto'       => $adelanto,
-                'moneda'      => 'PEN',
-                'fecha'       => date('Y-m-d'),
-            ]);
-        }
+        // Registrar el adelanto como primer pago
+        $formaPago = !empty($data['forma_pago']) ? trim($data['forma_pago']) : 'Efectivo';
+        $this->pagoModel->insert([
+            'id_contrato' => $idContrato,
+            'forma_pago'  => $formaPago,
+            'monto'       => $adelanto,
+            'moneda'      => 'PEN',
+            'fecha'       => date('Y-m-d'),
+        ]);
 
         // Registrar sesiones opcionales vinculadas a la promoción
         $sesionesInput = $data['sesiones'] ?? [];
@@ -262,9 +260,9 @@ class ContratoService
                     throw new \RuntimeException('Las sesiones no pueden programarse con más de 10 meses de anticipación', 422);
                 }
                 $hora = (int) $dt->format('G');
-                if ($hora < 7 || $hora > 20) {
+                if ($hora < 9 || $hora > 20) {
                     $db->transRollback();
-                    throw new \RuntimeException('El horario de las sesiones debe ser entre las 7:00 a.m. y las 8:00 p.m.', 422);
+                    throw new \RuntimeException('El horario de las sesiones debe ser entre las 9:00 a.m. y las 8:00 p.m.', 422);
                 }
                 $sesionModel->insert([
                     'id_promocion'      => (int) $promocion['id_promocion'],

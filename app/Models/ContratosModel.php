@@ -47,7 +47,7 @@ class ContratosModel extends Model
 
     protected $validationRules = [
         'id_cotizacion' => 'required|is_natural_no_zero',
-        'adelanto'      => 'required|decimal|greater_than_equal_to[0]',
+        'adelanto'      => 'required|decimal|greater_than[0]',
         'total'         => 'required|decimal|greater_than_equal_to[0]',
         'estado'        => 'required|in_list[ACTIVO,CANCELADO,COMPLETADO]',
     ];
@@ -57,7 +57,7 @@ class ContratosModel extends Model
         ],
         'adelanto' => [
             'required'              => 'El adelanto es obligatorio.',
-            'greater_than_equal_to' => 'El adelanto no puede ser negativo.',
+            'greater_than'          => 'El adelanto debe ser mayor a cero.',
         ],
         'total' => [
             'required' => 'El total del contrato es obligatorio.',
