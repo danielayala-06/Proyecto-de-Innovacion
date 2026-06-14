@@ -125,6 +125,125 @@ window.ordenarSesiones = function (dir) {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MINI CALENDARIO (modal de sesión)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MESES_CAL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_CAL  = ['L','M','X','J','V','S','D'];
+
+const TIPO_LABEL_CAL = { colegio: 'Colegio', exteriores: 'Exteriores', estudio: 'Estudio', otro: 'Otro' };
+const DIAS_CORTOS    = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MESES_CORTOS   = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+const miniCal = {
+    año: new Date().getFullYear(),
+    mes: new Date().getMonth(),
+    _data: [],
+
+    _todasSesiones() {
+        if (this._data.length > 0) return this._data;
+        return Object.values(state.sesiones).flat().filter(s => s.estado !== 'cancelado');
+    },
+
+    async cargar() {
+        try {
+            const res  = await sesionApi.listar();
+            this._data = (res.data ?? []).filter(s => s.estado !== 'cancelado');
+            this.render();
+        } catch { /* fallback: usa state.sesiones */ }
+    },
+
+    ir(año, mes) { this.año = año; this.mes = mes; this.render(); },
+
+    render() {
+        const labelEl = document.getElementById('miniCalLabel');
+        const grid    = document.getElementById('miniCalGrid');
+        if (!labelEl || !grid) return;
+
+        labelEl.textContent = `${MESES_CAL[this.mes]} ${this.año}`;
+
+        const mapa = {};
+        for (const s of this._todasSesiones()) {
+            const d = s.fecha_hora_sesion?.slice(0, 10);
+            if (d) (mapa[d] ??= []).push(s);
+        }
+
+        const hoyISO = new Date().toISOString().slice(0, 10);
+        const selISO = document.getElementById('sfFecha')?.value ?? '';
+        const offset = (new Date(this.año, this.mes, 1).getDay() + 6) % 7;
+        const ultimo = new Date(this.año, this.mes + 1, 0).getDate();
+
+        let html = DIAS_CAL.map(d => `<div class="mca-name">${d}</div>`).join('');
+        for (let i = 0; i < offset; i++) html += `<div class="mca-cell empty"></div>`;
+
+        for (let d = 1; d <= ultimo; d++) {
+            const iso  = `${this.año}-${String(this.mes + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const sess = mapa[iso] ?? [];
+            let cls = 'mca-cell';
+            if (iso < hoyISO) cls += ' mca-past';
+            if (iso === hoyISO) cls += ' mca-hoy';
+            if (iso === selISO) cls += ' mca-sel';
+            const dots  = sess.slice(0, 3).map(s => `<span class="mca-dot ses-${s.estado}"></span>`).join('');
+            const click = iso < hoyISO ? '' : `onclick="miniCalSelDia('${iso}')"`;
+            html += `<div class="${cls}" ${click}><span class="mca-num">${d}</span><div class="mca-dots">${dots}</div></div>`;
+        }
+        grid.innerHTML = html;
+    },
+
+    renderDayInfo(iso) {
+        const el = document.getElementById('miniCalDayInfo');
+        if (!el) return;
+
+        const sesiones = this._todasSesiones()
+            .filter(s => s.fecha_hora_sesion?.slice(0, 10) === iso)
+            .sort((a, b) => a.fecha_hora_sesion.localeCompare(b.fecha_hora_sesion));
+
+        const d     = new Date(iso + 'T00:00:00');
+        const label = `${DIAS_CORTOS[d.getDay()]} ${d.getDate()} ${MESES_CORTOS[d.getMonth()]}`;
+
+        if (!sesiones.length) {
+            el.style.display = 'block';
+            el.innerHTML = `<div class="mca-day-title">${label}</div><div class="mca-day-empty">Sin sesiones este día.</div>`;
+            return;
+        }
+
+        const rows = sesiones.map(s => {
+            const hora    = s.fecha_hora_sesion?.slice(11, 16) ?? '';
+            const colegio = s.nombre_colegio ?? s.nombre_promocion ?? '—';
+            const tipo    = TIPO_LABEL_CAL[s.tipo] ?? s.tipo;
+            return `<div class="mca-ses-row">
+                <span class="mca-ses-hora">${hora}</span>
+                <div class="mca-ses-info">
+                    <div class="mca-ses-name" title="${colegio}">${colegio}</div>
+                    <div class="mca-ses-meta">${tipo} · ${s.estado}</div>
+                </div>
+            </div>`;
+        }).join('');
+
+        el.style.display = 'block';
+        el.innerHTML = `<div class="mca-day-title">${label}</div>${rows}`;
+    },
+};
+
+window.miniCalPrev = () => {
+    let { año, mes } = miniCal;
+    mes--; if (mes < 0) { mes = 11; año--; }
+    miniCal.ir(año, mes);
+};
+window.miniCalNext = () => {
+    let { año, mes } = miniCal;
+    mes++; if (mes > 11) { mes = 0; año++; }
+    miniCal.ir(año, mes);
+};
+window.miniCalSelDia = function (iso) {
+    const sfFecha = document.getElementById('sfFecha');
+    if (sfFecha) sfFecha.value = iso;
+    miniCal.render();
+    miniCal.renderDayInfo(iso);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SESIONES — FUNCIONES GLOBALES
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -138,6 +257,13 @@ window.abrirNuevaSesion = function (tipo = '') {
     sesionForm.limpiar(tipo);
     document.getElementById('sfPromocion').value = state.activePromocion;
     document.getElementById('modalSesionTitulo').textContent = 'Nueva sesión';
+    const el = document.getElementById('miniCalDayInfo');
+    if (el) el.style.display = 'none';
+    const hoy = new Date();
+    miniCal.año = hoy.getFullYear();
+    miniCal.mes = hoy.getMonth();
+    miniCal.render();
+    miniCal.cargar();
     _modalSesion?.show();
 };
 
@@ -153,6 +279,11 @@ window.abrirEditarSesion = async function (id) {
         sesionForm.poblar(res.data);
         document.getElementById('sfPromocion').value = state.activePromocion;
         document.getElementById('modalSesionTitulo').textContent = 'Editar sesión';
+        const fecha = res.data.fecha_hora_sesion?.slice(0, 10);
+        if (fecha) { const [a, m] = fecha.split('-').map(Number); miniCal.ir(a, m - 1); }
+        else { const hoy = new Date(); miniCal.ir(hoy.getFullYear(), hoy.getMonth()); }
+        miniCal.cargar();
+        if (fecha) miniCal.renderDayInfo(fecha);
         _modalSesion?.show();
     } catch {
         alerts.error('No se pudo cargar la sesión.');
@@ -520,6 +651,20 @@ function init() {
     document.getElementById('promocionesTabs')?.addEventListener('click', e => {
         const btn = e.target.closest('.promo-tab');
         if (btn) cargarPromocion(parseInt(btn.dataset.id, 10));
+    });
+
+    // Sincronizar mini calendario cuando el usuario escribe la fecha directamente
+    document.getElementById('sfFecha')?.addEventListener('change', () => {
+        const val = document.getElementById('sfFecha').value;
+        if (val) {
+            const [a, m] = val.split('-').map(Number);
+            miniCal.ir(a, m - 1);
+            miniCal.renderDayInfo(val);
+        } else {
+            miniCal.render();
+            const el = document.getElementById('miniCalDayInfo');
+            if (el) el.style.display = 'none';
+        }
     });
 
     if (state.promociones.length) {

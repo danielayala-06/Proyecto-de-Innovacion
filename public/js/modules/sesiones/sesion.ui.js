@@ -108,7 +108,7 @@ export const ui = {
                         Sesiones activas: <strong>${totalActivas} / 3</strong>
                     </span>
                     ${puedeAgregar
-                        ? `<button class="btn-add-sesion btn-icon" onclick="abrirNuevaSesion()" title="Nueva sesión" style="margin-left:auto;">
+                        ? `<button class="btn-nuevo-paquete" onclick="abrirNuevaSesion()" style="margin-left:auto;padding:5px 14px;font-size:.78rem;">
                                <i class="bi bi-plus-circle"></i> Nueva sesión
                            </button>`
                         : `<span class="limite-agotado" style="margin-left:auto;"><i class="bi bi-lock-fill"></i> Límite alcanzado</span>`}

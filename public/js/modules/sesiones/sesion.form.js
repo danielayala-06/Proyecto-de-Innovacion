@@ -41,7 +41,7 @@ export const sesionForm = {
         document.getElementById('sfId').value            = '';
         document.getElementById('sfTipo').value          = tipo;
         document.getElementById('sfFecha').value         = '';
-        document.getElementById('sfHora').value          = '08:00';
+        document.getElementById('sfHora').value          = '09:00';
         document.getElementById('sfObservaciones').value = '';
 
         // Restricciones de fecha: hoy → +10 meses
@@ -76,7 +76,7 @@ export const sesionForm = {
 
     /**
      * Lee los valores del formulario y construye el payload para la API.
-     * Si no se indicó hora, usa `'08:00'` como valor por defecto.
+     * Si no se indicó hora, usa `'09:00'` como valor por defecto.
      *
      * @returns {{
      *   id_promocion:      number,
@@ -87,7 +87,7 @@ export const sesionForm = {
      */
     datos() {
         const fecha = document.getElementById('sfFecha').value;
-        const hora  = document.getElementById('sfHora').value || '08:00';
+        const hora  = document.getElementById('sfHora').value || '09:00';
         return {
             id_promocion:      parseInt(document.getElementById('sfPromocion').value, 10),
             tipo:              document.getElementById('sfTipo').value,
@@ -104,7 +104,7 @@ export const sesionForm = {
     validar() {
         const tipo  = document.getElementById('sfTipo').value;
         const fecha = document.getElementById('sfFecha').value;
-        const hora  = document.getElementById('sfHora').value || '08:00';
+        const hora  = document.getElementById('sfHora').value || '09:00';
 
         if (!tipo)  return 'Selecciona el tipo de sesión.';
         if (!fecha) return 'La fecha es obligatoria.';
@@ -112,7 +112,7 @@ export const sesionForm = {
         const dt    = new Date(`${fecha}T${hora}`);
         const ahora = new Date();
 
-        if (dt <= ahora) return 'La fecha y hora de la sesión ya pasó o es el momento actual.';
+        if (dt <= ahora) return 'No es posible agendar una sesión en una fecha y hora ya transcurridas.';
 
         const max = new Date();
         max.setMonth(max.getMonth() + 10);

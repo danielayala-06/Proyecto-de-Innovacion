@@ -54,42 +54,100 @@
     </div>
 </main>
 
+<style>
+.sf-layout{display:flex;min-height:340px;}
+.sf-cal{width:270px;min-width:250px;flex-shrink:0;padding:1rem;border-right:1px solid var(--border);background:var(--bg-page);}
+.sf-form{flex:1;padding:1.25rem;min-width:0;}
+.sf-cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.sf-cal-lbl{font-size:.82rem;font-weight:700;color:var(--text-primary);}
+.sf-cal-nav{background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;
+            color:var(--text-secondary);padding:.18rem .45rem;line-height:1;font-size:.8rem;}
+.sf-cal-nav:hover{background:var(--bg-hover);}
+.sf-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.mca-name{text-align:center;font-size:.65rem;font-weight:700;color:var(--text-muted);padding:.2rem 0;}
+.mca-cell{display:flex;flex-direction:column;align-items:center;border-radius:5px;
+          padding:.12rem 0 .22rem;cursor:pointer;transition:background .12s;}
+.mca-cell.empty{cursor:default;}
+.mca-cell.mca-past{opacity:.32;cursor:not-allowed;pointer-events:none;}
+.mca-cell:not(.mca-past):not(.empty):hover{background:var(--bg-hover);}
+.mca-cell.mca-hoy .mca-num{background:var(--accent);color:#fff;border-radius:50%;
+    width:20px;height:20px;display:flex;align-items:center;justify-content:center;}
+.mca-cell.mca-sel{background:var(--bg-hover);outline:2px solid var(--accent);outline-offset:-2px;}
+.mca-num{font-size:.74rem;font-weight:500;line-height:1.3;}
+.mca-dots{display:flex;gap:2px;justify-content:center;min-height:5px;}
+.mca-dot{width:5px;height:5px;border-radius:50%;display:inline-block;}
+.mca-dot.ses-pendiente{background:#B8963E;}
+.mca-dot.ses-finalizado{background:#22863a;}
+.mca-dot.ses-cancelado{background:#dc3545;}
+.sf-cal-legend{margin-top:.6rem;font-size:.68rem;color:var(--text-muted);display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;}
+@media(max-width:600px){.sf-layout{flex-direction:column;}.sf-cal{width:100%;border-right:none;border-bottom:1px solid var(--border);}}
+.mca-day-info{margin-top:.75rem;padding-top:.65rem;border-top:1px solid var(--border);max-height:160px;overflow-y:auto;}
+.mca-day-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.4rem;}
+.mca-ses-row{display:flex;align-items:flex-start;gap:.45rem;padding:.25rem 0;border-bottom:1px solid var(--border);}
+.mca-ses-row:last-child{border-bottom:none;}
+.mca-ses-hora{font-size:.75rem;font-weight:700;color:var(--accent);min-width:36px;flex-shrink:0;padding-top:1px;}
+.mca-ses-info{flex:1;min-width:0;}
+.mca-ses-name{font-size:.74rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mca-ses-meta{font-size:.67rem;color:var(--text-muted);}
+.mca-day-empty{font-size:.73rem;color:var(--text-muted);text-align:center;padding:.4rem 0;}
+</style>
+
 <!-- ═══════ MODAL NUEVA / EDITAR SESIÓN ════════════════════════════════════════ -->
 <div class="modal fade" id="modalSesion" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title" id="modalSesionTitulo">Nueva sesión</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <input type="hidden" id="sfId">
-                <input type="hidden" id="sfPromocion">
+            <div class="modal-body p-0">
+                <div class="sf-layout">
 
-                <div class="row g-3 mb-3">
-                    <div class="col-12 col-md-6">
-                        <label>Tipo de sesión</label>
-                        <select class="form-select" id="sfTipo">
-                            <option value="">Seleccionar...</option>
-                            <option value="colegio">Colegio</option>
-                            <option value="exteriores">Exteriores</option>
-                            <option value="estudio">Estudio</option>
-                            <option value="otro">Otro</option>
-                        </select>
+                    <!-- ── Mini calendario ─────────────────────────────── -->
+                    <div class="sf-cal">
+                        <div class="sf-cal-hdr">
+                            <button class="sf-cal-nav" onclick="miniCalPrev()"><i class="bi bi-chevron-left"></i></button>
+                            <span id="miniCalLabel" class="sf-cal-lbl"></span>
+                            <button class="sf-cal-nav" onclick="miniCalNext()"><i class="bi bi-chevron-right"></i></button>
+                        </div>
+                        <div id="miniCalGrid" class="sf-cal-grid"></div>
+                        <div class="sf-cal-legend">
+                            <span class="mca-dot ses-pendiente"></span> Pendiente &nbsp;
+                            <span class="mca-dot ses-finalizado"></span> Finalizado
+                        </div>
+                        <div id="miniCalDayInfo" class="mca-day-info" style="display:none;"></div>
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label>Fecha</label>
-                        <input type="date" class="form-control" id="sfFecha">
+
+                    <!-- ── Formulario ──────────────────────────────────── -->
+                    <div class="sf-form">
+                        <input type="hidden" id="sfId">
+                        <input type="hidden" id="sfPromocion">
+
+                        <div class="mb-3">
+                            <label>Tipo de sesión</label>
+                            <select class="form-select form-select-sm" id="sfTipo">
+                                <option value="">Seleccionar...</option>
+                                <option value="colegio">Colegio</option>
+                                <option value="exteriores">Exteriores</option>
+                                <option value="estudio">Estudio</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label>Fecha <small class="text-muted">(elige en el calendario)</small></label>
+                            <input type="date" class="form-control form-control-sm" id="sfFecha">
+                        </div>
+                        <div class="mb-3">
+                            <label>Hora</label>
+                            <input type="time" class="form-control form-control-sm" id="sfHora" value="09:00" min="09:00" max="20:00">
+                        </div>
+                        <div class="mb-3">
+                            <label>Observaciones</label>
+                            <textarea class="form-control form-control-sm" id="sfObservaciones" rows="3"
+                                placeholder="Detalles del lugar, indicaciones, etc."></textarea>
+                        </div>
                     </div>
-                </div>
-                <div class="mb-3">
-                    <label>Hora</label>
-                    <input type="time" class="form-control" id="sfHora" value="09:00" min="09:00" max="20:00">
-                </div>
-                <div class="mb-3">
-                    <label>Observaciones</label>
-                    <textarea class="form-control" id="sfObservaciones" rows="2"
-                        placeholder="Detalles del lugar, indicaciones, etc."></textarea>
+
                 </div>
             </div>
             <div class="modal-footer">
