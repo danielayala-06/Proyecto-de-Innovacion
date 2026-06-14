@@ -668,6 +668,10 @@ window.abrirModalPago = async function (id) {
   _pagoContratoId   = id;
   _pagoContratoData = null;
 
+  // Clear any stale opacity left by a previous failed payment attempt
+  const _pagoElReset = document.getElementById('modalPago');
+  if (_pagoElReset) _pagoElReset.style.opacity = '';
+
   if (!_modalPago) {
     const modalPagoEl    = document.getElementById('modalPago');
     const modalDetalleEl = document.getElementById('modalDetalle');
@@ -885,6 +889,11 @@ async function _ejecutarPago() {
   } catch (e) {
     alerts.error(e.message || 'No se pudo registrar el pago.');
     if (btnEj) { btnEj.disabled = false; btnEj.innerHTML = '<i class="bi bi-check-circle me-1"></i>Confirmar y registrar'; }
+    // Restores visibility: opacity was set to 0 before opening modalConfirmarPago
+    const pagoEl = document.getElementById('modalPago');
+    const detEl  = document.getElementById('modalDetalle');
+    if (pagoEl) pagoEl.style.opacity = '';
+    if (detEl)  detEl.style.filter   = 'brightness(0.35) blur(2px)';
   }
 }
 

@@ -49,9 +49,13 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     // ── Admin formularios ─────────────────────────────────────────────────────
     $routes->group('admin/formularios', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
         $routes->get ('/',                    'AdminController::index');
+        $routes->post('/',                    'AdminController::crear');
         $routes->get ('promocion/(:num)',     'AdminController::promocion/$1');
+        $routes->patch('promocion/(:num)',    'AdminController::actualizarPromocion/$1');
+        $routes->delete('promocion/(:num)',   'AdminController::eliminarPromocion/$1');
         $routes->post('alumno/agregar',       'AdminController::agregarAlumno');
-        $routes->post('alumno/importar',      'AdminController::importarAlumnos');
+        $routes->post('alumno/importar',       'AdminController::importarAlumnos');
+        $routes->post('alumno/agregar-completo', 'AdminController::agregarCompleto');
         $routes->get ('exportar/(:num)',      'AdminController::exportarCsv/$1');
         $routes->post('vincular/(:num)',      'AdminController::vincularPromocion/$1');
         $routes->get ('promo-escolar/(:num)', 'AdminController::irDesdePromocion/$1');

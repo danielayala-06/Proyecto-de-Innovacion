@@ -109,13 +109,12 @@ export const sesionForm = {
         if (!tipo)  return 'Selecciona el tipo de sesión.';
         if (!fecha) return 'La fecha es obligatoria.';
 
-        const dt  = new Date(`${fecha}T${hora}`);
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
+        const dt    = new Date(`${fecha}T${hora}`);
+        const ahora = new Date();
 
-        if (dt < hoy) return 'La fecha de la sesión no puede ser en el pasado.';
+        if (dt <= ahora) return 'La fecha y hora de la sesión ya pasó o es el momento actual.';
 
-        const max = new Date(hoy);
+        const max = new Date();
         max.setMonth(max.getMonth() + 10);
         if (dt > max) return 'La sesión no puede programarse con más de 10 meses de anticipación.';
 

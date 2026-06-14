@@ -53,7 +53,18 @@ class PromPromocionModel extends Model
 
         $promocion['total_alumnos'] = $total;
         $promocion['completados']   = $completados;
-        $promocion['pendientes']    = $total - $completados;
+
+        // Número esperado de estudiantes desde la promocion_escolar vinculada
+        $promocion['num_estudiantes_esperados'] = null;
+        if (!empty($promocion['id_promocion_escolar'])) {
+            $pe = $db->table('promociones_escolares')
+                ->select('num_estudiantes')
+                ->where('id_promocion', (int) $promocion['id_promocion_escolar'])
+                ->get()->getRowArray();
+            if ($pe) {
+                $promocion['num_estudiantes_esperados'] = (int) $pe['num_estudiantes'];
+            }
+        }
 
         return $promocion;
     }

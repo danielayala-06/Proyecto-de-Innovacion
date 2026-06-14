@@ -7,17 +7,34 @@
 
     <!-- BREADCRUMB + HEADER -->
     <div class="sesiones-header">
-        <a href="<?= base_url('admin/formularios') ?>" class="btn-back">
-            <i class="bi bi-arrow-left"></i> Formularios
-        </a>
-        <div style="flex:1;">
-            <p class="section-label"><?= esc($promocion['nombre']) ?></p>
+        <!-- Selector de promoción (si hay más de una) -->
+        <?php if (count($todasPromociones) > 1): ?>
+        <div style="position:relative;">
+            <select id="selectorPromocion"
+                    onchange="if(this.value) window.location.href='<?= base_url('admin/formularios/promocion/') ?>'+this.value"
+                    style="appearance:none;background:var(--bg-input);border:1px solid var(--border);
+                           border-radius:9px;padding:.4rem 2rem .4rem .75rem;font-size:.8rem;
+                           font-weight:600;color:var(--text-primary);cursor:pointer;min-width:200px;max-width:280px;">
+                <?php foreach ($todasPromociones as $tp): ?>
+                <option value="<?= $tp['id'] ?>" <?= $tp['id'] == $promocion['id'] ? 'selected' : '' ?>>
+                    <?= esc($tp['nombre_colegio'] ?? '') ?> — <?= esc($tp['nombre']) ?>
+                    <?= $tp['nivel'] ? '(' . esc($tp['nivel']) . ')' : '' ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
+            <i class="bi bi-chevron-down" style="position:absolute;right:.6rem;top:50%;transform:translateY(-50%);
+               pointer-events:none;font-size:.75rem;color:var(--text-muted);"></i>
+        </div>
+        <?php else: ?>
+        <div>
+            <p class="section-label" style="margin:0;"><?= esc($promocion['nombre']) ?></p>
             <div style="font-size:.82rem;color:var(--text-muted);">
                 <?= esc($promocion['nombre_colegio'] ?? '') ?>
                 <?= $promocion['nivel'] ? ' · ' . esc($promocion['nivel']) : '' ?>
             </div>
         </div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <?php endif; ?>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
             <?php if (!empty($sesionesLink)): ?>
             <a href="<?= esc($sesionesLink) ?>"
                style="display:inline-flex;align-items:center;gap:.35rem;background:var(--accent);color:#fff;
@@ -26,20 +43,52 @@
                 <i class="bi bi-camera"></i> Ver sesiones
             </a>
             <?php endif; ?>
-            <a href="<?= base_url('admin/formularios/exportar/' . $promocion['id']) ?>"
-               style="display:inline-flex;align-items:center;gap:.35rem;background:var(--bg-input);
-                      border:1px solid var(--border);border-radius:8px;padding:.4rem .85rem;
-                      font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text-primary);">
-                <i class="bi bi-download"></i> Exportar CSV
-            </a>
+
+            <?php if (!empty($promocion['id_promocion_escolar'])): ?>
+            <!-- Campaña vinculada a contrato: se pueden agregar formularios -->
+            <button id="btnNuevoFormulario"
+                    style="display:inline-flex;align-items:center;gap:.35rem;background:var(--accent);color:#fff;
+                           border:none;border-radius:8px;padding:.4rem .85rem;font-size:.8rem;font-weight:600;
+                           cursor:pointer;">
+                <i class="bi bi-person-plus-fill"></i> Nuevo formulario
+            </button>
             <button @click="abrirImportar()"
                     style="display:inline-flex;align-items:center;gap:.35rem;background:var(--bg-input);
                            border:1px solid var(--border);border-radius:8px;padding:.4rem .85rem;
                            font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text-primary);">
                 <i class="bi bi-upload"></i> Importar alumnos
             </button>
+            <?php else: ?>
+            <!-- Sin contrato vinculado: botones deshabilitados con tooltip -->
+            <span title="Vincula esta campaña a un contrato para poder agregar formularios"
+                  style="display:inline-flex;align-items:center;gap:.35rem;background:var(--bg-input);
+                         border:1px dashed var(--border);border-radius:8px;padding:.4rem .85rem;
+                         font-size:.8rem;font-weight:600;color:var(--text-muted);cursor:not-allowed;opacity:.6;">
+                <i class="bi bi-person-plus-fill"></i> Nuevo formulario
+            </span>
+            <?php endif; ?>
+
+            <a href="<?= base_url('admin/formularios/exportar/' . $promocion['id']) ?>"
+               style="display:inline-flex;align-items:center;gap:.35rem;background:var(--bg-input);
+                      border:1px solid var(--border);border-radius:8px;padding:.4rem .85rem;
+                      font-size:.8rem;font-weight:600;text-decoration:none;color:var(--text-primary);">
+                <i class="bi bi-download"></i> Exportar CSV
+            </a>
         </div>
     </div>
+
+    <?php if (empty($promocion['id_promocion_escolar'])): ?>
+    <!-- AVISO: sin contrato vinculado -->
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:10px;
+                padding:.85rem 1.1rem;margin-bottom:1rem;display:flex;align-items:flex-start;gap:.65rem;font-size:.82rem;">
+        <i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b;margin-top:.1rem;flex-shrink:0;"></i>
+        <div>
+            <strong style="color:#f59e0b;">Esta campaña no está vinculada a ningún contrato.</strong>
+            Para poder agregar o importar formularios de alumnos, primero debes vincularla a una promoción del sistema
+            desde la <a href="<?= base_url('admin/formularios') ?>" style="color:var(--accent);">lista de campañas</a>.
+        </div>
+    </div>
+    <?php endif; ?>
 
     <!-- ENLACE COMPARTIDO -->
     <div class="cot-table-card mb-3" style="padding:1rem 1.25rem;">
@@ -66,37 +115,17 @@
         </div>
     </div>
 
-    <!-- ESTADÍSTICAS -->
-    <div class="adm-stats">
-        <div class="adm-stat">
-            <div class="adm-stat-num"><?= $promocion['total_alumnos'] ?></div>
-            <div class="adm-stat-label">Total alumnos</div>
-        </div>
-        <div class="adm-stat">
-            <div class="adm-stat-num green"><?= $promocion['completados'] ?></div>
-            <div class="adm-stat-label">Completados</div>
-        </div>
-        <div class="adm-stat">
-            <div class="adm-stat-num amber"><?= $promocion['pendientes'] ?></div>
-            <div class="adm-stat-label">Pendientes</div>
-        </div>
-        <div class="adm-stat">
-            <div class="adm-stat-num gold"><?= $stock['cuadros'] ?></div>
-            <div class="adm-stat-label">Cuadros libres</div>
-        </div>
-        <div class="adm-stat">
-            <div class="adm-stat-num gold"><?= $stock['anuarios'] ?></div>
-            <div class="adm-stat-label">Anuarios libres</div>
-        </div>
-    </div>
-
     <!-- BARRA DE PROGRESO -->
-    <?php $pct = $promocion['total_alumnos'] > 0
-        ? round(($promocion['completados'] / $promocion['total_alumnos']) * 100) : 0; ?>
+    <?php
+        $totalStat = ($promocion['num_estudiantes_esperados'] ?? null)
+            ?? $promocion['total_alumnos'];
+        $pct = $totalStat > 0
+            ? round(($promocion['completados'] / $totalStat) * 100) : 0;
+    ?>
     <div class="cot-table-card mb-3" style="padding:1rem 1.25rem;">
-        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:.82rem;margin-bottom:.5rem;">
             <span style="color:var(--text-muted);">Progreso de formularios</span>
-            <strong><?= $pct ?>%</strong>
+            <strong><?= $promocion['completados'] ?><span style="color:var(--text-muted);font-weight:400;">/<?= $totalStat ?></span></strong>
         </div>
         <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
             <div style="height:100%;width:<?= $pct ?>%;background:var(--accent);border-radius:4px;transition:width .5s;"></div>
@@ -229,5 +258,295 @@ function adminPanel() {
     };
 }
 </script>
+
+<?php if (!empty($promocion['id_promocion_escolar'])): ?>
+<?php
+    $hayCuadros  = (int) ($promocion['cuadros_total']  ?? 0) > 0;
+    $hayAnuarios = (int) ($promocion['anuarios_total'] ?? 0) > 0;
+?>
+<!-- ══════ MODAL NUEVO FORMULARIO (alumno individual — datos completos) ══════ -->
+<div id="modalNuevoFormulario"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1060;
+            align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;">
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;
+                width:100%;max-width:520px;padding:1.5rem;box-shadow:0 8px 40px rgba(0,0,0,.35);">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+            <h6 style="margin:0;font-size:.95rem;font-weight:700;">
+                <i class="bi bi-person-plus-fill me-2" style="color:var(--accent);"></i>Agregar alumno
+            </h6>
+            <button id="btnCerrarNuevoForm"
+                    style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.1rem;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div id="nfErrorGlobal"
+             style="display:none;background:rgba(220,53,69,.08);border:1px solid rgba(220,53,69,.3);
+                    border-radius:8px;padding:.65rem .9rem;font-size:.8rem;color:#dc3545;margin-bottom:1rem;"></div>
+
+        <!-- ── Sección: Alumno ─────────────────────────────────────────────── -->
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+                    color:var(--text-muted);margin-bottom:.75rem;">Datos del alumno</div>
+
+        <div style="margin-bottom:.85rem;">
+            <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">
+                Nombres y apellidos *
+            </label>
+            <input type="text" id="nfNombre" class="form-control form-control-sm"
+                   maxlength="150" placeholder="Nombres y apellidos">
+        </div>
+        <div style="margin-bottom:.85rem;">
+            <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">
+                Fecha de nacimiento *
+            </label>
+            <input type="date" id="nfFechaNacimiento" class="form-control form-control-sm"
+                   min="2005-01-01" max="<?= date('Y-m-d', strtotime('-5 years')) ?>">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem;">
+            <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">Color favorito</label>
+                <input type="text" id="nfColor" class="form-control form-control-sm" placeholder="Ej: Azul">
+            </div>
+            <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">¿Qué quiere ser?</label>
+                <input type="text" id="nfProfesion" class="form-control form-control-sm" placeholder="Ej: Médico">
+            </div>
+        </div>
+
+        <!-- ── Sección: Apoderado ──────────────────────────────────────────── -->
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+                    color:var(--text-muted);margin-bottom:.75rem;margin-top:1.1rem;
+                    border-top:1px solid var(--border);padding-top:1rem;">Datos del apoderado</div>
+
+        <div style="margin-bottom:.85rem;">
+            <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">
+                Nombre completo del apoderado *
+            </label>
+            <input type="text" id="nfTutor" class="form-control form-control-sm"
+                   maxlength="150" placeholder="Nombres y apellidos">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem;">
+            <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">Relación</label>
+                <select id="nfRelacion" class="form-select form-select-sm">
+                    <option value="Padre">Padre</option>
+                    <option value="Madre">Madre</option>
+                    <option value="Tutor">Tutor Legal</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">Teléfono *</label>
+                <input type="tel" id="nfTelefono" class="form-control form-control-sm"
+                       placeholder="987654321" maxlength="9" inputmode="numeric">
+            </div>
+        </div>
+        <div style="margin-bottom:.85rem;">
+            <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">
+                Correo electrónico
+            </label>
+            <input type="email" id="nfEmail" class="form-control form-control-sm"
+                   placeholder="Opcional" maxlength="120">
+        </div>
+
+        <!-- ── Sección: Productos (condicional) ────────────────────────────── -->
+        <?php if ($hayCuadros || $hayAnuarios): ?>
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+                    color:var(--text-muted);margin-bottom:.75rem;margin-top:1.1rem;
+                    border-top:1px solid var(--border);padding-top:1rem;">Productos</div>
+        <?php if ($hayCuadros): ?>
+        <div style="margin-bottom:.85rem;">
+            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;">
+                <input type="checkbox" id="nfTieneCuadro"
+                       style="accent-color:var(--accent);width:1rem;height:1rem;cursor:pointer;">
+                <label for="nfTieneCuadro" style="font-size:.82rem;font-weight:600;cursor:pointer;">Cuadro escolar</label>
+            </div>
+            <select id="nfCuadroTamano" class="form-select form-select-sm" style="display:none;">
+                <option value="">— Selecciona un tamaño —</option>
+                <option value="20x30 cm">20×30 cm</option>
+                <option value="30x40 cm">30×40 cm</option>
+                <option value="40x50 cm">40×50 cm</option>
+                <option value="50x60 cm">50×60 cm</option>
+            </select>
+        </div>
+        <?php endif; ?>
+        <?php if ($hayAnuarios): ?>
+        <div style="margin-bottom:.85rem;">
+            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;">
+                <input type="checkbox" id="nfTieneAnuario"
+                       style="accent-color:var(--accent);width:1rem;height:1rem;cursor:pointer;">
+                <label for="nfTieneAnuario" style="font-size:.82rem;font-weight:600;cursor:pointer;">Anuario</label>
+            </div>
+            <select id="nfAnuarioModelo" class="form-select form-select-sm" style="display:none;">
+                <option value="">— Selecciona un modelo —</option>
+                <option value="Clásico Tapa Dura">Clásico Tapa Dura</option>
+                <option value="Premium Cuero">Premium Cuero</option>
+                <option value="Digital + Físico">Digital + Físico</option>
+            </select>
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
+
+        <!-- ── Sección: Autorizaciones ────────────────────────────────────── -->
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+                    color:var(--text-muted);margin-bottom:.75rem;margin-top:1.1rem;
+                    border-top:1px solid var(--border);padding-top:1rem;">Autorizaciones</div>
+
+        <div style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.65rem;">
+            <input type="checkbox" id="nfAceptaImagenes"
+                   style="margin-top:.1rem;accent-color:var(--accent);width:1rem;height:1rem;cursor:pointer;flex-shrink:0;">
+            <label for="nfAceptaImagenes" style="font-size:.79rem;line-height:1.45;cursor:pointer;">
+                Autoriza el uso de imágenes del alumno con fines fotográficos.
+            </label>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:1.25rem;">
+            <input type="checkbox" id="nfAceptaDatos"
+                   style="margin-top:.1rem;accent-color:var(--accent);width:1rem;height:1rem;cursor:pointer;flex-shrink:0;">
+            <label for="nfAceptaDatos" style="font-size:.79rem;line-height:1.45;cursor:pointer;">
+                Acepta la política de tratamiento de datos personales.
+            </label>
+        </div>
+
+        <!-- Footer -->
+        <div style="display:flex;justify-content:flex-end;gap:.6rem;">
+            <button id="btnCancelarNuevoForm"
+                    style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);
+                           border-radius:8px;padding:.4rem .9rem;font-size:.82rem;font-weight:600;cursor:pointer;">
+                Cancelar
+            </button>
+            <button id="btnGuardarNuevoForm"
+                    style="background:var(--accent);color:#fff;border:none;border-radius:8px;
+                           padding:.4rem 1.1rem;font-size:.82rem;font-weight:600;cursor:pointer;">
+                <i class="bi bi-check-circle me-1"></i> Guardar alumno
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const modal      = document.getElementById('modalNuevoFormulario');
+    const btnAbrir   = document.getElementById('btnNuevoFormulario');
+    const btnCerrar1 = document.getElementById('btnCerrarNuevoForm');
+    const btnCerrar2 = document.getElementById('btnCancelarNuevoForm');
+    const btnGuardar = document.getElementById('btnGuardarNuevoForm');
+    const errorEl    = document.getElementById('nfErrorGlobal');
+    const g = id => document.getElementById(id);
+
+    function resetForm() {
+        ['nfNombre','nfFechaNacimiento','nfColor','nfProfesion',
+         'nfTutor','nfTelefono','nfEmail'].forEach(id => { const el = g(id); if (el) el.value = ''; });
+        const rel = g('nfRelacion'); if (rel) rel.value = 'Padre';
+        ['nfTieneCuadro','nfTieneAnuario','nfAceptaImagenes','nfAceptaDatos'].forEach(id => {
+            const el = g(id); if (el) el.checked = false;
+        });
+        const ct = g('nfCuadroTamano');  if (ct) { ct.value = ''; ct.style.display = 'none'; }
+        const am = g('nfAnuarioModelo'); if (am) { am.value = ''; am.style.display = 'none'; }
+        errorEl.style.display = 'none';
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Guardar alumno';
+    }
+
+    function abrir() {
+        resetForm();
+        modal.style.display = 'flex';
+        const n = g('nfNombre'); if (n) n.focus();
+    }
+
+    function cerrar() { modal.style.display = 'none'; }
+
+    const cuadroChk  = g('nfTieneCuadro');
+    const anuarioChk = g('nfTieneAnuario');
+    if (cuadroChk)  cuadroChk.addEventListener('change',  () => { const s = g('nfCuadroTamano');  if (s) s.style.display = cuadroChk.checked  ? '' : 'none'; });
+    if (anuarioChk) anuarioChk.addEventListener('change', () => { const s = g('nfAnuarioModelo'); if (s) s.style.display = anuarioChk.checked ? '' : 'none'; });
+
+    btnAbrir.addEventListener('click', abrir);
+    btnCerrar1.addEventListener('click', cerrar);
+    btnCerrar2.addEventListener('click', cerrar);
+    modal.addEventListener('click', e => { if (e.target === modal) cerrar(); });
+
+    btnGuardar.addEventListener('click', async function () {
+        errorEl.style.display = 'none';
+
+        const RE_LETRAS = /^[A-Za-záéíóúüñÁÉÍÓÚÜÑ\s'.,-]+$/;
+        const RE_TEL    = /^9\d{8}$/;
+        const RE_EMAIL  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+        const nombre    = (g('nfNombre')?.value          ?? '').trim();
+        const fecha     =  g('nfFechaNacimiento')?.value ?? '';
+        const color     = (g('nfColor')?.value           ?? '').trim();
+        const profesion = (g('nfProfesion')?.value       ?? '').trim();
+        const tutor     = (g('nfTutor')?.value           ?? '').trim();
+        const tel       = (g('nfTelefono')?.value        ?? '').trim();
+        const email     = (g('nfEmail')?.value           ?? '').trim();
+
+        if (!nombre)                              { mostrarError('El nombre del alumno es obligatorio.');                                         g('nfNombre')?.focus();          return; }
+        if (!RE_LETRAS.test(nombre))              { mostrarError('El nombre solo puede contener letras y espacios (sin números ni emojis).');     g('nfNombre')?.focus();          return; }
+        if (!fecha)                               { mostrarError('La fecha de nacimiento es obligatoria.');                                       g('nfFechaNacimiento')?.focus(); return; }
+        if (fecha < '2005-01-01')                 { mostrarError('La fecha de nacimiento no puede ser anterior al año 2005.');                    g('nfFechaNacimiento')?.focus(); return; }
+        if (fecha > '<?= date('Y-m-d', strtotime('-5 years')) ?>')  { mostrarError('El alumno debe tener al menos 5 años de edad.');             g('nfFechaNacimiento')?.focus(); return; }
+        if (color     && !RE_LETRAS.test(color))      { mostrarError('El color favorito solo puede contener letras y espacios.');                 g('nfColor')?.focus();           return; }
+        if (profesion && !RE_LETRAS.test(profesion))  { mostrarError('La profesión solo puede contener letras y espacios.');                     g('nfProfesion')?.focus();       return; }
+        if (!tutor)                               { mostrarError('El nombre del apoderado es obligatorio.');                                      g('nfTutor')?.focus();           return; }
+        if (!RE_LETRAS.test(tutor))               { mostrarError('El nombre del apoderado solo puede contener letras y espacios.');               g('nfTutor')?.focus();           return; }
+        if (!tel)                                 { mostrarError('El teléfono es obligatorio.');                                                  g('nfTelefono')?.focus();        return; }
+        if (!RE_TEL.test(tel))                    { mostrarError('El teléfono debe tener 9 dígitos y comenzar con 9 (ej: 987654321).');          g('nfTelefono')?.focus();        return; }
+        if (email && !RE_EMAIL.test(email))       { mostrarError('El correo no es válido (ej: nombre@ejemplo.com).');                            g('nfEmail')?.focus();           return; }
+
+        const tieneCuadro  = g('nfTieneCuadro')?.checked  ?? false;
+        const tieneAnuario = g('nfTieneAnuario')?.checked ?? false;
+        if (tieneCuadro  && !g('nfCuadroTamano')?.value)  { mostrarError('Selecciona el tamaño del cuadro.');  return; }
+        if (tieneAnuario && !g('nfAnuarioModelo')?.value)  { mostrarError('Selecciona el modelo del anuario.'); return; }
+
+        btnGuardar.disabled = true;
+        btnGuardar.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Guardando...';
+
+        try {
+            const r = await fetch(BASE_URL + 'admin/formularios/alumno/agregar-completo', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    promocion_id:     PROM_ID,
+                    nombre_alumno:    nombre,
+                    fecha_nacimiento: fecha,
+                    color_favorito:   color     || null,
+                    profesion_futura: profesion || null,
+                    nombre_tutor:     tutor,
+                    relacion_tutor:   g('nfRelacion')?.value ?? 'Padre',
+                    telefono:         tel,
+                    email:            email     || null,
+                    tiene_cuadro:     tieneCuadro,
+                    cuadro_tamano:    g('nfCuadroTamano')?.value  || null,
+                    tiene_anuario:    tieneAnuario,
+                    anuario_modelo:   g('nfAnuarioModelo')?.value || null,
+                    acepta_imagenes:  g('nfAceptaImagenes')?.checked ?? false,
+                    acepta_datos:     g('nfAceptaDatos')?.checked    ?? false,
+                }),
+            });
+            const data = await r.json();
+            if (data.ok) {
+                cerrar();
+                location.reload();
+            } else {
+                mostrarError(data.error || 'No se pudo guardar el alumno.');
+                btnGuardar.disabled = false;
+                btnGuardar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Guardar alumno';
+            }
+        } catch {
+            mostrarError('Error de conexión. Intenta de nuevo.');
+            btnGuardar.disabled = false;
+            btnGuardar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Guardar alumno';
+        }
+    });
+
+    function mostrarError(msg) {
+        errorEl.textContent   = msg;
+        errorEl.style.display = '';
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+})();
+</script>
+<?php endif; ?>
 
 <?= $footer ?>

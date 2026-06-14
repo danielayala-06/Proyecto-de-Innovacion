@@ -106,19 +106,6 @@ $sNum = 0;
         </div>
     </div>
 
-    <!-- SECCIÓN 3: COLEGIO (solo lectura) -->
-    <div class="section">
-        <div class="section-title"><span><?= ++$sNum ?></span> Datos del colegio</div>
-        <div class="field">
-            <label>Colegio</label>
-            <div class="readonly-val"><?= esc($promocion['nombre_colegio'] ?? '—') ?></div>
-        </div>
-        <div class="field">
-            <label>Promoción / Grado</label>
-            <div class="readonly-val"><?= esc($promocion['nombre']) ?><?= $promocion['nivel'] ? ' — ' . esc($promocion['nivel']) : '' ?></div>
-        </div>
-    </div>
-
     <!-- SECCIÓN PRODUCTOS (solo si hay 2+ tipos en el contrato) -->
     <?php if ($cuadrosEnContrato || $anuariosEnContrato): ?>
     <div class="section">

@@ -58,25 +58,28 @@ $sNum = 0;
         <div class="section-title"><span><?= ++$sNum ?></span> Datos del alumno</div>
 
         <div class="field">
-            <label>Nombre completo *</label>
+            <label>Nombres y apellidos *</label>
             <input type="text" x-model="form.nombre_alumno" :class="errors.nombre_alumno ? 'err' : ''" placeholder="Nombres y apellidos">
             <div class="err-msg" x-show="errors.nombre_alumno" x-text="errors.nombre_alumno"></div>
         </div>
 
         <div class="field">
             <label>Fecha de nacimiento *</label>
-            <input type="date" x-model="form.fecha_nacimiento" :class="errors.fecha_nacimiento ? 'err' : ''">
+            <input type="date" x-model="form.fecha_nacimiento" :class="errors.fecha_nacimiento ? 'err' : ''"
+                   min="2005-01-01" max="<?= date('Y-m-d', strtotime('-5 years')) ?>">
             <div class="err-msg" x-show="errors.fecha_nacimiento" x-text="errors.fecha_nacimiento"></div>
         </div>
 
         <div class="field">
             <label>Color favorito</label>
-            <input type="text" x-model="form.color_favorito" placeholder="Ej: Azul marino">
+            <input type="text" x-model="form.color_favorito" :class="errors.color_favorito ? 'err' : ''" placeholder="Ej: Azul marino">
+            <div class="err-msg" x-show="errors.color_favorito" x-text="errors.color_favorito"></div>
         </div>
 
         <div class="field">
             <label>¿Qué quieres ser de grande?</label>
-            <input type="text" x-model="form.profesion_futura" placeholder="Ej: Médico, Ingeniero, Artista...">
+            <input type="text" x-model="form.profesion_futura" :class="errors.profesion_futura ? 'err' : ''" placeholder="Ej: Médico, Ingeniero, Artista...">
+            <div class="err-msg" x-show="errors.profesion_futura" x-text="errors.profesion_futura"></div>
         </div>
     </div>
 
@@ -101,32 +104,20 @@ $sNum = 0;
 
         <div class="field">
             <label>Teléfono / WhatsApp *</label>
-            <input type="tel" x-model="form.telefono" :class="errors.telefono ? 'err' : ''" placeholder="Ej: 987654321">
+            <input type="tel" x-model="form.telefono" :class="errors.telefono ? 'err' : ''"
+                   placeholder="Ej: 987654321" maxlength="9" inputmode="numeric">
             <div class="err-msg" x-show="errors.telefono" x-text="errors.telefono"></div>
         </div>
 
         <div class="field">
             <label>Correo electrónico</label>
-            <input type="email" x-model="form.email" placeholder="tumail@ejemplo.com">
+            <input type="email" x-model="form.email" :class="errors.email ? 'err' : ''" placeholder="tumail@ejemplo.com">
+            <div class="err-msg" x-show="errors.email" x-text="errors.email"></div>
             <div class="hint">Opcional — para enviar novedades</div>
         </div>
     </div>
 
-    <!-- ── SECCIÓN 3: COLEGIO (solo lectura) ─────────────────────── -->
-    <div class="section">
-        <div class="section-title"><span><?= ++$sNum ?></span> Datos del colegio</div>
-
-        <div class="field">
-            <label>Colegio</label>
-            <div class="readonly-val"><?= esc($promocion['nombre_colegio'] ?? '—') ?></div>
-        </div>
-        <div class="field">
-            <label>Promoción / Grado</label>
-            <div class="readonly-val"><?= esc($promocion['nombre']) ?><?= $promocion['nivel'] ? ' — ' . esc($promocion['nivel']) : '' ?></div>
-        </div>
-    </div>
-
-    <!-- ── SECCIÓN 4: PRODUCTOS (solo si hay 2+ tipos en el contrato) ── -->
+    <!-- ── SECCIÓN 3: PRODUCTOS (solo si hay 2+ tipos en el contrato) ── -->
     <?php if ($cuadrosEnContrato || $anuariosEnContrato): ?>
     <div class="section">
         <div class="section-title"><span><?= ++$sNum ?></span> Productos</div>
@@ -310,13 +301,34 @@ function formulario() {
 
         validar() {
             const e = {};
-            if (!this.form.nombre_alumno.trim())    e.nombre_alumno    = 'El nombre del alumno es obligatorio.';
-            if (!this.form.fecha_nacimiento)         e.fecha_nacimiento = 'La fecha de nacimiento es obligatoria.';
-            if (!this.form.nombre_tutor.trim())      e.nombre_tutor     = 'El nombre del tutor es obligatorio.';
-            if (!this.form.telefono.trim())          e.telefono         = 'El teléfono es obligatorio.';
+            const RE_LETRAS = /^[A-Za-záéíóúüñÁÉÍÓÚÜÑ\s'.,-]+$/;
+            const RE_TEL    = /^9\d{8}$/;
+            const RE_EMAIL  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+            const MAX_FECHA = '<?= date('Y-m-d', strtotime('-5 years')) ?>';
+
+            const nombre    = this.form.nombre_alumno.trim();
+            const fecha     = this.form.fecha_nacimiento;
+            const color     = this.form.color_favorito.trim();
+            const profesion = this.form.profesion_futura.trim();
+            const tutor     = this.form.nombre_tutor.trim();
+            const tel       = this.form.telefono.trim();
+            const email     = this.form.email.trim();
+
+            if (!nombre)                                 e.nombre_alumno    = 'El nombre del alumno es obligatorio.';
+            else if (!RE_LETRAS.test(nombre))            e.nombre_alumno    = 'Solo puede contener letras y espacios (sin números ni emojis).';
+            if (!fecha)                                  e.fecha_nacimiento = 'La fecha de nacimiento es obligatoria.';
+            else if (fecha < '2005-01-01')               e.fecha_nacimiento = 'La fecha no puede ser anterior al año 2005.';
+            else if (fecha > MAX_FECHA)                  e.fecha_nacimiento = 'El alumno debe tener al menos 5 años de edad.';
+            if (color     && !RE_LETRAS.test(color))     e.color_favorito   = 'Solo puede contener letras y espacios.';
+            if (profesion && !RE_LETRAS.test(profesion)) e.profesion_futura = 'Solo puede contener letras y espacios.';
+            if (!tutor)                                  e.nombre_tutor     = 'El nombre del tutor es obligatorio.';
+            else if (!RE_LETRAS.test(tutor))             e.nombre_tutor     = 'Solo puede contener letras y espacios.';
+            if (!tel)                                    e.telefono         = 'El teléfono es obligatorio.';
+            else if (!RE_TEL.test(tel))                  e.telefono         = 'Debe tener 9 dígitos y comenzar con 9 (ej: 987654321).';
+            if (email && !RE_EMAIL.test(email))          e.email            = 'Correo no válido (ej: nombre@ejemplo.com).';
             if (this.form.tiene_cuadro  && !this.form.cuadro_tamano)  e.cuadro_tamano  = 'Selecciona el tamaño del cuadro.';
             if (this.form.tiene_anuario && !this.form.anuario_modelo) e.anuario_modelo = 'Selecciona el modelo del anuario.';
-            if (!this.form.acepta_datos)             e.acepta_datos     = 'Debes aceptar la política de datos.';
+            if (!this.form.acepta_datos)                 e.acepta_datos     = 'Debes aceptar la política de datos.';
             this.errors = e;
             return Object.keys(e).length === 0;
         },

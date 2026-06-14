@@ -3,18 +3,21 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Models\ColegiosModel;
 use App\Models\PromAlumnoModel;
 use App\Models\PromPromocionModel;
 use App\Models\PromFormularioModel;
 
 class AdminController extends BaseController
 {
+    protected ColegiosModel       $colegioModel;
     protected PromAlumnoModel     $alumnoModel;
     protected PromPromocionModel  $promocionModel;
     protected PromFormularioModel $formularioModel;
 
     public function __construct()
     {
+        $this->colegioModel    = new ColegiosModel();
         $this->alumnoModel     = new PromAlumnoModel();
         $this->promocionModel  = new PromPromocionModel();
         $this->formularioModel = new PromFormularioModel();
@@ -23,49 +26,145 @@ class AdminController extends BaseController
     // GET /admin/formularios
     public function index()
     {
-        $promociones = $this->promocionModel->todasConColegio();
+        // Si ya existe al menos una promocion, redirigir directamente a la más reciente
+        $primera = $this->promocionModel
+            ->orderBy('created_at', 'DESC')
+            ->first();
 
-        $db = \Config\Database::connect();
-        foreach ($promociones as &$p) {
-            $p['total_alumnos'] = (int) $db->table('prom_alumnos')
-                ->where('promocion_id', $p['id'])->countAllResults();
-            $p['completados'] = (int) $db->table('prom_alumnos')
-                ->where('promocion_id', $p['id'])->where('completado', 1)->countAllResults();
-
-            // Si está vinculada, resolver el id_contrato para el link de sesiones
-            $p['sesiones_link'] = null;
-            if (!empty($p['id_promocion_escolar'])) {
-                $row = $db->query(
-                    'SELECT c.id_contrato FROM contratos c
-                     JOIN cotizaciones cot ON cot.id_cotizacion = c.id_cotizacion
-                     JOIN promociones_escolares pe ON pe.id_cotizacion = cot.id_cotizacion
-                     WHERE pe.id_promocion = ? LIMIT 1',
-                    [(int) $p['id_promocion_escolar']]
-                )->getRowArray();
-                if ($row) {
-                    $p['sesiones_link'] = base_url('contratos/' . $row['id_contrato'] . '/sesiones');
-                }
-            }
+        if ($primera) {
+            return redirect()->to(base_url('admin/formularios/promocion/' . $primera['id']));
         }
-        unset($p);
 
-        // Promociones del sistema principal para vincular
+        // Sin promociones: mostrar pantalla de bienvenida con opción de crear
+        $db = \Config\Database::connect();
+
+        // Promociones del sistema principal para vincular (solo contratos ACTIVO o COMPLETADO)
         $promoEscolares = $db->query(
-            'SELECT pe.id_promocion, pe.nombre, pe.grado, c.nombre_colegio,
+            'SELECT pe.id_promocion, pe.id_colegio, pe.nombre, pe.grado, c.nombre_colegio,
                     con.id_contrato
              FROM promociones_escolares pe
              JOIN colegios c ON c.id_colegio = pe.id_colegio
              JOIN cotizaciones cot ON cot.id_cotizacion = pe.id_cotizacion
              JOIN contratos con ON con.id_cotizacion = cot.id_cotizacion
+             WHERE con.estado IN ("ACTIVO", "COMPLETADO")
              ORDER BY pe.id_promocion DESC'
         )->getResultArray();
+
+        $promociones = [];
+        $colegios    = $this->colegioModel
+            ->where('estado', 'ACTIVO')
+            ->orderBy('nombre_colegio', 'ASC')
+            ->findAll();
 
         return view('admin/index', [
             'header'         => view('Layouts/header'),
             'footer'         => view('Layouts/footer'),
             'promociones'    => $promociones,
             'promoEscolares' => $promoEscolares,
+            'colegios'       => $colegios,
         ]);
+    }
+
+    // POST /admin/formularios
+    public function crear()
+    {
+        $body   = $this->request->getJSON(true) ?? [];
+        $nombre = trim($body['nombre'] ?? '');
+        $nivel  = trim($body['nivel']  ?? '');
+
+        if ($nombre === '') {
+            return $this->_json(['ok' => false, 'error' => 'El nombre es obligatorio.'], 422);
+        }
+
+        // Resolver colegio: puede venir id_colegio existente o nombre_colegio nuevo
+        $idColegio = null;
+        if (!empty($body['id_colegio'])) {
+            $idColegio = (int) $body['id_colegio'];
+        } elseif (!empty($body['nombre_colegio'])) {
+            $nombreColegio = trim($body['nombre_colegio']);
+            $existente     = $this->colegioModel->where('nombre_colegio', $nombreColegio)->first();
+            if ($existente) {
+                $idColegio = (int) $existente['id_colegio'];
+            } else {
+                $idColegio = $this->colegioModel->insert([
+                    'nombre_colegio' => $nombreColegio,
+                    'distrito'       => '',
+                    'provincia'      => '',
+                    'estado'         => 'ACTIVO',
+                ], true);
+            }
+        }
+
+        if (!$idColegio) {
+            return $this->_json(['ok' => false, 'error' => 'Selecciona o escribe el nombre del colegio.'], 422);
+        }
+
+        $nuevoId = $this->promocionModel->insert([
+            'colegio_id'           => $idColegio,
+            'id_promocion_escolar' => !empty($body['id_promocion_escolar']) ? (int) $body['id_promocion_escolar'] : null,
+            'token_compartido'     => bin2hex(random_bytes(24)),
+            'nombre'               => $nombre,
+            'nivel'                => $nivel,
+            'cuadros_total'        => 0,
+            'anuarios_total'       => 0,
+            'activa'               => 1,
+            'created_at'           => date('Y-m-d H:i:s'),
+        ], true);
+
+        return $this->_json([
+            'ok'       => true,
+            'id'       => $nuevoId,
+            'redirect' => base_url('admin/formularios/promocion/' . $nuevoId),
+        ]);
+    }
+
+    // PATCH /admin/formularios/promocion/{id}
+    public function actualizarPromocion(int $id)
+    {
+        $body = $this->request->getJSON(true) ?? [];
+
+        if (!$this->promocionModel->find($id)) {
+            return $this->_json(['ok' => false, 'error' => 'Promoción no encontrada.'], 404);
+        }
+
+        $campos = [];
+        if (isset($body['nombre']) && trim($body['nombre']) !== '') {
+            $campos['nombre'] = trim($body['nombre']);
+        }
+        if (isset($body['nivel'])) {
+            $campos['nivel'] = trim($body['nivel']);
+        }
+        if (!empty($body['id_colegio'])) {
+            $campos['colegio_id'] = (int) $body['id_colegio'];
+        }
+        if (array_key_exists('activa', $body)) {
+            $campos['activa'] = $body['activa'] ? 1 : 0;
+        }
+
+        if (!empty($campos)) {
+            $this->promocionModel->update($id, $campos);
+        }
+
+        return $this->_json(['ok' => true]);
+    }
+
+    // DELETE /admin/formularios/promocion/{id}
+    public function eliminarPromocion(int $id)
+    {
+        if (!$this->promocionModel->find($id)) {
+            return $this->_json(['ok' => false, 'error' => 'Promoción no encontrada.'], 404);
+        }
+
+        // Eliminar alumnos y formularios relacionados primero
+        $db = \Config\Database::connect();
+        $alumnos = $db->table('prom_alumnos')->where('promocion_id', $id)->get()->getResultArray();
+        foreach ($alumnos as $a) {
+            $db->table('prom_formularios')->where('alumno_id', $a['id'])->delete();
+        }
+        $db->table('prom_alumnos')->where('promocion_id', $id)->delete();
+        $this->promocionModel->delete($id);
+
+        return $this->_json(['ok' => true]);
     }
 
     // GET /admin/formularios/promocion/{id}
@@ -95,7 +194,6 @@ class AdminController extends BaseController
         }
 
         $alumnos = $this->alumnoModel->porPromocion($id);
-        $stock   = $this->promocionModel->stockDisponible($id);
 
         // Resolver link de sesiones si está vinculada
         $sesionesLink = null;
@@ -113,14 +211,34 @@ class AdminController extends BaseController
             }
         }
 
+        // Lista de todas las promociones para el selector de navegación
+        $todasPromociones = $this->promocionModel
+            ->select('prom_promociones.id, prom_promociones.nombre, prom_promociones.nivel, colegios.nombre_colegio')
+            ->join('colegios', 'colegios.id_colegio = prom_promociones.colegio_id', 'left')
+            ->orderBy('prom_promociones.created_at', 'DESC')
+            ->findAll();
+
+        // Promociones del sistema con contrato para el modal "Nuevo formulario"
+        $db = \Config\Database::connect();
+        $promoEscolares = $db->query(
+            'SELECT pe.id_promocion, pe.id_colegio, pe.nombre, pe.grado, c.nombre_colegio, con.id_contrato
+             FROM promociones_escolares pe
+             JOIN colegios c ON c.id_colegio = pe.id_colegio
+             JOIN cotizaciones cot ON cot.id_cotizacion = pe.id_cotizacion
+             JOIN contratos con ON con.id_cotizacion = cot.id_cotizacion
+             WHERE con.estado IN ("ACTIVO", "COMPLETADO")
+             ORDER BY pe.id_promocion DESC'
+        )->getResultArray();
+
         return view('admin/promocion', [
-            'header'          => view('Layouts/header'),
-            'footer'          => view('Layouts/footer'),
-            'promocion'       => $resumen,
-            'alumnos'         => $alumnos,
-            'stock'           => $stock,
-            'sesionesLink'    => $sesionesLink,
-            'linkCompartido'  => base_url('formulario/grupo/' . $resumen['token_compartido']),
+            'header'           => view('Layouts/header'),
+            'footer'           => view('Layouts/footer'),
+            'promocion'        => $resumen,
+            'alumnos'          => $alumnos,
+            'sesionesLink'     => $sesionesLink,
+            'linkCompartido'   => base_url('formulario/grupo/' . $resumen['token_compartido']),
+            'todasPromociones' => $todasPromociones,
+            'promoEscolares'   => $promoEscolares,
         ]);
     }
 
@@ -249,12 +367,95 @@ class AdminController extends BaseController
         return $this->_json(['ok' => true, 'insertados' => $insertados]);
     }
 
+    // POST /admin/formularios/alumno/agregar-completo  (JSON)
+    public function agregarCompleto()
+    {
+        $body         = $this->request->getJSON(true) ?? [];
+        $promocion_id = (int) ($body['promocion_id'] ?? 0);
+        $nombre       = trim($body['nombre_alumno'] ?? '');
+
+        if ($promocion_id === 0 || $nombre === '') {
+            return $this->_json(['ok' => false, 'error' => 'El nombre del alumno es obligatorio.'], 422);
+        }
+
+        $prom = $this->promocionModel->find($promocion_id);
+        if (!$prom) {
+            return $this->_json(['ok' => false, 'error' => 'Promoción no encontrada.'], 404);
+        }
+
+        $tieneCuadro  = !empty($body['tiene_cuadro']);
+        $tieneAnuario = !empty($body['tiene_anuario']);
+
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $token = bin2hex(random_bytes(32));
+        $db->table('prom_alumnos')->insert([
+            'promocion_id' => $promocion_id,
+            'nombre'       => $nombre,
+            'token'        => $token,
+            'completado'   => 1,
+            'enviado'      => 0,
+            'created_at'   => date('Y-m-d H:i:s'),
+        ]);
+        $alumnoId = $db->insertID();
+
+        $db->table('prom_formularios')->insert([
+            'alumno_id'        => $alumnoId,
+            'nombre_alumno'    => $nombre,
+            'fecha_nacimiento' => ($body['fecha_nacimiento'] ?? '') ?: null,
+            'color_favorito'   => ($body['color_favorito']   ?? '') ?: null,
+            'profesion_futura' => ($body['profesion_futura'] ?? '') ?: null,
+            'nombre_tutor'     => ($body['nombre_tutor']     ?? '') ?: null,
+            'relacion_tutor'   => $body['relacion_tutor'] ?? 'Padre',
+            'telefono'         => ($body['telefono']         ?? '') ?: null,
+            'email'            => ($body['email']            ?? '') ?: null,
+            'tiene_cuadro'     => $tieneCuadro  ? 1 : 0,
+            'cuadro_tamano'    => ($body['cuadro_tamano']    ?? '') ?: null,
+            'tiene_anuario'    => $tieneAnuario ? 1 : 0,
+            'anuario_modelo'   => ($body['anuario_modelo']   ?? '') ?: null,
+            'acepta_imagenes'  => !empty($body['acepta_imagenes']) ? 1 : 0,
+            'acepta_datos'     => !empty($body['acepta_datos'])    ? 1 : 0,
+            'ip_address'       => $this->request->getIPAddress(),
+            'created_at'       => date('Y-m-d H:i:s'),
+        ]);
+
+        if ($tieneCuadro) {
+            $db->table('prom_promociones')
+               ->where('id', $promocion_id)
+               ->update(['cuadros_usados' => (int) $prom['cuadros_usados'] + 1]);
+        }
+        if ($tieneAnuario) {
+            $db->table('prom_promociones')
+               ->where('id', $promocion_id)
+               ->update(['anuarios_usados' => (int) $prom['anuarios_usados'] + 1]);
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return $this->_json(['ok' => false, 'error' => 'Error al guardar. Intenta de nuevo.'], 500);
+        }
+
+        return $this->_json(['ok' => true]);
+    }
+
     // GET /admin/formularios/exportar/{id}
     public function exportarCsv(int $promocion_id)
     {
-        $filas = $this->formularioModel->porPromocion($promocion_id);
+        $filas    = $this->formularioModel->porPromocion($promocion_id);
+        $promo    = $this->promocionModel
+            ->select('prom_promociones.nombre, colegios.nombre_colegio')
+            ->join('colegios', 'colegios.id_colegio = prom_promociones.colegio_id', 'left')
+            ->find($promocion_id);
 
-        $nombre_archivo = 'formularios_' . $promocion_id . '_' . date('Ymd') . '.csv';
+        $slug = $this->_slugNombreExport(
+            $promo['nombre']         ?? '',
+            $promo['nombre_colegio'] ?? '',
+            $promocion_id
+        );
+
+        $nombre_archivo = 'formularios_' . $slug . '_' . date('Ymd') . '.csv';
 
         header('Content-Type: text/csv; charset=utf-8');
         header('Content-Disposition: attachment; filename="' . $nombre_archivo . '"');
@@ -330,6 +531,19 @@ class AdminController extends BaseController
             'cuadros_total'  => (int) ($row['cuadros_total']  ?? 0),
             'anuarios_total' => (int) ($row['anuarios_total'] ?? 0),
         ];
+    }
+
+    private function _slugNombreExport(string $nombre, string $colegio, int $id): string
+    {
+        $base = $nombre !== '' ? $nombre : ($colegio !== '' ? $colegio : 'promocion_' . $id);
+
+        // Transliterar tildes y ñ, quitar caracteres no alfanuméricos, lowercase
+        $slug = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $base) ?: $base;
+        $slug = strtolower($slug);
+        $slug = preg_replace('/[^a-z0-9]+/', '_', $slug);
+        $slug = trim($slug, '_');
+
+        return $slug !== '' ? $slug : 'promocion_' . $id;
     }
 
     private function _json(array $data, int $status = 200)
