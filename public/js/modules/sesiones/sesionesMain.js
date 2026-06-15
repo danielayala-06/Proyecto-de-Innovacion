@@ -32,48 +32,25 @@
  *  - {@link window.eliminarEstudiante}
  */
 
-import { sesionApi }                    from '../../api/sesion.api.js';
-import { estudianteApi }                from '../../api/estudiante.api.js';
-import { state }                        from './sesion.state.js';
-import { ui }                           from './sesion.ui.js';
-import { sesionForm, estudianteForm }   from './sesion.form.js';
-import { alerts }                       from '../../utils/alerts.js';
+import { sesionApi }                              from '../../api/sesion.api.js';
+import { estudianteApi }                          from '../../api/estudiante.api.js';
+import { state, TIPO_LABEL, TIPO_ICON,
+         ESTADO_LABEL, ESTADO_CLASS }             from './sesion.state.js';
+import { ui }                                     from './sesion.ui.js';
+import { sesionForm, estudianteForm }             from './sesion.form.js';
+import { alerts }                                 from '../../utils/alerts.js';
+import { formatters }                             from '../../utils/formatters.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MODALES Y OFFCANVAS
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** @type {bootstrap.Modal|null} Modal de creación/edición de sesión. */
-let _modalSesion     = null;
+let _modalSesion        = null;
 /** @type {bootstrap.Modal|null} Modal de registro de nuevo estudiante. */
-let _modalEstudiante = null;
-/** @type {bootstrap.Offcanvas|null} Offcanvas de gestión de asistencia. */
-let _offcanvas       = null;
-
-/** Estado del ordenamiento de sesiones. */
-let _sortCampo = 'sesion';   // 'sesion' | 'creacion'
-let _sortDir   = 'asc';      // 'asc' | 'desc'
-
-function _aplicarOrden(sesiones) {
-    return [...sesiones].sort((a, b) => {
-        const va = _sortCampo === 'sesion' ? a.fecha_hora_sesion : a.id_sesion;
-        const vb = _sortCampo === 'sesion' ? b.fecha_hora_sesion : b.id_sesion;
-        const d  = _sortDir === 'asc' ? 1 : -1;
-        return va < vb ? -d : va > vb ? d : 0;
-    });
-}
-
-function _sincronizarControles() {
-    const sel = document.getElementById('sesionSortCampo');
-    if (sel) sel.value = _sortCampo;
-
-    const btnAsc  = document.getElementById('sesionSortAsc');
-    const btnDesc = document.getElementById('sesionSortDesc');
-    const activeStyle  = 'background:var(--accent);color:#fff;border-color:var(--accent);';
-    const defaultStyle = 'background:var(--bg-surface);color:var(--text-primary);';
-    if (btnAsc)  btnAsc.style.cssText  += _sortDir === 'asc'  ? activeStyle : defaultStyle;
-    if (btnDesc) btnDesc.style.cssText += _sortDir === 'desc' ? activeStyle : defaultStyle;
-}
+let _modalEstudiante    = null;
+/** @type {bootstrap.Modal|null} Modal de detalle de sesión. */
+let _modalDetalleSesion = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CARGA POR PROMOCIÓN
@@ -100,29 +77,22 @@ async function cargarPromocion(idPromocion) {
         state.estudiantes[idPromocion] = res.data ?? [];
     } catch { state.estudiantes[idPromocion] = []; }
 
-    const sesiones      = _aplicarOrden(state.sesiones[idPromocion] ?? []);
-    const totalActivas  = sesiones.filter(s => s.estado !== 'cancelado').length;
-    const puedeAgregar  = totalActivas < 3;
+    // Cargar asistencia de cada sesión activa
+    const sesiones = state.sesiones[idPromocion] ?? [];
+    const activas  = sesiones.filter(s => s.estado !== 'cancelado');
+    const asistencias = {};
+    await Promise.all(activas.map(async s => {
+        try {
+            const res = await sesionApi.obtener(s.id_sesion);
+            asistencias[s.id_sesion] = res.data.asistencia ?? [];
+        } catch { asistencias[s.id_sesion] = []; }
+    }));
 
+    const promo = state.promociones.find(p => p.id_promocion === idPromocion) ?? null;
     ui.renderTabs(state.promociones, idPromocion);
-    ui.renderSesiones(sesiones, puedeAgregar);
-    _sincronizarControles();
+    ui.renderSesiones(sesiones, state.estudiantes[idPromocion], asistencias, promo);
     ui.renderEstudiantes(state.estudiantes[idPromocion], idPromocion);
 }
-
-window.ordenarSesiones = function (dir) {
-    // Si se pasa dirección, actualízala; si no, solo recampo desde el select
-    if (dir === 'asc' || dir === 'desc') {
-        _sortDir = dir;
-    }
-    const sel = document.getElementById('sesionSortCampo');
-    if (sel) _sortCampo = sel.value;
-
-    const sesiones     = _aplicarOrden(state.sesiones[state.activePromocion] ?? []);
-    const totalActivas = sesiones.filter(s => s.estado !== 'cancelado').length;
-    ui.renderSesiones(sesiones, totalActivas < 3);
-    _sincronizarControles();
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MINI CALENDARIO (modal de sesión)
@@ -336,77 +306,30 @@ window.cambiarEstadoSesion = async function (id, estado) {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ASISTENCIA — FUNCIONES GLOBALES
+// ASISTENCIA — TABLA UNIFICADA
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Carga los datos de una sesión con su asistencia y abre el offcanvas.
- * Actualiza `state.sesionActiva` y el título del offcanvas.
+ * Cicla el estado de asistencia de un estudiante en una sesión:
+ * null → asistió (1) → faltó (0) → null
  *
- * @param {number} idSesion - ID de la sesión a gestionar.
- * @returns {Promise<void>}
+ * @param {number}   idSesion     - ID de la sesión.
+ * @param {number}   idEstudiante - ID del estudiante.
+ * @param {1|0|null} estadoActual - Estado actual de asistencia.
  */
-window.abrirAsistencia = async function (idSesion) {
+window.toggleAsistencia = async function (idSesion, idEstudiante, estadoActual) {
     try {
-        const res          = await sesionApi.obtener(idSesion);
-        state.sesionActiva = res.data;
-        const estudiantes  = state.estudiantes[state.activePromocion] ?? [];
-        document.getElementById('asistenciaTitulo').textContent =
-            `Asistencia · ${res.data.tipo} · ${res.data.fecha_hora_sesion.slice(0, 10)}`;
-        ui.renderAsistencia(res.data, estudiantes);
-        _offcanvas?.show();
-    } catch {
-        alerts.error('No se pudo cargar la sesión.');
-    }
-};
-
-/**
- * Agrega un estudiante a la lista de asistencia de una sesión y recarga el offcanvas.
- *
- * @param {number} idSesion     - ID de la sesión.
- * @param {number} idEstudiante - ID del estudiante a agregar.
- * @returns {Promise<void>}
- */
-window.agregarAAsistencia = async function (idSesion, idEstudiante) {
-    try {
-        await sesionApi.agregarEstudiante(idSesion, idEstudiante);
-        await abrirAsistencia(idSesion);
+        if (estadoActual === null) {
+            await sesionApi.agregarEstudiante(idSesion, idEstudiante);
+            await sesionApi.marcarAsistencia(idSesion, idEstudiante, 1);
+        } else if (estadoActual === 1) {
+            await sesionApi.marcarAsistencia(idSesion, idEstudiante, 0);
+        } else {
+            await sesionApi.quitarEstudiante(idSesion, idEstudiante);
+        }
+        await cargarPromocion(state.activePromocion);
     } catch (e) {
-        alerts.error(e.message || 'Error al agregar estudiante.');
-    }
-};
-
-/**
- * Quita un estudiante de la lista de asistencia de una sesión y recarga el offcanvas.
- *
- * @param {number} idSesion     - ID de la sesión.
- * @param {number} idEstudiante - ID del estudiante a quitar.
- * @returns {Promise<void>}
- */
-window.quitarDeAsistencia = async function (idSesion, idEstudiante) {
-    try {
-        await sesionApi.quitarEstudiante(idSesion, idEstudiante);
-        await abrirAsistencia(idSesion);
-    } catch (e) {
-        alerts.error(e.message || 'Error al quitar estudiante.');
-    }
-};
-
-/**
- * Marca la asistencia de un estudiante en una sesión (1 = asistió, 0 = ausente)
- * y recarga el offcanvas.
- *
- * @param {number} idSesion     - ID de la sesión.
- * @param {number} idEstudiante - ID del estudiante.
- * @param {0|1}   valor         - `1` si asistió, `0` si estuvo ausente.
- * @returns {Promise<void>}
- */
-window.marcarAsistencia = async function (idSesion, idEstudiante, valor) {
-    try {
-        await sesionApi.marcarAsistencia(idSesion, idEstudiante, valor);
-        await abrirAsistencia(idSesion);
-    } catch (e) {
-        alerts.error(e.message || 'Error al marcar asistencia.');
+        alerts.error(e.message || 'Error al actualizar asistencia.');
     }
 };
 
@@ -454,12 +377,79 @@ window.guardarEstudiante = async function () {
  */
 window.eliminarEstudiante = async function (id) {
     if (!confirm('¿Eliminar este estudiante de la promoción? Esta acción no se puede deshacer.')) return;
+    bootstrap.Modal.getInstance(document.getElementById('modalPerfilEstudiante'))?.hide();
     try {
         await estudianteApi.eliminar(id);
         alerts.ok('Estudiante eliminado.');
         await cargarPromocion(state.activePromocion);
     } catch (e) {
         alerts.error(e.message || 'Error al eliminar el estudiante.');
+    }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DETALLE SESIÓN — MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.verDetalleSesion = async function (id) {
+    const body   = document.getElementById('detalleSesionBody');
+    const footer = document.getElementById('detalleSesionFooter');
+    const titulo = document.getElementById('detalleSesionTitulo');
+
+    body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="bi bi-arrow-repeat"></i> Cargando...</div>';
+    footer.innerHTML = '<button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>';
+    _modalDetalleSesion?.show();
+
+    try {
+        const res = await sesionApi.obtener(id);
+        const s   = res.data;
+
+        const [fecha, horaFull] = s.fecha_hora_sesion.split(' ');
+        const hora  = horaFull?.slice(0, 5) ?? '';
+        const h     = parseInt(hora, 10);
+        const min   = hora.slice(3, 5);
+        const ampm  = h >= 12 ? 'p.m.' : 'a.m.';
+        const h12   = h % 12 || 12;
+
+        titulo.innerHTML = `<i class="bi bi-calendar3-event me-2" style="color:var(--accent);"></i>Sesión ${TIPO_LABEL[s.tipo] ?? s.tipo}`;
+
+        const tipoBadge   = `<span class="tipo-badge tipo-${s.tipo}"><i class="bi ${TIPO_ICON[s.tipo] ?? 'bi-calendar'}"></i> ${TIPO_LABEL[s.tipo] ?? s.tipo}</span>`;
+        const estadoBadge = `<span class="${ESTADO_CLASS[s.estado] ?? 'badge-pendiente'}">${ESTADO_LABEL[s.estado] ?? s.estado}</span>`;
+
+        body.innerHTML = `
+            <div style="display:flex;flex-direction:column;gap:1.1rem;">
+                <div>
+                    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.35rem;">Tipo</div>
+                    ${tipoBadge}
+                </div>
+                <div>
+                    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.35rem;">Fecha y hora</div>
+                    <div style="font-size:.9rem;"><i class="bi bi-calendar3 me-1"></i>${formatters.fecha(fecha)} &nbsp;<strong>${h12}:${min} ${ampm}</strong></div>
+                </div>
+                <div>
+                    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.35rem;">Estado</div>
+                    ${estadoBadge}
+                </div>
+                ${s.observaciones ? `
+                <div>
+                    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.35rem;">Observaciones</div>
+                    <div style="font-size:.85rem;color:var(--text-secondary);">${s.observaciones}</div>
+                </div>` : ''}
+            </div>`;
+
+        const esconder = `bootstrap.Modal.getInstance(document.getElementById('modalDetalleSesion'))?.hide();`;
+        const acciones = [];
+        if (s.estado !== 'finalizado' && s.estado !== 'cancelado') {
+            acciones.push(`<button class="btn btn-secondary btn-sm" onclick="${esconder}abrirEditarSesion(${id})"><i class="bi bi-pencil me-1"></i>Editar</button>`);
+        }
+        if (s.estado === 'pendiente') {
+            acciones.push(`<button class="btn btn-success btn-sm" onclick="${esconder}cambiarEstadoSesion(${id},'finalizado')"><i class="bi bi-check-circle me-1"></i>Finalizar</button>`);
+            acciones.push(`<button class="btn btn-danger btn-sm" onclick="${esconder}cambiarEstadoSesion(${id},'cancelado')"><i class="bi bi-x-circle me-1"></i>Cancelar</button>`);
+        }
+        footer.innerHTML = `<button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>${acciones.join('')}`;
+
+    } catch {
+        body.innerHTML = '<div style="color:var(--red-text);padding:1rem;">No se pudo cargar la sesión.</div>';
     }
 };
 
@@ -622,7 +612,19 @@ window.verDetalleEstudiante = async function(idEstudiante) {
                 ${filasHtml}
             </div>`;
 
-        body.innerHTML = datosPersonales + productosHtml + sesionesHtml;
+        const eliminarBtn = `
+            <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border-color);text-align:right;">
+                <button onclick="eliminarEstudiante(${idEstudiante})"
+                        style="background:none;border:1px solid var(--red-border,#dc3545);color:var(--red-text,#dc3545);
+                               border-radius:8px;padding:6px 14px;font-size:.8rem;cursor:pointer;font-family:inherit;
+                               transition:background .15s;"
+                        onmouseover="this.style.background='var(--red-bg,#ffeef0)'"
+                        onmouseout="this.style.background='none'">
+                    <i class="bi bi-trash me-1"></i> Eliminar estudiante
+                </button>
+            </div>`;
+
+        body.innerHTML = datosPersonales + productosHtml + sesionesHtml + eliminarBtn;
 
     } catch (err) {
         console.error('Error cargando perfil:', err);
@@ -644,9 +646,9 @@ function init() {
     state.idContrato  = ID_CONTRATO;
     state.promociones = PROMOCIONES;
 
-    _modalSesion     = new bootstrap.Modal(document.getElementById('modalSesion'));
-    _modalEstudiante = new bootstrap.Modal(document.getElementById('modalEstudiante'));
-    _offcanvas       = new bootstrap.Offcanvas(document.getElementById('offcanvasAsistencia'));
+    _modalSesion        = new bootstrap.Modal(document.getElementById('modalSesion'));
+    _modalEstudiante    = new bootstrap.Modal(document.getElementById('modalEstudiante'));
+    _modalDetalleSesion = new bootstrap.Modal(document.getElementById('modalDetalleSesion'));
 
     document.getElementById('promocionesTabs')?.addEventListener('click', e => {
         const btn = e.target.closest('.promo-tab');
