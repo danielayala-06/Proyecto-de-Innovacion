@@ -39,7 +39,7 @@ class PagosApi extends BaseApiController
 
     public function __construct()
     {
-        $this->pagoService     = new PagoService();
+        $this->pagoService     = service('pagoService');
         $this->pagoTransformer = new PagoTransformer();
     }
 

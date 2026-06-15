@@ -56,13 +56,13 @@ class SesionService
 
     public function __construct()
     {
-        $this->sesionModel           = new SesionesFotograficasModel();
-        $this->asistenciaModel       = new SesionAsistenciaModel();
-        $this->promocionModel        = new PromocionesEscolaresModel();
-        $this->estudianteModel       = new EstudiantesModel();
-        $this->reglasPaquetesModel   = new ReglasPaquetesModel();
-        $this->detalleModel          = new CotizacionesDetallesModel();
-        $this->paquetesSesionesModel = new PaquetesSesionesModel();
+        $this->sesionModel           = model(SesionesFotograficasModel::class);
+        $this->asistenciaModel       = model(SesionAsistenciaModel::class);
+        $this->promocionModel        = model(PromocionesEscolaresModel::class);
+        $this->estudianteModel       = model(EstudiantesModel::class);
+        $this->reglasPaquetesModel   = model(ReglasPaquetesModel::class);
+        $this->detalleModel          = model(CotizacionesDetallesModel::class);
+        $this->paquetesSesionesModel = model(PaquetesSesionesModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -276,6 +276,42 @@ class SesionService
         }
 
         return $id;
+    }
+
+    /**
+     * Inserta las sesiones iniciales enviadas al firmar un contrato.
+     *
+     * Se ejecuta dentro de la transacción del llamante; si alguna validación
+     * falla lanza RuntimeException y el llamante debe hacer el rollback.
+     *
+     * @param  array<int, array<string, mixed>> $sesionesInput Hasta 3 elementos con
+     *                                                         'fecha_hora_sesion' y 'tipo'.
+     * @param  int                              $idPromocion   ID de la promoción destino.
+     * @return void
+     *
+     * @throws \RuntimeException 422 si la fecha/hora no cumple las reglas de negocio.
+     */
+    public function crearDesdeContrato(array $sesionesInput, int $idPromocion): void
+    {
+        $tiposValidos = ['exteriores', 'colegio', 'estudio', 'otro'];
+
+        foreach (array_slice($sesionesInput, 0, 3) as $s) {
+            $fecha = trim($s['fecha_hora_sesion'] ?? '');
+            $tipo  = $s['tipo'] ?? 'otro';
+
+            if (!$fecha || !in_array($tipo, $tiposValidos, true)) {
+                continue;
+            }
+
+            $this->_validarFecha($fecha);
+
+            $this->sesionModel->insert([
+                'id_promocion'      => $idPromocion,
+                'fecha_hora_sesion' => $fecha,
+                'tipo'              => $tipo,
+                'estado'            => 'pendiente',
+            ]);
+        }
     }
 
     /**

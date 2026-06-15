@@ -16,24 +16,13 @@
  */
 
 import { formatters } from '../../utils/formatters.js';
+import { badgeResolver } from '../../utils/badges.js';
 
-/** @type {Object<string, string[]>} Mapa de estado → [clase CSS de badge, etiqueta]. */
-const BADGE_MAP = {
+const badgeEstado = badgeResolver({
   ACTIVO:     ['badge-pendiente', 'Vigente'],
   COMPLETADO: ['badge-aprobada',  'Completado'],
   CANCELADO:  ['badge-rechazada', 'Cancelado'],
-};
-
-/**
- * Genera el HTML del badge de estado de un contrato.
- *
- * @param {string} estado - Estado del contrato (ACTIVO | COMPLETADO | CANCELADO).
- * @returns {string} HTML del badge `<span>`.
- */
-function badgeEstado(estado) {
-  const [cls, label] = BADGE_MAP[estado?.toUpperCase()] ?? ['badge-inactivo', estado ?? '—'];
-  return `<span class="${cls}">${label}</span>`;
-}
+});
 
 /**
  * Extrae el nombre del cliente de un contrato, independientemente de si viene

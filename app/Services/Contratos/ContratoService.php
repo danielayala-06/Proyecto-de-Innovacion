@@ -53,12 +53,12 @@ class ContratoService
 
     public function __construct()
     {
-        $this->contratoModel       = new ContratosModel();
-        $this->cotizacionModel     = new CotizacionesModel();
-        $this->pagoModel           = new PagosModel();
-        $this->detalleModel        = new CotizacionesDetallesModel();
-        $this->promocionModel      = new PromocionesEscolaresModel();
-        $this->reglasPaquetesModel = new ReglasPaquetesModel();
+        $this->contratoModel       = model(ContratosModel::class);
+        $this->cotizacionModel     = model(CotizacionesModel::class);
+        $this->pagoModel           = model(PagosModel::class);
+        $this->detalleModel        = model(CotizacionesDetallesModel::class);
+        $this->promocionModel      = model(PromocionesEscolaresModel::class);
+        $this->reglasPaquetesModel = model(ReglasPaquetesModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -181,13 +181,16 @@ class ContratoService
 
         $promocion    = $this->promocionModel->porCotizacion((int) $data['id_cotizacion']);
         $numAlumnos   = (int) ($promocion['num_estudiantes'] ?? 0);
-        $adelantoMin  = $numAlumnos > 0 ? max(50, $numAlumnos * 10) : 50;
+        $minEst       = $numAlumnos > 0 ? $numAlumnos * 10 : 0;
+        $minPct       = (int) ceil($total * 0.05);
+        $adelantoMin  = max(50, $minEst, $minPct);
 
         if ($adelanto < $adelantoMin) {
             throw new \RuntimeException(
-                $numAlumnos > 0
-                    ? "El adelanto mínimo es S/ {$adelantoMin} (S/ 10 × {$numAlumnos} alumnos)"
-                    : "El adelanto mínimo es S/ {$adelantoMin}",
+                "El adelanto mínimo es S/ {$adelantoMin} " .
+                ($numAlumnos > 0
+                    ? "(S/ 10 × {$numAlumnos} alumnos o 5% del total, lo que sea mayor)"
+                    : "(5% del total)"),
                 422
             );
         }
@@ -241,35 +244,11 @@ class ContratoService
         // Registrar sesiones opcionales vinculadas a la promoción
         $sesionesInput = $data['sesiones'] ?? [];
         if (!empty($sesionesInput) && is_array($sesionesInput) && $promocion !== null) {
-            $tiposValidos = ['exteriores', 'colegio', 'estudio', 'otro'];
-            $hoy          = new \DateTime('today');
-            $maxFecha     = (new \DateTime('today'))->modify('+10 months');
-            $sesionModel  = new \App\Models\SesionesFotograficasModel();
-            foreach (array_slice($sesionesInput, 0, 3) as $s) {
-                $fecha = trim($s['fecha_hora_sesion'] ?? '');
-                $tipo  = $s['tipo'] ?? 'otro';
-                if (!$fecha || !in_array($tipo, $tiposValidos)) continue;
-                $dt = \DateTime::createFromFormat('Y-m-d H:i:s', $fecha);
-                if (!$dt) continue;
-                if ($dt < $hoy) {
-                    $db->transRollback();
-                    throw new \RuntimeException('Las sesiones no pueden tener fecha en el pasado', 422);
-                }
-                if ($dt > $maxFecha) {
-                    $db->transRollback();
-                    throw new \RuntimeException('Las sesiones no pueden programarse con más de 10 meses de anticipación', 422);
-                }
-                $hora = (int) $dt->format('G');
-                if ($hora < 9 || $hora > 20) {
-                    $db->transRollback();
-                    throw new \RuntimeException('El horario de las sesiones debe ser entre las 9:00 a.m. y las 8:00 p.m.', 422);
-                }
-                $sesionModel->insert([
-                    'id_promocion'      => (int) $promocion['id_promocion'],
-                    'fecha_hora_sesion' => $fecha,
-                    'tipo'              => $tipo,
-                    'estado'            => 'pendiente',
-                ]);
+            try {
+                service('sesionService')->crearDesdeContrato($sesionesInput, (int) $promocion['id_promocion']);
+            } catch (\RuntimeException $e) {
+                $db->transRollback();
+                throw $e;
             }
         }
 
@@ -329,13 +308,17 @@ class ContratoService
 
             $promocion   = $this->promocionModel->porCotizacion((int) $contrato['id_cotizacion']);
             $numAlumnos  = (int) ($promocion['num_estudiantes'] ?? 0);
-            $adelantoMin = $numAlumnos > 0 ? max(50, $numAlumnos * 10) : 50;
+            $totalContrato = (float) $contrato['total'];
+            $minEst      = $numAlumnos > 0 ? $numAlumnos * 10 : 0;
+            $minPct      = (int) ceil($totalContrato * 0.05);
+            $adelantoMin = max(50, $minEst, $minPct);
 
             if ($nuevoAdelanto < $adelantoMin) {
                 throw new \RuntimeException(
-                    $numAlumnos > 0
-                        ? "El adelanto mínimo es S/ {$adelantoMin} (S/ 10 × {$numAlumnos} alumnos)"
-                        : "El adelanto mínimo es S/ {$adelantoMin}",
+                    "El adelanto mínimo es S/ {$adelantoMin} " .
+                    ($numAlumnos > 0
+                        ? "(S/ 10 × {$numAlumnos} alumnos o 5% del total, lo que sea mayor)"
+                        : "(5% del total)"),
                     422
                 );
             }

@@ -596,8 +596,8 @@ window.verDetalleEstudiante = async function(idEstudiante) {
                                <div style="font-size:.83rem;font-weight:500;">${TIPO_LABEL_SESION[s.tipo] ?? s.tipo}</div>
                                <div style="font-size:.73rem;color:var(--text-muted);">${_fechaCorta(fecha)}${hora ? ' · ' + hora.slice(0,5) : ''}</div>
                            </div>
-                           <span class="${s.estado === 'finalizado' ? 'badge-aprobada' : s.estado === 'cancelado' ? 'badge-rechazada' : 'badge-pendiente'}"
-                                 style="font-size:.68rem;">${s.estado}</span>
+                           <span class="${ESTADO_CLASS[s.estado] ?? 'badge-pendiente'}"
+                                 style="font-size:.68rem;">${ESTADO_LABEL[s.estado] ?? s.estado}</span>
                        </div>`;
                    }).join('')}
                </div>`

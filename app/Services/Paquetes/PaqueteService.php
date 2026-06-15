@@ -52,12 +52,12 @@ class PaqueteService
 
     public function __construct()
     {
-        $this->paqueteModel            = new PaquetesModel();
-        $this->paqueteProductoModel    = new PaquetesProductosModel();
-        $this->paquetesSesionesModel   = new PaquetesSesionesModel();
-        $this->reglasPaquetesModel     = new ReglasPaquetesModel();
-        $this->reglasItemsModel        = new ReglasItemsModel();
-        $this->productoModel           = new ProductosModel();
+        $this->paqueteModel            = model(PaquetesModel::class);
+        $this->paqueteProductoModel    = model(PaquetesProductosModel::class);
+        $this->paquetesSesionesModel   = model(PaquetesSesionesModel::class);
+        $this->reglasPaquetesModel     = model(ReglasPaquetesModel::class);
+        $this->reglasItemsModel        = model(ReglasItemsModel::class);
+        $this->productoModel           = model(ProductosModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

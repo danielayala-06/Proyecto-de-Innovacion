@@ -39,7 +39,7 @@ class ContratosApi extends BaseApiController
 
     public function __construct()
     {
-        $this->contratoService     = new ContratoService();
+        $this->contratoService     = service('contratoService');
         $this->contratoTransformer = new ContratoTransformer();
     }
 

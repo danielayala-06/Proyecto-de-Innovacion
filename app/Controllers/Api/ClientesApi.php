@@ -39,7 +39,7 @@ class ClientesApi extends BaseApiController
 
     public function __construct()
     {
-        $this->clienteService     = new ClienteService();
+        $this->clienteService     = service('clienteService');
         $this->clienteTransformer = new ClienteTransformer();
     }
 

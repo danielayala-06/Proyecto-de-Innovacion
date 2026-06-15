@@ -41,10 +41,10 @@ class EstudianteService
 
     public function __construct()
     {
-        $this->estudianteModel = new EstudiantesModel();
-        $this->personaModel    = new PersonasModel();
-        $this->promocionModel  = new PromocionesEscolaresModel();
-        $this->apoderadoModel  = new ApoderadosModel();
+        $this->estudianteModel = model(EstudiantesModel::class);
+        $this->personaModel    = model(PersonasModel::class);
+        $this->promocionModel  = model(PromocionesEscolaresModel::class);
+        $this->apoderadoModel  = model(ApoderadosModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

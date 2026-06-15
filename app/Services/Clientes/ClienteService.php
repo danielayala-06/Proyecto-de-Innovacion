@@ -34,8 +34,8 @@ class ClienteService
 
     public function __construct()
     {
-        $this->clienteModel = new ClientesModel();
-        $this->personaModel = new PersonasModel();
+        $this->clienteModel = model(ClientesModel::class);
+        $this->personaModel = model(PersonasModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

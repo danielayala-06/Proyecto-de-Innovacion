@@ -56,13 +56,13 @@ class CotizacionService
 
     public function __construct()
     {
-        $this->cotizacionModel      = new CotizacionesModel();
-        $this->detalleModel         = new CotizacionesDetallesModel();
-        $this->colegioModel         = new ColegiosModel();
-        $this->promocionModel       = new PromocionesEscolaresModel();
-        $this->productoModel        = new ProductosModel();
-        $this->paqueteModel         = new PaquetesModel();
-        $this->reglasPaquetesModel  = new ReglasPaquetesModel();
+        $this->cotizacionModel      = model(CotizacionesModel::class);
+        $this->detalleModel         = model(CotizacionesDetallesModel::class);
+        $this->colegioModel         = model(ColegiosModel::class);
+        $this->promocionModel       = model(PromocionesEscolaresModel::class);
+        $this->productoModel        = model(ProductosModel::class);
+        $this->paqueteModel         = model(PaquetesModel::class);
+        $this->reglasPaquetesModel  = model(ReglasPaquetesModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

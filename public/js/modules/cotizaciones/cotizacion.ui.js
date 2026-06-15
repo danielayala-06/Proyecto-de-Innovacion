@@ -14,26 +14,15 @@
  */
 
 import { formatters } from '../../utils/formatters.js';
+import { badgeResolver } from '../../utils/badges.js';
 
-/** @type {Object<string, string[]>} Mapa de estado → [clase CSS de badge, etiqueta]. */
-const BADGE_MAP = {
+const badgeEstado = badgeResolver({
   PENDIENTE:         ['badge-pendiente',  'Pendiente'],
   APROBADA:          ['badge-aprobada',   'Aprobada'],
   RECHAZADA:         ['badge-rechazada',  'Rechazada'],
   EXPIRADA:          ['badge-inactivo',   'Expirada'],
   CONTRATO_GENERADO: ['badge-completada', 'Contrato'],
-};
-
-/**
- * Genera el HTML del badge de estado de una cotización.
- *
- * @param {string} estado - Estado de la cotización (insensible a mayúsculas).
- * @returns {string} HTML del badge `<span>`.
- */
-function badgeEstado(estado) {
-  const [cls, label] = BADGE_MAP[estado?.toUpperCase()] ?? ['badge-inactivo', estado ?? '—'];
-  return `<span class="${cls}">${label}</span>`;
-}
+});
 
 /**
  * Extrae el nombre completo del cliente de una cotización.

@@ -42,10 +42,10 @@ class PromocionService
 
     public function __construct()
     {
-        $this->promocionModel  = new PromocionesEscolaresModel();
-        $this->cotizacionModel = new CotizacionesModel();
-        $this->estudianteModel = new EstudiantesModel();
-        $this->sesionModel     = new SesionesFotograficasModel();
+        $this->promocionModel  = model(PromocionesEscolaresModel::class);
+        $this->cotizacionModel = model(CotizacionesModel::class);
+        $this->estudianteModel = model(EstudiantesModel::class);
+        $this->sesionModel     = model(SesionesFotograficasModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

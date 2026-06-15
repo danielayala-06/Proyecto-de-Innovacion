@@ -60,10 +60,10 @@ class PaquetesApi extends BaseApiController
 
     public function __construct()
     {
-        $this->paqueteService     = new PaqueteService();
+        $this->paqueteService     = service('paqueteService');
         $this->paqueteTransformer = new PaqueteTransformer();
-        $this->productosModel     = new ProductosModel();
-        $this->paquetesModel      = new PaquetesModel();
+        $this->productosModel     = model(ProductosModel::class);
+        $this->paquetesModel      = model(PaquetesModel::class);
     }
 
     /**

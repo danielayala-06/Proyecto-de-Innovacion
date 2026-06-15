@@ -38,7 +38,7 @@ class EstudiantesApi extends BaseApiController
 
     public function __construct()
     {
-        $this->estudianteService     = new EstudianteService();
+        $this->estudianteService     = service('estudianteService');
         $this->estudianteTransformer = new EstudianteTransformer();
     }
 

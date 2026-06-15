@@ -34,8 +34,8 @@ class PagoService
 
     public function __construct()
     {
-        $this->pagoModel     = new PagosModel();
-        $this->contratoModel = new ContratosModel();
+        $this->pagoModel     = model(PagosModel::class);
+        $this->contratoModel = model(ContratosModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

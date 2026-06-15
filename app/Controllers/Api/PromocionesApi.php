@@ -39,7 +39,7 @@ class PromocionesApi extends BaseApiController
 
     public function __construct()
     {
-        $this->promocionService     = new PromocionService();
+        $this->promocionService     = service('promocionService');
         $this->promocionTransformer = new PromocionTransformer();
     }
 

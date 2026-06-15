@@ -238,7 +238,8 @@ function _bloquearFormulario(mensaje) {
 // SESIONES FOTOGRÁFICAS (opcional)
 // ─────────────────────────────────────────────────────────────────────────────
 
-let _sesionIdx = 0;
+let _sesionIdx   = 0;
+let _adelantoMin = 0;
 
 /** Límites de fecha para sesiones: hoy como mínimo, +10 meses como máximo. */
 function _limitesSesion() {
@@ -340,31 +341,32 @@ function _initForm(cotId, total, prom = null) {
   if (adelantoInput && total) {
     adelantoInput.placeholder = `Máx. ${formatters.moneda(total)}`;
     const numEst = prom?.num_estudiantes ? parseInt(prom.num_estudiantes) : 0;
-    if (numEst > 0) {
-      const minSugerido = numEst * 10;
+    const minEst = numEst > 0 ? numEst * 10 : 0;
+    const minPct = Math.ceil(total * 0.05);
+    _adelantoMin = Math.max(50, minEst, minPct);
 
-      const hint = document.createElement('p');
-      hint.style.cssText = 'font-size:.75rem;color:var(--accent-text);background:var(--accent-light);border:1px solid var(--accent);border-radius:6px;padding:4px 8px;margin-top:6px;margin-bottom:0;display:inline-flex;align-items:center;gap:5px;';
-      hint.innerHTML = `<i class="bi bi-info-circle-fill"></i>Mínimo sugerido: <strong>${formatters.moneda(minSugerido)}</strong> (${numEst} est. × S/ 10)`;
-      adelantoInput.closest('.cc-form-group')?.appendChild(hint);
+    const hint = document.createElement('p');
+    hint.style.cssText = 'font-size:.75rem;color:var(--accent-text);background:var(--accent-light);border:1px solid var(--accent);border-radius:6px;padding:4px 8px;margin-top:6px;margin-bottom:0;display:inline-flex;align-items:center;gap:5px;';
+    hint.innerHTML = `<i class="bi bi-info-circle-fill"></i>Adelanto mínimo requerido: <strong>${formatters.moneda(_adelantoMin)}</strong>`
+      + (numEst > 0 ? ` (S/ 10 × ${numEst} est. o 5% del total)` : ' (5% del total)');
+    adelantoInput.closest('.cc-form-group')?.appendChild(hint);
 
-      const _actualizarColorAdelanto = () => {
-        const val = parseFloat(adelantoInput.value) || 0;
-        if (!val) {
-          adelantoInput.style.borderColor = '';
-          adelantoInput.style.color       = '';
-        } else if (val >= minSugerido) {
-          adelantoInput.style.borderColor = 'var(--green-text, #2e7d32)';
-          adelantoInput.style.color       = 'var(--green-text, #2e7d32)';
-        } else {
-          adelantoInput.style.borderColor = '#f59e0b';
-          adelantoInput.style.color       = '#b45309';
-        }
-      };
+    const _actualizarColorAdelanto = () => {
+      const val = parseFloat(adelantoInput.value) || 0;
+      if (!val) {
+        adelantoInput.style.borderColor = '';
+        adelantoInput.style.color       = '';
+      } else if (val >= _adelantoMin) {
+        adelantoInput.style.borderColor = 'var(--green-text, #2e7d32)';
+        adelantoInput.style.color       = 'var(--green-text, #2e7d32)';
+      } else {
+        adelantoInput.style.borderColor = 'var(--red-border, #dc3545)';
+        adelantoInput.style.color       = 'var(--red-text, #dc3545)';
+      }
+    };
 
-      adelantoInput.addEventListener('input', _actualizarColorAdelanto);
-      adelantoInput.addEventListener('change', _actualizarColorAdelanto);
-    }
+    adelantoInput.addEventListener('input', _actualizarColorAdelanto);
+    adelantoInput.addEventListener('change', _actualizarColorAdelanto);
   }
 
   const selectForma = document.getElementById('contratoFormaPago');
@@ -422,6 +424,10 @@ function _abrirConfirmacion(cotId, total) {
   const adelanto = parseFloat(document.getElementById('contratoAdelanto')?.value) || 0;
   if (!adelanto || adelanto <= 0) {
     alerts.warning('Ingresa un adelanto válido mayor a cero.');
+    return;
+  }
+  if (_adelantoMin > 0 && adelanto < _adelantoMin) {
+    alerts.warning(`El adelanto mínimo requerido es ${formatters.moneda(_adelantoMin)}.`);
     return;
   }
   if (total && adelanto > total + 0.001) {

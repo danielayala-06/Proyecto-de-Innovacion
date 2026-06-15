@@ -40,7 +40,7 @@ class CotizacionesApi extends BaseApiController
 
     public function __construct()
     {
-        $this->service     = new CotizacionService();
+        $this->service     = service('cotizacionService');
         $this->transformer = new CotizacionTransformer();
     }
 

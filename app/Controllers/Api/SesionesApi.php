@@ -43,7 +43,7 @@ class SesionesApi extends BaseApiController
 
     public function __construct()
     {
-        $this->sesionService     = new SesionService();
+        $this->sesionService     = service('sesionService');
         $this->sesionTransformer = new SesionTransformer();
     }
 
