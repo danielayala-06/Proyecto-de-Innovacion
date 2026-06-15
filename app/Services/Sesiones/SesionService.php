@@ -305,19 +305,23 @@ class SesionService
 
             $this->_validarFecha($fecha);
 
-            $this->sesionModel->insert([
+            $id = $this->sesionModel->insert([
                 'id_promocion'      => $idPromocion,
                 'fecha_hora_sesion' => $fecha,
                 'tipo'              => $tipo,
                 'estado'            => 'pendiente',
             ]);
+
+            if ($id === false) {
+                throw new \RuntimeException(json_encode($this->sesionModel->errors()), 422);
+            }
         }
     }
 
     /**
      * Valida que la fecha/hora de sesión cumpla las reglas de negocio:
      * no puede ser en el pasado, no más de 10 meses de anticipación,
-     * y el horario debe estar entre las 7:00 y las 20:00.
+     * y el horario debe estar entre las 9:00 y las 20:00.
      *
      * @throws \RuntimeException 422 si alguna regla no se cumple.
      */

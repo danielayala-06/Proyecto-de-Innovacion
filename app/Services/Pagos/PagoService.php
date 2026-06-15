@@ -157,7 +157,10 @@ class PagoService
         $nuevoSaldo       = (float) $contrato['total'] - $nuevoTotalPagado;
 
         if ($nuevoSaldo <= 0) {
-            $this->contratoModel->update((int) $data['id_contrato'], ['estado' => 'COMPLETADO']);
+            if ($this->contratoModel->update((int) $data['id_contrato'], ['estado' => 'COMPLETADO']) === false) {
+                $db->transRollback();
+                throw new \RuntimeException('Error al marcar el contrato como completado', 500);
+            }
         }
 
         $db->transComplete();
