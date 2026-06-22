@@ -347,12 +347,21 @@ class AdminController extends BaseController
 
         try {
             $body = $this->request->getJSON(true) ?? [];
-        } catch (\CodeIgniter\HTTP\Exceptions\HTTPException $e) {
+        } catch (\Throwable $e) {
             $body = $this->request->getPost();
         }
 
         if (empty($body)) {
             $body = $this->request->getPost();
+            if (empty($body)) {
+                $raw = $this->request->getRawInput();
+                if (!empty($raw)) {
+                    $decoded = json_decode($raw, true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $body = $decoded;
+                    }
+                }
+            }
         }
 
         $promocion_id = (int) ($body['promocion_id'] ?? 0);

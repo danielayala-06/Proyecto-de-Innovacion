@@ -299,6 +299,31 @@ function formulario() {
             } catch(e) { /* silencioso */ }
         },
 
+        focusFirstErrorField() {
+            this.$nextTick(() => {
+                const invalidInput = document.querySelector('.err');
+                if (invalidInput) {
+                    invalidInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (typeof invalidInput.focus === 'function') {
+                        invalidInput.focus({ preventScroll: true });
+                    }
+                    return;
+                }
+
+                const errMsg = document.querySelector('.err-msg');
+                if (!errMsg) {
+                    return;
+                }
+
+                const container = errMsg.closest('.field, .check-item, .subfield');
+                const focusTarget = container?.querySelector('input, select, textarea');
+                if (focusTarget && typeof focusTarget.focus === 'function') {
+                    focusTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    focusTarget.focus({ preventScroll: true });
+                }
+            });
+        },
+
         validar() {
             const e = {};
             const RE_LETRAS = /^[A-Za-záéíóúüñÁÉÍÓÚÜÑ\s'.,-]+$/;
@@ -336,10 +361,7 @@ function formulario() {
         async enviar() {
             this.errorGlobal = '';
             if (!this.validar()) {
-                this.$nextTick(() => {
-                    const el = document.querySelector('.err-msg');
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                });
+                this.focusFirstErrorField();
                 return;
             }
 

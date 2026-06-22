@@ -216,7 +216,7 @@
 
 </div>
 
-<form id="formImportarAlumnos" style="display:none;" method="post" action="/admin/formularios/alumno/importar">
+<form id="formImportarAlumnos" style="display:none;" method="post" action="<?= base_url('admin/formularios/alumno/importar') ?>">
     <?= csrf_field() ?>
     <input type="hidden" name="promocion_id" value="<?= (int) $promocion['id'] ?>">
 </form>
@@ -242,7 +242,7 @@
 
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
-const BASE_URL         = "<?= base_url('') ?>";
+const BASE_URL         = "<?= rtrim(base_url(''), '/') . '/' ?>";
 const PROM_ID          = <?= (int) $promocion['id'] ?>;
 const CSRF_TOKEN_NAME  = "<?= csrf_header() ?>";
 const CSRF_HASH        = "<?= csrf_hash() ?>";
@@ -525,10 +525,18 @@ function adminPanel() {
         btnGuardar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Guardar alumno';
     }
 
+    function focusField(el) {
+        if (!el) return;
+        if (typeof el.scrollIntoView === 'function') {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        el.focus({ preventScroll: true });
+    }
+
     function abrir() {
         resetForm();
         modal.style.display = 'flex';
-        const n = g('nfNombre'); if (n) n.focus();
+        const n = g('nfNombre'); if (n) focusField(n);
     }
 
     function cerrar() { modal.style.display = 'none'; }
@@ -578,7 +586,7 @@ function adminPanel() {
             const formData = new FormData(form);
             nombres.forEach(n => formData.append('nombres[]', n));
 
-            const r = await fetch('/admin/formularios/alumno/importar', {
+            const r = await fetch(BASE_URL + 'admin/formularios/alumno/importar', {
                 method: 'POST',
                 credentials: 'same-origin',
                 body: formData,
@@ -665,29 +673,29 @@ function adminPanel() {
             const tel       = (g('nfTelefono')?.value        ?? '').trim();
             const email     = (g('nfEmail')?.value           ?? '').trim();
 
-            if (!nombre)                              { mostrarError('El nombre del alumno es obligatorio.');                                         g('nfNombre')?.focus();          savingAlumno = false; return; }
-            if (!RE_LETRAS.test(nombre))              { mostrarError('El nombre solo puede contener letras y espacios (sin números ni emojis).');     g('nfNombre')?.focus();          savingAlumno = false; return; }
-            if (!fecha)                               { mostrarError('La fecha de nacimiento es obligatoria.');                                       g('nfFechaNacimiento')?.focus(); savingAlumno = false; return; }
-            if (fecha < '2005-01-01')                 { mostrarError('La fecha de nacimiento no puede ser anterior al año 2005.');                    g('nfFechaNacimiento')?.focus(); savingAlumno = false; return; }
-            if (fecha > '<?= date('Y-m-d', strtotime('-5 years')) ?>')  { mostrarError('El alumno debe tener al menos 5 años de edad.');             g('nfFechaNacimiento')?.focus(); savingAlumno = false; return; }
-            if (color     && !RE_LETRAS.test(color))      { mostrarError('El color favorito solo puede contener letras y espacios.');                 g('nfColor')?.focus();           savingAlumno = false; return; }
-            if (profesion && !RE_LETRAS.test(profesion))  { mostrarError('La profesión solo puede contener letras y espacios.');                     g('nfProfesion')?.focus();       savingAlumno = false; return; }
-            if (!tutor)                               { mostrarError('El nombre del apoderado es obligatorio.');                                      g('nfTutor')?.focus();           savingAlumno = false; return; }
-            if (!RE_LETRAS.test(tutor))               { mostrarError('El nombre del apoderado solo puede contener letras y espacios.');               g('nfTutor')?.focus();           savingAlumno = false; return; }
-            if (!tel)                                 { mostrarError('El teléfono es obligatorio.');                                                  g('nfTelefono')?.focus();        savingAlumno = false; return; }
-            if (!RE_TEL.test(tel))                    { mostrarError('El teléfono debe tener 9 dígitos y comenzar con 9 (ej: 987654321).');          g('nfTelefono')?.focus();        savingAlumno = false; return; }
-            if (email && !RE_EMAIL.test(email))       { mostrarError('El correo no es válido (ej: nombre@ejemplo.com).');                            g('nfEmail')?.focus();           savingAlumno = false; return; }
+            if (!nombre)                              { mostrarError('El nombre del alumno es obligatorio.');                                         focusField(g('nfNombre'));          savingAlumno = false; return; }
+            if (!RE_LETRAS.test(nombre))              { mostrarError('El nombre solo puede contener letras y espacios (sin números ni emojis).');     focusField(g('nfNombre'));          savingAlumno = false; return; }
+            if (!fecha)                               { mostrarError('La fecha de nacimiento es obligatoria.');                                       focusField(g('nfFechaNacimiento')); savingAlumno = false; return; }
+            if (fecha < '2005-01-01')                 { mostrarError('La fecha de nacimiento no puede ser anterior al año 2005.');                    focusField(g('nfFechaNacimiento')); savingAlumno = false; return; }
+            if (fecha > '<?= date('Y-m-d', strtotime('-5 years')) ?>')  { mostrarError('El alumno debe tener al menos 5 años de edad.');             focusField(g('nfFechaNacimiento')); savingAlumno = false; return; }
+            if (color     && !RE_LETRAS.test(color))      { mostrarError('El color favorito solo puede contener letras y espacios.');                 focusField(g('nfColor'));           savingAlumno = false; return; }
+            if (profesion && !RE_LETRAS.test(profesion))  { mostrarError('La profesión solo puede contener letras y espacios.');                     focusField(g('nfProfesion'));       savingAlumno = false; return; }
+            if (!tutor)                               { mostrarError('El nombre del apoderado es obligatorio.');                                      focusField(g('nfTutor'));           savingAlumno = false; return; }
+            if (!RE_LETRAS.test(tutor))               { mostrarError('El nombre del apoderado solo puede contener letras y espacios.');               focusField(g('nfTutor'));           savingAlumno = false; return; }
+            if (!tel)                                 { mostrarError('El teléfono es obligatorio.');                                                  focusField(g('nfTelefono'));        savingAlumno = false; return; }
+            if (!RE_TEL.test(tel))                    { mostrarError('El teléfono debe tener 9 dígitos y comenzar con 9 (ej: 987654321).');          focusField(g('nfTelefono'));        savingAlumno = false; return; }
+            if (email && !RE_EMAIL.test(email))       { mostrarError('El correo no es válido (ej: nombre@ejemplo.com).');                            focusField(g('nfEmail'));           savingAlumno = false; return; }
 
             const tieneCuadro  = g('nfTieneCuadro')?.checked  ?? false;
             const tieneAnuario = g('nfTieneAnuario')?.checked ?? false;
-            if (tieneCuadro  && !g('nfCuadroTamano')?.value)  { mostrarError('Selecciona el tamaño del cuadro.');  savingAlumno = false; return; }
-            if (tieneAnuario && !g('nfAnuarioModelo')?.value)  { mostrarError('Selecciona el modelo del anuario.'); savingAlumno = false; return; }
+            if (tieneCuadro  && !g('nfCuadroTamano')?.value)  { mostrarError('Selecciona el tamaño del cuadro.');  focusField(g('nfCuadroTamano'));  savingAlumno = false; return; }
+            if (tieneAnuario && !g('nfAnuarioModelo')?.value)  { mostrarError('Selecciona el modelo del anuario.'); focusField(g('nfAnuarioModelo')); savingAlumno = false; return; }
 
             btnGuardar.disabled = true;
             btnGuardar.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Guardando...';
 
             try {
-                const r = await fetch('/admin/formularios/alumno/agregar-completo', {
+                const r = await fetch(BASE_URL + 'admin/formularios/alumno/agregar-completo', {
                     method:  'POST',
                     credentials: 'same-origin',
                     headers: {
