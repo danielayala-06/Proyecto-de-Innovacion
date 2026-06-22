@@ -7,7 +7,7 @@
             <a href="<?= base_url('/contratos') ?>" class="btn-back">
                 <i class="bi bi-arrow-left"></i> Contratos
             </a>
-            <div>
+            <div class="flex-fill">
                 <p class="section-label">Gestión de Sesiones</p>
                 <div class="sesiones-contrato-info">
                     <span><i class="bi bi-file-earmark-text"></i> Contrato #<?= str_pad($contrato['id_contrato'], 4, '0', STR_PAD_LEFT) ?></span>
@@ -19,7 +19,7 @@
                     </span>
                 </div>
             </div>
-            <div class="d-flex justify-content-end w-100">
+            <div class="d-flex justify-content-end w-25">
                 <button type="button" class="align-self-end btn btn-nuevo-paquete" style="cursor:pointer;">Ir a formulario <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>

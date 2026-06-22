@@ -6,9 +6,12 @@
 <div class="container">
 
     <!-- BREADCRUMB + HEADER -->
-    <div class="sesiones-header">
+    <div class="sesiones-header d-flex justify-content-between" >
+        <a class="btn-back btn btn-outline-secondary btn-sm py-2">
+            <i class="bi bi-arrow-left"></i> Atras
+        </a>
         <!-- Selector de promoción (si hay más de una) -->
-        <?php if (count($todasPromociones) > 1): ?>
+        <!-- <?php if (count($todasPromociones) > 1): ?>
         <div style="position:relative;">
             <select id="selectorPromocion"
                     onchange="if(this.value) window.location.href='<?= base_url('admin/formularios/promocion/') ?>'+this.value"
@@ -33,7 +36,8 @@
                 <?= $promocion['nivel'] ? ' · ' . esc($promocion['nivel']) : '' ?>
             </div>
         </div>
-        <?php endif; ?>
+        <?php endif; ?> -->
+ 
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
             <?php if (!empty($sesionesLink)): ?>
             <a href="<?= esc($sesionesLink) ?>"
@@ -47,12 +51,14 @@
             <?php if (!empty($promocion['id_promocion_escolar'])): ?>
             <!-- Campaña vinculada a contrato: se pueden agregar formularios -->
             <button id="btnNuevoFormulario"
+                    type="button"
                     style="display:inline-flex;align-items:center;gap:.35rem;background:var(--accent);color:#fff;
                            border:none;border-radius:8px;padding:.4rem .85rem;font-size:.8rem;font-weight:600;
                            cursor:pointer;">
-                <i class="bi bi-person-plus-fill"></i> Nuevo formulario
+                <i class="bi bi-person-plus-fill"></i> Agregar alumno
             </button>
-            <button @click="abrirImportar()"
+            <button id="btnAbrirImportar"
+                    type="button"
                     style="display:inline-flex;align-items:center;gap:.35rem;background:var(--bg-input);
                            border:1px solid var(--border);border-radius:8px;padding:.4rem .85rem;
                            font-size:.8rem;font-weight:600;cursor:pointer;color:var(--text-primary);">
@@ -91,7 +97,7 @@
     <?php endif; ?>
 
     <!-- ENLACE COMPARTIDO -->
-    <div class="cot-table-card mb-3" style="padding:1rem 1.25rem;">
+    <div class="cot-table-cdivard mb-3" style="padding:1rem 1.25rem;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
             <div>
                 <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.3rem;">
@@ -114,9 +120,29 @@
             </div>
         </div>
     </div>
-
-    <!-- BARRA DE PROGRESO -->
-    <?php
+ 
+    <!-- BARRA DE PROMOCIÓN -->
+    <div class="asis-promo-bar mb-3">
+        <i class="bi bi-mortarboard"></i>
+        <div>
+            <div class="asis-promo-nombre"><?= esc($promocion['nombre'] ?? 'Promoción') ?></div>
+            <div class="asis-promo-meta">
+                <?= esc($promocion['nombre_colegio'] ?? 'Colegio no asignado') ?>
+                <?= !empty($promocion['nivel']) ? ' · ' . esc($promocion['nivel']) : '' ?>
+            </div>
+        </div>
+        <span class="asis-promo-sep">·</span>
+        <div class="asis-promo-meta">Alumnos: <?= (int) ($promocion['total_alumnos'] ?? 0) ?></div>
+        <div class="asis-promo-meta">Completados: <?= (int) ($promocion['completados'] ?? 0) ?>
+            <?php if (!empty($promocion['num_estudiantes_esperados'])): ?> · Esperados: <?= (int) $promocion['num_estudiantes_esperados'] ?><?php endif; ?>
+        </div>
+        <?php if (empty($promocion['id_promocion_escolar'])): ?>
+        <span class="asis-promo-sep">·</span>
+        <div class="asis-promo-meta" style="color:var(--red-text);">Sin contrato vinculado</div>
+        <?php endif; ?>
+    </div>
+ 
+    <!-- BARRA DE PROGRESO -->    <?php
         $totalStat = ($promocion['num_estudiantes_esperados'] ?? null)
             ?? $promocion['total_alumnos'];
         $pct = $totalStat > 0
@@ -189,21 +215,26 @@
     </div>
 
 </div>
+
+<form id="formImportarAlumnos" style="display:none;" method="post" action="/admin/formularios/alumno/importar">
+    <?= csrf_field() ?>
+    <input type="hidden" name="promocion_id" value="<?= (int) $promocion['id'] ?>">
+</form>
+
 </main>
 
 <!-- MODAL IMPORTAR -->
-<div class="adm-overlay" x-show="modalImportar" x-cloak @click.self="modalImportar = false">
-    <div class="adm-modal" @click.stop>
+<div id="importModalOverlay" class="adm-overlay" style="display:none;">    <div class="adm-modal">
         <h2><i class="bi bi-upload me-2" style="color:var(--accent);"></i>Importar alumnos</h2>
         <p>Escribe un nombre por línea. Se generará un enlace único para cada alumno.</p>
-        <textarea x-model="nombresTexto"
+        <div id="importError" style="display:none;background:rgba(220,53,69,.08);border:1px solid rgba(220,53,69,.3);border-radius:8px;padding:.75rem .95rem;font-size:.82rem;color:#dc3545;margin-bottom:1rem;"></div>
+        <textarea id="txtNombresImportar"
                   placeholder="Juan García Pérez&#10;María López Torres&#10;Carlos Mendoza Lima"></textarea>
         <div class="adm-modal-footer">
-            <button class="btn btn-secondary btn-sm" @click="modalImportar = false">Cancelar</button>
-            <button class="btn btn-sm" @click="importar()" :disabled="importando"
+            <button type="button" id="btnCancelarImportar" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="button" id="btnConfirmarImportar" class="btn btn-sm"
                     style="background:var(--accent);color:#fff;border:none;font-weight:600;padding:.4rem 1rem;border-radius:7px;">
-                <span x-show="!importando"><i class="bi bi-check-circle me-1"></i>Importar</span>
-                <span x-show="importando">Importando...</span>
+                <span id="importBtnText"><i class="bi bi-check-circle me-1"></i>Importar</span>
             </button>
         </div>
     </div>
@@ -211,8 +242,11 @@
 
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
-const BASE_URL = "<?= base_url('') ?>";
-const PROM_ID  = <?= (int) $promocion['id'] ?>;
+const BASE_URL         = "<?= base_url('') ?>";
+const PROM_ID          = <?= (int) $promocion['id'] ?>;
+const CSRF_TOKEN_NAME  = "<?= csrf_header() ?>";
+const CSRF_HASH        = "<?= csrf_hash() ?>";
+const CSRF_HEADER_NAME = "<?= csrf_header() ?>";
 
 function adminPanel() {
     return {
@@ -228,32 +262,67 @@ function adminPanel() {
             return nombre.toLowerCase().includes(this.busqueda.toLowerCase());
         },
 
+        mostrarErrorImportacion(msg) {
+            const el = document.getElementById('importError');
+            if (!el) return;
+            if (!msg) {
+                el.style.display = 'none';
+                el.textContent = '';
+                return;
+            }
+            el.textContent = msg;
+            el.style.display = 'block';
+        },
+
         abrirImportar() {
             this.nombresTexto  = '';
             this.modalImportar = true;
+            this.mostrarErrorImportacion('');
         },
 
         async importar() {
             const nombres = this.nombresTexto
                 .split('\n').map(n => n.trim()).filter(n => n.length > 0);
-            if (!nombres.length) { alert('Escribe al menos un nombre.'); return; }
+            if (!nombres.length) {
+                this.mostrarErrorImportacion('Escribe al menos un nombre.');
+                return;
+            }
 
             this.importando = true;
+            this.mostrarErrorImportacion('');
             try {
                 const r = await fetch(BASE_URL + 'admin/formularios/alumno/importar', {
                     method:  'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ promocion_id: PROM_ID, nombres }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [CSRF_TOKEN_NAME]: CSRF_HASH,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ promocion_id: PROM_ID, nombres }),
                 });
-                const data = await r.json();
+
+                let data;
+                try {
+                    data = await r.json();
+                } catch (jsonErr) {
+                    throw new Error('Respuesta inválida del servidor.');
+                }
+
+                if (!r.ok) {
+                    throw new Error(data.error || 'Error al importar.');
+                }
+
                 if (data.ok) {
                     this.modalImportar = false;
                     setTimeout(() => location.reload(), 400);
                 } else {
-                    alert(data.error || 'Error al importar.');
+                    this.mostrarErrorImportacion(data.error || 'Error al importar.');
                 }
-            } catch { alert('Error de conexión.'); }
-            finally  { this.importando = false; }
+            } catch (err) {
+                this.mostrarErrorImportacion(err.message || 'Error de conexión.');
+            } finally {
+                this.importando = false;
+            }
         },
     };
 }
@@ -410,12 +479,12 @@ function adminPanel() {
 
         <!-- Footer -->
         <div style="display:flex;justify-content:flex-end;gap:.6rem;">
-            <button id="btnCancelarNuevoForm"
+            <button id="btnCancelarNuevoForm" type="button"
                     style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);
                            border-radius:8px;padding:.4rem .9rem;font-size:.82rem;font-weight:600;cursor:pointer;">
                 Cancelar
             </button>
-            <button id="btnGuardarNuevoForm"
+            <button id="btnGuardarNuevoForm" type="button"
                     style="background:var(--accent);color:#fff;border:none;border-radius:8px;
                            padding:.4rem 1.1rem;font-size:.82rem;font-weight:600;cursor:pointer;">
                 <i class="bi bi-check-circle me-1"></i> Guardar alumno
@@ -426,12 +495,20 @@ function adminPanel() {
 
 <script>
 (function () {
-    const modal      = document.getElementById('modalNuevoFormulario');
-    const btnAbrir   = document.getElementById('btnNuevoFormulario');
-    const btnCerrar1 = document.getElementById('btnCerrarNuevoForm');
-    const btnCerrar2 = document.getElementById('btnCancelarNuevoForm');
-    const btnGuardar = document.getElementById('btnGuardarNuevoForm');
-    const errorEl    = document.getElementById('nfErrorGlobal');
+    const modal          = document.getElementById('modalNuevoFormulario');
+    const btnAbrir       = document.getElementById('btnNuevoFormulario');
+    const btnCerrar1     = document.getElementById('btnCerrarNuevoForm');
+    const btnCerrar2     = document.getElementById('btnCancelarNuevoForm');
+    const btnGuardar     = document.getElementById('btnGuardarNuevoForm');
+    const errorEl        = document.getElementById('nfErrorGlobal');
+    const importOverlay  = document.getElementById('importModalOverlay');
+    const btnAbrirImport = document.getElementById('btnAbrirImportar');
+    const btnCancelarImport = document.getElementById('btnCancelarImportar');
+    const btnConfirmarImport = document.getElementById('btnConfirmarImportar');
+    const txtNombresImportar = document.getElementById('txtNombresImportar');
+    const importErrorEl = document.getElementById('importError');
+    const importBtnText = document.getElementById('importBtnText');
+    let savingAlumno = false;
     const g = id => document.getElementById(id);
 
     function resetForm() {
@@ -456,6 +533,86 @@ function adminPanel() {
 
     function cerrar() { modal.style.display = 'none'; }
 
+    window.abrirImportModal = function() {
+        console.log('abrirImportModal called');
+        if (!importOverlay || !txtNombresImportar || !importBtnText || !importErrorEl) {
+            alert('No se pudo abrir el modal de importación. Intenta recargar la página.');
+            return;
+        }
+        importErrorEl.style.display = 'none';
+        importErrorEl.textContent = '';
+        txtNombresImportar.value = '';
+        importBtnText.innerHTML = '<i class="bi bi-check-circle me-1"></i>Importar';
+        importOverlay.style.display = 'flex';
+        txtNombresImportar.focus();
+    };
+
+    window.cerrarImportModal = function() {
+        console.log('cerrarImportModal called');
+        if (!importOverlay) return;
+        importOverlay.style.display = 'none';
+    };
+
+    window.confirmarImportar = async function() {
+        console.log('confirmarImportar called');
+        if (!txtNombresImportar || !importErrorEl || !importBtnText || !btnConfirmarImport) return;
+
+        const nombres = txtNombresImportar.value
+            .split('\n').map(n => n.trim()).filter(n => n.length > 0);
+
+        if (!nombres.length) {
+            importErrorEl.textContent = 'Escribe al menos un nombre.';
+            importErrorEl.style.display = 'block';
+            return;
+        }
+
+        importBtnText.textContent = 'Importando...';
+        importBtnText.style.opacity = '0.7';
+        btnConfirmarImport.disabled = true;
+        try {
+            const form = document.getElementById('formImportarAlumnos');
+            if (!form) {
+                throw new Error('No se encontró el formulario de importación.');
+            }
+
+            const formData = new FormData(form);
+            nombres.forEach(n => formData.append('nombres[]', n));
+
+            const r = await fetch('/admin/formularios/alumno/importar', {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: formData,
+            });
+
+            let data;
+            try {
+                data = await r.json();
+            } catch (jsonErr) {
+                const text = await r.text();
+                throw new Error('Respuesta inválida del servidor: ' + (text || jsonErr.message));
+            }
+
+            if (!r.ok) {
+                throw new Error(data.error || 'Error al importar.');
+            }
+
+            if (data.ok) {
+                window.cerrarImportModal();
+                setTimeout(() => location.reload(), 400);
+            } else {
+                throw new Error(data.error || 'Error al importar.');
+            }
+        } catch (err) {
+            console.error('Import error:', err);
+            importErrorEl.textContent = err.message || 'Error de conexión.';
+            importErrorEl.style.display = 'block';
+        } finally {
+            importBtnText.innerHTML = '<i class="bi bi-check-circle me-1"></i>Importar';
+            importBtnText.style.opacity = '1';
+            btnConfirmarImport.disabled = false;
+        }
+    };
+
     const cuadroChk  = g('nfTieneCuadro');
     const anuarioChk = g('nfTieneAnuario');
     if (cuadroChk)  cuadroChk.addEventListener('change',  () => { const s = g('nfCuadroTamano');  if (s) s.style.display = cuadroChk.checked  ? '' : 'none'; });
@@ -465,80 +622,121 @@ function adminPanel() {
     btnCerrar1.addEventListener('click', cerrar);
     btnCerrar2.addEventListener('click', cerrar);
     modal.addEventListener('click', e => { if (e.target === modal) cerrar(); });
+    if (btnAbrirImport && !btnAbrirImport.dataset.listenerAttached) {
+        btnAbrirImport.addEventListener('click', abrirImportModal);
+        btnAbrirImport.dataset.listenerAttached = '1';
+    }
+    if (btnCancelarImport && !btnCancelarImport.dataset.listenerAttached) {
+        btnCancelarImport.addEventListener('click', cerrarImportModal);
+        btnCancelarImport.dataset.listenerAttached = '1';
+    }
+    if (importOverlay && !importOverlay.dataset.listenerAttached) {
+        importOverlay.addEventListener('click', e => { if (e.target === importOverlay) cerrarImportModal(); });
+        importOverlay.dataset.listenerAttached = '1';
+    }
+    if (btnConfirmarImport && !btnConfirmarImport.dataset.listenerAttached) {
+        btnConfirmarImport.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            confirmarImportar();
+        });
+        btnConfirmarImport.dataset.listenerAttached = '1';
+    }
 
-    btnGuardar.addEventListener('click', async function () {
-        errorEl.style.display = 'none';
+    if (btnGuardar && !btnGuardar.dataset.listenerAttached) {
+        btnGuardar.addEventListener('click', async function (e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (savingAlumno) {
+                return;
+            }
+            savingAlumno = true;
+            errorEl.style.display = 'none';
 
-        const RE_LETRAS = /^[A-Za-záéíóúüñÁÉÍÓÚÜÑ\s'.,-]+$/;
-        const RE_TEL    = /^9\d{8}$/;
-        const RE_EMAIL  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+            const RE_LETRAS = /^[A-Za-záéíóúüñÁÉÍÓÚÜÑ\s'.,-]+$/;
+            const RE_TEL    = /^9\d{8}$/;
+            const RE_EMAIL  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-        const nombre    = (g('nfNombre')?.value          ?? '').trim();
-        const fecha     =  g('nfFechaNacimiento')?.value ?? '';
-        const color     = (g('nfColor')?.value           ?? '').trim();
-        const profesion = (g('nfProfesion')?.value       ?? '').trim();
-        const tutor     = (g('nfTutor')?.value           ?? '').trim();
-        const tel       = (g('nfTelefono')?.value        ?? '').trim();
-        const email     = (g('nfEmail')?.value           ?? '').trim();
+            const nombre    = (g('nfNombre')?.value          ?? '').trim();
+            const fecha     =  g('nfFechaNacimiento')?.value ?? '';
+            const color     = (g('nfColor')?.value           ?? '').trim();
+            const profesion = (g('nfProfesion')?.value       ?? '').trim();
+            const tutor     = (g('nfTutor')?.value           ?? '').trim();
+            const tel       = (g('nfTelefono')?.value        ?? '').trim();
+            const email     = (g('nfEmail')?.value           ?? '').trim();
 
-        if (!nombre)                              { mostrarError('El nombre del alumno es obligatorio.');                                         g('nfNombre')?.focus();          return; }
-        if (!RE_LETRAS.test(nombre))              { mostrarError('El nombre solo puede contener letras y espacios (sin números ni emojis).');     g('nfNombre')?.focus();          return; }
-        if (!fecha)                               { mostrarError('La fecha de nacimiento es obligatoria.');                                       g('nfFechaNacimiento')?.focus(); return; }
-        if (fecha < '2005-01-01')                 { mostrarError('La fecha de nacimiento no puede ser anterior al año 2005.');                    g('nfFechaNacimiento')?.focus(); return; }
-        if (fecha > '<?= date('Y-m-d', strtotime('-5 years')) ?>')  { mostrarError('El alumno debe tener al menos 5 años de edad.');             g('nfFechaNacimiento')?.focus(); return; }
-        if (color     && !RE_LETRAS.test(color))      { mostrarError('El color favorito solo puede contener letras y espacios.');                 g('nfColor')?.focus();           return; }
-        if (profesion && !RE_LETRAS.test(profesion))  { mostrarError('La profesión solo puede contener letras y espacios.');                     g('nfProfesion')?.focus();       return; }
-        if (!tutor)                               { mostrarError('El nombre del apoderado es obligatorio.');                                      g('nfTutor')?.focus();           return; }
-        if (!RE_LETRAS.test(tutor))               { mostrarError('El nombre del apoderado solo puede contener letras y espacios.');               g('nfTutor')?.focus();           return; }
-        if (!tel)                                 { mostrarError('El teléfono es obligatorio.');                                                  g('nfTelefono')?.focus();        return; }
-        if (!RE_TEL.test(tel))                    { mostrarError('El teléfono debe tener 9 dígitos y comenzar con 9 (ej: 987654321).');          g('nfTelefono')?.focus();        return; }
-        if (email && !RE_EMAIL.test(email))       { mostrarError('El correo no es válido (ej: nombre@ejemplo.com).');                            g('nfEmail')?.focus();           return; }
+            if (!nombre)                              { mostrarError('El nombre del alumno es obligatorio.');                                         g('nfNombre')?.focus();          savingAlumno = false; return; }
+            if (!RE_LETRAS.test(nombre))              { mostrarError('El nombre solo puede contener letras y espacios (sin números ni emojis).');     g('nfNombre')?.focus();          savingAlumno = false; return; }
+            if (!fecha)                               { mostrarError('La fecha de nacimiento es obligatoria.');                                       g('nfFechaNacimiento')?.focus(); savingAlumno = false; return; }
+            if (fecha < '2005-01-01')                 { mostrarError('La fecha de nacimiento no puede ser anterior al año 2005.');                    g('nfFechaNacimiento')?.focus(); savingAlumno = false; return; }
+            if (fecha > '<?= date('Y-m-d', strtotime('-5 years')) ?>')  { mostrarError('El alumno debe tener al menos 5 años de edad.');             g('nfFechaNacimiento')?.focus(); savingAlumno = false; return; }
+            if (color     && !RE_LETRAS.test(color))      { mostrarError('El color favorito solo puede contener letras y espacios.');                 g('nfColor')?.focus();           savingAlumno = false; return; }
+            if (profesion && !RE_LETRAS.test(profesion))  { mostrarError('La profesión solo puede contener letras y espacios.');                     g('nfProfesion')?.focus();       savingAlumno = false; return; }
+            if (!tutor)                               { mostrarError('El nombre del apoderado es obligatorio.');                                      g('nfTutor')?.focus();           savingAlumno = false; return; }
+            if (!RE_LETRAS.test(tutor))               { mostrarError('El nombre del apoderado solo puede contener letras y espacios.');               g('nfTutor')?.focus();           savingAlumno = false; return; }
+            if (!tel)                                 { mostrarError('El teléfono es obligatorio.');                                                  g('nfTelefono')?.focus();        savingAlumno = false; return; }
+            if (!RE_TEL.test(tel))                    { mostrarError('El teléfono debe tener 9 dígitos y comenzar con 9 (ej: 987654321).');          g('nfTelefono')?.focus();        savingAlumno = false; return; }
+            if (email && !RE_EMAIL.test(email))       { mostrarError('El correo no es válido (ej: nombre@ejemplo.com).');                            g('nfEmail')?.focus();           savingAlumno = false; return; }
 
-        const tieneCuadro  = g('nfTieneCuadro')?.checked  ?? false;
-        const tieneAnuario = g('nfTieneAnuario')?.checked ?? false;
-        if (tieneCuadro  && !g('nfCuadroTamano')?.value)  { mostrarError('Selecciona el tamaño del cuadro.');  return; }
-        if (tieneAnuario && !g('nfAnuarioModelo')?.value)  { mostrarError('Selecciona el modelo del anuario.'); return; }
+            const tieneCuadro  = g('nfTieneCuadro')?.checked  ?? false;
+            const tieneAnuario = g('nfTieneAnuario')?.checked ?? false;
+            if (tieneCuadro  && !g('nfCuadroTamano')?.value)  { mostrarError('Selecciona el tamaño del cuadro.');  savingAlumno = false; return; }
+            if (tieneAnuario && !g('nfAnuarioModelo')?.value)  { mostrarError('Selecciona el modelo del anuario.'); savingAlumno = false; return; }
 
-        btnGuardar.disabled = true;
-        btnGuardar.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Guardando...';
+            btnGuardar.disabled = true;
+            btnGuardar.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Guardando...';
 
-        try {
-            const r = await fetch(BASE_URL + 'admin/formularios/alumno/agregar-completo', {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    promocion_id:     PROM_ID,
-                    nombre_alumno:    nombre,
-                    fecha_nacimiento: fecha,
-                    color_favorito:   color     || null,
-                    profesion_futura: profesion || null,
-                    nombre_tutor:     tutor,
-                    relacion_tutor:   g('nfRelacion')?.value ?? 'Padre',
-                    telefono:         tel,
-                    email:            email     || null,
-                    tiene_cuadro:     tieneCuadro,
-                    cuadro_tamano:    g('nfCuadroTamano')?.value  || null,
-                    tiene_anuario:    tieneAnuario,
-                    anuario_modelo:   g('nfAnuarioModelo')?.value || null,
-                    acepta_imagenes:  g('nfAceptaImagenes')?.checked ?? false,
-                    acepta_datos:     g('nfAceptaDatos')?.checked    ?? false,
-                }),
-            });
-            const data = await r.json();
-            if (data.ok) {
-                cerrar();
-                location.reload();
-            } else {
-                mostrarError(data.error || 'No se pudo guardar el alumno.');
+            try {
+                const r = await fetch('/admin/formularios/alumno/agregar-completo', {
+                    method:  'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [CSRF_TOKEN_NAME]: CSRF_HASH,
+                    },
+                    body: JSON.stringify({
+                        promocion_id:     PROM_ID,
+                        nombre_alumno:    nombre,
+                        fecha_nacimiento: fecha,
+                        color_favorito:   color     || null,
+                        profesion_futura: profesion || null,
+                        nombre_tutor:     tutor,
+                        relacion_tutor:   g('nfRelacion')?.value ?? 'Padre',
+                        telefono:         tel,
+                        email:            email     || null,
+                        tiene_cuadro:     tieneCuadro,
+                        cuadro_tamano:    g('nfCuadroTamano')?.value  || null,
+                        tiene_anuario:    tieneAnuario,
+                        anuario_modelo:   g('nfAnuarioModelo')?.value || null,
+                        acepta_imagenes:  g('nfAceptaImagenes')?.checked ?? false,
+                        acepta_datos:     g('nfAceptaDatos')?.checked    ?? false,
+                    }),
+                });
+                let data;
+                try {
+                    data = await r.json();
+                } catch (jsonErr) {
+                    throw new Error('Respuesta inválida del servidor.');
+                }
+                if (!r.ok) {
+                    throw new Error(data.error || 'No se pudo guardar el alumno.');
+                }
+                if (data.ok) {
+                    cerrar();
+                    location.reload();
+                } else {
+                    mostrarError(data.error || 'No se pudo guardar el alumno.');
+                }
+            } catch (err) {
+                mostrarError(err.message || 'Error de conexión. Intenta de nuevo.');
+            } finally {
+                savingAlumno = false;
                 btnGuardar.disabled = false;
                 btnGuardar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Guardar alumno';
             }
-        } catch {
-            mostrarError('Error de conexión. Intenta de nuevo.');
-            btnGuardar.disabled = false;
-            btnGuardar.innerHTML = '<i class="bi bi-check-circle me-1"></i> Guardar alumno';
-        }
-    });
+        });
+        btnGuardar.dataset.listenerAttached = '1';
+    }
 
     function mostrarError(msg) {
         errorEl.textContent   = msg;

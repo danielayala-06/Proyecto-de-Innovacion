@@ -11,7 +11,13 @@
 .adm-stat-label{font-size:.7rem;color:var(--text-muted);margin-top:.3rem;text-transform:uppercase;letter-spacing:.05em}
 .adm-link-text{font-size:.72rem;color:var(--text-muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
 
-.adm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1050;display:flex;align-items:center;justify-content:center;padding:1rem}
+.asis-promo-bar{display:flex;align-items:center;gap:.65rem;padding:1rem 1.2rem;background:color-mix(in srgb,var(--accent) 8%,var(--bg-elevated));border:1px solid var(--accent);border-radius:12px;}
+.asis-promo-bar>i{font-size:1.25rem;color:var(--accent);flex-shrink:0;}
+.asis-promo-nombre{font-weight:700;font-size:.95rem;color:var(--accent);}
+.asis-promo-sep{color:var(--text-muted);font-size:.9rem;}
+.asis-promo-meta{font-size:.82rem;color:var(--text-secondary);}
+
+.adm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem}
 .adm-modal{background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;padding:1.75rem;width:100%;max-width:460px;box-shadow:0 16px 48px rgba(0,0,0,.25)}
 .adm-modal h2{font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:.35rem}
 .adm-modal p{font-size:.82rem;color:var(--text-muted);margin-bottom:1rem}

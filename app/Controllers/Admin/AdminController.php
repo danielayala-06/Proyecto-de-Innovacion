@@ -340,12 +340,27 @@ class AdminController extends BaseController
         ]);
     }
 
-    // POST /admin/formularios/alumno/importar  (JSON)
+    // POST /admin/formularios/alumno/importar
     public function importarAlumnos()
     {
-        $body         = $this->request->getJSON(true) ?? [];
+        $body = [];
+
+        try {
+            $body = $this->request->getJSON(true) ?? [];
+        } catch (\CodeIgniter\HTTP\Exceptions\HTTPException $e) {
+            $body = $this->request->getPost();
+        }
+
+        if (empty($body)) {
+            $body = $this->request->getPost();
+        }
+
         $promocion_id = (int) ($body['promocion_id'] ?? 0);
         $nombres      = $body['nombres'] ?? [];
+
+        if (is_string($nombres)) {
+            $nombres = [$nombres];
+        }
 
         if ($promocion_id === 0 || empty($nombres)) {
             return $this->_json(['ok' => false, 'error' => 'promocion_id y nombres son requeridos.'], 422);
