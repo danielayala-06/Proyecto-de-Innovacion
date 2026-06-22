@@ -129,14 +129,22 @@ function _tablaAsistencia(activas, estudiantes, asistencias, promo) {
             <span class="asis-promo-meta">${promo.grado}${promo.seccion ? ' ' + promo.seccion : ''} — ${promo.nombre}</span>
         </div>` : '';
 
+    const imprimirBtn = promo ? `
+        <button class="btn btn-outline-primary btn-sm" onclick="imprimirListaPromocion(${promo.id_promocion})" style="white-space:nowrap;">
+            <i class="bi bi-printer"></i> Imprimir lista
+        </button>` : '';
+
     return `
         <div class="asis-section">
             ${promoBar}
-            <div class="asis-hdr">
-                <div class="asis-hdr-title">
-                    <i class="bi bi-calendar3-event"></i> Control de asistencia
+            <div class="asis-hdr" style="gap:.75rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                    <div class="asis-hdr-title">
+                        <i class="bi bi-calendar3-event"></i> Control de asistencia
+                    </div>
+                    <div class="asis-hdr-meta"><i class="bi bi-calendar-check me-1"></i>Total sesiones: ${activas.length}</div>
                 </div>
-                <div class="asis-hdr-meta"><i class="bi bi-calendar-check me-1"></i>Total sesiones: ${activas.length}</div>
+                ${imprimirBtn}
             </div>
             <p class="asis-hint">Haz clic en una celda para marcar · <strong>X</strong> asistió · <strong>—</strong> faltó · vacío sin marcar</p>
             <div class="asis-table-wrap">

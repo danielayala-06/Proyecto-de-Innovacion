@@ -12,6 +12,8 @@ namespace App\Controllers;
 
 use App\Services\Contratos\ContratoService;
 use Config\Database;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 /**
  * Sirve las vistas del módulo de sesiones fotográficas.
@@ -88,5 +90,93 @@ class SesionController extends BaseController
         ];
 
         return view('sesiones/index', $data);
+    }
+
+    public function imprimirLista(int $idContrato, int $idPromocion)
+    {
+        $db = Database::connect();
+
+        $contratoService = new ContratoService();
+        $contrato = $contratoService->buscarPorID($idContrato);
+        if (!$contrato) {
+            return view('errors/html/error_404', ['message' => 'Contrato no encontrado']);
+        }
+
+        $promocion = $db->table('promociones_escolares pe')
+            ->select('pe.*, c.nombre_colegio, c.distrito, c.provincia, cotizaciones.id_cotizacion')
+            ->join('colegios c', 'c.id_colegio = pe.id_colegio', 'left')
+            ->join('cotizaciones', 'cotizaciones.id_cotizacion = pe.id_cotizacion', 'left')
+            ->where('pe.id_promocion', $idPromocion)
+            ->where('pe.id_cotizacion', $contrato['id_cotizacion'])
+            ->get()
+            ->getRowArray();
+
+        if (!$promocion) {
+            return view('errors/html/error_404', ['message' => 'Promoción no encontrada para este contrato']);
+        }
+
+        $estudiantes = $db->table('estudiantes e')
+            ->select('e.id_estudiante, e.nombres, e.apellidos')
+            ->where('e.id_promocion', $idPromocion)
+            ->orderBy('e.apellidos', 'ASC')
+            ->get()->getResultArray();
+
+        $sesiones = $db->table('sesiones_fotograficas sf')
+            ->select('sf.id_sesion, sf.fecha_hora_sesion, sf.tipo, sf.estado, sf.observaciones')
+            ->where('sf.id_promocion', $idPromocion)
+            ->orderBy('sf.fecha_hora_sesion', 'ASC')
+            ->get()->getResultArray();
+
+        $asistencia = [];
+        if (!empty($sesiones)) {
+            $sesionIds = array_column($sesiones, 'id_sesion');
+            $rows = $db->table('sesion_asistencia sa')
+                ->select('sa.id_sesion, sa.id_estudiante, sa.asistio')
+                ->whereIn('sa.id_sesion', $sesionIds)
+                ->get()->getResultArray();
+
+            foreach ($rows as $row) {
+                $asistencia[$row['id_sesion']][$row['id_estudiante']] = $row['asistio'];
+            }
+        }
+
+        $productos = $db->table('cotizaciones_detalles cd')
+            ->select([
+                'cd.tipo_item',
+                'cd.descripcion',
+                'cd.cantidad',
+                'cd.precio_unitario',
+                'COALESCE(p.nombre_paquete, pr.nombre_producto, cd.descripcion) AS nombre',
+            ])
+            ->join('paquetes p', 'p.id_paquete = cd.id_referencia AND cd.tipo_item = "paquete"', 'left')
+            ->join('productos pr', 'pr.id_producto = cd.id_referencia AND cd.tipo_item = "producto"', 'left')
+            ->where('cd.id_cotizacion', $promocion['id_cotizacion'])
+            ->get()->getResultArray();
+
+        $titulo = sprintf('lista_estudiantes_%s_%s', preg_replace('/[^A-Za-z0-9_-]/', '_', $promocion['nombre_colegio'] ?? 'promocion'), $idPromocion);
+
+        $html = view('pdf/sesiones_lista', [
+            'titulo'      => $titulo,
+            'promocion'   => $promocion,
+            'contrato'    => $contrato,
+            'estudiantes' => $estudiantes,
+            'sesiones'    => $sesiones,
+            'asistencia'  => $asistencia,
+            'productos'   => $productos,
+        ]);
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('defaultFont', 'Arial');
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isPhpEnabled', false);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+        $dompdf->stream($titulo . '.pdf', ['Attachment' => false]);
+
+        return;
     }
 }

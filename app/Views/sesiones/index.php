@@ -36,6 +36,7 @@
 
         <!-- CONTENIDO PRINCIPAL -->
         <div id="sesionesContainer"></div>
+        <div id="estudiantesContainer" style="margin-top:1.2rem;"></div>
 
         <?php endif; ?>
     </div>

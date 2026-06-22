@@ -648,6 +648,14 @@ window.irAFormulario = function() {
     window.location.href = `${BASE_URL}index.php/admin/formularios/promo-escolar/${state.activePromocion}`;
 };
 
+window.imprimirListaPromocion = function (idPromocion) {
+    if (!idPromocion) {
+        alerts.warning('No se encontró la promoción para imprimir.');
+        return;
+    }
+    window.open(`${BASE_URL}contratos/${ID_CONTRATO}/sesiones/${idPromocion}/lista-pdf`, '_blank');
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // INICIALIZACIÓN
 // ─────────────────────────────────────────────────────────────────────────────
