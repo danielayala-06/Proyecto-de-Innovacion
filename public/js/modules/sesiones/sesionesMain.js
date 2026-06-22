@@ -633,6 +633,22 @@ window.verDetalleEstudiante = async function(idEstudiante) {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// NAVEGACIÓN A PANEL DE FORMULARIOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Redirige al panel de administración de formularios para la promoción actual.
+ * @returns {void}
+ */
+window.irAFormulario = function() {
+    if (!state.activePromocion) {
+        alerts.warning('Selecciona una promoción primero');
+        return;
+    }
+    window.location.href = `${BASE_URL}index.php/admin/formularios/promo-escolar/${state.activePromocion}`;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INICIALIZACIÓN
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -653,6 +669,11 @@ function init() {
     document.getElementById('promocionesTabs')?.addEventListener('click', e => {
         const btn = e.target.closest('.promo-tab');
         if (btn) cargarPromocion(parseInt(btn.dataset.id, 10));
+    });
+
+    // Botón para ir al panel de formularios
+    document.querySelector('.btn-nuevo-paquete')?.addEventListener('click', () => {
+        window.irAFormulario();
     });
 
     // Sincronizar mini calendario cuando el usuario escribe la fecha directamente

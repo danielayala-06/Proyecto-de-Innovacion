@@ -19,6 +19,9 @@
                     </span>
                 </div>
             </div>
+            <div class="d-flex justify-content-end w-100">
+                <button type="button" class="align-self-end btn btn-nuevo-paquete" style="cursor:pointer;">Ir a formulario <i class="bi bi-arrow-right"></i></button>
+            </div>
         </div>
 
         <?php if (empty($promociones)): ?>
