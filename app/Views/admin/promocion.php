@@ -7,9 +7,9 @@
 
     <!-- BREADCRUMB + HEADER -->
     <div class="sesiones-header d-flex justify-content-between" >
-        <a class="btn-back btn btn-outline-secondary btn-sm py-2">
+        <button class="btn-back btn btn-outline-secondary btn-sm py-2" onclick="history.back()">
             <i class="bi bi-arrow-left"></i> Atras
-        </a>
+        </button>
         <!-- Selector de promoción (si hay más de una) -->
         <!-- <?php if (count($todasPromociones) > 1): ?>
         <div style="position:relative;">
