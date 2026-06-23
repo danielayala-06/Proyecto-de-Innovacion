@@ -365,6 +365,14 @@ window.guardarEstudiante = async function () {
         _modalEstudiante?.hide();
         await cargarPromocion(state.activePromocion);
     } catch (e) {
+        // Si el backend indica que el formulario ya fue completado (409),
+        // mostrar agradecimiento y cerrar el modal (evita re-registro).
+        if (e && e.status === 409) {
+            alerts.ok('Formulario ya completado. Gracias.');
+            _modalEstudiante?.hide();
+            await cargarPromocion(state.activePromocion);
+            return;
+        }
         alerts.error(e.message || 'Error al registrar el estudiante.');
     }
 };

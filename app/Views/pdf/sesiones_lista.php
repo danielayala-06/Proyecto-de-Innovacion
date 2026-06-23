@@ -21,6 +21,7 @@
     th, td { border: 1px solid #c8d0de; padding: 6px 8px; text-align: left; }
     th { background: #eef2fb; font-size: 10px; text-transform: uppercase; color: #33415c; }
     td { font-size: 11px; vertical-align: top; }
+    .page-break { page-break-after: always; margin: 2rem 0; }
     .text-center { text-align: center; }
     .small { font-size: 10px; color: #555; }
     .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; color: #fff; }
@@ -63,44 +64,22 @@
         </div>
     </div>
 
-    <div class="section-title">Productos asociados</div>
-    <table>
-        <thead>
-            <tr>
-                <th style="width:6%;">#</th>
-                <th>Producto / paquete</th>
-                <th style="width:14%;">Cantidad</th>
-                <th style="width:20%;">Precio unitario</th>
-            </tr>
-        </thead>
-        <tbody>
-        <?php foreach ($productos as $idx => $prod): ?>
-            <tr>
-                <td class="text-center"><?= $idx + 1 ?></td>
-                <td><?= esc($prod['nombre'] ?? $prod['descripcion'] ?? '—') ?></td>
-                <td class="text-center"><?= (int) ($prod['cantidad'] ?? 0) ?></td>
-                <td class="text-center"><?= isset($prod['precio_unitario']) ? 'S/ ' . number_format((float) $prod['precio_unitario'], 2, '.', ',') : '—' ?></td>
-            </tr>
-        <?php endforeach; ?>
-        <?php if (empty($productos)): ?>
-            <tr><td colspan="4" class="text-center small">No hay productos registrados para esta cotización.</td></tr>
-        <?php endif; ?>
-        </tbody>
-    </table>
+    <div class="page-break"></div>
 
-    <div class="section-title">Asistencia de estudiantes</div>
+    <div class="section-title">Control Individual de Alumnos</div>
     <table>
         <thead>
             <tr>
-                <th style="width:6%;">#</th>
-                <th>Estudiante</th>
+                <th style="width:6%;">N°</th>
+                <th style="text-align: center;">Nombres del Alumno</th>
                 <?php foreach ($sesiones as $sesion): ?>
                     <?php $fecha = substr($sesion['fecha_hora_sesion'] ?? '', 0, 10); ?>
-                    <th style="width:11%;">
+                    <th style="width:11%; text-align: center;">
                         <?= esc($fecha) ?><br>
-                        <span class="small"><?= esc($sesion['tipo']) ?></span>
-                    </th>
+                    <span class="small"><?= esc($sesion['tipo']) ?></span>
+                </th>
                 <?php endforeach; ?>
+                <th style="text-align: center;">Observaciones</th>
             </tr>
         </thead>
         <tbody>
@@ -114,6 +93,7 @@
                             <?php if ($estado === '1' || $estado === 1): ?>X<?php elseif ($estado === '0' || $estado === 0): ?>—<?php else: ?>&nbsp;<?php endif; ?>
                         </td>
                     <?php endforeach; ?>
+                    <td><?= esc($est['observaciones'] ?? '') ?></td>
                 </tr>
             <?php endforeach; ?>
             <?php if (empty($estudiantes)): ?>
@@ -122,36 +102,6 @@
         </tbody>
     </table>
 
-    <div class="section-title">Observaciones de sesiones</div>
-    <table>
-        <thead>
-            <tr>
-                <th style="width:12%;">Fecha</th>
-                <th style="width:10%;">Tipo</th>
-                <th>Observaciones</th>
-                <th style="width:10%;">Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($sesiones as $sesion): ?>
-                <tr>
-                    <td><?= esc(substr($sesion['fecha_hora_sesion'] ?? '', 0, 10)) ?></td>
-                    <td><?= esc($sesion['tipo']) ?></td>
-                    <td><?= esc($sesion['observaciones'] ?? '—') ?></td>
-                    <td class="text-center">
-                        <span class="badge badge-<?= $sesion['estado'] === 'finalizado' ? 'finalizado' : ($sesion['estado'] === 'cancelado' ? 'cancelado' : 'pendiente') ?>">
-                            <?= esc(ucfirst($sesion['estado'])) ?>
-                        </span>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            <?php if (empty($sesiones)): ?>
-                <tr><td colspan="4" class="text-center small">No hay sesiones programadas.</td></tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
-
-    <div class="footnote">Datos generados desde el contrato y la promoción. El reporte incluye alumnos actuales, su asistencia y las observaciones de cada sesión.</div>
 </div>
 </body>
 </html>

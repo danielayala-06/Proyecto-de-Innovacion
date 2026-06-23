@@ -194,14 +194,14 @@ export const estudianteForm = {
         return {
             id_promocion: idPromocion,
             estudiante: {
-                nombres:          document.getElementById('efNombreCompleto').value.trim(),
+                nombres:          (document.getElementById('efNombreCompleto').value || '').trim().toLocaleUpperCase('es-PE'),
                 apellidos:        null,
                 fecha_nacimiento: document.getElementById('efNacimiento').value || null,
-                color_fav:        document.getElementById('efColor').value.trim()     || null,
-                profesion_futura: document.getElementById('efProfesion').value.trim() || null,
+                color_fav:        (document.getElementById('efColor').value || '').trim()     || null,
+                profesion_futura: (document.getElementById('efProfesion').value || '').trim().toLocaleUpperCase('es-PE') || null,
             },
             apoderado: {
-                nombres:       document.getElementById('apNombreCompleto').value.trim(),
+                nombres:       (document.getElementById('apNombreCompleto').value || '').trim().toLocaleUpperCase('es-PE'),
                 apellidos:     null,
                 telefono:      document.getElementById('apTelefono').value.trim(),
                 correo:        document.getElementById('apCorreo').value.trim() || null,
