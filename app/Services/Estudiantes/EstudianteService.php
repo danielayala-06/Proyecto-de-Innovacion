@@ -137,8 +137,53 @@ class EstudianteService
         $apData = $data['apoderado'] ?? [];
         $esData = $data['estudiante'] ?? [];
 
+        // Normalizar a mayúsculas campos de texto (UTF-8)
+        $upper = function ($v) {
+            if ($v === null) return null;
+            $v = trim((string) $v);
+            return mb_strtoupper($v, 'UTF-8');
+        };
+
+        if (!empty($apData)) {
+            $apData['nombres']   = $upper($apData['nombres'] ?? null);
+            $apData['apellidos'] = $upper($apData['apellidos'] ?? null);
+            if (!empty($apData['correo'])) $apData['correo'] = trim($apData['correo']);
+            if (!empty($apData['numero_documento'])) $apData['numero_documento'] = trim($apData['numero_documento']);
+        }
+
+        if (!empty($esData)) {
+            $esData['nombres']   = $upper($esData['nombres'] ?? null);
+            $esData['apellidos'] = $upper($esData['apellidos'] ?? null);
+        }
+
         if (empty($apData) || empty($esData)) {
             throw new \RuntimeException('Datos del apoderado y del estudiante son requeridos', 422);
+        }
+
+        // Prevención de reenvío: si ya existe un estudiante para la misma promoción
+        // con el mismo teléfono o número de documento del apoderado, abortar.
+        $telefono = $apData['telefono'] ?? null;
+        $numeroDoc = $apData['numero_documento'] ?? null;
+
+        if (!empty($telefono) || !empty($numeroDoc)) {
+            $qb = $this->estudianteModel->builder();
+            $qb->select('estudiantes.id_estudiante')
+                ->join('apoderados a', 'a.id_apoderado = estudiantes.id_apoderado')
+                ->join('personas p', 'p.id_persona = a.id_persona')
+                ->where('estudiantes.id_promocion', $idPromocion);
+
+            if (!empty($telefono)) {
+                $qb->where('p.telefono', $telefono);
+            }
+
+            if (!empty($numeroDoc)) {
+                $qb->orWhere('p.numero_documento', $numeroDoc);
+            }
+
+            $existing = $qb->get()->getRowArray();
+            if (!empty($existing)) {
+                throw new \RuntimeException('Formulario ya completado para esta promoción', 409);
+            }
         }
 
         $db = $this->personaModel->db;
@@ -147,9 +192,11 @@ class EstudianteService
         // 1. Persona del apoderado
         $idPersona = $this->personaModel->insert([
             'nombres'          => $apData['nombres'],
-            'apellidos'        => '',
+            'apellidos'        => $apData['apellidos'] ?? '',
             'telefono'         => $apData['telefono'],
             'correo'           => $apData['correo'] ?? null,
+            'numero_documento' => $apData['numero_documento'] ?? null,
+            'tipo_documento'   => $apData['tipo_documento'] ?? null,
         ]);
 
         if ($idPersona === false) {
@@ -191,7 +238,7 @@ class EstudianteService
             'id_apoderado'     => $idApoderado,
             'id_promocion'     => $idPromocion,
             'nombres'          => $esData['nombres'],
-            'apellidos'        => null,
+            'apellidos'        => $esData['apellidos'] ?? null,
             'fecha_nacimiento' => $esData['fecha_nacimiento'] ?? null,
             'color_fav'        => $esData['color_fav']        ?? null,
             'profesion_futura' => $esData['profesion_futura'] ?? null,
@@ -229,12 +276,18 @@ class EstudianteService
             throw new \RuntimeException('Estudiante no encontrado', 404);
         }
 
+        $upper = function ($v) {
+            if ($v === null) return null;
+            $v = trim((string) $v);
+            return mb_strtoupper($v, 'UTF-8');
+        };
+
         $update = array_filter([
-            'nombres'          => $data['nombres']          ?? null,
-            'apellidos'        => $data['apellidos']        ?? null,
+            'nombres'          => isset($data['nombres']) ? $upper($data['nombres']) : null,
+            'apellidos'        => isset($data['apellidos']) ? $upper($data['apellidos']) : null,
             'fecha_nacimiento' => $data['fecha_nacimiento'] ?? null,
             'color_fav'        => $data['color_fav']        ?? null,
-            'profesion_futura' => $data['profesion_futura'] ?? null,
+            'profesion_futura' => isset($data['profesion_futura']) ? $upper($data['profesion_futura']) : null,
         ], fn($v) => $v !== null);
 
         if (!empty($update) && $this->estudianteModel->update($id, $update) === false) {

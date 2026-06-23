@@ -194,6 +194,32 @@ class FormularioController extends BaseController
             return $this->_json(['ok' => false, 'error' => 'El nombre del alumno es obligatorio.'], 422);
         }
 
+        $telefono = trim($body['telefono'] ?? '');
+        $email    = trim($body['email'] ?? '');
+        if ($telefono !== '' || $email !== '') {
+            $duplicate = $db->table('prom_formularios f')
+                ->select('f.id')
+                ->join('prom_alumnos a', 'a.id = f.alumno_id')
+                ->where('a.promocion_id', (int) $prom['id']);
+
+            $duplicate->groupStart();
+            if ($telefono !== '') {
+                $duplicate->where('f.telefono', $telefono);
+            }
+            if ($email !== '') {
+                if ($telefono !== '') {
+                    $duplicate->orWhere('f.email', $email);
+                } else {
+                    $duplicate->where('f.email', $email);
+                }
+            }
+            $duplicate->groupEnd();
+
+            if ($duplicate->get()->getRowArray()) {
+                return $this->_json(['ok' => false, 'error' => 'Este formulario ya fue enviado con estos datos.'], 409);
+            }
+        }
+
         $tieneCuadro  = !empty($body['tiene_cuadro']);
         $tieneAnuario = !empty($body['tiene_anuario']);
 

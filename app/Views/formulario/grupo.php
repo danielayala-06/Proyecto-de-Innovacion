@@ -220,6 +220,7 @@ $sNum = 0;
 const BASE_URL         = "<?= base_url('') ?>";
 const PROM_ID          = <?= (int) $promocion['id'] ?>;
 const TOKEN_COMPARTIDO = "<?= esc($token) ?>";
+const FORMULARIO_GRUPAL_KEY = `formulario-grupal-${TOKEN_COMPARTIDO}`;
 
 const CUADROS_EN_CONTRATO  = <?= $cuadrosEnContrato  ? 'true' : 'false' ?>;
 const ANUARIOS_EN_CONTRATO = <?= $anuariosEnContrato ? 'true' : 'false' ?>;
@@ -237,6 +238,11 @@ function formularioGrupal() {
         errors: {}, errorGlobal: '', enviando: false, enviado: false,
 
         init() {
+            if (localStorage.getItem(FORMULARIO_GRUPAL_KEY) === '1') {
+                window.location.href = BASE_URL + 'formulario/gracias';
+                return;
+            }
+
             // Cuando no hay selección, los productos del paquete se asignan automáticamente
             if (!MOSTRAR_PRODUCTOS) {
                 if (CUADROS_EN_CONTRATO)  this.form.tiene_cuadro  = true;
@@ -291,6 +297,7 @@ function formularioGrupal() {
                 });
                 const data = await r.json();
                 if (data.ok) {
+                    localStorage.setItem(FORMULARIO_GRUPAL_KEY, '1');
                     this.enviado = true;
                     setTimeout(() => { window.location.href = BASE_URL + 'formulario/gracias'; }, 1200);
                 } else {

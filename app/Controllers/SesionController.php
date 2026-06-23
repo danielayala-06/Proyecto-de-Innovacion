@@ -175,8 +175,12 @@ class SesionController extends BaseController
         $dompdf->loadHtml($html);
         $dompdf->setPaper('A4', 'portrait');
         $dompdf->render();
-        $dompdf->stream($titulo . '.pdf', ['Attachment' => false]);
 
-        return;
+        $pdfOutput = $dompdf->output();
+
+        return $this->response
+            ->setContentType('application/pdf')
+            ->setHeader('Content-Disposition', 'inline; filename="' . $titulo . '.pdf"')
+            ->setBody($pdfOutput);
     }
 }

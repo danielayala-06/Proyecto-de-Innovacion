@@ -87,11 +87,11 @@ class ClienteService
         $db->transStart();
 
         $idPersona = $this->personaModel->insert([
-            'nombres'          => $data['nombres'],
-            'apellidos'        => $data['apellidos']        ?? null,
+            'nombres'          => strtoupper($data['nombres']),
+            'apellidos'        => strtoupper($data['apellidos'])    ?? null,
             'telefono'         => $data['telefono'],
-            'correo'           => $data['correo']           ?? null,
-            'tel_alternativo'  => $data['tel_alternativo']  ?? null,
+            'correo'           => $data['correo']                   ?? null,
+            'tel_alternativo'  => $data['tel_alternativo']          ?? null,
             'numero_documento' => !empty($data['numero_documento']) ? $data['numero_documento'] : null,
             'tipo_documento'   => !empty($data['tipo_documento'])   ? $data['tipo_documento']   : null,
         ]);
@@ -149,13 +149,13 @@ class ClienteService
         $db->transStart();
 
         $personaData = array_filter([
-            'nombres'          => $data['nombres']          ?? null,
-            'apellidos'        => $data['apellidos']        ?? null,
-            'telefono'         => $data['telefono']         ?? null,
-            'correo'           => $data['correo']           ?? null,
-            'tel_alternativo'  => $data['tel_alternativo']  ?? null,
-            'numero_documento' => $data['numero_documento'] ?? null,
-            'tipo_documento'   => $data['tipo_documento']   ?? null,
+            'nombres'          => strtoupper($data['nombres'])   ?? null,
+            'apellidos'        => strtoupper($data['apellidos']) ?? null,
+            'telefono'         => $data['telefono']              ?? null,
+            'correo'           => $data['correo']                ?? null,
+            'tel_alternativo'  => $data['tel_alternativo']       ?? null,
+            'numero_documento' => $data['numero_documento']      ?? null,
+            'tipo_documento'   => $data['tipo_documento']        ?? null,
         ], fn($v) => $v !== null);
 
         if (!empty($personaData) && $this->personaModel->update($cliente['id_persona'], $personaData) === false) {
