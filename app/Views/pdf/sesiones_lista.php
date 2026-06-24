@@ -20,7 +20,7 @@
 
     body{
         font-family: DejaVu Sans, sans-serif;
-        font-size:11px;
+        font-size:12px;
         color:#5f5a54;
     }
 
@@ -141,16 +141,16 @@
     }
 
     .col-num{
-        width:45px;
+        width:15px;
         text-align:center;
     }
 
     .col-name{
-        width:260px;
+        width:200px;
     }
 
     .col-obs{
-        width:180px;
+        width:130px;
     }
 
     /* ==========================
@@ -158,8 +158,8 @@
     ========================== */
 
     .session-box{
-        width:28px;
-        height:28px;
+        width:35px;
+        height:35px;
         margin:auto;
         border:1px solid #c8b68c;
         background:#fff;
@@ -173,7 +173,6 @@
     .checked{
         text-align:center;
         background:#faf7ef;
-        padding-bottom:2.5mm;
     }
 
     .footer-info{
@@ -181,6 +180,16 @@
         padding:10px;
         border:1px solid var(--border);
         background:#faf8f5;
+    }
+    .session-header-type{
+        border-bottom:1px solid #999;
+        padding-bottom:3px;
+        margin-bottom:3px;
+        min-height:14px;
+    }
+
+    .session-header-date{
+        font-size:9px;
     }
 </style>
 <body>
@@ -198,7 +207,6 @@
                     Registro oficial de asistencia
                 </div>
             </div>
-
             <div class="contract">
                 Contrato #<?= str_pad($contrato['id_contrato'],4,'0',STR_PAD_LEFT) ?>
                 <br>
@@ -212,6 +220,25 @@
         </div>
 
         <table class="info-table">
+
+            <?php
+            $fechaSesionColegio = null;
+            $fechaSesionEstudioExterior = null;
+
+            foreach ($sesiones as $sesion) {
+                if ($fechaSesionColegio === null && $sesion['tipo'] === 'colegio') {
+                    $fechaSesionColegio = date('d/m/Y', strtotime($sesion['fecha_hora_sesion']));
+                }
+
+                if ($fechaSesionEstudioExterior === null && in_array($sesion['tipo'], ['estudio', 'exteriores'], true)) {
+                    $fechaSesionEstudioExterior = date('d/m/Y', strtotime($sesion['fecha_hora_sesion']));
+                }
+
+                if ($fechaSesionColegio !== null && $fechaSesionEstudioExterior !== null) {
+                    break;
+                }
+            }
+            ?>
 
             <tr>
                 <td class="info-label">Colegio</td>
@@ -234,11 +261,32 @@
                 <td class="info-label">N° de alumnos</td>
                 <td><?= count($estudiantes) ?></td>
             </tr>
+            
+            <tr>
+                <td class="info-label">Padre de Familia</td>
+                <td><?= $contrato['cliente'] ?></td>
+            </tr>
+            
+            <tr>
+                <td class="info-label">Fecha de Sesion - Colegio</td>
+                <td><?= $fechaSesionColegio ?? '' ?></td>
+            </tr>
+            
+            <tr>
+                <td class="info-label">Fecha de Sesion - Estudio/Exterior</td>
+                <td><?= $fechaSesionEstudioExterior ?? '' ?></td>
+            </tr>
+            
+            <tr>
+                <td class="info-label">Fecha Final de Entrega</td>
+                <td></td>
+            </tr>
 
         </table>
 
     </div>
 
+    <!-- Para agregar el salto de pagina -->
     <div class="page-break"></div>
 
 
@@ -246,22 +294,32 @@
     <br>
     <br>
 
+    <!-- Tabla de asistencia -->
     <table class="attendance-table">
         <thead>
-        <tr>
-            <th>N°</th>
-            <th>Alumno</th>
-            <?php foreach ($sesiones as $sesion): ?>
+            <tr>
+                <th>N°</th>
+                <th>Nombre del Alumno</th>
+                <?php for($i = 0; $i < 3; $i++): ?>
+                    <?php $sesion = $sesiones[$i] ?? null; ?>
+
                 <th>
-                    <?= esc($sesion['tipo']) ?>
-                    <br>
-                    <span style="font-size:9px;">
-                        <?= date('d/m/Y', strtotime($sesion['fecha_hora_sesion'])) ?>
-                    </span>
+                    <div class="session-header-type">
+                        <?= $sesion ? esc($sesion['tipo']) : '&nbsp;' ?>
+                    </div>
+
+                    <div class="session-header-date">
+                        <?= $sesion
+                            ? date('d/m/y', strtotime($sesion['fecha_hora_sesion']))
+                            : '.../.../....'
+                        ?>
+                    </div>
+
                 </th>
-            <?php endforeach; ?>
-            <th>Observación</th>
-        </tr>
+                <?php endfor; ?>
+
+                <th>Observación</th>
+            </tr>
         </thead>
 
         <tbody>
@@ -279,20 +337,39 @@
                             )
                         ) ?>
                     </td>
-                    <?php foreach ($sesiones as $sesion): ?>
-                        <?php
-                        $estado = $asistencia[$sesion['id_sesion']][$est['id_estudiante']] ?? null;
-                        ?>
+                    <?php for($i = 0; $i < 3; $i++): ?>
+                        <?php $sesion = $sesiones[$i] ?? null; ?>
+
                         <td align="center">
-                            <?php if ($estado === '1' || $estado === 1): ?>
-                                <div class="session-box checked">
-                                    X
-                                </div>
+
+                            <?php if($sesion): ?>
+
+                                <?php
+                                $estado =
+                                    $asistencia[$sesion['id_sesion']]
+                                            [$est['id_estudiante']]
+                                    ?? null;
+                                ?>
+
+                                <?php if($estado === '1' || $estado === 1): ?>
+
+                                    <div class="session-box checked">
+                                        X
+                                    </div>
+
+                                <?php else: ?>
+
+                                    <div class="session-box"></div>
+
+                                <?php endif; ?>
+
                             <?php else: ?>
-                                <div class="session-box"></div>
-                            <?php endif; ?>
-                        </td>
-                    <?php endforeach; ?>
+
+                                <!-- Sesión todavía no creada -->
+                            <div class="session-box"></div>
+                        <?php endif; ?>
+                    </td>
+                    <?php endfor; ?>
                     <td class="col-obs">
                         <?= esc($est['observaciones'] ?? '') ?>
                     </td>
