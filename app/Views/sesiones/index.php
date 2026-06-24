@@ -206,7 +206,8 @@
                         </div>
                         <div class="mb-3">
                             <label>Hora</label>
-                            <input type="time" class="form-control form-control-sm" id="sfHora" value="09:00" min="09:00" max="20:00">
+                            <input type="time" class="form-control form-control-sm" id="sfHora" value="09:00" min="07:00" max="22:00">
+                            <!-- <small class="text-muted">Solo se pueden crear las sesiones en este horario: de 7:00 a.m. hasta las 10:00 p.m.</small> -->
                         </div>
                         <div class="mb-3">
                             <label>Observaciones</label>
@@ -219,7 +220,26 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-primary btn-sm" onclick="guardarSesion()">Guardar sesión</button>
+                <button class="btn btn-primary btn-sm" onclick="confirmarGuardarSesion()">Guardar sesión</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ MODAL DE CONFIRMACIÓN DE SESIÓN ═════════════════════════════════════ -->
+<div class="modal fade" id="modalConfirmarSesion" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Confirmar sesión</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmarSesionMensaje">¿Estás seguro de querer agendar esta sesión?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="guardarSesion()">Sí, agendar</button>
             </div>
         </div>
     </div>

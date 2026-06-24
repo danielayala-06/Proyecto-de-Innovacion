@@ -321,7 +321,7 @@ class SesionService
     /**
      * Valida que la fecha/hora de sesión cumpla las reglas de negocio:
      * no puede ser en el pasado, no más de 10 meses de anticipación,
-     * y el horario debe estar entre las 9:00 y las 20:00.
+     * y el horario debe estar entre las 7:00 y las 22:00.
      *
      * @throws \RuntimeException 422 si alguna regla no se cumple.
      */
@@ -343,8 +343,8 @@ class SesionService
         }
 
         $hora = (int) $dt->format('G');
-        if ($hora < 9 || $hora >= 20) {
-            throw new \RuntimeException('El horario debe ser entre las 9:00 a.m. y las 8:00 p.m.', 422);
+        if ($hora < 7 || $hora >= 22) {
+            throw new \RuntimeException('El horario debe ser entre las 7:00 a.m. y las 10:00 p.m.', 422);
         }
     }
 

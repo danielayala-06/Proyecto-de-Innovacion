@@ -51,6 +51,8 @@ let _modalSesion        = null;
 let _modalEstudiante    = null;
 /** @type {bootstrap.Modal|null} Modal de detalle de sesión. */
 let _modalDetalleSesion = null;
+/** @type {bootstrap.Modal|null} Modal de confirmación de guardado de sesión. */
+let _modalConfirmarSesion = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CARGA POR PROMOCIÓN
@@ -266,6 +268,21 @@ window.abrirEditarSesion = async function (id) {
  *
  * @returns {Promise<void>}
  */
+window.confirmarGuardarSesion = function () {
+    const err = sesionForm.validar();
+    if (err) { alerts.error(err); return; }
+
+    const datos = sesionForm.datos();
+    const tipoLabel = TIPO_LABEL[datos.tipo] || datos.tipo || 'esta sesión';
+    const fecha = datos.fecha_hora_sesion.slice(0, 16).replace(' ', ' a las ');
+    const mensaje = `¿Estás seguro de querer agendar la sesión: ${tipoLabel} para el ${fecha}?`;
+
+    const mensajeEl = document.getElementById('confirmarSesionMensaje');
+    if (mensajeEl) mensajeEl.textContent = mensaje;
+
+    _modalConfirmarSesion?.show();
+};
+
 window.guardarSesion = async function () {
     const err = sesionForm.validar();
     if (err) { alerts.error(err); return; }
@@ -281,6 +298,7 @@ window.guardarSesion = async function () {
             await sesionApi.crear(datos);
             alerts.ok('Sesión creada.');
         }
+        _modalConfirmarSesion?.hide();
         _modalSesion?.hide();
         await cargarPromocion(state.activePromocion);
     } catch (e) {
@@ -681,6 +699,7 @@ function init() {
     _modalSesion        = new bootstrap.Modal(document.getElementById('modalSesion'));
     _modalEstudiante    = new bootstrap.Modal(document.getElementById('modalEstudiante'));
     _modalDetalleSesion = new bootstrap.Modal(document.getElementById('modalDetalleSesion'));
+    _modalConfirmarSesion = new bootstrap.Modal(document.getElementById('modalConfirmarSesion'));
 
     document.getElementById('promocionesTabs')?.addEventListener('click', e => {
         const btn = e.target.closest('.promo-tab');

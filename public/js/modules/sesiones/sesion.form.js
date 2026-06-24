@@ -41,7 +41,7 @@ export const sesionForm = {
         document.getElementById('sfId').value            = '';
         document.getElementById('sfTipo').value          = tipo;
         document.getElementById('sfFecha').value         = '';
-        document.getElementById('sfHora').value          = '09:00';
+        document.getElementById('sfHora').value          = '07:00';
         document.getElementById('sfObservaciones').value = '';
 
         // Restricciones de fecha: hoy → +10 meses
@@ -119,7 +119,7 @@ export const sesionForm = {
         if (dt > max) return 'La sesión no puede programarse con más de 10 meses de anticipación.';
 
         const h = dt.getHours();
-        if (h < 9 || h >= 20) return 'El horario debe ser entre las 9:00 a.m. y las 8:00 p.m.';
+        if (h < 7 || h >= 22) return 'El horario debe ser entre las 7:00 a.m. y las 10:00 p.m.';
 
         return null;
     },
