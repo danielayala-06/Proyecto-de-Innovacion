@@ -70,7 +70,8 @@ function _filtrar() {
     const okArch   = state.mostrarArchivadas || (!ESTADOS_ARCHIVADOS_COT.has(e) && !c.archivado);
     const okSearch = !search
       || _nombreCliente(c).toLowerCase().includes(search)
-      || String(c.id).includes(search);
+      || String(c.id).includes(search)
+      || (c.colegio?.nombre ?? '').toLowerCase().includes(search);
     const okEstado = !estado || e === estado;
     return okArch && okSearch && okEstado;
   });
