@@ -66,9 +66,10 @@ function _filtrar() {
   const filtradas = state.filas.filter(c => {
     const e       = c.estado?.toUpperCase();
     const okArch  = state.mostrarArchivadas || (!ESTADOS_ARCHIVADOS_CON.has(e) && !c.archivado);
-    const nombre  = (c.cliente?.nombre ?? '').toLowerCase();
-    const cod     = String(c.id);
-    const okSearch = !search || nombre.includes(search) || cod.includes(search);
+    const nombre   = (c.cliente?.nombre ?? '').toLowerCase();
+    const cod      = String(c.id);
+    const colegio  = (c.promocion?.colegio ?? '').toLowerCase();
+    const okSearch = !search || nombre.includes(search) || cod.includes(search) || colegio.includes(search);
     const okEstado = !estado || e === (estadoMap[estado] ?? estado.toUpperCase());
     return okArch && okSearch && okEstado;
   });

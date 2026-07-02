@@ -86,9 +86,12 @@
     .svc-qty { font-weight: 700; color: #1b2d6b; }
 
     /* ── SESIONES ─────────────────────────────────────────────── */
-    .ses-row { display: table; width: 100%; margin-bottom: 11px; }
-    .ses-l   { display: table-cell; font-weight: 700; font-size: 11px; white-space: nowrap; padding-right: 8px; color: #444; }
-    .ses-v   { display: table-cell; border-bottom: 1px solid #aaa; padding-bottom: 3px; }
+    .ses-table { width: 100%; border-collapse: collapse; margin-bottom: 11px; }
+    .ses-l { font-weight: 700; font-size: 11px; white-space: nowrap; padding-right: 8px; color: #444; width: 1%; }
+    .ses-v { border-bottom: 1px solid #aaa; padding-bottom: 3px; }
+
+    /* ── OBSERVACIONES ────────────────────────────────────────── */
+    .obs-line { border-bottom: 1px solid #aaa; height: 20px; margin-bottom: 10px; }
 
     /* ── ITEMS TABLE ──────────────────────────────────────────── */
     .items { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 10.5px; }
@@ -134,8 +137,18 @@
     .sig-name  { font-size: 11.5px; font-weight: 700; color: #1a1a1a; margin-top: 2px; }
 
     @page { margin: 0; }
+
+    .binding-line {
+        position: fixed;
+        left: 21mm;
+        top: 13mm;
+        bottom: 13mm;
+        width: 0;
+        border-left: 8px solid #1b2d6b;
+    }
 </style>
 <body>
+<div class="binding-line"></div>
 <?php
 $promo    = $contrato['promociones'][0] ?? [];
 $detalles = $contrato['detalles']       ?? [];
@@ -192,13 +205,13 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
     <div class="row2">
         <div class="col2">
             <div class="field">
-                <div class="fl">Cliente</div>
+                <div class="fl">Cliente:</div>
                 <div class="fv"><?= esc($promo['nombre_colegio']) ?></div>
             </div>
         </div>
         <div class="col2">
             <div class="field">
-                <div class="fl">Nivel</div>
+                <div class="fl">Nivel:</div>
                 <div class="fv">
                     <?php
                         $nivel = implode(' ', array_filter([
@@ -214,7 +227,7 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
     </div>
     <?php if (!empty($promo['distrito']) || !empty($promo['provincia'])): ?>
     <div class="field">
-        <div class="fl">Dirección</div>
+        <div class="fl">Dirección:</div>
         <div class="fv"><?= esc(implode(', ', array_filter([$promo['distrito'] ?? '', $promo['provincia'] ?? '']))) ?></div>
     </div>
     <?php endif; ?>
@@ -223,13 +236,13 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
     <div class="row2">
         <div class="col2">
             <div class="field">
-                <div class="fl">Contacto</div>
+                <div class="fl">Contacto:</div>
                 <div class="fv"><?= esc($contrato['cliente']) ?></div>
             </div>
         </div>
         <div class="col2">
             <div class="field">
-                <div class="fl">Teléfono</div>
+                <div class="fl">Teléfono:</div>
                 <div class="fv"><?= esc($contrato['telefono'] ?? '—') ?></div>
             </div>
         </div>
@@ -239,13 +252,13 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
     <div class="row2">
         <div class="col2">
             <div class="field">
-                <div class="fl">Contacto adicional</div>
+                <div class="fl">Contacto adicional:</div>
                 <div class="fv"><?= esc($contacto2Nombre) ?></div>
             </div>
         </div>
         <div class="col2">
             <div class="field">
-                <div class="fl">Teléfono</div>
+                <div class="fl">Teléfono:</div>
                 <div class="fv"><?= esc($contacto2Telefono ?? '—') ?></div>
             </div>
         </div>
@@ -290,22 +303,35 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
     <?php
     $sesiones  = $contrato['sesiones'] ?? [];
     $tipoLabel = ['estudio' => 'Estudio', 'colegio' => 'Colegio', 'exteriores' => 'Exteriores', 'otro' => 'Otro'];
-    $numSes    = max(count($sesiones), 2);
-    for ($i = 0; $i < $numSes; $i++):
-        $s     = $sesiones[$i] ?? null;
-        $fecha = '';
+    $fechasSes = [];
+    for ($i = 0; $i < 3; $i++) {
+        $s = $sesiones[$i] ?? null;
         if ($s) {
-            $dt    = new \DateTime($s['fecha_hora_sesion']);
-            $fecha = $dt->format('d') . ' de ' . $mesesEs[(int)$dt->format('m') - 1] . ' de ' . $dt->format('Y')
-                   . ', ' . $dt->format('H:i') . ' h'
-                   . ' — ' . ($tipoLabel[$s['tipo']] ?? ucfirst($s['tipo']));
+            $dt = new \DateTime($s['fecha_hora_sesion']);
+            $fechasSes[] = $dt->format('d') . ' de ' . $mesesEs[(int)$dt->format('m') - 1]
+                         . ' de ' . $dt->format('Y') . ', ' . $dt->format('H:i') . ' h'
+                         . ' — ' . ($tipoLabel[$s['tipo']] ?? ucfirst($s['tipo']));
+        } else {
+            $fechasSes[] = '';
         }
+    }
     ?>
-    <div class="ses-row">
-        <div class="ses-l">Fecha de sesión <?= $i + 1 ?>:</div>
-        <div class="ses-v"><?= $fecha ? esc($fecha) : '&nbsp;' ?></div>
-    </div>
-    <?php endfor; ?>
+    <table style="width:100%; border-collapse:collapse; margin-bottom:11px;">
+        <tr>
+            <?php for ($i = 0; $i < 3; $i++): ?>
+            <td style="width:33%; padding-right:<?= $i < 2 ? '12px' : '0' ?>; vertical-align:top;">
+                <div style="font-weight:700; font-size:9px; color:#555; text-transform:uppercase; letter-spacing:.3px; margin-bottom:3px;">Sesión <?= $i + 1 ?>:</div>
+                <div style="border-bottom:1px solid #aaa; font-size:10px; padding-bottom:3px; min-height:16px;"><?= $fechasSes[$i] ? esc($fechasSes[$i]) : '&nbsp;' ?></div>
+            </td>
+            <?php endfor; ?>
+        </tr>
+    </table>
+
+    <!-- OBSERVACIONES -->
+    <div class="sec">Observaciones</div>
+    <div class="obs-line"></div>
+    <div class="obs-line"></div>
+    <div class="obs-line"></div>
 
     <!-- DETALLE -->
     <div class="sec">Detalle del Servicio</div>
@@ -375,26 +401,26 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
                 <div class="clausulas-title">Cláusulas del Contrato</div>
                 <ol>
                     <li>El presente contrato es irrevocable.</li>
-                    <li>En caso de resolución por parte del Cliente, el adelanto no será devuelto; podrá aplicarse como crédito en un plazo máximo de 30 días.</li>
-                    <li>En cada sesión se cancela un porcentaje del pago total.</li>
-                    <li>El saldo final del 10% se cancela al momento de la entrega de los productos.</li>
-                    <li>La firma y/o el abono implican la aceptación plena de todas las cláusulas del presente contrato.</li>
+                    <li>En caso de resolución por parte del cliente, el monto entregado en adelanto no será devuelto, pero podrá aplicarse como crédito en otra fecha en un plazo máximo de 30 días.</li>
+                    <li>En cada sesión se da un porcentaje del pago total.</li>
+                    <li>El saldo final del 10 % se cancela cuando se entregan los anuarios.</li>
+                    <li>El abono del dinero implica la aceptación y conformidad del cliente en todas sus cláusulas expuestas.</li>
                 </ol>
             </div>
         </div>
         <div class="price-right">
             <div class="p-row">
-                <div class="p-lbl">Total</div>
+                <div class="p-lbl">Total:</div>
                 <div class="p-val">S/. <?= number_format($contrato['total'], 2) ?></div>
             </div>
             <hr class="p-sep">
             <div class="p-row">
-                <div class="p-lbl">Adelanto</div>
+                <div class="p-lbl">Adelanto:</div>
                 <div class="p-val">S/. <?= number_format($contrato['adelanto'], 2) ?></div>
             </div>
             <hr class="p-sep">
             <div class="p-row saldo">
-                <div class="p-lbl">Saldo</div>
+                <div class="p-lbl">Saldo:</div>
                 <div class="p-val">S/. <?= number_format($contrato['total'] - $contrato['adelanto'], 2) ?></div>
             </div>
         </div>

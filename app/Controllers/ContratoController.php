@@ -116,8 +116,9 @@ class ContratoController extends BaseController
         $dompdf->render();
 
         // Attachment => false: el PDF se abre en el navegador, no se descarga
+        // exit() detiene el ciclo de CI4 para que no intente enviar cookies después del stream
+        ob_end_clean();
         $dompdf->stream($titulo . '.pdf', ['Attachment' => false]);
-
-        return;
+        exit();
     }
 }
