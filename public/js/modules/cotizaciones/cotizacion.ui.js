@@ -115,13 +115,9 @@ export const ui = {
 
     const baseUrl = window.BASE_URL || '/';
     tbody.innerHTML = filas.map(c => {
-      const codigo      = formatters.codigo(c.id);
-      const nombre      = nombreCliente(c);
-      const estado      = c.estado?.toUpperCase();
-      const canEdit     = estado === 'PENDIENTE';
-      const canDel      = estado === 'PENDIENTE';
-      const canContract = estado === 'APROBADA' && !c.tiene_contrato;
-      const canArchive  = estado !== 'PENDIENTE';
+      const codigo = formatters.codigo(c.id);
+      const nombre = nombreCliente(c);
+      const estado = c.estado?.toUpperCase();
 
       return `
         <tr style="cursor:pointer;" onclick="verDetalle(${c.id})">
@@ -129,39 +125,27 @@ export const ui = {
           <td>
             ${c.colegio?.nombre
               ? `<span class="text-uppercase fw-semibold" style="font-size:.85rem;">${c.colegio.nombre}</span>
-                 ${c.promocion?.num_estudiantes ? `<br><span style="font-size:.75rem;color:var(--text-muted);">${c.promocion.num_estudiantes} est.</span>` : ''}
-                 <br><span class="text-uppercase" style="font-size:.72rem;color:var(--text-muted);">${nombre}</span>`
+                 <br><span class="text-uppercase" style="font-size:.75rem;color:var(--text-muted);">${nombre}</span>
+                 ${c.promocion?.num_estudiantes ? `<br><span style="font-size:.72rem;color:var(--text-muted);">${c.promocion.num_estudiantes} est.</span>` : ''}`
               : `<span class="text-uppercase" style="font-size:.85rem;">${nombre}</span>`
             }
           </td>
-          <td style="text-align:center;">${c.promocion?.num_estudiantes ?? '—'}</td>
           <td>${formatters.moneda(c.total)}</td>
-          <td>${badgeEstado(c.estado)}</td>
+          <td>
+            ${badgeEstado(c.estado)}
+            ${c.tiene_contrato ? `<br><span style="font-size:.65rem;font-weight:700;color:var(--green-text);background:var(--green-bg);border:1px solid var(--green-border);padding:1px 6px;border-radius:20px;white-space:nowrap;margin-top:3px;display:inline-block;"><i class="bi bi-file-earmark-check me-1"></i>Con contrato</span>` : ''}
+          </td>
           <td>${formatters.fecha(c.fecha)}</td>
           <td class="text-center" onclick="event.stopPropagation()">
-            <div class="d-flex gap-1 justify-content-center">
-              ${canEdit ? `
-              <button class="btn btn-sm btn-outline-warning" title="Editar cotización"
-                      onclick="window.location.href='${baseUrl}cotizaciones/editar/${c.id}'">
-                <i class="bi bi-pencil"></i>
-              </button>` : ''}
-              ${canContract ? `
-              <button class="btn btn-sm btn-outline-success" title="Generar contrato"
-                      onclick="irAGenerarContrato(${c.id})">
-                <i class="bi bi-file-earmark-plus"></i>
-              </button>` : ''}
-              ${canArchive ? `
-              <button class="btn btn-sm ${c.archivado ? 'btn-secondary' : 'btn-outline-secondary'}"
-                      title="${c.archivado ? 'Desarchivar' : 'Archivar'}"
-                      onclick="archivarCotizacion(${c.id}, ${c.archivado ? 'true' : 'false'})">
-                <i class="bi ${c.archivado ? 'bi-archive-fill' : 'bi-archive'}"></i>
-              </button>` : ''}
-              ${canDel ? `
-              <button class="btn btn-sm btn-outline-danger" title="Rechazar"
-                      onclick="confirmarEliminar(${c.id},'${codigo}')">
-                <i class="bi bi-trash"></i>
-              </button>` : ''}
-            </div>
+            <button class="cot-menu-btn"
+                    data-id="${c.id}"
+                    data-estado="${estado}"
+                    data-archivado="${c.archivado ? '1' : '0'}"
+                    data-contrato="${c.tiene_contrato ? '1' : '0'}"
+                    data-codigo="${codigo}"
+                    onclick="abrirMenuCot(event, this)">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
           </td>
         </tr>`;
     }).join('');

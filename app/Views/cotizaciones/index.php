@@ -78,7 +78,6 @@ function fmtFechaCot(?string $f): string {
                     <tr>
                         <th class="text-uppercase" onclick="sortBy('codigo')">Código <i class="bi bi-arrow-down-up sort-icon" id="sort-codigo"></i></th>
                         <th class="text-uppercase" onclick="sortBy('institucion')">Institución / Cliente <i class="bi bi-arrow-down-up sort-icon" id="sort-institucion"></i></th>
-                        <th class="text-uppercase" onclick="sortBy('estudiantes')" style="text-align:center;">Nº Est. <i class="bi bi-arrow-down-up sort-icon" id="sort-estudiantes"></i></th>
                         <th class="text-uppercase" onclick="sortBy('total')">Total <i class="bi bi-arrow-down-up sort-icon" id="sort-total"></i></th>
                         <th class="text-uppercase" onclick="sortBy('estado')">Estado <i class="bi bi-arrow-down-up sort-icon" id="sort-estado"></i></th>
                         <th class="text-uppercase" onclick="sortBy('creado')">Creado <i class="bi bi-arrow-down-up sort-icon" id="sort-creado"></i></th>

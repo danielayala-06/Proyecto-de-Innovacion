@@ -144,23 +144,14 @@ export const ui = {
           <td>${formatters.moneda(c.total)}</td>
           <td>${badgeEstado(c.estado)}</td>
           <td>${formatters.fecha(c.fecha_creacion)}</td>
-          <td onclick="event.stopPropagation()">
-            <div class="con-actions">
-              <button class="btn btn-sm btn-outline-warning" ${editAttr}>
-                <i class="bi bi-pencil-square"></i>
-              </button>
-              <a class="btn btn-sm btn-outline-info" title="Gestionar sesiones"
-                 href="/contratos/${c.id}/sesiones"
-                 onclick="event.stopPropagation()">
-                <i class="bi bi-camera"></i>
-              </a>
-              ${canArchive ? `
-              <button class="btn btn-sm ${c.archivado ? 'btn-secondary' : 'btn-outline-secondary'}"
-                      title="${c.archivado ? 'Desarchivar' : 'Archivar'}"
-                      onclick="event.stopPropagation();archivarContrato(${c.id}, ${c.archivado ? 'true' : 'false'})">
-                <i class="bi ${c.archivado ? 'bi-archive-fill' : 'bi-archive'}"></i>
-              </button>` : ''}
-            </div>
+          <td class="text-center" onclick="event.stopPropagation()">
+            <button class="cot-menu-btn"
+                    data-id="${c.id}"
+                    data-estado="${c.estado?.toUpperCase()}"
+                    data-archivado="${c.archivado ? '1' : '0'}"
+                    onclick="abrirMenuCon(event, this)">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
           </td>
         </tr>`;
     }).join('');

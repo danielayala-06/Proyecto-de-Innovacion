@@ -159,6 +159,66 @@ function _limpiarFormContrato() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MENÚ KEBAB DE ACCIONES POR FILA (window.*)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const _cerrarMenuCon = () => document.getElementById('conRowDropdown')?.remove();
+window._cerrarMenuCon = _cerrarMenuCon;
+
+document.addEventListener('click', _cerrarMenuCon);
+
+window.abrirMenuCon = function (e, btn) {
+  e.stopPropagation();
+  _cerrarMenuCon();
+
+  const id       = Number(btn.dataset.id);
+  const estado   = btn.dataset.estado;
+  const archivado = btn.dataset.archivado === '1';
+  const isActivo  = estado === 'ACTIVO';
+  const canArchive = !isActivo;
+
+  const items = [];
+
+  if (isActivo) {
+    items.push(`<button class="cot-row-dropdown-item"
+        onclick="_cerrarMenuCon();editarContrato(${id})">
+      <i class="bi bi-pencil-square" style="color:var(--amber-text);"></i>Corregir contrato
+    </button>`);
+  }
+
+  items.push(`<button class="cot-row-dropdown-item"
+      onclick="_cerrarMenuCon();window.location.href='${BASE_URL}contratos/${id}/sesiones'">
+    <i class="bi bi-camera" style="color:var(--blue-text);"></i>Gestionar sesiones
+  </button>`);
+
+  if (canArchive) {
+    items.push('<div class="cot-row-dropdown-divider"></div>');
+    items.push(`<button class="cot-row-dropdown-item"
+        onclick="_cerrarMenuCon();archivarContrato(${id},${archivado})">
+      <i class="bi ${archivado ? 'bi-archive-fill' : 'bi-archive'}" style="color:var(--text-muted);"></i>
+      ${archivado ? 'Desarchivar' : 'Archivar'}
+    </button>`);
+  }
+
+  const menu = document.createElement('div');
+  menu.id        = 'conRowDropdown';
+  menu.className = 'cot-row-dropdown';
+  menu.innerHTML = items.join('');
+  document.body.appendChild(menu);
+
+  const rect  = btn.getBoundingClientRect();
+  const menuW = menu.offsetWidth  || 185;
+  const menuH = menu.offsetHeight || 100;
+  let   left  = rect.right - menuW;
+  let   top   = rect.bottom + 4;
+  if (left < 8)                             left = 8;
+  if (top + menuH > window.innerHeight - 8) top  = rect.top - menuH - 4;
+
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PAGINACIÓN Y ORDEN (window.*)
 // ─────────────────────────────────────────────────────────────────────────────
 

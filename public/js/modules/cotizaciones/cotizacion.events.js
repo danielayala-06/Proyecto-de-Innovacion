@@ -110,7 +110,6 @@ window.sortBy = function (key) {
   const getVal = (item, k) => {
     if (k === 'cliente')     return _nombreCliente(item);
     if (k === 'institucion') return item.colegio?.nombre ?? '';
-    if (k === 'estudiantes') return item.promocion?.num_estudiantes ?? 0;
     const keyMap = { codigo: 'id', fecha: 'fecha', total: 'total', estado: 'estado', creado: 'fecha' };
     return item[keyMap[k] ?? k] ?? '';
   };
@@ -122,6 +121,80 @@ window.sortBy = function (key) {
   });
 
   _renderPagina();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MENÚ KEBAB DE ACCIONES POR FILA (window.*)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const _cerrarMenu = () => document.getElementById('cotRowDropdown')?.remove();
+window._cerrarMenu = _cerrarMenu;
+
+document.addEventListener('click', _cerrarMenu);
+
+window.abrirMenuCot = function (e, btn) {
+  e.stopPropagation();
+  _cerrarMenu();
+
+  const id          = Number(btn.dataset.id);
+  const estado      = btn.dataset.estado;
+  const archivado   = btn.dataset.archivado === '1';
+  const conContrato = btn.dataset.contrato  === '1';
+  const codigo      = btn.dataset.codigo;
+  const baseUrl     = window.BASE_URL || '/';
+
+  const canEdit     = estado === 'PENDIENTE';
+  const canDel      = estado === 'PENDIENTE';
+  const canContract = estado === 'APROBADA' && !conContrato;
+  const canArchive  = estado !== 'PENDIENTE';
+
+  const items = [];
+
+  if (canEdit) {
+    items.push(`<button class="cot-row-dropdown-item"
+        onclick="_cerrarMenu();window.location.href='${baseUrl}cotizaciones/editar/${id}'">
+      <i class="bi bi-pencil" style="color:var(--amber-text);"></i>Editar
+    </button>`);
+  }
+  if (canContract) {
+    items.push(`<button class="cot-row-dropdown-item"
+        onclick="_cerrarMenu();irAGenerarContrato(${id})">
+      <i class="bi bi-file-earmark-plus" style="color:var(--green-text);"></i>Generar contrato
+    </button>`);
+  }
+  if (canArchive) {
+    items.push(`<button class="cot-row-dropdown-item"
+        onclick="_cerrarMenu();archivarCotizacion(${id},${archivado})">
+      <i class="bi ${archivado ? 'bi-archive-fill' : 'bi-archive'}" style="color:var(--text-muted);"></i>
+      ${archivado ? 'Desarchivar' : 'Archivar'}
+    </button>`);
+  }
+  if (canDel) {
+    if (items.length) items.push('<div class="cot-row-dropdown-divider"></div>');
+    items.push(`<button class="cot-row-dropdown-item danger"
+        onclick="_cerrarMenu();confirmarEliminar(${id},'${codigo}')">
+      <i class="bi bi-trash"></i>Rechazar
+    </button>`);
+  }
+
+  if (!items.length) return;
+
+  const menu = document.createElement('div');
+  menu.id        = 'cotRowDropdown';
+  menu.className = 'cot-row-dropdown';
+  menu.innerHTML = items.join('');
+  document.body.appendChild(menu);
+
+  const rect    = btn.getBoundingClientRect();
+  const menuW   = menu.offsetWidth  || 185;
+  const menuH   = menu.offsetHeight || 120;
+  let   left    = rect.right - menuW;
+  let   top     = rect.bottom + 4;
+  if (left < 8)                          left = 8;
+  if (top + menuH > window.innerHeight - 8) top = rect.top - menuH - 4;
+
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

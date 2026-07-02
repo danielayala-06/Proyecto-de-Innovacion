@@ -1324,6 +1324,30 @@ label {
 [data-theme="dark"] .cot-confirm-title  { color: var(--sidebar-active-text); }
 [data-theme="dark"] .cot-confirm-subtitle { color: var(--sidebar-link); opacity: .75; }
 
+/* ── MENÚ DE ACCIONES (kebab ⋯) ─────────────────────────────────── */
+.cot-menu-btn {
+    background: none; border: 1px solid transparent; border-radius: 6px;
+    padding: 3px 8px; cursor: pointer; color: var(--text-muted);
+    font-size: .95rem; line-height: 1; transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.cot-menu-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border); }
+.cot-row-dropdown {
+    position: fixed; z-index: 1055;
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 9px; box-shadow: var(--shadow-md);
+    min-width: 185px; padding: 4px 0; font-size: .83rem;
+}
+.cot-row-dropdown-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 14px; cursor: pointer;
+    color: var(--text-primary); background: none; border: none;
+    width: 100%; text-align: left; transition: background 0.1s;
+}
+.cot-row-dropdown-item:hover { background: var(--bg-hover); }
+.cot-row-dropdown-item.danger { color: var(--red-text); }
+.cot-row-dropdown-item.danger:hover { background: var(--red-bg); }
+.cot-row-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
 /* ── CONTRATOS ───────────────────────────────────────────────────── */
 .con-stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; margin-bottom: 1.35rem; }
 .con-table-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
