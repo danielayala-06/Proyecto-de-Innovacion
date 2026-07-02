@@ -77,12 +77,19 @@ class CotizacionesModel extends Model
                 'c2.id_cliente AS id_cliente2',
                 'p2.nombres AS nombres2', 'p2.apellidos AS apellidos2',
                 'p2.telefono AS telefono2',
+                'pe.id_promocion AS id_promocion_fk',
+                'pe.nombre      AS promo_nombre',
+                'pe.num_estudiantes',
+                'co.id_colegio  AS id_colegio_fk',
+                'co.nombre_colegio',
             ])
-            ->join('clientes',     'clientes.id_cliente = cotizaciones.id_cliente')
-            ->join('personas p1',  'p1.id_persona = clientes.id_persona')
-            ->join('usuarios',     'usuarios.id_usuario = cotizaciones.id_usuario')
-            ->join('clientes c2',  'c2.id_cliente = cotizaciones.id_cliente2', 'left')
-            ->join('personas p2',  'p2.id_persona = c2.id_persona', 'left')
+            ->join('clientes',                  'clientes.id_cliente = cotizaciones.id_cliente')
+            ->join('personas p1',               'p1.id_persona = clientes.id_persona')
+            ->join('usuarios',                  'usuarios.id_usuario = cotizaciones.id_usuario')
+            ->join('clientes c2',               'c2.id_cliente = cotizaciones.id_cliente2', 'left')
+            ->join('personas p2',               'p2.id_persona = c2.id_persona', 'left')
+            ->join('promociones_escolares pe',  'pe.id_cotizacion = cotizaciones.id_cotizacion', 'left')
+            ->join('colegios co',               'co.id_colegio = pe.id_colegio', 'left')
             ->orderBy('cotizaciones.id_cotizacion', 'DESC')
             ->findAll();
     }

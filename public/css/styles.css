@@ -1274,15 +1274,16 @@ label {
 .cot-table-card thead th:hover { color: var(--accent); }
 .cot-table-card thead th.sorted { color: var(--accent); }
 .cot-table-card thead th.sorted .sort-icon { color: var(--accent); opacity: 1; }
-.cot-table-card tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.12s; }
+.cot-table-card tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s, box-shadow 0.15s, opacity 0.15s; }
 .cot-table-card tbody tr:last-child { border-bottom: none; }
-.cot-table-card tbody tr:hover { background: var(--bg-hover); }
+.cot-table-card tbody tr:hover { background: var(--bg-hover); box-shadow: inset 3px 0 0 var(--accent); }
 .cot-table-card tbody td { padding: 11px 14px; vertical-align: middle; }
 
 .cot-codigo {
     font-family: 'JetBrains Mono', 'Courier New', monospace;
-    font-size: 0.77rem; font-weight: 700; color: var(--accent-text);
-    background: var(--accent-light); padding: 2px 7px; border-radius: 5px; white-space: nowrap;
+    font-size: 0.77rem; font-weight: 700; color: var(--green-text);
+    background: var(--green-bg); padding: 2px 7px; border-radius: 5px;
+    border: 1px solid var(--green-border); white-space: nowrap;
 }
 .cot-tipo {
     font-size: 0.66rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;
@@ -1308,6 +1309,20 @@ label {
 .cot-items-list { list-style: none; padding: 0; margin: 0; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .cot-items-list li { padding: 7px 12px; font-size: 0.83rem; color: var(--text-secondary); border-bottom: 1px solid var(--border); }
 .cot-items-list li:last-child { border-bottom: none; }
+
+/* ── MODAL CONFIRMACIÓN COTIZACIÓN ──────────────────────────────── */
+.cot-confirm-header {
+    background: var(--accent); border-bottom: none; padding: 1rem 1.25rem;
+}
+.cot-confirm-title {
+    color: #fff; font-size: 1rem; font-weight: 700; letter-spacing: .3px; margin: 0;
+}
+.cot-confirm-subtitle {
+    color: rgba(255,255,255,.78); font-size: .75rem; margin-top: 2px;
+}
+[data-theme="dark"] .cot-confirm-header { background: var(--sidebar-bg); }
+[data-theme="dark"] .cot-confirm-title  { color: var(--sidebar-active-text); }
+[data-theme="dark"] .cot-confirm-subtitle { color: var(--sidebar-link); opacity: .75; }
 
 /* ── CONTRATOS ───────────────────────────────────────────────────── */
 .con-stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 10px; margin-bottom: 1.35rem; }

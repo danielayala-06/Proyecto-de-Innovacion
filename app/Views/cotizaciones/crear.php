@@ -121,8 +121,7 @@
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label">
-                                        Documento
-                                        <span style="font-size:.72rem;color:var(--text-muted);font-weight:250;">(opcional)</span>
+                                        Documento de Identidad
                                     </label>
                                     <div class="input-group">
                                         <select class="form-select" id="tipoDocumento2" style="max-width:175px;flex-shrink:0;">
@@ -460,12 +459,12 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width:660px;">
         <div class="modal-content">
 
-            <div class="modal-header" style="background:var(--sidebar-bg,#1A1814);border-bottom:none;padding:1rem 1.25rem;">
+            <div class="modal-header cot-confirm-header">
                 <div>
-                    <h6 class="modal-title mb-0" style="color:var(--sidebar-active-text,#F2E4BC);font-size:1rem;font-weight:700;letter-spacing:.3px;">
+                    <h6 class="modal-title cot-confirm-title">
                         <i class="bi bi-file-earmark-check me-2"></i>Resumen de cotización
                     </h6>
-                    <div style="color:var(--sidebar-link,#C8BCA8);font-size:.75rem;margin-top:2px;opacity:.75;">
+                    <div class="cot-confirm-subtitle">
                         Revisa los datos antes de confirmar
                     </div>
                 </div>
@@ -473,6 +472,9 @@
             </div>
 
             <div class="modal-body" style="padding:1.25rem;background:var(--bg-surface,#FAFAF8);">
+
+                <!-- Contexto: cliente + institución + promoción -->
+                <div id="conf-contexto" style="margin-bottom:1rem;"></div>
 
                 <!-- Bloque destacado: estudiantes + total -->
                 <div style="display:flex;gap:.75rem;margin-bottom:1.1rem;">
@@ -518,8 +520,9 @@
             </div>
 
             <div class="modal-footer" style="border-top:1px solid var(--border,#D6D0C8);padding:.9rem 1.25rem;gap:.5rem;background:var(--bg-surface,#FAFAF8);">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-                    <i class="bi bi-pencil me-1"></i>Revisar
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"
+                        style="padding:.45rem 1.2rem;">
+                    <i class="bi bi-arrow-left me-1"></i>Volver al formulario
                 </button>
                 <button type="button" class="btn btn-sm" id="btn-confirmar-cotizacion"
                         style="background:var(--accent,#B49040);color:#fff;font-weight:600;padding:.45rem 1.2rem;border:none;">

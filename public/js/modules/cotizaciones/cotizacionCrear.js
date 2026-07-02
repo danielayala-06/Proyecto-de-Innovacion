@@ -1246,6 +1246,37 @@ function _mostrarModalConfirmacion() {
     const descMonto  = Math.min(state.descuentoMonto ?? 0, totalBruto);
     const total      = totalBruto - descMonto;
 
+    // ── Bloque de contexto: cliente + institución + promoción ───────────────
+    const ctxEl = document.getElementById('conf-contexto');
+    if (ctxEl) {
+        const cliente    = document.getElementById('contactoCliente')?.value?.trim() || '—';
+        const institucion = document.getElementById('nombreColegio')?.value?.trim() || '';
+        const promNombre  = document.getElementById('nombreProm')?.value?.trim() || '';
+        const grado       = document.getElementById('gradoProm')?.value || '';
+        const seccion     = document.getElementById('seccionProm')?.value?.trim() || '';
+
+        const infoSecundaria = [promNombre, grado, seccion].filter(Boolean).join(' · ');
+
+        ctxEl.innerHTML = `
+            <div style="background:var(--bg-elevated,#fff);border:1.5px solid var(--border,#D6D0C8);
+                        border-radius:10px;padding:.75rem 1rem;display:flex;flex-direction:column;gap:.3rem;">
+                <div style="display:flex;align-items:center;gap:.55rem;">
+                    <i class="bi bi-person-fill" style="color:var(--accent,#B49040);font-size:.85rem;flex-shrink:0;"></i>
+                    <span style="font-size:.88rem;font-weight:600;color:var(--text-primary,#1C1916);">${cliente}</span>
+                </div>
+                ${institucion ? `
+                <div style="display:flex;align-items:center;gap:.55rem;">
+                    <i class="bi bi-building" style="color:var(--text-muted,#7C7468);font-size:.82rem;flex-shrink:0;"></i>
+                    <span style="font-size:.82rem;color:var(--text-secondary,#4E4840);">${institucion}</span>
+                </div>` : ''}
+                ${infoSecundaria ? `
+                <div style="display:flex;align-items:center;gap:.55rem;">
+                    <i class="bi bi-mortarboard" style="color:var(--text-muted,#7C7468);font-size:.82rem;flex-shrink:0;"></i>
+                    <span style="font-size:.78rem;color:var(--text-muted,#7C7468);">${infoSecundaria}</span>
+                </div>` : ''}
+            </div>`;
+    }
+
     // ── Bloques de resumen ──────────────────────────────────────────────────
     const numEstEl = document.getElementById('conf-num-estudiantes');
     if (numEstEl) {
@@ -1271,8 +1302,9 @@ function _mostrarModalConfirmacion() {
 
         const filaHeader = `
             <div style="display:grid;grid-template-columns:${COLS};
-                        gap:0;background:var(--sidebar-bg,#1A1814);color:var(--sidebar-link,#C8BCA8);
-                        font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
+                        gap:0;background:var(--bg-page,#F2EFEA);color:var(--text-muted,#7C7468);
+                        border-bottom:1px solid var(--border,#D6D0C8);
+                        font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">
                 <div style="padding:.45rem 1rem;">Descripción</div>
                 <div style="padding:.45rem .5rem;text-align:center;">Cant.</div>
                 <div style="padding:.45rem .75rem;text-align:right;">Precio u.</div>

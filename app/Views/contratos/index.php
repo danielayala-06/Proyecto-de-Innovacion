@@ -51,7 +51,7 @@
                         <th class="text-uppercase" onclick="sortBy('codigo')">Código <i class="bi bi-arrow-down-up sort-icon" id="sort-codigo"></i></th>
                         <th class="text-uppercase" onclick="sortBy('cotizacionCod')">Cotización <i class="bi bi-arrow-down-up sort-icon" id="sort-cotizacionCod"></i></th>
                         <th class="text-uppercase" onclick="sortBy('cliente')">Cliente <i class="bi bi-arrow-down-up sort-icon" id="sort-cliente"></i></th>
-                        <th class="text-uppercase" onclick="sortBy('fechaEvento')">Fecha Sesión <i class="bi bi-arrow-down-up sort-icon" id="sort-fechaEvento"></i></th>
+                        <th class="text-uppercase" onclick="sortBy('fechaEvento')">Primera Sesión <i class="bi bi-arrow-down-up sort-icon" id="sort-fechaEvento"></i></th>
                         <th class="text-uppercase" onclick="sortBy('total')">Total <i class="bi bi-arrow-down-up sort-icon" id="sort-total"></i></th>
                         <th class="text-uppercase" onclick="sortBy('estado')">Estado <i class="bi bi-arrow-down-up sort-icon" id="sort-estado"></i></th>
                         <th class="text-uppercase" onclick="sortBy('creado')">Generado <i class="bi bi-arrow-down-up sort-icon" id="sort-creado"></i></th>

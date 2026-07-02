@@ -294,11 +294,27 @@ class CotizacionService
         $cotizaciones   = [];
 
         foreach ($rows as $row) {
-            $id             = $row['id_cotizacion'];
+            $id = $row['id_cotizacion'];
+
+            $promocion = !empty($row['id_promocion_fk']) ? [
+                'id_promocion'   => $row['id_promocion_fk'],
+                'nombre'         => $row['promo_nombre'],
+                'num_estudiantes'=> $row['num_estudiantes'],
+            ] : null;
+
+            $colegio = !empty($row['id_colegio_fk']) ? [
+                'id_colegio'    => $row['id_colegio_fk'],
+                'nombre_colegio'=> $row['nombre_colegio'],
+                'provincia'     => null,
+                'distrito'      => null,
+            ] : null;
+
             $cotizaciones[] = $this->_formatearCotizacion(
                 $row,
                 $detallesPorCot[$id] ?? [],
-                isset($conContrato[$id])
+                isset($conContrato[$id]),
+                $promocion,
+                $colegio
             );
         }
 

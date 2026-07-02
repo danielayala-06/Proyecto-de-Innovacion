@@ -125,8 +125,16 @@ export const ui = {
 
       return `
         <tr style="cursor:pointer;" onclick="verDetalle(${c.id})">
-          <td><code style="font-size:.78rem;">${codigo}</code></td>
-          <td class= "text-uppercase">${nombre}</td>
+          <td><span class="cot-codigo">${codigo}</span></td>
+          <td>
+            ${c.colegio?.nombre
+              ? `<span class="text-uppercase fw-semibold" style="font-size:.85rem;">${c.colegio.nombre}</span>
+                 ${c.promocion?.num_estudiantes ? `<br><span style="font-size:.75rem;color:var(--text-muted);">${c.promocion.num_estudiantes} est.</span>` : ''}
+                 <br><span class="text-uppercase" style="font-size:.72rem;color:var(--text-muted);">${nombre}</span>`
+              : `<span class="text-uppercase" style="font-size:.85rem;">${nombre}</span>`
+            }
+          </td>
+          <td style="text-align:center;">${c.promocion?.num_estudiantes ?? '—'}</td>
           <td>${formatters.moneda(c.total)}</td>
           <td>${badgeEstado(c.estado)}</td>
           <td>${formatters.fecha(c.fecha)}</td>

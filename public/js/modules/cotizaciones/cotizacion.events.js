@@ -107,15 +107,17 @@ window.sortBy = function (key) {
     state.sortDir = 'asc';
   }
   const dir = state.sortDir === 'asc' ? 1 : -1;
-  const keyMap = {
-    codigo: 'id', cliente: 'cliente', fecha: 'fecha',
-    total: 'total', estado: 'estado', creado: 'fecha',
+  const getVal = (item, k) => {
+    if (k === 'cliente')     return _nombreCliente(item);
+    if (k === 'institucion') return item.colegio?.nombre ?? '';
+    if (k === 'estudiantes') return item.promocion?.num_estudiantes ?? 0;
+    const keyMap = { codigo: 'id', fecha: 'fecha', total: 'total', estado: 'estado', creado: 'fecha' };
+    return item[keyMap[k] ?? k] ?? '';
   };
-  const campo = keyMap[key] || key;
 
   state.filtradas.sort((a, b) => {
-    const va = campo === 'cliente' ? _nombreCliente(a) : (a[campo] ?? '');
-    const vb = campo === 'cliente' ? _nombreCliente(b) : (b[campo] ?? '');
+    const va = getVal(a, key);
+    const vb = getVal(b, key);
     return va < vb ? -dir : va > vb ? dir : 0;
   });
 
