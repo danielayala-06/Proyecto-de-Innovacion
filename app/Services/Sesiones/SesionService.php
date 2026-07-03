@@ -344,7 +344,7 @@ class SesionService
 
         $hora = (int) $dt->format('G');
         if ($hora < 7 || $hora >= 22) {
-            throw new \RuntimeException('El horario debe ser entre las 7:00 a.m. y las 10:00 p.m.', 422);
+            throw new \RuntimeException('El horario debe ser entre las 07:00 y las 22:00.', 422);
         }
     }
 

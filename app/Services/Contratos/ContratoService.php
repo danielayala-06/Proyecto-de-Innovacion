@@ -179,20 +179,11 @@ class ContratoService
             );
         }
 
-        $promocion   = $this->promocionModel->porCotizacion((int) $data['id_cotizacion']);
-        $numAlumnos  = (int) ($promocion['num_estudiantes'] ?? 0);
-        $adelantoMin = $this->_calcularAdelantoMin($numAlumnos, $total);
-
-        if ($adelanto < $adelantoMin) {
-            throw new \RuntimeException(
-                "El adelanto mínimo es S/ {$adelantoMin} " .
-                ($numAlumnos > 0
-                    ? "(S/ 10 × {$numAlumnos} alumnos o 5% del total, lo que sea mayor)"
-                    : "(5% del total)"),
-                422
-            );
+        if ($adelanto <= 0) {
+            throw new \RuntimeException('El adelanto debe ser mayor a cero.', 422);
         }
 
+        $promocion  = $this->promocionModel->porCotizacion((int) $data['id_cotizacion']);
         $detalles   = $this->detalleModel->where('id_cotizacion', (int) $data['id_cotizacion'])->findAll();
         $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
 
@@ -304,19 +295,8 @@ class ContratoService
                 );
             }
 
-            $promocion     = $this->promocionModel->porCotizacion((int) $contrato['id_cotizacion']);
-            $numAlumnos    = (int) ($promocion['num_estudiantes'] ?? 0);
-            $totalContrato = (float) $contrato['total'];
-            $adelantoMin   = $this->_calcularAdelantoMin($numAlumnos, $totalContrato);
-
-            if ($nuevoAdelanto < $adelantoMin) {
-                throw new \RuntimeException(
-                    "El adelanto mínimo es S/ {$adelantoMin} " .
-                    ($numAlumnos > 0
-                        ? "(S/ 10 × {$numAlumnos} alumnos o 5% del total, lo que sea mayor)"
-                        : "(5% del total)"),
-                    422
-                );
+            if ($nuevoAdelanto <= 0) {
+                throw new \RuntimeException('El adelanto debe ser mayor a cero.', 422);
             }
 
             $updateData['adelanto'] = $nuevoAdelanto;
@@ -453,16 +433,5 @@ class ContratoService
     public function obtenerDataContratoPDF(int $id)
     {
         return $this->contratoModel->obtenerDataPDFContrato($id);
-    }
-
-    /**
-     * Calcula el adelanto mínimo aceptable según las reglas de negocio:
-     * el mayor entre S/ 50 fijos, S/ 10 por alumno, o el 5 % del total.
-     */
-    private function _calcularAdelantoMin(int $numAlumnos, float $total): int
-    {
-        $minEst = $numAlumnos > 0 ? $numAlumnos * 10 : 0;
-        $minPct = (int) ceil($total * 0.05);
-        return max(50, $minEst, $minPct);
     }
 }

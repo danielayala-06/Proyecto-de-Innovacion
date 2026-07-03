@@ -187,3 +187,37 @@
     font-size: .85rem;
     color: var(--accent);
 }
+
+/* ── Sesión buttons ──────────────────────────────────────────────────────── */
+.cc-btn-add-sesion {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: transparent;
+    border: 1.5px dashed var(--accent);
+    border-radius: 6px;
+    padding: .35rem .9rem;
+    cursor: pointer;
+    transition: background .15s;
+    margin-top: .25rem;
+}
+.cc-btn-add-sesion:hover {
+    background: rgba(180, 144, 64, .08);
+}
+.cc-btn-del-sesion {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: .3rem .55rem;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+}
+.cc-btn-del-sesion:hover {
+    border-color: var(--red-text, #dc3545);
+    color: var(--red-text, #dc3545);
+}

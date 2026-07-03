@@ -63,35 +63,19 @@
                 <div class="shadow p-3 mb-5 bg-body-tertiary rounded">
 
                     <fieldset class="cc-fieldset">
-                        <legend><i class="bi bi-camera"></i> Sesiones fotográficas <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);">(opcional)</span></legend>
-                        <div class="w-100 mb-4 shadow border bg-body-tertiary rounded"></div>
-
-                        <div id="sesionesContainer"></div>
-
-                        <button type="button" id="btnAgregarSesion"
-                                style="margin-top:.35rem;font-size:.78rem;display:flex;align-items:center;gap:5px;padding:.3rem .75rem;">
-                            <i class="bi bi-plus-circle"></i>Agregar sesión
-                        </button>
-                        <p style="font-size:.73rem;color:var(--text-muted);margin:.4rem 0 0;">
-                            Máximo 3 sesiones &middot; horario permitido: 7:00 a.m. – 8:00 p.m. &middot; hasta 10 meses desde hoy.
-                        </p>
-                    </fieldset>
-
-                    <fieldset class="cc-fieldset">
                         <legend><i class="bi bi-cash-coin"></i> Pago del adelanto</legend>
-                        <div class="w-100 mb-4 shadow border bg-body-tertiary rounded"></div>
-    
+
                         <div class="cc-form-group">
                             <label for="contratoAdelanto">Monto (S/.) <span style="color:var(--red-text)">*</span></label>
                             <input type="number" id="contratoAdelanto" min="0.01" step="0.01" placeholder="0.00" onwheel="this.blur()"
                                    oninput="if(parseFloat(this.value)<0)this.value=''">
                         </div>
-    
+
                         <div class="cc-form-group">
                             <label for="contratoFechaFirma">Fecha de pago <span style="color:var(--red-text)">*</span></label>
                             <input type="date" id="contratoFechaFirma">
                         </div>
-    
+
                         <div class="cc-form-group" style="margin-bottom:0;">
                             <label for="contratoFormaPago">Forma de pago</label>
                             <select id="contratoFormaPago">
@@ -100,6 +84,31 @@
                             <input type="text" id="contratoFormaPagoOtro"
                                    placeholder="Ej: Tarjeta, Depósito BCP…"
                                    maxlength="60" style="display:none;margin-top:6px;">
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="cc-fieldset">
+                        <legend><i class="bi bi-camera"></i> Sesiones fotográficas <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);">(opcional)</span></legend>
+
+                        <div id="sesionesContainer"></div>
+
+                        <button type="button" id="btnAgregarSesion" class="cc-btn-add-sesion">
+                            <i class="bi bi-plus-circle-fill"></i>Agregar sesión
+                        </button>
+                        <p style="font-size:.73rem;color:var(--text-muted);margin:.5rem 0 0;">
+                            Máximo 3 sesiones &middot; horario: 07:00 – 22:00 &middot; hasta 10 meses desde hoy.
+                        </p>
+                    </fieldset>
+
+                    <fieldset class="cc-fieldset" style="margin-bottom:0;">
+                        <legend><i class="bi bi-chat-left-text"></i> Observaciones <span style="font-weight:400;font-size:.75rem;color:var(--text-muted);">(opcional)</span></legend>
+                        <div class="cc-form-group" style="margin-bottom:0;">
+                            <textarea id="contratoObservaciones" maxlength="400"
+                                      placeholder="Indicaciones especiales, condiciones adicionales…"
+                                      style="min-height:64px;"></textarea>
+                            <p style="font-size:.71rem;color:var(--text-muted);margin:.3rem 0 0;text-align:right;">
+                                <span id="obsCount">0</span>/400
+                            </p>
                         </div>
                     </fieldset>
     
@@ -194,6 +203,40 @@
                 <button type="button" class="btn btn-sm" id="btnConfirmarContrato"
                         style="background:var(--accent,#B49040);color:#fff;font-weight:600;border:none;border-radius:7px;padding:.4rem 1.1rem;">
                     <i class="bi bi-file-earmark-check me-1"></i>Confirmar y generar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL DE ADELANTO BAJO ───────────────────────────────────────────────── -->
+<div class="modal fade" id="modalAdelantoBajo" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content" style="border-radius:14px;overflow:hidden;">
+
+            <div class="modal-header" style="background:#b45309;border-bottom:none;padding:1rem 1.25rem;">
+                <div>
+                    <h6 class="modal-title mb-0" style="color:#fff;font-size:.95rem;font-weight:700;letter-spacing:.3px;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Adelanto inusualmente bajo
+                    </h6>
+                </div>
+            </div>
+
+            <div class="modal-body" style="padding:1.35rem 1.25rem;background:var(--bg-surface,#FAFAF8);">
+                <p id="adelantoBajoMensaje" style="font-size:.88rem;color:var(--text-primary);line-height:1.6;margin:0;"></p>
+                <p style="font-size:.8rem;color:var(--text-muted);margin-top:.75rem;margin-bottom:0;">
+                    Si ya coordinó este monto con el cliente, puede continuar. De lo contrario, le recomendamos regresar y ajustar el monto.
+                </p>
+            </div>
+
+            <div class="modal-footer" style="border-top:1px solid var(--border-color);padding:.85rem 1.25rem;gap:.5rem;background:var(--bg-surface,#FAFAF8);">
+                <button type="button" class="btn btn-sm" id="btnAdelantoBajoVolver"
+                        style="color:var(--text-muted);background:none;border:1px solid var(--border-color);border-radius:7px;padding:.35rem .85rem;">
+                    <i class="bi bi-arrow-left me-1"></i>Volver y corregir
+                </button>
+                <button type="button" class="btn btn-sm" id="btnAdelantoBajoConfirmar"
+                        style="background:#b45309;color:#fff;font-weight:600;border:none;border-radius:7px;padding:.4rem 1.1rem;">
+                    <i class="bi bi-check2 me-1"></i>Sí, deseo continuar
                 </button>
             </div>
         </div>

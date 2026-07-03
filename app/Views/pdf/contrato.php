@@ -311,7 +311,9 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
                         . ' — ' . ($tipoLabel[$s['tipo']] ?? ucfirst($s['tipo']));
         }
     }
-    $obsLinesToShow = max(2, 2 - count($sesLines));
+    $obsTexto       = trim($contrato['observaciones'] ?? '');
+    $obsUsadas      = count($sesLines) + ($obsTexto ? 1 : 0);
+    $obsLinesToShow = max(1, 2 - $obsUsadas);
     ?>
 
     <!-- OBSERVACIONES -->
@@ -319,6 +321,9 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
     <?php foreach ($sesLines as $line): ?>
     <div class="obs-line" style="line-height:20px; font-size:10px; color:#1b2d6b; font-weight:600;"><?= esc($line) ?></div>
     <?php endforeach; ?>
+    <?php if ($obsTexto): ?>
+    <div class="obs-line" style="line-height:20px; font-size:10px; color:#333;"><?= esc($obsTexto) ?></div>
+    <?php endif; ?>
     <?php for ($i = 0; $i < $obsLinesToShow; $i++): ?>
     <div class="obs-line"></div>
     <?php endfor; ?>

@@ -238,8 +238,7 @@ function _bloquearFormulario(mensaje) {
 // SESIONES FOTOGRÁFICAS (opcional)
 // ─────────────────────────────────────────────────────────────────────────────
 
-let _sesionIdx   = 0;
-let _adelantoMin = 0;
+let _sesionIdx = 0;
 
 /** Límites de fecha para sesiones: hoy como mínimo, +10 meses como máximo. */
 function _limitesSesion() {
@@ -278,8 +277,7 @@ function _agregarSesion() {
       <option value="exteriores">Exteriores</option>
       <option value="otro">Otro</option>
     </select>
-    <button type="button" data-action="del-sesion" data-idx="${idx}"
-            style="flex-shrink:0;background:none;border:1px solid var(--red-text,#dc3545);color:var(--red-text,#dc3545);border-radius:6px;padding:.3rem .55rem;cursor:pointer;"
+    <button type="button" class="cc-btn-del-sesion" data-action="del-sesion" data-idx="${idx}"
             title="Quitar sesión">
       <i class="bi bi-trash3"></i>
     </button>`;
@@ -291,7 +289,7 @@ function _agregarSesion() {
     if (!this.value) { this.style.borderColor = ''; return; }
     const sel  = new Date(this.value);
     const hora = parseInt(this.value.slice(11, 13), 10);
-    const ok   = sel >= hoy && sel <= max && hora >= 7 && hora <= 20;
+    const ok   = sel >= hoy && sel <= max && hora >= 7 && hora < 22;
     this.style.borderColor = ok ? 'var(--green-text,#2e7d32)' : 'var(--red-text,#dc3545)';
   });
 
@@ -340,28 +338,18 @@ function _initForm(cotId, total, prom = null) {
   const adelantoInput = document.getElementById('contratoAdelanto');
   if (adelantoInput && total) {
     adelantoInput.placeholder = `Máx. ${formatters.moneda(total)}`;
-    const numEst = prom?.num_estudiantes ? parseInt(prom.num_estudiantes) : 0;
-    const minEst = numEst > 0 ? numEst * 10 : 0;
-    const minPct = Math.ceil(total * 0.05);
-    _adelantoMin = Math.max(50, minEst, minPct);
-
-    const hint = document.createElement('p');
-    hint.style.cssText = 'font-size:.75rem;color:var(--accent-text);background:var(--accent-light);border:1px solid var(--accent);border-radius:6px;padding:4px 8px;margin-top:6px;margin-bottom:0;display:inline-flex;align-items:center;gap:5px;';
-    hint.innerHTML = `<i class="bi bi-info-circle-fill"></i>Adelanto mínimo requerido: <strong>${formatters.moneda(_adelantoMin)}</strong>`
-      + (numEst > 0 ? ` (S/ 10 × ${numEst} est. o 5% del total)` : ' (5% del total)');
-    adelantoInput.closest('.cc-form-group')?.appendChild(hint);
 
     const _actualizarColorAdelanto = () => {
       const val = parseFloat(adelantoInput.value) || 0;
       if (!val) {
         adelantoInput.style.borderColor = '';
         adelantoInput.style.color       = '';
-      } else if (val >= _adelantoMin) {
-        adelantoInput.style.borderColor = 'var(--green-text, #2e7d32)';
-        adelantoInput.style.color       = 'var(--green-text, #2e7d32)';
-      } else {
+      } else if (val > total + 0.001) {
         adelantoInput.style.borderColor = 'var(--red-border, #dc3545)';
         adelantoInput.style.color       = 'var(--red-text, #dc3545)';
+      } else {
+        adelantoInput.style.borderColor = 'var(--green-text, #2e7d32)';
+        adelantoInput.style.color       = 'var(--green-text, #2e7d32)';
       }
     };
 
@@ -407,6 +395,14 @@ function _initForm(cotId, total, prom = null) {
   }
   if (btnAgregar) btnAgregar.addEventListener('click', _agregarSesion);
 
+  const obsTextarea = document.getElementById('contratoObservaciones');
+  const obsCount    = document.getElementById('obsCount');
+  if (obsTextarea && obsCount) {
+    obsTextarea.addEventListener('input', () => {
+      obsCount.textContent = obsTextarea.value.length;
+    });
+  }
+
   document.getElementById('btnGenerar')?.addEventListener('click', () => _abrirConfirmacion(cotId, total));
 }
 
@@ -424,10 +420,6 @@ function _abrirConfirmacion(cotId, total) {
   const adelanto = parseFloat(document.getElementById('contratoAdelanto')?.value) || 0;
   if (!adelanto || adelanto <= 0) {
     alerts.warning('Ingresa un adelanto válido mayor a cero.');
-    return;
-  }
-  if (_adelantoMin > 0 && adelanto < _adelantoMin) {
-    alerts.warning(`El adelanto mínimo requerido es ${formatters.moneda(_adelantoMin)}.`);
     return;
   }
   if (total && adelanto > total + 0.001) {
@@ -457,8 +449,8 @@ function _abrirConfirmacion(cotId, total) {
       alerts.warning('Una sesión supera el límite de 10 meses desde hoy. Corrígela antes de continuar.');
       return;
     }
-    if (hora < 7 || hora > 20) {
-      alerts.warning('El horario de las sesiones debe ser entre las 7:00 a.m. y las 8:00 p.m.');
+    if (hora < 7 || hora >= 22) {
+      alerts.warning('El horario de las sesiones debe ser entre las 07:00 y las 22:00.');
       return;
     }
   }
@@ -495,30 +487,58 @@ function _abrirConfirmacion(cotId, total) {
 
   const alerta = document.getElementById('confAlerta');
   if (adelanto >= total - 0.001) {
-    alerta.style.display     = '';
-    alerta.style.background  = '#f0fff4';
-    alerta.style.border      = '1px solid #c3e6cb';
-    alerta.style.color       = '#155724';
+    alerta.style.display    = '';
+    alerta.style.background = '#f0fff4';
+    alerta.style.border     = '1px solid #c3e6cb';
+    alerta.style.color      = '#155724';
     alerta.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>El adelanto cubre el total. El contrato quedará sin saldo pendiente.';
-  } else if (pct < 20) {
-    alerta.style.display     = '';
-    alerta.style.background  = '#fff8e1';
-    alerta.style.border      = '1px solid #ffe082';
-    alerta.style.color       = '#795548';
-    alerta.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i>El adelanto es menor al 20% del total. Confirma que el monto es correcto.`;
   } else {
     alerta.style.display = 'none';
   }
 
   // Registrar handler del botón confirmar (solo una vez)
-  const btnConf = document.getElementById('btnConfirmarContrato');
+  const btnConf  = document.getElementById('btnConfirmarContrato');
   const nuevoBtn = btnConf.cloneNode(true);
   btnConf.replaceWith(nuevoBtn);
-  nuevoBtn.addEventListener('click', () => _submit(cotId, total, adelanto, fechaFirma, formaPagoText));
+  nuevoBtn.addEventListener('click', () => {
+    if (pct < 10) {
+      _mostrarAdvertenciaAdelanto(cotId, total, adelanto, fechaFirma, formaPagoText, pct);
+    } else {
+      _submit(cotId, total, adelanto, fechaFirma, formaPagoText);
+    }
+  });
 
   const modalEl = document.getElementById('modalConfirmarContrato');
   _modalContrato = _modalContrato ?? new bootstrap.Modal(modalEl);
   _modalContrato.show();
+}
+
+let _modalAdelantoBajo = null;
+
+function _mostrarAdvertenciaAdelanto(cotId, total, adelanto, fechaFirma, formaPago, pct) {
+  const msg = document.getElementById('adelantoBajoMensaje');
+  if (msg) {
+    msg.innerHTML = `El adelanto registrado es de <strong>${formatters.moneda(adelanto)}</strong>, lo que representa apenas el <strong>${pct}%</strong> del total del contrato (<strong>${formatters.moneda(total)}</strong>). Un adelanto tan reducido podría comprometer la formalidad del acuerdo y dificultar la recuperación del saldo pendiente.`;
+  }
+
+  const btnVolver     = document.getElementById('btnAdelantoBajoVolver');
+  const btnConfirmar  = document.getElementById('btnAdelantoBajoConfirmar');
+  const nuevoVolver   = btnVolver.cloneNode(true);
+  const nuevoConfirmar = btnConfirmar.cloneNode(true);
+  btnVolver.replaceWith(nuevoVolver);
+  btnConfirmar.replaceWith(nuevoConfirmar);
+
+  const modalEl = document.getElementById('modalAdelantoBajo');
+  _modalAdelantoBajo = _modalAdelantoBajo ?? new bootstrap.Modal(modalEl);
+
+  nuevoVolver.addEventListener('click', () => _modalAdelantoBajo.hide());
+  nuevoConfirmar.addEventListener('click', () => {
+    _modalAdelantoBajo.hide();
+    _submit(cotId, total, adelanto, fechaFirma, formaPago);
+  });
+
+  _modalContrato.hide();
+  _modalAdelantoBajo.show();
 }
 
 /**
@@ -526,7 +546,7 @@ function _abrirConfirmacion(cotId, total) {
  * Cierra el modal, deshabilita el botón y redirige al éxito.
  */
 async function _submit(cotId, total, adelanto, fechaFirma, formaPago) {
-  const obsTexto = formaPago ? `Forma de pago: ${formaPago}` : null;
+  const obsTexto = document.getElementById('contratoObservaciones')?.value.trim() || null;
 
   const btnConf = document.getElementById('btnConfirmarContrato');
   const btnGen  = document.getElementById('btnGenerar');
