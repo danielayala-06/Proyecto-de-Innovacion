@@ -61,11 +61,11 @@
     }
 
     /* ── FIELD ROWS ───────────────────────────────────────────── */
-    .row2 { display: table; width: 100%; margin-bottom: 10px; }
+    .row2 { display: table; width: 100%; margin-bottom: 5px; }
     .col2 { display: table-cell; width: 50%; }
     .col2:first-child { padding-right: 14px; }
 
-    .field { display: table; width: 100%; border-bottom: 1px solid #bbb; margin-bottom: 13px; }
+    .field { display: table; width: 100%; border-bottom: 1px solid #bbb; margin-bottom: 7px; }
     .fl    { display: table-cell; font-weight: 700; font-size: 9px; white-space: nowrap; padding-right: 6px; color: #555; width: 1%; text-transform: uppercase; letter-spacing: .3px; }
     .fv    { display: table-cell; font-size: 11.5px; font-weight: 700; color: #1b2d6b; padding-bottom: 1px; }
 
@@ -303,35 +303,25 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
     <?php
     $sesiones  = $contrato['sesiones'] ?? [];
     $tipoLabel = ['estudio' => 'Estudio', 'colegio' => 'Colegio', 'exteriores' => 'Exteriores', 'otro' => 'Otro'];
-    $fechasSes = [];
-    for ($i = 0; $i < 3; $i++) {
-        $s = $sesiones[$i] ?? null;
-        if ($s) {
+    $sesLines  = [];
+    foreach ($sesiones as $idx => $s) {
+        if (!empty($s['fecha_hora_sesion'])) {
             $dt = new \DateTime($s['fecha_hora_sesion']);
-            $fechasSes[] = $dt->format('d') . ' de ' . $mesesEs[(int)$dt->format('m') - 1]
-                         . ' de ' . $dt->format('Y') . ', ' . $dt->format('H:i') . ' h'
-                         . ' — ' . ($tipoLabel[$s['tipo']] ?? ucfirst($s['tipo']));
-        } else {
-            $fechasSes[] = '';
+            $sesLines[] = 'Sesión ' . ($idx + 1) . ': ' . $dt->format('d/m/Y') . ', ' . $dt->format('H:i')
+                        . ' — ' . ($tipoLabel[$s['tipo']] ?? ucfirst($s['tipo']));
         }
     }
+    $obsLinesToShow = max(2, 2 - count($sesLines));
     ?>
-    <table style="width:100%; border-collapse:collapse; margin-bottom:11px;">
-        <tr>
-            <?php for ($i = 0; $i < 3; $i++): ?>
-            <td style="width:33%; padding-right:<?= $i < 2 ? '12px' : '0' ?>; vertical-align:top;">
-                <div style="font-weight:700; font-size:9px; color:#555; text-transform:uppercase; letter-spacing:.3px; margin-bottom:3px;">Sesión <?= $i + 1 ?>:</div>
-                <div style="border-bottom:1px solid #aaa; font-size:10px; padding-bottom:3px; min-height:16px;"><?= $fechasSes[$i] ? esc($fechasSes[$i]) : '&nbsp;' ?></div>
-            </td>
-            <?php endfor; ?>
-        </tr>
-    </table>
 
     <!-- OBSERVACIONES -->
     <div class="sec">Observaciones</div>
+    <?php foreach ($sesLines as $line): ?>
+    <div class="obs-line" style="line-height:20px; font-size:10px; color:#1b2d6b; font-weight:600;"><?= esc($line) ?></div>
+    <?php endforeach; ?>
+    <?php for ($i = 0; $i < $obsLinesToShow; $i++): ?>
     <div class="obs-line"></div>
-    <div class="obs-line"></div>
-    <div class="obs-line"></div>
+    <?php endfor; ?>
 
     <!-- DETALLE -->
     <div class="sec">Detalle del Servicio</div>
