@@ -797,6 +797,16 @@ label {
 .pc-price span { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; }
 .pc-actions { display: flex; gap: 6px; }
 
+.pc-kebab { flex-shrink: 0; }
+.pc-kebab-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); border-radius: 6px;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s;
+}
+.pc-kebab-btn:hover { background: var(--border); color: var(--text-primary); }
+
 .empty-state {
     grid-column: 1/-1; text-align: center;
     padding: 4rem 2rem; color: var(--text-muted); font-size: 0.88rem;

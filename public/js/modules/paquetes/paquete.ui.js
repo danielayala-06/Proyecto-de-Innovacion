@@ -189,17 +189,38 @@ export const ui = {
                            <i class="bi bi-image"></i>
                        </div>`;
 
+                const labelToggle = esActivo ? 'Desactivar' : 'Activar';
+
                 return `
                 <div class="paquete-card${esActivo ? '' : ' pc-inactivo'}"
                      style="cursor:pointer;" onclick="editarPaquete(${p.id_paquete})">
                     ${imgHtml}
-                    <div class="pc-header">
-                        <div>
+                    <div class="pc-header" style="position:relative;">
+                        <div style="flex:1;min-width:0;">
                             ${_catBadge(p)}
                             <div class="pc-name">${p.nombre_paquete}</div>
                             ${desc ? `<div class="pc-desc">${desc}</div>` : ''}
                         </div>
-                        ${_estadoBadge(p.estado)}
+                        <div class="dropdown pc-kebab" onclick="event.stopPropagation()">
+                            <button class="pc-kebab-btn" data-bs-toggle="dropdown" aria-expanded="false"
+                                    title="Opciones">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <button class="dropdown-item" onclick="editarPaquete(${p.id_paquete})">
+                                        <i class="bi bi-pencil me-2"></i>Editar
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button class="dropdown-item ${esActivo ? 'text-danger' : 'text-success'}"
+                                            onclick="toggleEstado(${p.id_paquete},'${p.estado}')">
+                                        <i class="bi bi-${esActivo ? 'slash-circle' : 'check-circle'} me-2"></i>${labelToggle}
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
                     ${items.length ? `
@@ -212,15 +233,9 @@ export const ui = {
                             </div>`).join('')}
                     </div>` : ''}
 
-                    <div class="pc-footer" onclick="event.stopPropagation()">
+                    <div class="pc-footer">
                         <div class="pc-price">${formatters.moneda(p.precio)}</div>
-                        <div class="pc-actions d-flex justify-content-center gap-2">
-                            <div class="form-switch" title="${esActivo ? 'Desactivar' : 'Activar'}"
-                                 onclick="toggleEstado(${p.id_paquete},'${p.estado}')">
-                                <input class="form-check-input" type="checkbox" role="switch"
-                                       style="height:1.7rem;width:3rem;" ${esActivo ? 'checked' : ''}>
-                            </div>
-                        </div>
+                        ${_estadoBadge(p.estado)}
                     </div>
                 </div>`;
             }).join('');

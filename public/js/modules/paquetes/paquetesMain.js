@@ -154,13 +154,20 @@ window.guardarPaquete = async function () {
  * @returns {Promise<void>}
  */
 window.toggleEstado = async function (id, estadoActual) {
-    const nuevo = estadoActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    const nuevo      = estadoActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    const accion     = nuevo === 'INACTIVO' ? 'desactivar' : 'activar';
+    const advertencia = nuevo === 'INACTIVO'
+        ? 'El ítem dejará de aparecer en nuevas cotizaciones.'
+        : 'El ítem volverá a estar disponible para cotizaciones.';
+
+    if (!confirm(`¿Seguro que deseas ${accion} este ítem?\n${advertencia}`)) return;
+
     try {
         await paqueteApi.cambiarEstado(id, nuevo);
-        alerts.ok(nuevo === 'ACTIVO' ? 'Paquete activado.' : 'Paquete desactivado.');
+        alerts.ok(nuevo === 'ACTIVO' ? 'Ítem activado.' : 'Ítem desactivado.');
         await cargarPaquetes();
     } catch {
-        alerts.error('No se pudo cambiar el estado del paquete.');
+        alerts.error('No se pudo cambiar el estado del ítem.');
     }
 };
 
