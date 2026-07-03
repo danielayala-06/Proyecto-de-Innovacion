@@ -155,61 +155,6 @@
                     </button>
                 </div>
 
-                <!-- Reglas de bonificación -->
-                <hr style="border-color:var(--border);margin:1rem 0 .75rem;">
-                <label style="margin-bottom:8px;">Reglas y condiciones</label>
-                <div id="reglasContainer" style="margin-bottom:.75rem;"></div>
-
-                <!-- Mini-formulario para agregar regla -->
-                <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:.75rem;">
-                    <div class="row g-2 mb-2">
-                        <div class="col-6 col-md-4">
-                            <label style="font-size:.75rem;">¿Qué tipo de regla es?</label>
-                            <select class="form-select form-select-sm" id="rTipoCondicion"
-                                    onchange="window.__paqOnCondicionChange(this.value)">
-                                <option value="">— Seleccionar —</option>
-                                <option value="ELEGIBILIDAD_MIN">Mínimo para contratar el paquete</option>
-                                <option value="CANTIDAD_MIN">Bonificación por cantidad de alumnos</option>
-                                <option value="CANTIDAD_MAX">Reducción de sesiones por grupo pequeño</option>
-                            </select>
-                        </div>
-                        <div class="col-6 col-md-2">
-                            <label style="font-size:.75rem;" id="rValorCondicionLabel">N.° de alumnos</label>
-                            <input type="number" class="form-control form-control-sm" id="rValorCondicion"
-                                   placeholder="Ej: 15" min="1" step="1">
-                        </div>
-                        <div class="col-12 col-md-6" id="wrapRTipoBeneficio">
-                            <label style="font-size:.75rem;">¿Qué se entrega?</label>
-                            <select class="form-select form-select-sm" id="rTipoBeneficio">
-                                <option value="">— Seleccionar —</option>
-                                <option value="producto_gratis">Un producto del catálogo (gratis)</option>
-                                <option value="sesion_unica">Una sesión fotográfica extra</option>
-                                <option value="otro">Otro beneficio (texto libre)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-12 col-md-5" id="wrapRValorBeneficio">
-                            <label style="font-size:.75rem;" id="rValorBeneficioLabel">Detalle del beneficio</label>
-                            <input type="text" class="form-control form-control-sm" id="rValorBeneficio"
-                                   placeholder="Ej: Cuadro laminado para el docente">
-                        </div>
-                        <div class="col-12 col-md-5 d-none" id="wrapRProductoBeneficio">
-                            <label style="font-size:.75rem;">Producto que se entrega</label>
-                            <select class="form-select form-select-sm" id="rIdProductoBeneficio">
-                                <option value="">Seleccionar producto...</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-md-7">
-                            <label style="font-size:.75rem;">Mensaje que verá el cliente</label>
-                            <input type="text" class="form-control form-control-sm" id="rDescripcion"
-                                   placeholder="Ej: Con 15 o más alumnos, el docente recibe un cuadro laminado.">
-                        </div>
-                    </div>
-                    <button class="btn-add-item" onclick="agregarReglaModal()">
-                        <i class="bi bi-plus"></i> Agregar regla
-                    </button>
-                </div>
             </div>
             <div class="modal-footer d-flex justify-content-between">
                 <button class="btn btn-outline-danger btn-sm" id="btnEliminarModal" style="display:none;" onclick="confirmarEliminar()">

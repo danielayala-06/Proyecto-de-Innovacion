@@ -119,15 +119,6 @@
     .clausulas-box ol { padding-left: 13px; }
     .clausulas-box ol li { font-size: 8.5px; line-height: 2; color: #333; margin-bottom: 5px; }
 
-    /* ── REGLAS ───────────────────────────────────────────────── */
-    .reglas-box { border: 1px solid #c5cde0; border-radius: 5px; padding: 5px 9px; margin-bottom: 8px; background: #f8f9fd; }
-    .reglas-title { font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1b2d6b; margin-bottom: 4px; }
-    .rr { display: table; width: 100%; margin-bottom: 3px; }
-    .ri { display: table-cell; width: 12px; font-size: 10px; font-weight: 900; color: #1b2d6b; }
-    .rt { display: table-cell; font-size: 9.5px; color: #333; line-height: 1.4; }
-    .rb { display: inline-block; background: #dce3f3; color: #1b2d6b; font-size: 8px; font-weight: 700; border-radius: 8px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
-    .rb.lim { background: #f8d7da; color: #842029; }
-
     /* ── FIRMAS ───────────────────────────────────────────────── */
     .sigs { display: table; width: 100%; margin-top: 36px; }
     .sig  { display: table-cell; text-align: center; width: 50%; padding: 0 22px; vertical-align: bottom; }
@@ -152,10 +143,6 @@
 <?php
 $promo    = $contrato['promociones'][0] ?? [];
 $detalles = $contrato['detalles']       ?? [];
-
-$reglasAplicadas = $contrato['reglas_aplicadas'] ?? ['violaciones' => [], 'activadas' => []];
-$reglasActivadas = $reglasAplicadas['activadas']   ?? [];
-$reglasLimitadas = $reglasAplicadas['violaciones'] ?? [];
 
 // Segundo responsable: primero el cliente2 de BD, si no el campo libre del contrato
 $cliente2Nombre    = !empty($contrato['cliente2_nombre'])   ? $contrato['cliente2_nombre']   : null;
@@ -363,31 +350,6 @@ $numContrato = str_pad(date('y'), 2, '0', STR_PAD_LEFT) . '-' . str_pad($contrat
         </tfoot>
         <?php endif; ?>
     </table>
-
-    <?php if (!empty($reglasActivadas) || !empty($reglasLimitadas)): ?>
-    <div class="sec">Condiciones Especiales</div>
-    <div class="reglas-box">
-        <?php foreach ($reglasActivadas as $r): ?>
-        <div class="rr">
-            <div class="ri">+</div>
-            <div class="rt">
-                <?= esc($r['descripcion']) ?>
-                <?php $lb = !empty($r['nombre_producto_beneficio']) ? $r['nombre_producto_beneficio'] : ($r['valor_beneficio'] ?? ''); ?>
-                <?php if ($lb): ?><span class="rb"><?= esc($lb) ?></span><?php endif; ?>
-            </div>
-        </div>
-        <?php endforeach; ?>
-        <?php foreach ($reglasLimitadas as $r): ?>
-        <div class="rr">
-            <div class="ri" style="color:#842029;">!</div>
-            <div class="rt">
-                <?= esc($r['descripcion']) ?>
-                <span class="rb lim">Límite: <?= (int)$r['limite'] ?> uds.</span>
-            </div>
-        </div>
-        <?php endforeach; ?>
-    </div>
-    <?php endif; ?>
 
     <!-- CLÁUSULAS + PRECIOS -->
     <div class="price-grid">
