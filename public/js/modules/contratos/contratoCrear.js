@@ -528,17 +528,22 @@ function _mostrarAdvertenciaAdelanto(cotId, total, adelanto, fechaFirma, formaPa
   btnVolver.replaceWith(nuevoVolver);
   btnConfirmar.replaceWith(nuevoConfirmar);
 
-  const modalEl = document.getElementById('modalAdelantoBajo');
-  _modalAdelantoBajo = _modalAdelantoBajo ?? new bootstrap.Modal(modalEl);
-
-  nuevoVolver.addEventListener('click', () => _modalAdelantoBajo.hide());
+  nuevoVolver.addEventListener('click', () => {
+    _modalAdelantoBajo.hide();
+    document.getElementById('modalAdelantoBajo').addEventListener('hidden.bs.modal', () => {
+      _modalContrato.show();
+    }, { once: true });
+  });
   nuevoConfirmar.addEventListener('click', () => {
     _modalAdelantoBajo.hide();
     _submit(cotId, total, adelanto, fechaFirma, formaPago);
   });
 
+  document.getElementById('modalConfirmarContrato').addEventListener('hidden.bs.modal', () => {
+    _modalAdelantoBajo = _modalAdelantoBajo ?? new bootstrap.Modal(document.getElementById('modalAdelantoBajo'));
+    _modalAdelantoBajo.show();
+  }, { once: true });
   _modalContrato.hide();
-  _modalAdelantoBajo.show();
 }
 
 /**

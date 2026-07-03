@@ -166,6 +166,35 @@
         </div>
     </div>
 
+    <!-- MODAL: ADELANTO BAJO -->
+    <div class="modal fade" id="modalAdelantoBajoIndex" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+            <div class="modal-content" style="border-radius:14px;overflow:hidden;">
+                <div class="modal-header" style="background:#b45309;border-bottom:none;padding:1rem 1.25rem;">
+                    <h6 class="modal-title mb-0" style="color:#fff;font-size:.95rem;font-weight:700;letter-spacing:.3px;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Adelanto inusualmente bajo
+                    </h6>
+                </div>
+                <div class="modal-body" style="padding:1.35rem 1.25rem;background:var(--bg-surface,#FAFAF8);">
+                    <p id="adelantoBajoMensajeIndex" style="font-size:.88rem;color:var(--text-primary);line-height:1.6;margin:0;"></p>
+                    <p style="font-size:.8rem;color:var(--text-muted);margin-top:.75rem;margin-bottom:0;">
+                        Si ya coordinó este monto con el cliente, puede continuar. De lo contrario, le recomendamos regresar y ajustar el monto.
+                    </p>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid var(--border-color);padding:.85rem 1.25rem;gap:.5rem;background:var(--bg-surface,#FAFAF8);">
+                    <button type="button" id="btnAdelantoBajoIndexVolver"
+                            style="color:var(--text-muted);background:none;border:1px solid var(--border-color);border-radius:7px;padding:.35rem .85rem;font-size:.84rem;">
+                        <i class="bi bi-arrow-left me-1"></i>Volver y corregir
+                    </button>
+                    <button type="button" id="btnAdelantoBajoIndexConfirmar"
+                            style="background:#b45309;color:#fff;font-weight:600;border:none;border-radius:7px;padding:.4rem 1.1rem;font-size:.84rem;">
+                        <i class="bi bi-check2 me-1"></i>Sí, deseo continuar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL 3: VER DETALLE CONTRATO  -->
     <div class="modal fade" id="modalDetalle" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-lg">

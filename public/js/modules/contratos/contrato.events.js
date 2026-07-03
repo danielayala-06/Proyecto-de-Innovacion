@@ -89,12 +89,6 @@ let _editContratoId = null;
 /** @type {number} Total del contrato en edición, para validar adelanto. */
 let _editContratoTotal = 0;
 
-/** @type {number} Adelanto mínimo requerido (S/ 10 × alumnos, mínimo S/ 50). */
-let _editContratoMin = 0;
-
-/** @type {number} Número de estudiantes del contrato en edición. */
-let _editContratoAlumnos = 0;
-
 /** @type {Function|null} Listener activo del input adelanto (para poder removerlo). */
 let _adelantoInputHandler = null;
 
@@ -344,13 +338,6 @@ window.confirmarContrato = async function () {
     alerts.warning(`El adelanto no puede superar el total del contrato (${formatters.moneda(_editContratoTotal)}).`);
     return;
   }
-  if (_editContratoId !== null && _editContratoMin > 0 && adelanto < _editContratoMin - 0.001) {
-    const msg = _editContratoAlumnos > 0
-      ? `El adelanto mínimo es ${formatters.moneda(_editContratoMin)} (S/ 10 × ${_editContratoAlumnos} alumnos).`
-      : `El adelanto mínimo es ${formatters.moneda(_editContratoMin)}.`;
-    alerts.warning(msg);
-    return;
-  }
 
   const fechaFirma = document.getElementById('contratoFechaFirma')?.value || null;
   if (fechaFirma) {
@@ -367,18 +354,61 @@ window.confirmarContrato = async function () {
     }
   }
 
-  const formaPago     = document.getElementById('contratoFormaPago')?.value     || '';
-  const clausulas     = document.getElementById('contratoClausulas')?.value.trim()     || '';
+  const formaPago     = document.getElementById('contratoFormaPago')?.value         || '';
+  const clausulas     = document.getElementById('contratoClausulas')?.value.trim()   || '';
   const observaciones = document.getElementById('contratoObservaciones')?.value.trim() || '';
   const contacto2Nombre   = document.getElementById('contacto2Nombre')?.value.trim()   || null;
   const contacto2Telefono = document.getElementById('contacto2Telefono')?.value.trim() || null;
 
-  const obsPartes = [];
-  if (formaPago)     obsPartes.push(`Forma de pago: ${formaPago}`);
-  if (clausulas)     obsPartes.push(`Cláusulas: ${clausulas}`);
-  if (observaciones) obsPartes.push(observaciones);
-  const obsTexto = obsPartes.join('\n\n') || null;
+  const obsTexto = observaciones || null;
 
+  const pct = _editContratoTotal > 0 ? Math.round((adelanto / _editContratoTotal) * 100) : 100;
+  if (pct < 10) {
+    _mostrarAdelantoBajoIndex(adelanto, pct, { adelanto, fechaFirma, obsTexto, contacto2Nombre, contacto2Telefono });
+    return;
+  }
+
+  await _submitContrato({ adelanto, fechaFirma, obsTexto, contacto2Nombre, contacto2Telefono });
+};
+
+let _modalAdelantoBajoIndex = null;
+
+function _mostrarAdelantoBajoIndex(adelanto, pct, payload) {
+  const msg = document.getElementById('adelantoBajoMensajeIndex');
+  if (msg) {
+    msg.innerHTML = `El adelanto registrado es de <strong>${formatters.moneda(adelanto)}</strong>, lo que representa apenas el <strong>${pct}%</strong> del total del contrato (<strong>${formatters.moneda(_editContratoTotal)}</strong>). Un adelanto tan reducido podría comprometer la formalidad del acuerdo y dificultar la recuperación del saldo pendiente.`;
+  }
+
+  const btnVolver    = document.getElementById('btnAdelantoBajoIndexVolver');
+  const btnConfirmar = document.getElementById('btnAdelantoBajoIndexConfirmar');
+  const nuevoVolver    = btnVolver.cloneNode(true);
+  const nuevoConfirmar = btnConfirmar.cloneNode(true);
+  btnVolver.replaceWith(nuevoVolver);
+  btnConfirmar.replaceWith(nuevoConfirmar);
+
+  nuevoVolver.addEventListener('click', () => {
+    _modalAdelantoBajoIndex.hide();
+    if (!_modal2) _modal2 = new bootstrap.Modal(document.getElementById('modalGenerarContrato'));
+    document.getElementById('modalAdelantoBajoIndex').addEventListener('hidden.bs.modal', () => {
+      _modal2.show();
+    }, { once: true });
+  });
+  nuevoConfirmar.addEventListener('click', async () => {
+    _modalAdelantoBajoIndex.hide();
+    await _submitContrato(payload);
+  });
+
+  const modal2El = document.getElementById('modalGenerarContrato');
+  modal2El.addEventListener('hidden.bs.modal', () => {
+    if (!_modalAdelantoBajoIndex) {
+      _modalAdelantoBajoIndex = new bootstrap.Modal(document.getElementById('modalAdelantoBajoIndex'));
+    }
+    _modalAdelantoBajoIndex.show();
+  }, { once: true });
+  _modal2?.hide();
+}
+
+async function _submitContrato({ adelanto, fechaFirma, obsTexto, contacto2Nombre, contacto2Telefono }) {
   try {
     if (_editContratoId !== null) {
       await contratoApi.actualizar(_editContratoId, {
@@ -428,12 +458,8 @@ window.editarContrato = async function (id) {
   try {
     const res    = await contratoApi.obtener(id);
     const data   = res.data;
-    _editContratoId      = id;
-    _editContratoTotal   = parseFloat(data.total) || 0;
-    _editContratoAlumnos = parseInt(data.promocion?.num_estudiantes ?? 0);
-    _editContratoMin     = _editContratoAlumnos > 0
-      ? Math.max(50, _editContratoAlumnos * 10)
-      : 50;
+    _editContratoId    = id;
+    _editContratoTotal = parseFloat(data.total) || 0;
 
     const fechaInput    = document.getElementById('contratoFechaFirma');
     const adelantoInput = document.getElementById('contratoAdelanto');
@@ -454,18 +480,12 @@ window.editarContrato = async function (id) {
     if (adelantoInput) {
       if (_adelantoInputHandler) adelantoInput.removeEventListener('input', _adelantoInputHandler);
       _adelantoInputHandler = () => {
-        const val       = parseFloat(adelantoInput.value) || 0;
-        const excede    = _editContratoTotal > 0 && val > _editContratoTotal + 0.001;
-        const bajMin    = val > 0 && val < _editContratoMin - 0.001;
-        const invalido  = excede || bajMin;
-        let msg = '';
-        if (excede)  msg = `El adelanto no puede superar el total del contrato (${formatters.moneda(_editContratoTotal)}).`;
-        else if (bajMin) msg = _editContratoAlumnos > 0
-          ? `El adelanto mínimo es ${formatters.moneda(_editContratoMin)} (S/ 10 × ${_editContratoAlumnos} alumnos).`
-          : `El adelanto mínimo es ${formatters.moneda(_editContratoMin)}.`;
-        if (aviso)     { aviso.textContent = msg; aviso.style.display = invalido ? '' : 'none'; }
-        if (adelantoInput) adelantoInput.style.borderColor = invalido ? 'var(--red-text, #dc3545)' : '';
-        if (btnSubmit) btnSubmit.disabled = invalido;
+        const val    = parseFloat(adelantoInput.value) || 0;
+        const excede = _editContratoTotal > 0 && val > _editContratoTotal + 0.001;
+        const msg    = excede ? `El adelanto no puede superar el total del contrato (${formatters.moneda(_editContratoTotal)}).` : '';
+        if (aviso)         { aviso.textContent = msg; aviso.style.display = excede ? '' : 'none'; }
+        adelantoInput.style.borderColor = excede ? 'var(--red-text, #dc3545)' : (val > 0 ? 'var(--green-text, #2e7d32)' : '');
+        if (btnSubmit) btnSubmit.disabled = excede;
       };
       adelantoInput.addEventListener('input', _adelantoInputHandler);
     }
