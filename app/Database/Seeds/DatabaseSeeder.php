@@ -27,7 +27,6 @@ class DatabaseSeeder extends Seeder
         $this->call('ClientesSeeder');       // depende de: personas
         $this->call('RolesPermisosSeeder');  // depende de: roles, permisos
         $this->call('PaquetesProductosSeeder'); // depende de: paquetes, productos
-        $this->call('ReglasPaquetesSeeder');    // depende de: paquetes
         $this->call('PaquetesSesionesSeeder');  // depende de: paquetes
 
         // ── Cotizaciones y su árbol ──────────────────────────────────────────
