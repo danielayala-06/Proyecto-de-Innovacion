@@ -63,10 +63,6 @@ class PaqueteTransformer extends BaseTransformer
             ], $resource['productos']);
         }
 
-        if (isset($resource['reglas'])) {
-            $data['reglas'] = $resource['reglas'];
-        }
-
         return $data;
     }
 
