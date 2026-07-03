@@ -43,7 +43,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/sesiones',                        'SesionController::lista');
     $routes->get('/contratos/(:num)/sesiones',     'SesionController::index/$1');
     $routes->get('/contratos/(:num)/sesiones/(:num)/lista-pdf', 'SesionController::imprimirLista/$1/$2');
-    $routes->get('/paquetes',              'PaqueteController::index');
+    $routes->get('/catalogo',              'PaqueteController::index');
     $routes->get('/clientes',              'ClienteController::index');
     $routes->get('/calendario',            'CalendarioController::index');
 

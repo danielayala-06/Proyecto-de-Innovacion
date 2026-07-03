@@ -91,8 +91,8 @@ function navActivo(string $ruta, string $segmento): string {
                 </a>
             </li> -->
             <li>
-                <a href="<?= base_url('/paquetes') ?>" class="<?= navActivo('paquetes', $segmento) ?>">
-                    <i class="bi bi-box-seam"></i> <span class="nav-label">Paquetes</span>
+                <a href="<?= base_url('/catalogo') ?>" class="<?= navActivo('catalogo', $segmento) ?>">
+                    <i class="bi bi-box-seam"></i> <span class="nav-label">Catálogo</span>
                 </a>
             </li>
 

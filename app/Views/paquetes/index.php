@@ -3,7 +3,7 @@
 <main id="main-content">
     <div class="container">
 
-        <p class="section-label">Paquetes</p>
+        <p class="section-label">Catálogo</p>
 
         <!-- TOOLBAR -->
         <div class="toolbar">

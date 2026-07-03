@@ -57,6 +57,10 @@ Views are plain PHP files. The layout is assembled manually — each controller 
 
 The auth login view (app/Views/auth/login.php) is standalone (no layout injection).
 
+### Naming convention: Catálogo vs paquetes
+
+La sección que el usuario ve como **"Catálogo"** (ruta `/catalogo`) corresponde internamente al dominio `paquetes` (tabla `paquetes`, `PaqueteController`, `PaqueteService`, `PaquetesModel`, `paquete.api.js`, etc.). No renombrar el código interno — solo la UI y la ruta cambiaron.
+
 ### CSS
 
 Single stylesheet: public/css/styles.css. Uses CSS custom properties for theming (data-theme="dark|light" on <html>). Theme is persisted in localStorage and applied before first paint via an inline script in header.php.
