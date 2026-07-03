@@ -6,12 +6,10 @@
  *
  * Endpoints consumidos:
  *  - GET    api/paquetes               → listar paquetes (soporta filtros: estado, nivel)
- *  - GET    api/paquetes/{id}          → detalle con productos y reglas
+ *  - GET    api/paquetes/{id}          → detalle con productos
  *  - POST   api/paquetes               → crear un nuevo paquete
  *  - PUT    api/paquetes/{id}          → actualizar datos del paquete
  *  - PATCH  api/paquetes/{id}/estado   → activar o desactivar (ACTIVO | INACTIVO)
- *  - POST   api/paquetes/{id}/reglas   → crear regla de bonificación
- *  - DELETE api/paquetes/reglas/{rid}  → eliminar regla
  *  - POST   api/paquetes/{id}/imagen   → subir / reemplazar imagen (multipart)
  *  - DELETE api/paquetes/{id}/imagen   → eliminar imagen
  */
@@ -34,10 +32,6 @@ export const paqueteApi = {
     actualizar:    (id, data)    => http.put(`api/paquetes/${id}`, data),
     /** @param {number} id - ID del paquete. @param {'ACTIVO'|'INACTIVO'} estado - Nuevo estado. */
     cambiarEstado: (id, estado)  => http.patch(`api/paquetes/${id}/estado`, { estado }),
-    /** @param {number} id - ID del paquete. @param {Object} data - Datos de la regla. */
-    crearRegla:    (id, data)    => http.post(`api/paquetes/${id}/reglas`, data),
-    /** @param {number} rid - ID de la regla. */
-    eliminarRegla: (rid)         => http.delete(`api/paquetes/reglas/${rid}`),
 
     /**
      * Sube o reemplaza la imagen de un paquete.

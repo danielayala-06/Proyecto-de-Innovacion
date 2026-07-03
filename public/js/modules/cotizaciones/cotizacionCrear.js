@@ -1680,7 +1680,7 @@ async function init() {
     try {
         const [resC, resP] = await Promise.all([
             clienteApi.listar(),
-            paqueteApi.listar({ estado: 'ACTIVO', con_reglas: 1 }),
+            paqueteApi.listar({ estado: 'ACTIVO' }),
         ]);
         state.todosClientes = resC.data ?? [];
         state.todosPaquetes = resP.data ?? [];

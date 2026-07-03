@@ -24,7 +24,6 @@
  */
 
 import { paqueteApi }                    from '../../api/paquete.api.js';
-import { productoApi }                   from '../../api/producto.api.js';
 import { state, calcularStats, filtrar } from './paquete.state.js';
 import { ui }                            from './paquete.ui.js';
 import { form }                          from './paquete.form.js';
@@ -138,12 +137,7 @@ window.guardarPaquete = async function () {
         if (_idEditando) {
             await paqueteApi.actualizar(_idEditando, form.datosActualizar());
         } else {
-            const res       = await paqueteApi.crear(form.datosCrear());
-            const idPaquete = res.id_paquete;
-            const pendientes = form.getReglasPendientes();
-            for (const regla of pendientes) {
-                await paqueteApi.crearRegla(idPaquete, regla);
-            }
+            await paqueteApi.crear(form.datosCrear());
         }
         _modal?.hide();
         alerts.ok(_idEditando ? 'Paquete actualizado.' : 'Paquete creado.');
@@ -214,48 +208,6 @@ window.agregarSesionModal = function () {
     form.agregarSesion();
 };
 
-/**
- * Lee el mini-formulario de regla y la guarda (en edición vía API, en creación en memoria).
- */
-window.agregarReglaModal = async function () {
-    const regla = form.leerReglaForm();
-    if (!regla) {
-        alerts.error('Completa todos los campos de la regla antes de agregar.');
-        return;
-    }
-
-    if (form.modoEdicion) {
-        try {
-            const res = await paqueteApi.crearRegla(form.idPaqueteActual, regla);
-            // Re-fetch the package so saved rules show updated data (incl. nombre_producto_beneficio)
-            const updated = await paqueteApi.obtener(form.idPaqueteActual);
-            form.poblar(updated.data);
-            alerts.ok('Regla guardada.');
-        } catch (err) {
-            alerts.error(err.message || 'Error al guardar la regla.');
-        }
-    } else {
-        form.agregarReglaPendiente(regla);
-    }
-};
-
-/**
- * Elimina una regla vía API y actualiza la vista (modo edición).
- * Referenciado desde `window.__paqEliminarReglaApi` para que form.js pueda invocarlo.
- *
- * @param {number} idRegla
- */
-window.__paqEliminarReglaApi = async function (idRegla) {
-    try {
-        await paqueteApi.eliminarRegla(idRegla);
-        alerts.ok('Regla eliminada.');
-        const res = await paqueteApi.obtener(form.idPaqueteActual);
-        form.poblar(res.data);
-    } catch (err) {
-        alerts.error(err.message || 'Error al eliminar la regla.');
-    }
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // IMAGEN DE PAQUETE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -314,23 +266,6 @@ window.quitarImagenPaquete = async function () {
  *
  * @returns {void}
  */
-async function _cargarProductosEnSelect() {
-    try {
-        const res = await productoApi.listar();
-        const select = document.getElementById('rIdProductoBeneficio');
-        if (!select) return;
-        const placeholder = select.querySelector('option[value=""]');
-        select.innerHTML = '';
-        if (placeholder) select.appendChild(placeholder);
-        (res.data ?? []).forEach(p => {
-            const opt = document.createElement('option');
-            opt.value       = p.id_producto;
-            opt.textContent = p.nombre_producto;
-            select.appendChild(opt);
-        });
-    } catch (err) { console.warn('No se pudieron cargar productos para el selector:', err); }
-}
-
 function init() {
     const modalEl        = document.getElementById('modalPaquete');
     const modalConfirmEl = document.getElementById('modalConfirm');
@@ -340,10 +275,6 @@ function init() {
     document.getElementById('searchInput')?.addEventListener('input',  _aplicarFiltros);
     document.getElementById('filterCat')?.addEventListener('change',   _aplicarFiltros);
     document.getElementById('filterNivel')?.addEventListener('change', _aplicarFiltros);
-
-    document.getElementById('rTipoBeneficio')?.addEventListener('change', e => {
-        form.toggleBeneficioUI(e.target.value);
-    });
 
     document.getElementById('pImagenInput')?.addEventListener('change', async function () {
         const file = this.files?.[0];
@@ -378,56 +309,7 @@ function init() {
         this.value = '';
     });
 
-    _cargarProductosEnSelect();
     cargarPaquetes();
 }
-
-/**
- * Adapta el formulario de regla según el tipo de condición elegido.
- *
- * - ELEGIBILIDAD_MIN: oculta la sección de beneficio (es solo una restricción)
- *   y actualiza los placeholders para reflejar que se trata de un requisito mínimo.
- * - CANTIDAD_MIN / CANTIDAD_MAX: muestra la sección de beneficio normalmente.
- */
-window.__paqOnCondicionChange = function(tipo) {
-    const wrapBenef   = document.getElementById('wrapRTipoBeneficio');
-    const wrapValBen  = document.getElementById('wrapRValorBeneficio');
-    const wrapProd    = document.getElementById('wrapRProductoBeneficio');
-    const labelValor  = document.getElementById('rValorCondicionLabel');
-    const labelBenef  = document.getElementById('rValorBeneficioLabel');
-    const inputDesc   = document.getElementById('rDescripcion');
-    const selBenef    = document.getElementById('rTipoBeneficio');
-    const inputValBen = document.getElementById('rValorBeneficio');
-
-    if (tipo === 'ELEGIBILIDAD_MIN') {
-        // No tiene beneficio — es una restricción de elegibilidad
-        if (wrapBenef)   wrapBenef.style.display  = 'none';
-        if (wrapValBen)  wrapValBen.style.display  = '';
-        if (wrapProd)    wrapProd.classList.add('d-none');
-        if (labelValor)  labelValor.textContent    = 'Mínimo de alumnos requerido';
-        if (labelBenef)  labelBenef.textContent    = 'Aviso cuando no se cumple';
-        if (inputValBen) inputValBen.placeholder   = 'Ej: Paquete no disponible para grupos menores de 14 alumnos.';
-        if (inputDesc)   inputDesc.placeholder     = 'Ej: Se requieren mínimo 14 alumnos para contratar este paquete.';
-        if (selBenef)    selBenef.value = 'otro';
-    } else if (tipo === 'CANTIDAD_MAX') {
-        // No tiene beneficio — es una reducción de sesiones por grupo pequeño
-        if (wrapBenef)   wrapBenef.style.display  = 'none';
-        if (wrapValBen)  wrapValBen.style.display  = '';
-        if (wrapProd)    wrapProd.classList.add('d-none');
-        if (labelValor)  labelValor.textContent    = 'Máximo de alumnos para aplicar';
-        if (labelBenef)  labelBenef.textContent    = 'Aviso que verá el usuario';
-        if (inputValBen) inputValBen.placeholder   = 'Ej: La sesión se realizará en una sola fecha.';
-        if (inputDesc)   inputDesc.placeholder     = 'Ej: Con menos de 12 alumnos, la sesión se realiza en una sola fecha.';
-        if (selBenef)    selBenef.value = 'otro';
-    } else {
-        if (wrapBenef)   wrapBenef.style.display  = '';
-        if (labelValor)  labelValor.textContent    = 'N.° de alumnos';
-        if (labelBenef)  labelBenef.textContent    = 'Detalle del beneficio';
-        if (inputValBen) inputValBen.placeholder   = 'Ej: Cuadro laminado para el docente';
-        if (inputDesc)   inputDesc.placeholder     = 'Ej: Con 15 o más alumnos, el docente recibe un cuadro laminado.';
-        if (selBenef)    selBenef.value = '';
-        form.toggleBeneficioUI('');
-    }
-};
 
 init();
