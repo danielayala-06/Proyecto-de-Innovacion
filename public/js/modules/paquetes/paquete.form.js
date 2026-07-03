@@ -30,12 +30,6 @@ import { categoriaDesdNombre } from './paquete.state.js';
  */
 let _items = [];
 
-/**
- * Configuración de sesiones (solo modo creación).
- * @type {Array<{tipo_sesion:string, num_sesiones:number, lugar_descripcion:string}>}
- */
-let _sesiones = [];
-
 /** true cuando el modal está en modo edición (paquete ya existe en BD). */
 let _modoEdicion = false;
 
@@ -91,54 +85,6 @@ const _set = (id, v) => { const el = document.getElementById(id); if (el) el.val
 /** Devuelve el `value` recortado del elemento con `id`, o `''` si no existe. */
 const _get = (id)    => document.getElementById(id)?.value?.trim() ?? '';
 
-const TIPO_SESION_LABEL = {
-    colegio:    'Colegio',
-    exteriores: 'Exteriores',
-    estudio:    'Estudio',
-    otro:       'Otro',
-};
-
-/** Re-renderiza la tabla de sesiones en #sesionesContainer. */
-function _renderSesiones() {
-    const container = document.getElementById('sesionesContainer');
-    if (!container) return;
-
-    if (!_sesiones.length) {
-        container.innerHTML = '<p class="text-muted" style="font-size:.8rem;margin:0 0 .5rem;">Sin sesiones definidas.</p>';
-        return;
-    }
-
-    container.innerHTML = _sesiones.map((s, i) => `
-        <div class="row g-2 align-items-center mb-1" style="flex-wrap:nowrap;">
-            <div class="col-auto">
-                <select class="form-select form-select-sm" style="min-width:120px;"
-                        onchange="window.__paqSesionTipo(${i}, this.value)">
-                    ${Object.entries(TIPO_SESION_LABEL).map(([v, l]) =>
-                        `<option value="${v}"${s.tipo_sesion === v ? ' selected' : ''}>${l}</option>`
-                    ).join('')}
-                </select>
-            </div>
-            <div class="col-auto">
-                <input type="number" class="form-control form-control-sm" style="width:70px;"
-                       value="${s.num_sesiones}" min="1" max="10"
-                       onchange="window.__paqSesionNum(${i}, this.value)"
-                       placeholder="N.°">
-            </div>
-            <div class="col">
-                <input type="text" class="form-control form-control-sm"
-                       value="${s.lugar_descripcion ?? ''}"
-                       oninput="window.__paqSesionLugar(${i}, this.value)"
-                       placeholder="Descripción del lugar (opcional)">
-            </div>
-            <div class="col-auto">
-                <button type="button" class="btn btn-sm btn-outline-danger" style="padding:.2rem .4rem;"
-                        onclick="window.__paqRemoveSesion(${i})">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-        </div>`).join('');
-}
-
 /**
  * Re-renderiza el contenedor de ítems `#itemsContainer` a partir del array `_items`.
  * Cada ítem produce un input de texto con botón de eliminar.
@@ -189,12 +135,10 @@ export const form = {
         if (cat) cat.value = 'Quinceañeros';
         const niv = document.getElementById('pNivel');
         if (niv) niv.value = '';
-        _items    = [];
-        _sesiones = [];
+        _items = [];
         _modoEdicion     = false;
         _idPaqueteActual = null;
         _renderItems();
-        _renderSesiones();
     },
 
     /**
@@ -268,7 +212,6 @@ export const form = {
             descripcion:      lineas.join('\n') || null,
             precio:           parseFloat(_get('pPrecio')),
             categoria:        CAT_DB_MAP[cat] ?? 'otros',
-            sesiones:         _sesiones.length ? _sesiones.map(s => ({ ...s })) : undefined,
         };
     },
 
@@ -311,11 +254,6 @@ export const form = {
         }, 30);
     },
 
-    agregarSesion() {
-        _sesiones.push({ tipo_sesion: 'colegio', num_sesiones: 1, lugar_descripcion: '' });
-        _renderSesiones();
-    },
-
     /** true si el modal está en modo edición. */
     get modoEdicion() { return _modoEdicion; },
 
@@ -344,7 +282,3 @@ window.__paqUpdateItem = (i, v) => { _items[i] = v; };
  */
 window.__paqRemoveItem = (i) => { _items.splice(i, 1); _renderItems(); };
 
-window.__paqSesionTipo   = (i, v) => { _sesiones[i].tipo_sesion       = v;            };
-window.__paqSesionNum    = (i, v) => { _sesiones[i].num_sesiones       = parseInt(v) || 1; };
-window.__paqSesionLugar  = (i, v) => { _sesiones[i].lugar_descripcion  = v;            };
-window.__paqRemoveSesion = (i)    => { _sesiones.splice(i, 1); _renderSesiones();      };

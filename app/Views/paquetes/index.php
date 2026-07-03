@@ -80,7 +80,8 @@
                     </div>
                     <div class="col-12 col-md-4">
                         <label>Categoría</label>
-                        <select class="form-select" id="pCategoria">
+                        <select class="form-select" id="pCategoria" onchange="window.__paqActualizarTitulo()">
+                            <option value="" disabled selected>Seleccionar categoría...</option>
                             <option value="Cuadros">Cuadros</option>
                             <option value="Anuarios">Anuarios</option>
                             <option value="Paquetes">Paquetes</option>
@@ -142,16 +143,6 @@
                     <div id="itemsContainer"></div>
                     <button class="btn-add-item" onclick="agregarItemModal()">
                         <i class="bi bi-plus"></i> Agregar ítem
-                    </button>
-                </div>
-
-                <!-- Sesiones fotográficas (solo creación) -->
-                <div id="sesionesSection" class="mb-1" style="display:none;">
-                    <hr style="border-color:var(--border);margin:.75rem 0;">
-                    <label style="margin-bottom:8px;">Sesiones fotográficas incluidas</label>
-                    <div id="sesionesContainer"></div>
-                    <button class="btn-add-item" onclick="agregarSesionModal()">
-                        <i class="bi bi-plus"></i> Agregar tipo de sesión
                     </button>
                 </div>
 

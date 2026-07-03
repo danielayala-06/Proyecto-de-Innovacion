@@ -93,9 +93,8 @@ function _aplicarFiltros() {
 window.abrirNuevo = function () {
     _idEditando = null;
     form.limpiar();
-    document.getElementById('modalTitulo').textContent = 'Nuevo paquete';
+    document.getElementById('modalTitulo').textContent = 'Agregar al catálogo';
     document.getElementById('btnEliminarModal').style.display = 'none';
-    document.getElementById('sesionesSection').style.display = '';
     document.getElementById('pImagenSection').style.display = 'none';
     _modal?.show();
 };
@@ -112,9 +111,8 @@ window.editarPaquete = async function (id) {
         const res = await paqueteApi.obtener(id);
         _idEditando = id;
         form.poblar(res.data);
-        document.getElementById('modalTitulo').textContent = 'Editar paquete';
+        document.getElementById('modalTitulo').textContent = `Editar: ${res.data.nombre_paquete}`;
         document.getElementById('btnEliminarModal').style.display = '';
-        document.getElementById('sesionesSection').style.display = 'none';
         document.getElementById('pImagenSection').style.display = '';
         _actualizarPreviewImagen(res.data.imagen_url ?? null);
         _modal?.show();
@@ -202,10 +200,6 @@ window.eliminarPaquete = async function () {
  */
 window.agregarItemModal = function () {
     form.agregarItem();
-};
-
-window.agregarSesionModal = function () {
-    form.agregarSesion();
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -311,5 +305,20 @@ function init() {
 
     cargarPaquetes();
 }
+
+const _TITULO_POR_CAT = {
+    Cuadros:     'Nuevo cuadro',
+    Anuarios:    'Nuevo anuario',
+    Paquetes:    'Nuevo paquete',
+    Corporativo: 'Nuevo ítem corporativo',
+    Otro:        'Nuevo ítem',
+};
+
+window.__paqActualizarTitulo = function () {
+    if (_idEditando) return;
+    const cat = document.getElementById('pCategoria')?.value ?? '';
+    document.getElementById('modalTitulo').textContent =
+        _TITULO_POR_CAT[cat] ?? 'Agregar al catálogo';
+};
 
 init();
