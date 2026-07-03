@@ -92,7 +92,7 @@ function navActivo(string $ruta, string $segmento): string {
             </li> -->
             <li>
                 <a href="<?= base_url('/catalogo') ?>" class="<?= navActivo('catalogo', $segmento) ?>">
-                    <i class="bi bi-box-seam"></i> <span class="nav-label">Catálogo</span>
+                    <i class="bi bi-book-half"></i> <span class="nav-label">Catálogo</span>
                 </a>
             </li>
 

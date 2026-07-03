@@ -30,7 +30,7 @@ async function init() {
         _aplicarFiltros();
     } catch (err) {
         console.error('Error cargando promociones:', err);
-        alerts.error('No se pudieron cargar las promociones');
+        alerts.error('No se pudieron cargar las promociones.');
     }
 
     document.getElementById('searchInput').addEventListener('input',  _onFilter);
@@ -300,8 +300,8 @@ window.crearSesion = async function() {
     const hora  = document.getElementById('nsHora')?.value || '08:00';
     const obs   = document.getElementById('nsObs')?.value?.trim() || null;
 
-    if (!tipo) { alerts.warning('Selecciona el tipo de sesión'); return; }
-    if (!fecha) { alerts.warning('Selecciona la fecha'); return; }
+    if (!tipo) { alerts.warning('Selecciona el tipo de sesión.'); return; }
+    if (!fecha) { alerts.warning('Selecciona la fecha.'); return; }
 
     try {
         await http.post('api/sesiones', {
@@ -313,7 +313,7 @@ window.crearSesion = async function() {
         alerts.success('Sesión agendada');
         await _recargarModal();
     } catch (err) {
-        alerts.error(err.message || 'Error al crear la sesión');
+        alerts.error(err.message || 'Error al crear la sesión.');
     }
 };
 

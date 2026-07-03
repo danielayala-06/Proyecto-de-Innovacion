@@ -668,7 +668,7 @@ window.verDetalleEstudiante = async function(idEstudiante) {
  */
 window.irAFormulario = function() {
     if (!state.activePromocion) {
-        alerts.warning('Selecciona una promoción primero');
+        alerts.warning('Selecciona una promoción primero.');
         return;
     }
     window.location.href = `${BASE_URL}index.php/admin/formularios/promo-escolar/${state.activePromocion}`;

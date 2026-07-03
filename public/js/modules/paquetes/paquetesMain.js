@@ -61,7 +61,7 @@ async function cargarPaquetes() {
         ui.renderStats(calcularStats(state.filtrados));
         ui.renderGrid(state.filtrados);
     } catch {
-        ui.renderError('No se pudieron cargar los paquetes.');
+        ui.renderError('No se pudo cargar el catálogo.');
     }
 }
 
@@ -119,7 +119,7 @@ window.editarPaquete = async function (id) {
         _actualizarPreviewImagen(res.data.imagen_url ?? null);
         _modal?.show();
     } catch {
-        alerts.error('No se pudo cargar el paquete.');
+        alerts.error('No se pudo cargar el ítem.');
     }
 };
 
@@ -140,10 +140,10 @@ window.guardarPaquete = async function () {
             await paqueteApi.crear(form.datosCrear());
         }
         _modal?.hide();
-        alerts.ok(_idEditando ? 'Paquete actualizado.' : 'Paquete creado.');
+        alerts.ok(_idEditando ? 'Ítem actualizado.' : 'Ítem guardado en el catálogo.');
         await cargarPaquetes();
     } catch (err) {
-        alerts.error(err.message || 'Error al guardar el paquete.');
+        alerts.error(err.message || 'Error al guardar el ítem.');
     }
 };
 
@@ -215,10 +215,10 @@ window.eliminarPaquete = async function () {
     try {
         await paqueteApi.cambiarEstado(_idEditando, 'INACTIVO');
         _modalConfirm?.hide();
-        alerts.ok('Paquete desactivado.');
+        alerts.ok('Ítem desactivado del catálogo.');
         await cargarPaquetes();
     } catch {
-        alerts.error('No se pudo desactivar el paquete.');
+        alerts.error('No se pudo desactivar el ítem.');
     }
 };
 

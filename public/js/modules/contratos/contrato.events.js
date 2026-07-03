@@ -992,8 +992,8 @@ function _actualizarBtnArchivadas() {
   const btn = document.getElementById('btnToggleArchivadas');
   if (!btn) return;
   btn.innerHTML = state.mostrarArchivadas
-    ? '<i class="bi bi-eye-slash"></i> Ocultar archivadas'
-    : '<i class="bi bi-archive"></i> Mostrar archivadas';
+    ? '<i class="bi bi-eye-slash"></i> Ocultar archivados'
+    : '<i class="bi bi-archive"></i> Mostrar archivados';
   btn.classList.toggle('btn-secondary',         state.mostrarArchivadas);
   btn.classList.toggle('btn-outline-secondary', !state.mostrarArchivadas);
 }

@@ -20,7 +20,7 @@
                 </div>
             </div>
             <div class="d-flex justify-content-end w-25">
-                <button type="button" class="align-self-end btn btn-nuevo-paquete" style="cursor:pointer;">Ir a formulario <i class="bi bi-arrow-right"></i></button>
+                <button type="button" class="align-self-end btn btn-nuevo-paquete" style="cursor:pointer;">Ir al formulario <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>
 

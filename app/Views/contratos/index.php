@@ -35,7 +35,7 @@
                         <option value="cancelado">Cancelado</option>
                     </select>
                     <button id="btnToggleArchivadas" class="btn btn-sm btn-outline-secondary" style="font-size:.78rem;display:flex;align-items:center;gap:5px;">
-                        <i class="bi bi-archive"></i> Mostrar archivadas
+                        <i class="bi bi-archive"></i> Mostrar archivados
                     </button>
                 </div>
                 <button class="btn-nuevo-paquete" onclick="abrirModalCotizaciones()">

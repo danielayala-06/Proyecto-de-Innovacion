@@ -268,12 +268,12 @@
             </tr>
             
             <tr>
-                <td class="info-label">Fecha de Sesion - Colegio</td>
+                <td class="info-label">Fecha de Sesión - Colegio</td>
                 <td><?= $fechaSesionColegio ?? '' ?></td>
             </tr>
             
             <tr>
-                <td class="info-label">Fecha de Sesion - Estudio/Exterior</td>
+                <td class="info-label">Fecha de Sesión - Estudio/Exterior</td>
                 <td><?= $fechaSesionEstudioExterior ?? '' ?></td>
             </tr>
             

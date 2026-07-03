@@ -111,7 +111,7 @@ export const ui = {
      * @param {string} [msg='Error al cargar los paquetes.'] - Mensaje de error a mostrar.
      * @returns {void}
      */
-    renderError(msg = 'Error al cargar los paquetes.') {
+    renderError(msg = 'Error al cargar el catálogo.') {
         const grid = document.getElementById('paquetesGrid');
         if (!grid) return;
         grid.innerHTML = `
@@ -164,7 +164,7 @@ export const ui = {
             grid.innerHTML = `
                 <div class="empty-state">
                     <i class="bi bi-box-seam"></i>
-                    No hay paquetes para mostrar.
+                    No hay ítems en el catálogo.
                 </div>`;
             return;
         }

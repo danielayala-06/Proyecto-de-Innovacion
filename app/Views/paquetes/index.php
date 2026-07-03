@@ -9,7 +9,7 @@
         <div class="toolbar">
             <div class="d-flex align-items-center gap-2 flex-wrap" style="flex:1;">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Buscar paquete...">
+                    <input type="text" id="searchInput" placeholder="Buscar en el catálogo...">
                     <button class="search-btn"><i class="bi bi-search"></i></button>
                 </div>
                 <select class="filter-select" id="filterCat">
@@ -30,7 +30,7 @@
                 </select>
             </div>
             <button class="btn-nuevo-paquete" onclick="abrirNuevo()">
-                <i class="bi bi-plus-circle"></i> Nuevo paquete
+                <i class="bi bi-plus-circle"></i> Agregar al catálogo
             </button>
         </div>
 
@@ -75,7 +75,7 @@
                 <input type="hidden" id="pId">
                 <div class="row g-3 mb-3">
                     <div class="col-12 col-md-8">
-                        <label>Nombre del paquete</label>
+                        <label>Nombre del ítem</label>
                         <input type="text" class="form-control" id="pNombre" placeholder="Ej: Paquete Quinceañero Premium">
                     </div>
                     <div class="col-12 col-md-4">
@@ -113,9 +113,9 @@
                     </div>
                 </div>
 
-                <!-- Imagen del paquete (solo edición) -->
+                <!-- Imagen del ítem (solo edición) -->
                 <div id="pImagenSection" class="mb-3" style="display:none;">
-                    <label style="margin-bottom:8px;">Imagen del paquete</label>
+                    <label style="margin-bottom:8px;">Imagen</label>
                     <div id="pImagenZone" class="img-upload-zone" onclick="document.getElementById('pImagenInput').click()">
                         <img id="pImagenPreview" src="" alt="" loading="lazy" decoding="async"
                              style="display:none;width:100%;height:100%;object-fit:cover;border-radius:8px;">
@@ -137,7 +137,7 @@
                     </div>
                 </div>
 
-                <!-- Items del paquete -->
+                <!-- Ítems incluidos -->
                 <div class="mb-1">
                     <label style="margin-bottom:8px;">Incluye</label>
                     <div id="itemsContainer"></div>
@@ -153,7 +153,7 @@
                 </button>
                 <div class="ms-auto d-flex gap-2">
                     <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-primary btn-sm" onclick="guardarPaquete()">Guardar paquete</button>
+                    <button class="btn btn-primary btn-sm" onclick="guardarPaquete()">Guardar</button>
                 </div>
             </div>
         </div>
@@ -165,11 +165,11 @@
     <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title" style="color:#e07070;"><i class="bi bi-exclamation-triangle me-2"></i>Eliminar paquete</h6>
+                <h6 class="modal-title" style="color:#e07070;"><i class="bi bi-exclamation-triangle me-2"></i>Eliminar ítem</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="font-size:0.85rem;color:#aaa;">
-                ¿Estás seguro de que deseas eliminar el paquete <strong id="confirmNombre" style="color:#ddd;"></strong>? Esta acción no se puede deshacer.
+                ¿Estás seguro de que deseas eliminar <strong id="confirmNombre" style="color:#ddd;"></strong> del catálogo? Esta acción no se puede deshacer.
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>

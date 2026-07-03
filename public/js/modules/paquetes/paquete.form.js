@@ -182,10 +182,10 @@ export const form = {
      * @returns {string|null} Mensaje de error si hay validación fallida, o `null` si es válido.
      */
     validar() {
-        if (!_get('pNombre'))                          return 'El nombre del paquete es obligatorio.';
+        if (!_get('pNombre'))                          return 'El nombre del ítem es obligatorio.';
         const precio = parseFloat(_get('pPrecio'));
         if (!precio || precio <= 0)                    return 'El precio debe ser mayor a 0.';
-        if (!NIVELES_VALIDOS.includes(_get('pNivel'))) return 'Selecciona el nivel disponible del paquete.';
+        if (!NIVELES_VALIDOS.includes(_get('pNivel'))) return 'Selecciona el nivel disponible.';
         return null;
     },
 
