@@ -107,11 +107,9 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth']
     $routes->post  ('paquetes',               'PaquetesApi::create');
     $routes->put   ('paquetes/(:num)',         'PaquetesApi::update/$1');
     $routes->patch ('paquetes/(:num)/estado',  'PaquetesApi::cambiarEstado/$1');
-    $routes->post  ('paquetes/(:num)/productos',              'PaquetesApi::agregarProducto/$1');
-    $routes->delete('paquetes/(:num)/productos/(:num)',        'PaquetesApi::quitarProducto/$1/$2');
-    $routes->post  ('paquetes/(:num)/reglas',                  'PaquetesApi::crearRegla/$1');
-    $routes->delete('paquetes/reglas/(:num)',                   'PaquetesApi::eliminarRegla/$1');
-    $routes->post  ('paquetes/(:num)/imagen',                  'PaquetesApi::subirImagen/$1');
+    $routes->post  ('paquetes/(:num)/productos',       'PaquetesApi::agregarProducto/$1');
+    $routes->delete('paquetes/(:num)/productos/(:num)', 'PaquetesApi::quitarProducto/$1/$2');
+    $routes->post  ('paquetes/(:num)/imagen',          'PaquetesApi::subirImagen/$1');
     $routes->delete('paquetes/(:num)/imagen',                  'PaquetesApi::eliminarImagen/$1');
     $routes->get   ('productos',                               'PaquetesApi::indexProductos');
 

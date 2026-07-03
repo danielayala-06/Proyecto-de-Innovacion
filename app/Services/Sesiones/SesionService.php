@@ -15,7 +15,6 @@ use App\Models\SesionesFotograficasModel;
 use App\Models\SesionAsistenciaModel;
 use App\Models\PromocionesEscolaresModel;
 use App\Models\EstudiantesModel;
-use App\Models\ReglasPaquetesModel;
 use App\Models\CotizacionesDetallesModel;
 use App\Models\PaquetesSesionesModel;
 
@@ -45,9 +44,6 @@ class SesionService
     /** @var EstudiantesModel Acceso a la tabla `estudiantes`. */
     protected EstudiantesModel $estudianteModel;
 
-    /** @var ReglasPaquetesModel Acceso a las reglas de bonificación de sesiones. */
-    protected ReglasPaquetesModel $reglasPaquetesModel;
-
     /** @var CotizacionesDetallesModel Acceso a los ítems de la cotización. */
     protected CotizacionesDetallesModel $detalleModel;
 
@@ -60,7 +56,6 @@ class SesionService
         $this->asistenciaModel       = model(SesionAsistenciaModel::class);
         $this->promocionModel        = model(PromocionesEscolaresModel::class);
         $this->estudianteModel       = model(EstudiantesModel::class);
-        $this->reglasPaquetesModel   = model(ReglasPaquetesModel::class);
         $this->detalleModel          = model(CotizacionesDetallesModel::class);
         $this->paquetesSesionesModel = model(PaquetesSesionesModel::class);
     }
@@ -188,27 +183,13 @@ class SesionService
             return 0;
         }
 
-        $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
-
-        // Si hay reducción por grupo pequeño, solo se permite la sesión de colegio.
-        if (!empty($evaluacion['reducciones']) && $tipo !== 'colegio') {
-            return 0;
-        }
-
         $configs    = $this->paquetesSesionesModel->configuracionesPorTipo($idsPaquetes, $tipo);
         $permitidas = 0;
         foreach ($configs as $cfg) {
             $permitidas += (int) $cfg['num_sesiones'];
         }
 
-        $bonus = 0;
-        foreach ($evaluacion['activadas'] as $r) {
-            if ($r['tipo_beneficio'] === 'sesion_unica') {
-                $bonus++;
-            }
-        }
-
-        return $permitidas + $bonus;
+        return $permitidas;
     }
 
     /**

@@ -78,14 +78,12 @@ class PaquetesApi extends BaseApiController
             'estado' => $this->request->getGet('estado'),
         ], fn($v) => $v !== null);
 
-        $conReglas = (bool) $this->request->getGet('con_reglas');
-
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON([
                 'status' => 'success',
                 'data'   => $this->paqueteTransformer->transformMany(
-                    $this->paqueteService->listar($filters, $conReglas)
+                    $this->paqueteService->listar($filters)
                 ),
             ]);
     }
@@ -272,42 +270,6 @@ class PaquetesApi extends BaseApiController
     }
 
     /**
-     * POST /api/paquetes/{id}/reglas
-     *
-     * Body: { tipo_condicion, valor_condicion, tipo_beneficio, valor_beneficio, descripcion }
-     *
-     * @param  mixed $id ID del paquete.
-     * @return ResponseInterface 201 con id_regla | 404 | 422.
-     */
-    public function crearRegla($id)
-    {
-        $body = $this->request->getJSON(true) ?? [];
-
-        $rules = [
-            'tipo_condicion'  => 'required|in_list[CANTIDAD_MIN,CANTIDAD_MAX,ELEGIBILIDAD_MIN]',
-            'valor_condicion' => 'required|decimal',
-            'tipo_beneficio'  => 'required|in_list[producto_gratis,sesion_unica,otro]',
-            'descripcion'     => 'required|max_length[300]',
-        ];
-
-        if (!$this->validateData($body, $rules)) {
-            return $this->response
-                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
-                ->setJSON(['status' => 'error', 'errors' => $this->validator->getErrors()]);
-        }
-
-        try {
-            $idRegla = $this->paqueteService->crearRegla((int) $id, $body);
-        } catch (\RuntimeException $e) {
-            return $this->serviceError($e);
-        }
-
-        return $this->response
-            ->setStatusCode(ResponseInterface::HTTP_CREATED)
-            ->setJSON(['status' => 'success', 'message' => 'Regla creada', 'id_regla' => $idRegla]);
-    }
-
-    /**
      * GET /api/productos[?estado=ACTIVO]
      *
      * Lista simplificada de productos para selectores en formularios.
@@ -328,25 +290,6 @@ class PaquetesApi extends BaseApiController
                     'categoria'      => $p['categoria'],
                 ], $productos),
             ]);
-    }
-
-    /**
-     * DELETE /api/paquetes/reglas/{rid}
-     *
-     * @param  mixed $rid ID de la regla.
-     * @return ResponseInterface 200 | 404.
-     */
-    public function eliminarRegla($rid)
-    {
-        try {
-            $this->paqueteService->eliminarRegla((int) $rid);
-        } catch (\RuntimeException $e) {
-            return $this->serviceError($e);
-        }
-
-        return $this->response
-            ->setStatusCode(ResponseInterface::HTTP_OK)
-            ->setJSON(['status' => 'success', 'message' => 'Regla eliminada']);
     }
 
     /**

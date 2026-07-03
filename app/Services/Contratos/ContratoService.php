@@ -17,7 +17,6 @@ use App\Models\CotizacionesModel;
 use App\Models\CotizacionesDetallesModel;
 use App\Models\PagosModel;
 use App\Models\PromocionesEscolaresModel;
-use App\Models\ReglasPaquetesModel;
 
 /**
  * Servicio de Contratos.
@@ -48,17 +47,13 @@ class ContratoService
     /** @var PromocionesEscolaresModel Para activar la promoción al confirmar el contrato. */
     protected PromocionesEscolaresModel $promocionModel;
 
-    /** @var ReglasPaquetesModel Evaluador de reglas de bonificación. */
-    protected ReglasPaquetesModel $reglasPaquetesModel;
-
     public function __construct()
     {
-        $this->contratoModel       = model(ContratosModel::class);
-        $this->cotizacionModel     = model(CotizacionesModel::class);
-        $this->pagoModel           = model(PagosModel::class);
-        $this->detalleModel        = model(CotizacionesDetallesModel::class);
-        $this->promocionModel      = model(PromocionesEscolaresModel::class);
-        $this->reglasPaquetesModel = model(ReglasPaquetesModel::class);
+        $this->contratoModel   = model(ContratosModel::class);
+        $this->cotizacionModel = model(CotizacionesModel::class);
+        $this->pagoModel       = model(PagosModel::class);
+        $this->detalleModel    = model(CotizacionesDetallesModel::class);
+        $this->promocionModel  = model(PromocionesEscolaresModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -183,24 +178,21 @@ class ContratoService
             throw new \RuntimeException('El adelanto debe ser mayor a cero.', 422);
         }
 
-        $promocion  = $this->promocionModel->porCotizacion((int) $data['id_cotizacion']);
-        $detalles   = $this->detalleModel->where('id_cotizacion', (int) $data['id_cotizacion'])->findAll();
-        $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($detalles);
+        $promocion = $this->promocionModel->porCotizacion((int) $data['id_cotizacion']);
 
         $db = $this->contratoModel->db;
         $db->transStart();
 
         $idContrato = $this->contratoModel->insert([
-            'id_cotizacion'     => $data['id_cotizacion'],
-            'fecha_creacion'    => date('Y-m-d'),
-            'fecha_emision'     => $data['fecha_emision']      ?? null,
-            'adelanto'          => $adelanto,
-            'total'             => $total,
-            'contacto2_nombre'  => $data['contacto2_nombre']   ?? null,
-            'contacto2_telefono'=> $data['contacto2_telefono'] ?? null,
-            'observaciones'     => $data['observaciones']      ?? null,
-            'estado'            => 'ACTIVO',
-            'reglas_aplicadas'  => json_encode($evaluacion, JSON_UNESCAPED_UNICODE) ?: null,
+            'id_cotizacion'      => $data['id_cotizacion'],
+            'fecha_creacion'     => date('Y-m-d'),
+            'fecha_emision'      => $data['fecha_emision']      ?? null,
+            'adelanto'           => $adelanto,
+            'total'              => $total,
+            'contacto2_nombre'   => $data['contacto2_nombre']   ?? null,
+            'contacto2_telefono' => $data['contacto2_telefono'] ?? null,
+            'observaciones'      => $data['observaciones']      ?? null,
+            'estado'             => 'ACTIVO',
         ]);
 
         if ($idContrato === false) {
@@ -249,10 +241,9 @@ class ContratoService
         }
 
         return [
-            'id_contrato'      => $idContrato,
-            'total'            => $total,
-            'saldo'            => $total - $adelanto,
-            'reglas_aplicadas' => $evaluacion,
+            'id_contrato' => $idContrato,
+            'total'       => $total,
+            'saldo'       => $total - $adelanto,
         ];
     }
 

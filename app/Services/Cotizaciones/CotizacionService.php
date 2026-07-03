@@ -17,7 +17,6 @@ use App\Models\ColegiosModel;
 use App\Models\PromocionesEscolaresModel;
 use App\Models\PaquetesModel;
 use App\Models\ProductosModel;
-use App\Models\ReglasPaquetesModel;
 
 /**
  * Servicio de Cotizaciones.
@@ -51,9 +50,6 @@ class CotizacionService
     /** @var PaquetesModel Acceso a la tabla `paquetes` (resolución de nombres en ítems). */
     protected PaquetesModel $paqueteModel;
 
-    /** @var ReglasPaquetesModel Acceso a las reglas de bonificación por cantidad. */
-    protected ReglasPaquetesModel $reglasPaquetesModel;
-
     public function __construct()
     {
         $this->cotizacionModel      = model(CotizacionesModel::class);
@@ -62,7 +58,6 @@ class CotizacionService
         $this->promocionModel       = model(PromocionesEscolaresModel::class);
         $this->productoModel        = model(ProductosModel::class);
         $this->paqueteModel         = model(PaquetesModel::class);
-        $this->reglasPaquetesModel  = model(ReglasPaquetesModel::class);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -422,12 +417,6 @@ class CotizacionService
             if ((float) ($detalle['precio_unitario'] ?? 0) < 0) {
                 throw new \RuntimeException('El precio unitario de los ítems no puede ser negativo.', 422);
             }
-        }
-
-        $evaluacion = $this->reglasPaquetesModel->evaluarDetalles($data['detalles'] ?? []);
-        if (!empty($evaluacion['violaciones'])) {
-            $msgs = implode('; ', array_column($evaluacion['violaciones'], 'descripcion'));
-            throw new \RuntimeException("Límite de cantidad superado: {$msgs}", 422);
         }
 
         $db = $this->cotizacionModel->db;
