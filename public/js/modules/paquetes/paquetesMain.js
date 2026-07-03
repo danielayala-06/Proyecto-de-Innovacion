@@ -34,11 +34,13 @@ import { alerts }                        from '../../utils/alerts.js';
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** @type {bootstrap.Modal|null} Modal de creación/edición de paquete. */
-let _modal        = null;
+let _modal             = null;
 /** @type {bootstrap.Modal|null} Modal de confirmación de desactivación. */
-let _modalConfirm = null;
+let _modalConfirm      = null;
+/** @type {bootstrap.Modal|null} Modal de confirmación de activar/desactivar. */
+let _modalToggleEstado = null;
 /** @type {number|null} ID del paquete que se está editando; `null` si es creación. */
-let _idEditando   = null;
+let _idEditando        = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CARGA DESDE API
@@ -153,22 +155,41 @@ window.guardarPaquete = async function () {
  * @param {string} estadoActual - Estado actual (`'ACTIVO'` o `'INACTIVO'`).
  * @returns {Promise<void>}
  */
-window.toggleEstado = async function (id, estadoActual) {
-    const nuevo      = estadoActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    const accion     = nuevo === 'INACTIVO' ? 'desactivar' : 'activar';
-    const advertencia = nuevo === 'INACTIVO'
-        ? 'El ítem dejará de aparecer en nuevas cotizaciones.'
-        : 'El ítem volverá a estar disponible para cotizaciones.';
+window.toggleEstado = function (id, estadoActual) {
+    const nuevo       = estadoActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    const desactivando = nuevo === 'INACTIVO';
 
-    if (!confirm(`¿Seguro que deseas ${accion} este ítem?\n${advertencia}`)) return;
+    const header  = document.getElementById('toggleEstadoHeader');
+    const titulo  = document.getElementById('toggleEstadoTitulo');
+    const mensaje = document.getElementById('toggleEstadoMensaje');
+    const btnConf = document.getElementById('toggleEstadoConfirmar');
 
-    try {
-        await paqueteApi.cambiarEstado(id, nuevo);
-        alerts.ok(nuevo === 'ACTIVO' ? 'Ítem activado.' : 'Ítem desactivado.');
-        await cargarPaquetes();
-    } catch {
-        alerts.error('No se pudo cambiar el estado del ítem.');
+    if (desactivando) {
+        header.style.background  = '#7f1d1d';
+        titulo.innerHTML = '<i class="bi bi-slash-circle me-2"></i>Desactivar ítem';
+        mensaje.innerHTML = 'El ítem <strong style="color:#ddd;">dejará de aparecer</strong> en nuevas cotizaciones. Puedes volver a activarlo en cualquier momento.';
+        btnConf.className = 'btn btn-danger btn-sm';
+        btnConf.textContent = 'Sí, desactivar';
+    } else {
+        header.style.background  = '#14532d';
+        titulo.innerHTML = '<i class="bi bi-check-circle me-2"></i>Activar ítem';
+        mensaje.innerHTML = 'El ítem <strong style="color:#ddd;">volverá a estar disponible</strong> para nuevas cotizaciones.';
+        btnConf.className = 'btn btn-success btn-sm';
+        btnConf.textContent = 'Sí, activar';
     }
+
+    btnConf.onclick = async () => {
+        _modalToggleEstado?.hide();
+        try {
+            await paqueteApi.cambiarEstado(id, nuevo);
+            alerts.ok(desactivando ? 'Ítem desactivado.' : 'Ítem activado.');
+            await cargarPaquetes();
+        } catch {
+            alerts.error('No se pudo cambiar el estado del ítem.');
+        }
+    };
+
+    _modalToggleEstado?.show();
 };
 
 /**
@@ -268,10 +289,12 @@ window.quitarImagenPaquete = async function () {
  * @returns {void}
  */
 function init() {
-    const modalEl        = document.getElementById('modalPaquete');
-    const modalConfirmEl = document.getElementById('modalConfirm');
-    if (modalEl)        _modal        = new bootstrap.Modal(modalEl);
-    if (modalConfirmEl) _modalConfirm = new bootstrap.Modal(modalConfirmEl);
+    const modalEl             = document.getElementById('modalPaquete');
+    const modalConfirmEl      = document.getElementById('modalConfirm');
+    const modalToggleEstadoEl = document.getElementById('modalToggleEstado');
+    if (modalEl)             _modal             = new bootstrap.Modal(modalEl);
+    if (modalConfirmEl)      _modalConfirm      = new bootstrap.Modal(modalConfirmEl);
+    if (modalToggleEstadoEl) _modalToggleEstado = new bootstrap.Modal(modalToggleEstadoEl);
 
     document.getElementById('searchInput')?.addEventListener('input',  _aplicarFiltros);
     document.getElementById('filterCat')?.addEventListener('change',   _aplicarFiltros);

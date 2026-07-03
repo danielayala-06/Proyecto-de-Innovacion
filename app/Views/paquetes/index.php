@@ -179,6 +179,23 @@
     </div>
 </div>
 
+<!-- Modal confirmación activar / desactivar -->
+<div class="modal fade" id="modalToggleEstado" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+        <div class="modal-content">
+            <div class="modal-header" id="toggleEstadoHeader">
+                <h6 class="modal-title" id="toggleEstadoTitulo"></h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="font-size:0.85rem;color:#aaa;" id="toggleEstadoMensaje"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-sm" id="toggleEstadoConfirmar">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>const BASE_URL = "<?= base_url('') ?>"</script>
 <script type="module" src="<?= base_url('js/modules/paquetes/paquetesMain.js') . '?v=' . filemtime(FCPATH . 'js/modules/paquetes/paquetesMain.js') ?>"></script>
 
