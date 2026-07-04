@@ -245,6 +245,36 @@
     </div>
 </div>
 
+<!-- ═══════ MODAL ADVERTENCIA CONFLICTO DE HORARIO ══════════════════════════ -->
+<div class="modal fade" id="modalConflictoSesion" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#78350f;">
+                <h6 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Conflicto de horario
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="font-size:.87rem;">
+                <p style="margin-bottom:.6rem;">Ya existe una sesión agendada a esa misma hora:</p>
+                <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;
+                            padding:.6rem 1rem;font-weight:600;color:var(--text-primary);margin-bottom:.85rem;"
+                     id="conflictoSesionDetalle">—</div>
+                <p style="color:var(--text-secondary);margin-bottom:0;">
+                    Normalmente no se trabajan dos sesiones a la misma hora.
+                    ¿Deseas continuar de todos modos?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-warning btn-sm" id="conflictoContinuar">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Continuar de todos modos
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════ MODAL NUEVO ESTUDIANTE ════════════════════════════════════════════ -->
 <div class="modal fade" id="modalEstudiante" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">

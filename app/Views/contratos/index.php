@@ -55,7 +55,7 @@
                         <th class="text-uppercase" onclick="sortBy('total')">Total <i class="bi bi-arrow-down-up sort-icon" id="sort-total"></i></th>
                         <th class="text-uppercase" onclick="sortBy('estado')">Estado <i class="bi bi-arrow-down-up sort-icon" id="sort-estado"></i></th>
                         <th class="text-uppercase" onclick="sortBy('creado')">Generado <i class="bi bi-arrow-down-up sort-icon" id="sort-creado"></i></th>
-                        <th class="text-uppercase" style="width:120px;text-align:center;">Acciones</th>
+                        <th class="text-uppercase" style="width:60px;text-align:center;">Acciones</th>
                     </tr>
                     </thead>
                     <tbody id="tablaBody"></tbody>
