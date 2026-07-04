@@ -53,6 +53,8 @@ let _modalEstudiante    = null;
 let _modalDetalleSesion = null;
 /** @type {bootstrap.Modal|null} Modal de confirmación de guardado de sesión. */
 let _modalConfirmarSesion = null;
+/** @type {bootstrap.Modal|null} Modal de advertencia de conflicto de horario. */
+let _modalConflicto       = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CARGA POR PROMOCIÓN
@@ -263,24 +265,67 @@ window.abrirEditarSesion = async function (id) {
 };
 
 /**
- * Valida el formulario de sesión y guarda (crea o actualiza).
- * Recarga la promoción activa al finalizar con éxito.
+ * Devuelve la primera sesión (no cancelada) que coincide exactamente
+ * en fecha y hora con `fechaHora`, excluyendo la sesión que se está editando.
  *
- * @returns {Promise<void>}
+ * @param {string}      fechaHora  - Formato `'YYYY-MM-DD HH:MM:SS'`.
+ * @param {number|null} idEditando - ID a ignorar (edición), o null si es nueva.
+ * @returns {Object|null}
+ */
+function _detectarConflicto(fechaHora, idEditando) {
+    const todas = Object.values(state.sesiones).flat();
+    return todas.find(s =>
+        s.estado !== 'cancelado' &&
+        s.id_sesion !== idEditando &&
+        s.fecha_hora_sesion === fechaHora
+    ) ?? null;
+}
+
+/**
+ * Muestra el modal de confirmación definitiva de sesión.
+ * @param {Object} datos - Datos del formulario.
+ */
+function _mostrarConfirmacion(datos) {
+    const tipoLabel = TIPO_LABEL[datos.tipo] || datos.tipo || 'esta sesión';
+    const fecha = datos.fecha_hora_sesion.slice(0, 16).replace(' ', ' a las ');
+    const mensajeEl = document.getElementById('confirmarSesionMensaje');
+    if (mensajeEl) mensajeEl.textContent =
+        `¿Estás seguro de querer agendar la sesión: ${tipoLabel} para el ${fecha}?`;
+    _modalConfirmarSesion?.show();
+}
+
+/**
+ * Valida el formulario de sesión. Si hay conflicto de horario muestra
+ * un modal de advertencia; de lo contrario pasa directo a confirmación.
+ *
+ * @returns {void}
  */
 window.confirmarGuardarSesion = function () {
     const err = sesionForm.validar();
     if (err) { alerts.error(err); return; }
 
-    const datos = sesionForm.datos();
-    const tipoLabel = TIPO_LABEL[datos.tipo] || datos.tipo || 'esta sesión';
-    const fecha = datos.fecha_hora_sesion.slice(0, 16).replace(' ', ' a las ');
-    const mensaje = `¿Estás seguro de querer agendar la sesión: ${tipoLabel} para el ${fecha}?`;
+    const datos      = sesionForm.datos();
+    const idEditando = sesionForm.getId();
+    const conflicto  = _detectarConflicto(datos.fecha_hora_sesion, idEditando);
 
-    const mensajeEl = document.getElementById('confirmarSesionMensaje');
-    if (mensajeEl) mensajeEl.textContent = mensaje;
+    if (conflicto) {
+        const tipoConflicto = TIPO_LABEL[conflicto.tipo] || conflicto.tipo;
+        const promo = conflicto.nombre_promocion
+            ? `${conflicto.nombre_promocion}${conflicto.grado ? ` — ${conflicto.grado}${conflicto.seccion ? ' ' + conflicto.seccion : ''}` : ''}`
+            : `Promoción #${conflicto.id_promocion}`;
 
-    _modalConfirmarSesion?.show();
+        document.getElementById('conflictoSesionDetalle').textContent =
+            `${tipoConflicto} · ${promo}`;
+
+        document.getElementById('conflictoContinuar').onclick = () => {
+            _modalConflicto?.hide();
+            _mostrarConfirmacion(datos);
+        };
+        _modalConflicto?.show();
+        return;
+    }
+
+    _mostrarConfirmacion(datos);
 };
 
 window.guardarSesion = async function () {
@@ -696,10 +741,11 @@ function init() {
     state.idContrato  = ID_CONTRATO;
     state.promociones = PROMOCIONES;
 
-    _modalSesion        = new bootstrap.Modal(document.getElementById('modalSesion'));
-    _modalEstudiante    = new bootstrap.Modal(document.getElementById('modalEstudiante'));
-    _modalDetalleSesion = new bootstrap.Modal(document.getElementById('modalDetalleSesion'));
+    _modalSesion          = new bootstrap.Modal(document.getElementById('modalSesion'));
+    _modalEstudiante      = new bootstrap.Modal(document.getElementById('modalEstudiante'));
+    _modalDetalleSesion   = new bootstrap.Modal(document.getElementById('modalDetalleSesion'));
     _modalConfirmarSesion = new bootstrap.Modal(document.getElementById('modalConfirmarSesion'));
+    _modalConflicto       = new bootstrap.Modal(document.getElementById('modalConflictoSesion'));
 
     document.getElementById('promocionesTabs')?.addEventListener('click', e => {
         const btn = e.target.closest('.promo-tab');

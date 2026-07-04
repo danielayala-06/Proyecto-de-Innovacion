@@ -179,15 +179,15 @@ window.abrirMenuCon = function (e, btn) {
         onclick="_cerrarMenuCon();editarContrato(${id})">
       <i class="bi bi-pencil-square" style="color:var(--amber-text);"></i>Corregir contrato
     </button>`);
+    items.push('<div class="cot-row-dropdown-divider"></div>');
+    items.push(`<button class="cot-row-dropdown-item"
+        onclick="_cerrarMenuCon();confirmarEliminar(${id},'${formatters.codigo(id)}')">
+      <i class="bi bi-x-circle" style="color:var(--red-text);"></i>Cancelar contrato
+    </button>`);
   }
 
-  items.push(`<button class="cot-row-dropdown-item"
-      onclick="_cerrarMenuCon();window.location.href='${BASE_URL}contratos/${id}/sesiones'">
-    <i class="bi bi-camera" style="color:var(--blue-text);"></i>Gestionar sesiones
-  </button>`);
-
   if (canArchive) {
-    items.push('<div class="cot-row-dropdown-divider"></div>');
+    if (items.length) items.push('<div class="cot-row-dropdown-divider"></div>');
     items.push(`<button class="cot-row-dropdown-item"
         onclick="_cerrarMenuCon();archivarContrato(${id},${archivado})">
       <i class="bi ${archivado ? 'bi-archive-fill' : 'bi-archive'}" style="color:var(--text-muted);"></i>
@@ -561,6 +561,14 @@ window.verDetalleContrato = async function (id) {
 
     if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(data, id, isActivo);
 
+    // Enlace a sesiones siempre visible (izquierda)
+    dangerEl.innerHTML =
+      `<a href="${BASE_URL}contratos/${id}/sesiones"
+          class="btn btn-link btn-sm p-0"
+          style="font-size:.78rem;text-decoration:none;color:var(--blue-text);">
+         <i class="bi bi-camera me-1"></i>Gestionar sesiones
+       </a>`;
+
     if (isActivo) {
       const saldo   = data.saldo ?? 0;
       const saldado = saldo <= 0.001;
@@ -577,14 +585,6 @@ window.verDetalleContrato = async function (id) {
                    title="Aún hay saldo pendiente de ${formatters.moneda(saldo)}">
              <i class="bi bi-check-circle me-1"></i>Completar
            </button>`;
-
-      // Acción destructiva (izquierda): link de texto discreto
-      dangerEl.innerHTML =
-        `<button class="btn btn-link btn-sm text-danger p-0"
-                 style="font-size:.78rem;text-decoration:none;"
-                 onclick="confirmarEliminar(${id},'${formatters.codigo(id)}')">
-           <i class="bi bi-x-circle me-1"></i>Cancelar contrato
-         </button>`;
     }
   } catch (e) {
     if (bodyEl) bodyEl.innerHTML =
@@ -956,12 +956,15 @@ async function _ejecutarPago() {
     const bodyEl   = document.getElementById('detalleBody');
     const esActivo = _pagoContratoData.estado?.toUpperCase() === 'ACTIVO';
     if (bodyEl) bodyEl.innerHTML = ui.renderDetalle(_pagoContratoData, _pagoPayload.id_contrato, esActivo);
-    if (!esActivo) {
-      const accsEl   = document.getElementById('detalleAcciones');
-      const dangerEl = document.getElementById('detalleAccionesDanger');
-      if (accsEl)   accsEl.innerHTML   = '';
-      if (dangerEl) dangerEl.innerHTML = '';
-    }
+    const accsEl   = document.getElementById('detalleAcciones');
+    const dangerEl = document.getElementById('detalleAccionesDanger');
+    if (dangerEl) dangerEl.innerHTML =
+      `<a href="${BASE_URL}contratos/${_pagoPayload.id_contrato}/sesiones"
+          class="btn btn-link btn-sm p-0"
+          style="font-size:.78rem;text-decoration:none;color:var(--blue-text);">
+         <i class="bi bi-camera me-1"></i>Gestionar sesiones
+       </a>`;
+    if (!esActivo && accsEl) accsEl.innerHTML = '';
 
     const resLista = await contratoApi.listar();
     state.filas = [...(resLista.data ?? [])].sort((a, b) => b.id - a.id);
