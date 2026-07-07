@@ -41,6 +41,8 @@ let _modalConfirm      = null;
 let _modalToggleEstado = null;
 /** @type {number|null} ID del paquete que se está editando; `null` si es creación. */
 let _idEditando        = null;
+/** @type {File|null} Archivo de imagen seleccionado en modo creación (pendiente de subir). */
+let _archivoImagenPendiente = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CARGA DESDE API
@@ -94,10 +96,12 @@ function _aplicarFiltros() {
  */
 window.abrirNuevo = function () {
     _idEditando = null;
+    _archivoImagenPendiente = null;
     form.limpiar();
     document.getElementById('modalTitulo').textContent = 'Agregar al catálogo';
     document.getElementById('btnEliminarModal').style.display = 'none';
-    document.getElementById('pImagenSection').style.display = 'none';
+    document.getElementById('pImagenSection').style.display = '';
+    _actualizarPreviewImagen(null);
     _modal?.show();
 };
 
@@ -137,7 +141,11 @@ window.guardarPaquete = async function () {
         if (_idEditando) {
             await paqueteApi.actualizar(_idEditando, form.datosActualizar());
         } else {
-            await paqueteApi.crear(form.datosCrear());
+            const res = await paqueteApi.crear(form.datosCrear());
+            if (_archivoImagenPendiente && res.id_paquete) {
+                try { await paqueteApi.subirImagen(res.id_paquete, _archivoImagenPendiente); } catch { /* imagen opcional */ }
+            }
+            _archivoImagenPendiente = null;
         }
         _modal?.hide();
         alerts.ok(_idEditando ? 'Ítem actualizado.' : 'Ítem guardado en el catálogo.');
@@ -261,7 +269,11 @@ function _actualizarPreviewImagen(url) {
  * Quita la imagen del paquete en edición (llama al endpoint DELETE).
  */
 window.quitarImagenPaquete = async function () {
-    if (!_idEditando) return;
+    if (!_idEditando) {
+        _archivoImagenPendiente = null;
+        _actualizarPreviewImagen(null);
+        return;
+    }
     try {
         await paqueteApi.eliminarImagen(_idEditando);
         _actualizarPreviewImagen(null);
@@ -302,9 +314,17 @@ function init() {
 
     document.getElementById('pImagenInput')?.addEventListener('change', async function () {
         const file = this.files?.[0];
-        if (!file || !_idEditando) return;
+        if (!file) return;
+        this.value = '';
 
-        // Mostrar preview local inmediatamente (sin esperar al servidor)
+        if (!_idEditando) {
+            // Modo creación: guardar en memoria y mostrar preview local
+            _archivoImagenPendiente = file;
+            _actualizarPreviewImagen(URL.createObjectURL(file));
+            return;
+        }
+
+        // Modo edición: subir inmediatamente al servidor
         const localUrl = URL.createObjectURL(file);
         _actualizarPreviewImagen(localUrl);
 
@@ -314,7 +334,6 @@ function init() {
             if (res.status === 'success') {
                 _actualizarPreviewImagen(res.imagen_url);
                 alerts.ok('Imagen guardada.');
-                // Actualizar objeto en state para que el grid refleje la imagen
                 const idx = state.todos.findIndex(p => p.id_paquete === _idEditando);
                 if (idx !== -1) {
                     state.todos[idx].imagen_url = res.imagen_url;
@@ -329,8 +348,6 @@ function init() {
             _actualizarPreviewImagen(null);
             alerts.error('Error de red al subir la imagen.');
         }
-        // Limpiar el input para permitir subir el mismo archivo de nuevo
-        this.value = '';
     });
 
     cargarPaquetes();

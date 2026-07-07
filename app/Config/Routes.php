@@ -70,12 +70,17 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
 
 $routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth'], function ($routes) {
 
-    // ── Clientes ─────────────────────────────────────────────────────────────
+    // ── Clientes (personas de contacto) ─────────────────────────────────────
     $routes->get   ('clientes',        'ClientesApi::index');
     $routes->get   ('clientes/(:num)', 'ClientesApi::show/$1');
     $routes->post  ('clientes',        'ClientesApi::create');
     $routes->put   ('clientes/(:num)', 'ClientesApi::update/$1');
     $routes->delete('clientes/(:num)', 'ClientesApi::delete/$1');
+
+    // ── Colegios (entidad "cliente" desde la UI) ──────────────────────────────
+    $routes->get('colegios',        'ColegiosApi::index');
+    $routes->get('colegios/(:num)', 'ColegiosApi::show/$1');
+    $routes->put('colegios/(:num)', 'ColegiosApi::update/$1');
 
     // ── Cotizaciones ──────────────────────────────────────────────────────────
     $routes->get   ('cotizaciones',               'CotizacionesApi::index');

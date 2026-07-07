@@ -34,6 +34,12 @@ class PaqueteTransformer extends BaseTransformer
         }
 
         $nombreImagen = $resource['imagen'] ?? null;
+        $imagenUrl    = null;
+        if ($nombreImagen) {
+            $ruta      = FCPATH . 'images/paquetes/' . $nombreImagen;
+            $version   = is_file($ruta) ? filemtime($ruta) : 0;
+            $imagenUrl = base_url('images/paquetes/' . $nombreImagen . '?v=' . $version);
+        }
 
         $data = [
             'id_paquete'       => (int)   $resource['id_paquete'],
@@ -41,7 +47,7 @@ class PaqueteTransformer extends BaseTransformer
             'nivel_disponible' =>         $resource['nivel_disponible'],
             'descripcion'      =>         $resource['descripcion'] ?? null,
             'imagen'           =>         $nombreImagen,
-            'imagen_url'       =>         $nombreImagen ? base_url('images/paquetes/' . $nombreImagen) : null,
+            'imagen_url'       =>         $imagenUrl,
             'precio'           => (float) $resource['precio'],
             'categoria'        =>         $resource['categoria']   ?? null,
             'estado'           =>         $resource['estado'],
