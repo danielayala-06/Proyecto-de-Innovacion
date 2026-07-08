@@ -1,67 +1,52 @@
 <?php
 
-/**
- * @file    Home.php
- * @package App\Controllers
- *
- * Controlador del Dashboard principal de la aplicación.
- * Calcula las métricas de resumen (contratos activos, total de clientes
- * e ingresos del mes) usando consultas directas a la base de datos.
- */
-
 namespace App\Controllers;
 
-/**
- * Sirve el dashboard con métricas de negocio en tiempo real.
- *
- * Ruta:
- *  - GET / → index()
- *
- * Las métricas se calculan directamente en este controlador (sin Service)
- * porque son consultas simples de agregación que no requieren lógica de negocio.
- */
 class Home extends BaseController
 {
-    /**
-     * Renderiza el dashboard principal con las métricas de resumen.
-     *
-     * Métricas calculadas:
-     *  - `contratosActivos` : COUNT de contratos con estado = 'ACTIVO'.
-     *  - `totalClientes`    : COUNT de clientes con estado = 'ACTIVO'.
-     *  - `ingresos`         : SUM de pagos.monto del mes y año actuales (CURDATE()).
-     *
-     * @return string HTML de la vista renderizada.
-     */
     public function index(): string
     {
         $db = \Config\Database::connect();
 
-        // Contratos en estado ACTIVO
+        $cotizaciones = (int) $db->table('cotizaciones')->countAllResults();
+
         $contratosActivos = (int) $db->table('contratos')
             ->where('UPPER(estado)', 'ACTIVO')
             ->countAllResults();
 
-        // Clientes activos en el sistema
-        $totalClientes = (int) $db->table('clientes')
-            ->where('UPPER(estado)', 'ACTIVO')
+        $promocioneActivas = (int) $db->table('prom_promociones')
+            ->where('activa', 1)
             ->countAllResults();
 
-        // Ingresos del mes en curso (suma de todos los pagos registrados en el mes/año actual)
+        $sesionesEstesMes = (int) $db->table('sesiones_fotograficas')
+            ->where("MONTH(fecha_hora_sesion) = MONTH(CURDATE())", null, false)
+            ->where("YEAR(fecha_hora_sesion)  = YEAR(CURDATE())",  null, false)
+            ->countAllResults();
+
         $row = $db->table('pagos')
             ->selectSum('monto')
-            ->where("MONTH(fecha) = MONTH(CURDATE())", null, false)
-            ->where("YEAR(fecha)  = YEAR(CURDATE())",  null, false)
             ->get()->getRowArray();
         $ingresos = (float) ($row['monto'] ?? 0);
 
-        $data = [
-            'header'           => view('Layouts/header'),
-            'footer'           => view('Layouts/footer'),
-            'contratosActivos' => $contratosActivos,
-            'totalClientes'    => $totalClientes,
-            'ingresos'         => $ingresos,
-        ];
+        $proximasSesiones = $db->table('sesiones_fotograficas sf')
+            ->select('c.nombre_colegio AS cliente, sf.tipo, sf.fecha_hora_sesion AS fecha')
+            ->join('prom_promociones pp', 'pp.id = sf.id_promocion')
+            ->join('colegios c', 'c.id_colegio = pp.colegio_id')
+            ->where('sf.estado', 'pendiente')
+            ->where('sf.fecha_hora_sesion >=', date('Y-m-d H:i:s'))
+            ->orderBy('sf.fecha_hora_sesion', 'ASC')
+            ->limit(8)
+            ->get()->getResultArray();
 
-        return view('index', $data);
+        return view('index', [
+            'header'            => view('Layouts/header'),
+            'footer'            => view('Layouts/footer'),
+            'cotizaciones'      => $cotizaciones,
+            'contratosActivos'  => $contratosActivos,
+            'promocioneActivas' => $promocioneActivas,
+            'sesionesEstesMes'  => $sesionesEstesMes,
+            'ingresos'          => $ingresos,
+            'proximasSesiones'  => $proximasSesiones,
+        ]);
     }
 }
