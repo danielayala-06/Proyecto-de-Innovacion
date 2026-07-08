@@ -52,6 +52,16 @@ public/images/paquetes/*.webp
 Vagrantfile
 
 #-------------------------
+# Herramientas externas
+#-------------------------
+tools/*.phar
+
+#-------------------------
+# Documentación generada
+#-------------------------
+/build/
+
+#-------------------------
 # Temporary Files
 #-------------------------
 /writable/cache/*
