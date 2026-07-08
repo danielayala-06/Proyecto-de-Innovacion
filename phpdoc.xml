@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdocumentor
+    configVersion="3"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="https://www.phpdoc.org"
+    xsi:noNamespaceSchemaLocation="https://docs.phpdoc.org/latest/phpdoc.xsd"
+>
+    <paths>
+        <output>build/docs/code</output>
+        <cache>build/.phpdoc-cache</cache>
+    </paths>
+
+    <version number="dev">
+        <folder>latest</folder>
+        <api format="php">
+            <source dsn=".">
+                <path>app/Controllers</path>
+                <path>app/Services</path>
+                <path>app/Models</path>
+                <path>app/Filters</path>
+                <path>app/Transformers</path>
+                <path>app/Commands</path>
+            </source>
+            <ignore hidden="true">
+                <path>app/Views</path>
+                <path>app/Database</path>
+                <path>app/Language</path>
+            </ignore>
+            <extensions>
+                <extension>php</extension>
+            </extensions>
+            <visibility>public</visibility>
+            <default-package-name>Ronceros</default-package-name>
+            <include-source>true</include-source>
+        </api>
+    </version>
+
+    <template name="default"/>
+</phpdocumentor>
