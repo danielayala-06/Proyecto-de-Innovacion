@@ -106,11 +106,6 @@ function navActivo(string $ruta, string $segmento): string {
                     <i class="bi bi-calendar3"></i> <span class="nav-label">Calendario</span>
                 </a>
             </li>
-            <li>
-                <a href="<?= base_url('admin/formularios') ?>" class="<?= navActivo('admin', $segmento) ?>">
-                    <i class="bi bi-file-earmark-person"></i> <span class="nav-label">Formularios</span>
-                </a>
-            </li>
         </ul>
 
         <div class="sidebar-footer">
