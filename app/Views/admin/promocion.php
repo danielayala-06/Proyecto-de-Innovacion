@@ -189,18 +189,18 @@
                         <?php endif; ?>
                     </td>
                     <td>
-                        <span class="adm-link-text" title="<?= base_url('formulario/' . $a['token']) ?>">
-                            <?= base_url('formulario/' . $a['token']) ?>
+                        <span class="adm-link-text" title="<?= public_url('formulario/' . $a['token']) ?>">
+                            <?= public_url('formulario/' . $a['token']) ?>
                         </span>
                     </td>
                     <td class="text-end" style="white-space:nowrap;">
-                        <button onclick="navigator.clipboard.writeText('<?= base_url('formulario/' . $a['token']) ?>')"
+                        <button onclick="navigator.clipboard.writeText('<?= public_url('formulario/' . $a['token']) ?>')"
                                 style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.8rem;padding:.2rem .4rem;"
                                 title="Copiar enlace">
                             <i class="bi bi-clipboard"></i>
                         </button>
                         <?php if (!$a['completado']): ?>
-                        <a href="<?= base_url('formulario/' . $a['token']) ?>" target="_blank"
+                        <a href="<?= public_url('formulario/' . $a['token']) ?>" target="_blank"
                            style="color:var(--text-muted);font-size:.8rem;padding:.2rem .4rem;"
                            title="Abrir formulario">
                             <i class="bi bi-box-arrow-up-right"></i>
@@ -542,7 +542,6 @@ function adminPanel() {
     function cerrar() { modal.style.display = 'none'; }
 
     window.abrirImportModal = function() {
-        console.log('abrirImportModal called');
         if (!importOverlay || !txtNombresImportar || !importBtnText || !importErrorEl) {
             alert('No se pudo abrir el modal de importación. Intenta recargar la página.');
             return;
@@ -556,13 +555,11 @@ function adminPanel() {
     };
 
     window.cerrarImportModal = function() {
-        console.log('cerrarImportModal called');
         if (!importOverlay) return;
         importOverlay.style.display = 'none';
     };
 
     window.confirmarImportar = async function() {
-        console.log('confirmarImportar called');
         if (!txtNombresImportar || !importErrorEl || !importBtnText || !btnConfirmarImport) return;
 
         const nombres = txtNombresImportar.value

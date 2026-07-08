@@ -25,13 +25,11 @@ class ServeLocal extends BaseCommand
             exit(EXIT_ERROR);
         }
 
-        $this->actualizarEnv($ip, $port);
-
         CLI::write('');
         CLI::write('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'yellow');
         CLI::write('  IP local  : ' . CLI::color($ip, 'green'));
         CLI::write('  Puerto    : ' . CLI::color((string) $port, 'green'));
-        CLI::write('  URL       : ' . CLI::color("http://{$ip}:{$port}/", 'cyan'));
+        CLI::write('  URL LAN   : ' . CLI::color("http://{$ip}:{$port}/", 'cyan'));
         CLI::write('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'yellow');
         CLI::write('');
 
@@ -66,26 +64,4 @@ class ServeLocal extends BaseCommand
         return null;
     }
 
-    private function actualizarEnv(string $ip, int $port): void
-    {
-        $envPath = ROOTPATH . '.env';
-        if (! is_file($envPath)) {
-            return;
-        }
-
-        $baseURL = "http://{$ip}:{$port}/";
-        $content = file_get_contents($envPath);
-
-        if (preg_match('/^app\.baseURL\s*=/m', $content)) {
-            $content = preg_replace(
-                '/^app\.baseURL\s*=.*/m',
-                "app.baseURL = '{$baseURL}'",
-                $content
-            );
-        } else {
-            $content .= "\napp.baseURL = '{$baseURL}'\n";
-        }
-
-        file_put_contents($envPath, $content);
-    }
 }
