@@ -209,6 +209,112 @@ class SesionService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // DATOS PARA VISTAS WEB
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Devuelve las promociones y la configuración de sesiones de un contrato.
+     * Usado por SesionController::index() para hidratar la vista de gestión.
+     *
+     * @return array{promociones: array, sesionesConfig: array}
+     */
+    public function datosPorContrato(int $idCotizacion): array
+    {
+        $db = \Config\Database::connect();
+
+        $promociones = $db->table('promociones_escolares pe')
+            ->select('pe.*, c.nombre_colegio')
+            ->join('colegios c', 'c.id_colegio = pe.id_colegio')
+            ->where('pe.id_cotizacion', $idCotizacion)
+            ->orderBy('pe.nombre', 'ASC')
+            ->get()->getResultArray();
+
+        $idsPaquetes = $db->table('cotizaciones_detalles')
+            ->select('id_referencia')
+            ->where('id_cotizacion', $idCotizacion)
+            ->where('tipo_item', 'paquete')
+            ->get()->getResultArray();
+
+        $idsPaquetes    = array_column($idsPaquetes, 'id_referencia');
+        $sesionesConfig = [];
+
+        if (!empty($idsPaquetes)) {
+            $sesionesConfig = $db->table('paquetes_sesiones ps')
+                ->select('ps.*, p.nombre_paquete')
+                ->join('paquetes p', 'p.id_paquete = ps.id_paquete')
+                ->whereIn('ps.id_paquete', $idsPaquetes)
+                ->get()->getResultArray();
+        }
+
+        return ['promociones' => $promociones, 'sesionesConfig' => $sesionesConfig];
+    }
+
+    /**
+     * Reúne todos los datos necesarios para generar el PDF de lista de estudiantes.
+     * Devuelve array vacío si la promoción no pertenece a esa cotización.
+     *
+     * @return array{promocion: array, estudiantes: array, sesiones: array, asistencia: array, productos: array}|array{}
+     */
+    public function datosListaPdf(int $idPromocion, int $idCotizacion): array
+    {
+        $db = \Config\Database::connect();
+
+        $promocion = $db->table('promociones_escolares pe')
+            ->select('pe.*, c.nombre_colegio, c.distrito, c.provincia, cotizaciones.id_cotizacion')
+            ->join('colegios c', 'c.id_colegio = pe.id_colegio', 'left')
+            ->join('cotizaciones', 'cotizaciones.id_cotizacion = pe.id_cotizacion', 'left')
+            ->where('pe.id_promocion', $idPromocion)
+            ->where('pe.id_cotizacion', $idCotizacion)
+            ->get()->getRowArray();
+
+        if (!$promocion) {
+            return [];
+        }
+
+        $estudiantes = $db->table('estudiantes e')
+            ->select('e.id_estudiante, e.nombres, e.apellidos')
+            ->where('e.id_promocion', $idPromocion)
+            ->orderBy('e.apellidos', 'ASC')
+            ->get()->getResultArray();
+
+        $sesiones = $db->table('sesiones_fotograficas sf')
+            ->select('sf.id_sesion, sf.fecha_hora_sesion, sf.tipo, sf.estado, sf.observaciones')
+            ->where('sf.id_promocion', $idPromocion)
+            ->orderBy('sf.fecha_hora_sesion', 'ASC')
+            ->get()->getResultArray();
+
+        $asistencia = [];
+        if (!empty($sesiones)) {
+            $sesionIds = array_column($sesiones, 'id_sesion');
+            $rows      = $db->table('sesion_asistencia sa')
+                ->select('sa.id_sesion, sa.id_estudiante, sa.asistio')
+                ->whereIn('sa.id_sesion', $sesionIds)
+                ->get()->getResultArray();
+            foreach ($rows as $row) {
+                $asistencia[$row['id_sesion']][$row['id_estudiante']] = $row['asistio'];
+            }
+        }
+
+        $productos = $db->table('cotizaciones_detalles cd')
+            ->select([
+                'cd.tipo_item', 'cd.descripcion', 'cd.cantidad', 'cd.precio_unitario',
+                'COALESCE(p.nombre_paquete, pr.nombre_producto, cd.descripcion) AS nombre',
+            ])
+            ->join('paquetes p',   'p.id_paquete  = cd.id_referencia AND cd.tipo_item = "paquete"',  'left')
+            ->join('productos pr', 'pr.id_producto = cd.id_referencia AND cd.tipo_item = "producto"', 'left')
+            ->where('cd.id_cotizacion', $idCotizacion)
+            ->get()->getResultArray();
+
+        return [
+            'promocion'   => $promocion,
+            'estudiantes' => $estudiantes,
+            'sesiones'    => $sesiones,
+            'asistencia'  => $asistencia,
+            'productos'   => $productos,
+        ];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // ESCRITURA
     // ─────────────────────────────────────────────────────────────────────────
 
