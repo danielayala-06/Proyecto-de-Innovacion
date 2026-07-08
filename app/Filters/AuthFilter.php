@@ -25,7 +25,7 @@ class AuthFilter implements FilterInterface
         if (str_starts_with($path, 'api/') || str_starts_with($path, 'index.php/api/')) {
             return service('response')
                 ->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED)
-                ->setJSON(['status' => 'error', 'message' => 'No autorizado. Inicia sesión.']);
+                ->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
         }
 
         return redirect()->to(base_url('/login'))
