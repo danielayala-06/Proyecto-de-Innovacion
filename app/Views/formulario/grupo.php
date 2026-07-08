@@ -141,7 +141,7 @@ $sNum = 0;
             <span class="prod-unico-icon"><i class="bi bi-image-fill"></i><i class="bi bi-journal-text"></i></span>
             <div>
                 <div class="prod-unico-name">Cuadro escolar + Anuario</div>
-                <div class="prod-unico-label">Ambos productos incluidos en tu paquete — selecciona el producto sin elegir tamaño o modelo.</div>
+                <div class="prod-unico-label">Ambos productos incluidos en tu paquete — el modelo de anuario es opcional.</div>
             </div>
         </div>
         <?php elseif ($cuadrosEnContrato): ?>
@@ -149,7 +149,7 @@ $sNum = 0;
             <span class="prod-unico-icon"><i class="bi bi-image-fill"></i></span>
             <div>
                 <div class="prod-unico-name">Cuadro escolar</div>
-                <div class="prod-unico-label">Producto incluido en tu contrato — el tamaño es opcional.</div>
+                <div class="prod-unico-label">Producto incluido en tu contrato.</div>
             </div>
         </div>
         <?php else: ?>
@@ -163,22 +163,6 @@ $sNum = 0;
         <?php endif; ?>
         <?php endif; ?>
 
-        <?php if ($cuadrosEnContrato): ?>
-        <div class="subfield" x-show="form.tiene_cuadro" x-transition>
-            <div class="field" style="margin-bottom:0">
-                <label>Tamaño del cuadro</label>
-                <select x-model="form.cuadro_tamano" :class="errors.cuadro_tamano ? 'err' : ''">
-                    <option value="">— Selecciona un tamaño (opcional) —</option>
-                    <option value="20x30 cm">20×30 cm</option>
-                    <option value="30x40 cm">30×40 cm</option>
-                    <option value="40x50 cm">40×50 cm</option>
-                    <option value="50x60 cm">50×60 cm</option>
-                </select>
-                <div class="hint">Opcional — completa solo si ya tienes preferencia.</div>
-                <div class="err-msg" x-show="errors.cuadro_tamano" x-text="errors.cuadro_tamano"></div>
-            </div>
-        </div>
-        <?php endif; ?>
 
         <?php if ($anuariosEnContrato): ?>
         <div class="subfield" x-show="form.tiene_anuario" x-transition style="margin-top:.75rem">
@@ -234,7 +218,7 @@ function formularioGrupal() {
         form: {
             nombre_alumno: '', fecha_nacimiento: '', color_favorito: '', profesion_futura: '',
             nombre_tutor: '', relacion_tutor: 'Padre', telefono: '', email: '',
-            tiene_cuadro: false, cuadro_tamano: '', tiene_anuario: false, anuario_modelo: '',
+            tiene_cuadro: false, tiene_anuario: false, anuario_modelo: '',
             acepta_imagenes: false, acepta_datos: false,
         },
         errors: {}, errorGlobal: '', enviando: false, enviado: false,

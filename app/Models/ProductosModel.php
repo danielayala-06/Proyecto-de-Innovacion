@@ -32,7 +32,6 @@ class ProductosModel extends Model
         'nombre_producto',
         'detalle',
         'categoria',
-        'tamanio',
         'estado',
     ];
 

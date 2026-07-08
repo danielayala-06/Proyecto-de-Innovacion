@@ -1,6 +1,5 @@
 // Dashboard module — Ronceros Fotografía
-// Datos simulados. Para conectar a la API, reemplaza cada bloque DATA.*
-// con: fetch(BASE_URL + 'index.php/api/dashboard/<recurso>')
+// Los datos provienen de CHART_DATA, inyectado por Home::index() como JSON.
 
 const PALETA = {
     s1: '#2a78d6',
@@ -17,52 +16,14 @@ const GRID_COLOR = 'rgba(0,0,0,0.06)';
 const TICK_COLOR = '#7C7468';
 const FONT_STACK  = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
-// ── Datos simulados ───────────────────────────────────────────────────────────
-const MESES = ['Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul'];
-
-const DATA = {
-    cotizacionesPorMes: {
-        labels: MESES,
-        values: [3, 5, 7, 4, 9, 6, 8, 5, 7, 4, 6, 7],
-    },
-    estadoCotizaciones: {
-        labels: ['Pendiente', 'Aprobada', 'Rechazada', 'Expirada'],
-        values: [3, 2, 1, 1],
-    },
-    contratosPorMes: {
-        labels: MESES,
-        values: [2, 3, 5, 3, 6, 4, 5, 4, 5, 3, 4, 5],
-    },
-    estadoContratos: {
-        labels: ['Activo', 'Completado', 'Cancelado'],
-        values: [5, 3, 1],
-    },
-    sesionesPorMes: {
-        labels: MESES,
-        values: [4, 6, 8, 5, 10, 7, 9, 6, 8, 5, 7, 8],
-    },
-    estadoSesiones: {
-        labels: ['Pendiente', 'Finalizado', 'Cancelado'],
-        values: [2, 8, 1],
-    },
-    productosMasVendidos: {
-        labels: ['Cuadros 40×50', 'Cuadros 30×40', 'Anuario Digital', 'Álbum Familiar', 'Mini álbum'],
-        values: [42, 38, 25, 19, 12],
-    },
-    valorPorInstitucion: {
-        labels: ['I.E. San José', 'Colegio Divina Gracia', 'I.E. Maristas', 'Colegio Fé y Alegría'],
-        values: [8400, 6300, 5100, 3800],
-    },
-};
-
 // ── Defaults globales de Chart.js ─────────────────────────────────────────────
 Chart.defaults.font.family   = FONT_STACK;
 Chart.defaults.font.size     = 12;
 Chart.defaults.color         = TICK_COLOR;
-Chart.defaults.plugins.legend.labels.boxWidth = 12;
-Chart.defaults.plugins.legend.labels.padding  = 16;
-Chart.defaults.plugins.legend.labels.usePointStyle = true;
-Chart.defaults.plugins.legend.labels.pointStyleWidth = 10;
+Chart.defaults.plugins.legend.labels.boxWidth          = 10;
+Chart.defaults.plugins.legend.labels.boxHeight         = 10;
+Chart.defaults.plugins.legend.labels.padding           = 16;
+Chart.defaults.plugins.legend.labels.usePointStyle     = true;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function scaleX() {
@@ -73,7 +34,8 @@ function scaleY(prefix = '') {
         grid: { color: GRID_COLOR, drawBorder: false },
         ticks: {
             color: TICK_COLOR,
-            callback: v => prefix ? prefix + v.toLocaleString('es-PE') : v,
+            precision: 0,
+            callback: v => prefix ? prefix + ' ' + v.toLocaleString('es-PE') : v,
         },
         beginAtZero: true,
     };
@@ -90,7 +52,7 @@ function buildBar(id, labels, values, color, yPrefix = '') {
             labels,
             datasets: [{
                 data: values,
-                backgroundColor: color + 'BF', // 75%
+                backgroundColor: color + 'BF',
                 borderColor: color,
                 borderWidth: 1.5,
                 borderRadius: 4,
@@ -145,15 +107,15 @@ function buildLine(id, labels, values, color) {
 
 function buildDoughnut(id, labels, values, colors) {
     const ctx = document.getElementById(id);
-    if (!ctx) return;
+    if (!ctx || !labels.length) return;
     new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels,
             datasets: [{
                 data: values,
-                backgroundColor: colors.map(c => c + 'CC'),
-                borderColor:     colors,
+                backgroundColor: colors.slice(0, labels.length).map(c => c + 'CC'),
+                borderColor:     colors.slice(0, labels.length),
                 borderWidth: 1.5,
                 hoverOffset: 6,
             }],
@@ -171,7 +133,7 @@ function buildDoughnut(id, labels, values, colors) {
 
 function buildHBar(id, labels, values, color) {
     const ctx = document.getElementById(id);
-    if (!ctx) return;
+    if (!ctx || !labels.length) return;
     new Chart(ctx, {
         type: 'bar',
         data: {
@@ -202,47 +164,82 @@ function buildHBar(id, labels, values, color) {
     });
 }
 
+// ── Placeholder cuando no hay datos ──────────────────────────────────────────
+function showEmpty(id) {
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    const wrapper = ctx.closest('.chart-wrap');
+    if (wrapper) {
+        wrapper.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:.82rem;">Sin datos aún</div>';
+    }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
+function tryChart(id, fn) {
+    try { fn(); } catch (e) { console.error('Chart error [' + id + ']:', e); showEmpty(id); }
+}
+
 function initDashboard() {
-    buildBar('chartCotizMes',
-        DATA.cotizacionesPorMes.labels,
-        DATA.cotizacionesPorMes.values,
-        PALETA.s1);
+    const D = window.CHART_DATA || {};
+    const meses = D.meses || [];
 
-    buildDoughnut('chartEstadoCotiz',
-        DATA.estadoCotizaciones.labels,
-        DATA.estadoCotizaciones.values,
-        [PALETA.s1, PALETA.s2, PALETA.s6, PALETA.s3]);
+    tryChart('chartCotizMes', () => {
+        if (D.cotizacionesPorMes?.some(v => v > 0))
+            buildBar('chartCotizMes', meses, D.cotizacionesPorMes, PALETA.s1);
+        else showEmpty('chartCotizMes');
+    });
 
-    buildLine('chartContratosMes',
-        DATA.contratosPorMes.labels,
-        DATA.contratosPorMes.values,
-        PALETA.s2);
+    tryChart('chartEstadoCotiz', () => {
+        if (D.estadoCotizaciones?.values?.length)
+            buildDoughnut('chartEstadoCotiz',
+                D.estadoCotizaciones.labels, D.estadoCotizaciones.values,
+                [PALETA.s2, PALETA.s1, PALETA.s6, PALETA.s3, PALETA.s4]);
+        else showEmpty('chartEstadoCotiz');
+    });
 
-    buildDoughnut('chartEstadoContratos',
-        DATA.estadoContratos.labels,
-        DATA.estadoContratos.values,
-        [PALETA.s1, PALETA.s4, PALETA.s6]);
+    tryChart('chartContratosMes', () => {
+        if (D.contratosPorMes?.some(v => v > 0))
+            buildLine('chartContratosMes', meses, D.contratosPorMes, PALETA.s2);
+        else showEmpty('chartContratosMes');
+    });
 
-    buildLine('chartSesionesMes',
-        DATA.sesionesPorMes.labels,
-        DATA.sesionesPorMes.values,
-        PALETA.s3);
+    tryChart('chartEstadoContratos', () => {
+        if (D.estadoContratos?.values?.length)
+            buildDoughnut('chartEstadoContratos',
+                D.estadoContratos.labels, D.estadoContratos.values,
+                [PALETA.s1, PALETA.s4, PALETA.s6]);
+        else showEmpty('chartEstadoContratos');
+    });
 
-    buildDoughnut('chartEstadoSesiones',
-        DATA.estadoSesiones.labels,
-        DATA.estadoSesiones.values,
-        [PALETA.s3, PALETA.s4, PALETA.s6]);
+    tryChart('chartSesionesMes', () => {
+        if (D.sesionesPorMes?.some(v => v > 0))
+            buildLine('chartSesionesMes', meses, D.sesionesPorMes, PALETA.s3);
+        else showEmpty('chartSesionesMes');
+    });
 
-    buildHBar('chartProductos',
-        DATA.productosMasVendidos.labels,
-        DATA.productosMasVendidos.values,
-        PALETA.s5);
+    tryChart('chartEstadoSesiones', () => {
+        if (D.estadoSesiones?.values?.length)
+            buildDoughnut('chartEstadoSesiones',
+                D.estadoSesiones.labels, D.estadoSesiones.values,
+                [PALETA.s3, PALETA.s4, PALETA.s6]);
+        else showEmpty('chartEstadoSesiones');
+    });
 
-    buildBar('chartInstitucion',
-        DATA.valorPorInstitucion.labels,
-        DATA.valorPorInstitucion.values,
-        PALETA.s1, 'S/');
+    tryChart('chartProductos', () => {
+        if (D.productosMasVendidos?.values?.length)
+            buildHBar('chartProductos',
+                D.productosMasVendidos.labels, D.productosMasVendidos.values,
+                PALETA.s5);
+        else showEmpty('chartProductos');
+    });
+
+    tryChart('chartInstitucion', () => {
+        if (D.valorPorInstitucion?.values?.length)
+            buildBar('chartInstitucion',
+                D.valorPorInstitucion.labels, D.valorPorInstitucion.values,
+                PALETA.s1, 'S/');
+        else showEmpty('chartInstitucion');
+    });
 }
 
 document.addEventListener('DOMContentLoaded', initDashboard);

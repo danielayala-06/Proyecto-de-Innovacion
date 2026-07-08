@@ -63,7 +63,7 @@ class PaquetesProductosModel extends Model
         return $this
             ->select('paquetes_productos.id_paquete_prod, paquetes_productos.cantidad,
                       productos.id_producto, productos.nombre_producto,
-                      productos.categoria, productos.tamanio, productos.estado')
+                      productos.categoria, productos.estado')
             ->join('productos', 'productos.id_producto = paquetes_productos.id_producto')
             ->where('paquetes_productos.id_paquete', $idPaquete)
             ->findAll();

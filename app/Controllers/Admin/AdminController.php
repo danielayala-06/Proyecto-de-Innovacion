@@ -451,7 +451,6 @@ class AdminController extends BaseController
             'telefono'         => ($body['telefono']         ?? '') ?: null,
             'email'            => ($body['email']            ?? '') ?: null,
             'tiene_cuadro'     => $tieneCuadro  ? 1 : 0,
-            'cuadro_tamano'    => ($body['cuadro_tamano']    ?? '') ?: null,
             'tiene_anuario'    => $tieneAnuario ? 1 : 0,
             'anuario_modelo'   => ($body['anuario_modelo']   ?? '') ?: null,
             'acepta_imagenes'  => !empty($body['acepta_imagenes']) ? 1 : 0,
@@ -508,7 +507,7 @@ class AdminController extends BaseController
         fputcsv($out, [
             'Nombre Alumno', 'Fecha Nacimiento', 'Color Favorito', 'Profesión Futura',
             'Nombre Tutor', 'Relación', 'Teléfono', 'Email',
-            'Cuadro', 'Tamaño Cuadro', 'Anuario', 'Modelo Anuario',
+            'Cuadro', 'Anuario', 'Modelo Anuario',
             'Acepta Imágenes', 'Acepta Datos', 'Fecha Envío',
         ]);
 
@@ -523,7 +522,6 @@ class AdminController extends BaseController
                 $f['telefono'],
                 $f['email'],
                 $f['tiene_cuadro']  ? 'Sí' : 'No',
-                $f['cuadro_tamano'],
                 $f['tiene_anuario'] ? 'Sí' : 'No',
                 $f['anuario_modelo'],
                 $f['acepta_imagenes'] ? 'Sí' : 'No',

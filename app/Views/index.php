@@ -234,7 +234,8 @@ function _fmtFecha(?string $f): string {
     </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="<?= base_url('js/vendor/chart.umd.min.js') ?>"></script>
+<script>window.CHART_DATA = <?= $chartData ?? '{}' ?>;</script>
 <script src="<?= base_url('js/modules/dashboard/dashboard.js') ?>"></script>
 
 <?= $footer ?>

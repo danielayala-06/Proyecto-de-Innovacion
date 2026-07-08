@@ -431,13 +431,6 @@ function adminPanel() {
                        style="accent-color:var(--accent);width:1rem;height:1rem;cursor:pointer;">
                 <label for="nfTieneCuadro" style="font-size:.82rem;font-weight:600;cursor:pointer;">Cuadro escolar</label>
             </div>
-            <select id="nfCuadroTamano" class="form-select form-select-sm" style="display:none;">
-                <option value="">— Selecciona un tamaño —</option>
-                <option value="20x30 cm">20×30 cm</option>
-                <option value="30x40 cm">30×40 cm</option>
-                <option value="40x50 cm">40×50 cm</option>
-                <option value="50x60 cm">50×60 cm</option>
-            </select>
         </div>
         <?php endif; ?>
         <?php if ($hayAnuarios): ?>
@@ -518,7 +511,6 @@ function adminPanel() {
         ['nfTieneCuadro','nfTieneAnuario','nfAceptaImagenes','nfAceptaDatos'].forEach(id => {
             const el = g(id); if (el) el.checked = false;
         });
-        const ct = g('nfCuadroTamano');  if (ct) { ct.value = ''; ct.style.display = 'none'; }
         const am = g('nfAnuarioModelo'); if (am) { am.value = ''; am.style.display = 'none'; }
         errorEl.style.display = 'none';
         btnGuardar.disabled = false;
@@ -618,9 +610,7 @@ function adminPanel() {
         }
     };
 
-    const cuadroChk  = g('nfTieneCuadro');
     const anuarioChk = g('nfTieneAnuario');
-    if (cuadroChk)  cuadroChk.addEventListener('change',  () => { const s = g('nfCuadroTamano');  if (s) s.style.display = cuadroChk.checked  ? '' : 'none'; });
     if (anuarioChk) anuarioChk.addEventListener('change', () => { const s = g('nfAnuarioModelo'); if (s) s.style.display = anuarioChk.checked ? '' : 'none'; });
 
     btnAbrir.addEventListener('click', abrir);
@@ -685,7 +675,6 @@ function adminPanel() {
 
             const tieneCuadro  = g('nfTieneCuadro')?.checked  ?? false;
             const tieneAnuario = g('nfTieneAnuario')?.checked ?? false;
-            if (tieneCuadro  && !g('nfCuadroTamano')?.value)  { mostrarError('Selecciona el tamaño del cuadro.');  focusField(g('nfCuadroTamano'));  savingAlumno = false; return; }
             if (tieneAnuario && !g('nfAnuarioModelo')?.value)  { mostrarError('Selecciona el modelo del anuario.'); focusField(g('nfAnuarioModelo')); savingAlumno = false; return; }
 
             btnGuardar.disabled = true;
@@ -710,7 +699,6 @@ function adminPanel() {
                         telefono:         tel,
                         email:            email     || null,
                         tiene_cuadro:     tieneCuadro,
-                        cuadro_tamano:    g('nfCuadroTamano')?.value  || null,
                         tiene_anuario:    tieneAnuario,
                         anuario_modelo:   g('nfAnuarioModelo')?.value || null,
                         acepta_imagenes:  g('nfAceptaImagenes')?.checked ?? false,

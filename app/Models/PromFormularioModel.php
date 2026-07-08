@@ -15,7 +15,7 @@ class PromFormularioModel extends Model
     protected $allowedFields    = [
         'alumno_id', 'nombre_alumno', 'fecha_nacimiento', 'color_favorito',
         'profesion_futura', 'nombre_tutor', 'relacion_tutor', 'telefono', 'email',
-        'tiene_cuadro', 'cuadro_tamano', 'tiene_anuario', 'anuario_modelo',
+        'tiene_cuadro', 'tiene_anuario', 'anuario_modelo',
         'acepta_imagenes', 'acepta_datos', 'ip_address', 'created_at',
     ];
 

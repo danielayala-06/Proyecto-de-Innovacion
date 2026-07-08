@@ -63,7 +63,6 @@ class PaqueteTransformer extends BaseTransformer
                 'id_producto'     => (int) $p['id_producto'],
                 'nombre_producto' =>       $p['nombre_producto'],
                 'categoria'       =>       $p['categoria'] ?? null,
-                'tamanio'         =>       $p['tamanio']   ?? null,
                 'estado'          =>       $p['estado'],
                 'cantidad'        => (int) $p['cantidad'],
             ], $resource['productos']);
