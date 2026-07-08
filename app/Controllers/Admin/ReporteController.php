@@ -3,11 +3,14 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use CodeIgniter\Database\ConnectionInterface;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ReporteController extends BaseController
 {
@@ -18,7 +21,6 @@ class ReporteController extends BaseController
     private const COLOR_FG        = 'FFFFFFFF';
     private const COLOR_ROW_ALT   = 'FFF5F5F5';
     private const COLOR_TOTAL_BG  = 'FFE8F4E8';
-    private const COLOR_BORDER    = 'FFD0D0D0';
 
     // ── Página generador ──────────────────────────────────────────────────────
 
@@ -30,11 +32,11 @@ class ReporteController extends BaseController
         ]);
     }
 
-    // ── Preview AJAX (POST JSON) ───────────────────────────────────────────────
+    // ── Preview AJAX (GET) ───────────────────────────────────────────────────
 
     public function preview()
     {
-        [$primerDia, $ultimoDia, $modulos, $desde, $hasta] = $this->_parsePost();
+        [$primerDia, $ultimoDia, $modulos, $desde, $hasta] = $this->_parseGet();
         $db = \Config\Database::connect();
 
         $out = ['rango' => $this->_rangoLabel($desde, $hasta), 'modulos' => []];
@@ -93,44 +95,52 @@ class ReporteController extends BaseController
         exit;
     }
 
-    // ── Vista imprimible (GET) ────────────────────────────────────────────────
+    // ── PDF con DomPDF (GET) ──────────────────────────────────────────────────
 
-    public function imprimir(): string
+    public function imprimir(): void
     {
         [$primerDia, $ultimoDia, $modulos, $desde, $hasta] = $this->_parseGet();
-        $db = \Config\Database::connect();
+        $db    = \Config\Database::connect();
+        $rango = $this->_rangoLabel($desde, $hasta);
 
-        $data = ['rango' => $this->_rangoLabel($desde, $hasta)];
+        $data = ['rango' => $rango];
         foreach ($modulos as $m) {
             match ($m) {
-                'kpi'          => $data['kpi']          = $this->_dataKpi($db, $primerDia, $ultimoDia),
-                'cotizaciones' => $data['cotizaciones']  = $this->_queryCotizaciones($db, $primerDia, $ultimoDia),
-                'contratos'    => $data['contratos']     = $this->_queryContratos($db, $primerDia, $ultimoDia),
-                'pagos'        => $data['pagos']         = $this->_queryPagos($db, $primerDia, $ultimoDia),
-                'sesiones'     => $data['sesiones']      = $this->_querySesiones($db, $primerDia, $ultimoDia),
+                'kpi'          => $data['kpi']         = $this->_dataKpi($db, $primerDia, $ultimoDia),
+                'cotizaciones' => $data['cotizaciones'] = $this->_queryCotizaciones($db, $primerDia, $ultimoDia),
+                'contratos'    => $data['contratos']    = $this->_queryContratos($db, $primerDia, $ultimoDia),
+                'pagos'        => $data['pagos']        = $this->_queryPagos($db, $primerDia, $ultimoDia),
+                'sesiones'     => $data['sesiones']     = $this->_querySesiones($db, $primerDia, $ultimoDia),
                 default        => null,
             };
         }
 
-        return view('admin/reporte_print', $data);
+        $html = view('admin/reporte_print', $data);
+
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isRemoteEnabled', false);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $slug     = preg_replace('/[^a-z0-9]+/', '_', strtolower($rango));
+        $filename = "reporte_{$slug}.pdf";
+
+        ob_end_clean();
+        $dompdf->stream($filename, ['Attachment' => false]);
+        exit;
     }
 
     // ── Parseo de parámetros ──────────────────────────────────────────────────
-
-    private function _parsePost(): array
-    {
-        $body    = $this->request->getJSON(true) ?? [];
-        $desde   = $body['desde']   ?? date('Y-m');
-        $hasta   = $body['hasta']   ?? date('Y-m');
-        $modulos = $body['modulos'] ?? self::MODULOS_VALIDOS;
-        return $this->_normalizar($desde, $hasta, $modulos);
-    }
 
     private function _parseGet(): array
     {
         $desde   = $this->request->getGet('desde')   ?? date('Y-m');
         $hasta   = $this->request->getGet('hasta')   ?? date('Y-m');
-        $modulos = $this->request->getGetArray('modulos') ?? self::MODULOS_VALIDOS;
+        $modulos = $this->request->getGet('modulos') ?? self::MODULOS_VALIDOS;
         return $this->_normalizar($desde, $hasta, $modulos);
     }
 
@@ -151,7 +161,7 @@ class ReporteController extends BaseController
 
     // ── Queries de datos ──────────────────────────────────────────────────────
 
-    private function _dataKpi($db, string $d, string $h): array
+    private function _dataKpi(ConnectionInterface $db, string $d, string $h): array
     {
         $ingresos = (float) $db->query(
             "SELECT COALESCE(SUM(monto),0) AS t FROM pagos WHERE fecha BETWEEN ? AND ?", [$d, $h]
@@ -176,7 +186,7 @@ class ReporteController extends BaseController
         return compact('ingresos', 'contratos', 'activos', 'sesiones', 'ingresosTotal');
     }
 
-    private function _dataCotizaciones($db, string $d, string $h): array
+    private function _dataCotizaciones(ConnectionInterface $db, string $d, string $h): array
     {
         $total  = (int) $db->query(
             "SELECT COUNT(*) AS n FROM cotizaciones WHERE fecha_registro BETWEEN ? AND ?", [$d, $h]
@@ -190,7 +200,7 @@ class ReporteController extends BaseController
         return compact('total', 'estados');
     }
 
-    private function _dataContratos($db, string $d, string $h): array
+    private function _dataContratos(ConnectionInterface $db, string $d, string $h): array
     {
         $row = $db->query(
             "SELECT COUNT(*) AS total, COALESCE(SUM(total),0) AS valor
@@ -200,7 +210,7 @@ class ReporteController extends BaseController
         return ['total' => (int) $row->total, 'valor' => (float) $row->valor];
     }
 
-    private function _dataPagos($db, string $d, string $h): array
+    private function _dataPagos(ConnectionInterface $db, string $d, string $h): array
     {
         $row = $db->query(
             "SELECT COUNT(*) AS total, COALESCE(SUM(monto),0) AS monto
@@ -210,7 +220,7 @@ class ReporteController extends BaseController
         return ['total' => (int) $row->total, 'monto' => (float) $row->monto];
     }
 
-    private function _dataSesiones($db, string $d, string $h): array
+    private function _dataSesiones(ConnectionInterface $db, string $d, string $h): array
     {
         $total = (int) $db->query(
             "SELECT COUNT(*) AS n FROM sesiones_fotograficas
@@ -225,10 +235,11 @@ class ReporteController extends BaseController
         return compact('total', 'estados');
     }
 
-    private function _queryCotizaciones($db, string $d, string $h): array
+    private function _queryCotizaciones(ConnectionInterface $db, string $d, string $h): array
     {
         return $db->query(
-            "SELECT cot.id_cotizacion, cot.fecha_registro, cot.estado, cot.total,
+            "SELECT cot.id_cotizacion, cot.fecha_registro, cot.estado,
+                    (cot.total_estimado - COALESCE(cot.descuento_monto, 0)) AS total,
                     c.nombre_colegio, pe.nombre AS promocion, pe.grado
              FROM cotizaciones cot
              LEFT JOIN promociones_escolares pe ON pe.id_cotizacion = cot.id_cotizacion
@@ -238,7 +249,7 @@ class ReporteController extends BaseController
         )->getResultArray();
     }
 
-    private function _queryContratos($db, string $d, string $h): array
+    private function _queryContratos(ConnectionInterface $db, string $d, string $h): array
     {
         return $db->query(
             "SELECT co.id_contrato, co.fecha_creacion, co.estado, co.total, co.adelanto,
@@ -253,7 +264,7 @@ class ReporteController extends BaseController
         )->getResultArray();
     }
 
-    private function _queryPagos($db, string $d, string $h): array
+    private function _queryPagos(ConnectionInterface $db, string $d, string $h): array
     {
         return $db->query(
             "SELECT p.id_pago, p.fecha, p.monto, p.moneda, p.forma_pago,
@@ -268,7 +279,7 @@ class ReporteController extends BaseController
         )->getResultArray();
     }
 
-    private function _querySesiones($db, string $d, string $h): array
+    private function _querySesiones(ConnectionInterface $db, string $d, string $h): array
     {
         return $db->query(
             "SELECT sf.id_sesion, sf.tipo, sf.estado, sf.fecha_hora_sesion,
@@ -283,7 +294,7 @@ class ReporteController extends BaseController
 
     // ── Hojas Excel ───────────────────────────────────────────────────────────
 
-    private function _xlsKpi($sheet, array $k, string $rango): void
+    private function _xlsKpi(Worksheet $sheet, array $k, string $rango): void
     {
         $sheet->setTitle('Resumen KPI');
         $sheet->getColumnDimension('A')->setWidth(32);
@@ -312,7 +323,7 @@ class ReporteController extends BaseController
         }
     }
 
-    private function _xlsCotizaciones($sheet, $db, string $d, string $h, string $rango): void
+    private function _xlsCotizaciones(Worksheet $sheet, ConnectionInterface $db, string $d, string $h, string $rango): void
     {
         $rows = $this->_queryCotizaciones($db, $d, $h);
         $sheet->setTitle('Cotizaciones');
@@ -338,7 +349,7 @@ class ReporteController extends BaseController
         $this->_xlsTotal($sheet, "A{$r}:F{$r}", "G{$r}", array_sum(array_column($rows, 'total')), '"S/ "#,##0.00');
     }
 
-    private function _xlsContratos($sheet, $db, string $d, string $h, string $rango): void
+    private function _xlsContratos(Worksheet $sheet, ConnectionInterface $db, string $d, string $h, string $rango): void
     {
         $rows = $this->_queryContratos($db, $d, $h);
         $sheet->setTitle('Contratos');
@@ -365,7 +376,7 @@ class ReporteController extends BaseController
         $this->_xlsTotal($sheet, "A{$r}:G{$r}", "H{$r}", array_sum(array_column($rows, 'adelanto')), '"S/ "#,##0.00');
     }
 
-    private function _xlsPagos($sheet, $db, string $d, string $h, string $rango): void
+    private function _xlsPagos(Worksheet $sheet, ConnectionInterface $db, string $d, string $h, string $rango): void
     {
         $rows = $this->_queryPagos($db, $d, $h);
         $sheet->setTitle('Pagos');
@@ -389,7 +400,7 @@ class ReporteController extends BaseController
         $this->_xlsTotal($sheet, "A{$r}:E{$r}", "F{$r}", array_sum(array_column($rows, 'monto')), '"S/ "#,##0.00');
     }
 
-    private function _xlsSesiones($sheet, $db, string $d, string $h, string $rango): void
+    private function _xlsSesiones(Worksheet $sheet, ConnectionInterface $db, string $d, string $h, string $rango): void
     {
         $rows = $this->_querySesiones($db, $d, $h);
         $sheet->setTitle('Sesiones');
@@ -416,7 +427,7 @@ class ReporteController extends BaseController
 
     // ── Helpers Excel ─────────────────────────────────────────────────────────
 
-    private function _xlsTitle($sheet, string $range, string $text): void
+    private function _xlsTitle(Worksheet $sheet, string $range, string $text): void
     {
         $sheet->mergeCells($range);
         $sheet->setCellValue(explode(':', $range)[0], $text);
@@ -428,7 +439,7 @@ class ReporteController extends BaseController
         $sheet->getRowDimension(1)->setRowHeight(26);
     }
 
-    private function _xlsHeaders($sheet, int $row, array $headers): void
+    private function _xlsHeaders(Worksheet $sheet, int $row, array $headers): void
     {
         foreach ($headers as $i => $h) {
             $sheet->setCellValue(chr(65 + $i) . $row, $h);
@@ -442,21 +453,21 @@ class ReporteController extends BaseController
         $sheet->getRowDimension($row)->setRowHeight(18);
     }
 
-    private function _xlsColWidths($sheet, array $widths): void
+    private function _xlsColWidths(Worksheet $sheet, array $widths): void
     {
         foreach ($widths as $i => $w) {
             $sheet->getColumnDimension(chr(65 + $i))->setWidth($w);
         }
     }
 
-    private function _xlsRowBg($sheet, string $range, string $argb): void
+    private function _xlsRowBg(Worksheet $sheet, string $range, string $argb): void
     {
         $sheet->getStyle($range)->applyFromArray([
             'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => $argb]],
         ]);
     }
 
-    private function _xlsTotal($sheet, string $labelRange, string $valueCell, float $value, string $fmt): void
+    private function _xlsTotal(Worksheet $sheet, string $labelRange, string $valueCell, float $value, string $fmt): void
     {
         $sheet->mergeCells($labelRange);
         $sheet->setCellValue(explode(':', $labelRange)[0], 'TOTAL');

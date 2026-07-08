@@ -50,7 +50,7 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     // ── Reportes ──────────────────────────────────────────────────────────────
     $routes->group('admin/reporte', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
         $routes->get ('/',         'ReporteController::index');
-        $routes->post('preview',   'ReporteController::preview');
+        $routes->get ('preview',   'ReporteController::preview');
         $routes->get ('exportar',  'ReporteController::exportar');
         $routes->get ('imprimir',  'ReporteController::imprimir');
     });

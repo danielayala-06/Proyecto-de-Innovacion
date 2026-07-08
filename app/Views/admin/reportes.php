@@ -5,12 +5,9 @@
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 .rpt-layout {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 280px 1fr;
     gap: 1.25rem;
     align-items: start;
-}
-@media (max-width: 860px) {
-    .rpt-layout { grid-template-columns: 1fr; }
 }
 
 /* ── Panel config ────────────────────────────────────────────────────────── */
@@ -40,7 +37,7 @@
 }
 .rpt-months {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: .5rem;
 }
 .rpt-months input[type=month] {
@@ -51,6 +48,7 @@
     background: var(--bg-body);
     color: var(--text-primary);
     font-size: .82rem;
+    min-width: 0;
 }
 .rpt-months .month-hint {
     font-size: .7rem;
@@ -59,20 +57,20 @@
 }
 
 /* ── Checkboxes módulos ──────────────────────────────────────────────────── */
-.mod-list { display: flex; flex-direction: column; gap: .4rem; }
+.mod-list { display: flex; flex-direction: column; gap: .3rem; }
 .mod-item {
     display: flex;
     align-items: center;
     gap: .55rem;
-    padding: .45rem .6rem;
+    padding: .42rem .6rem;
     border-radius: 7px;
     cursor: pointer;
     transition: background .15s;
     user-select: none;
 }
 .mod-item:hover { background: var(--bg-hover, rgba(128,128,128,.08)); }
-.mod-item input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
-.mod-item .mod-icon { font-size: .95rem; width: 18px; text-align: center; }
+.mod-item input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+.mod-item .mod-icon { font-size: 1rem; width: 18px; text-align: center; color: var(--accent); flex-shrink: 0; }
 .mod-item .mod-name { font-size: .83rem; font-weight: 500; color: var(--text-primary); }
 
 /* ── Botones acción ──────────────────────────────────────────────────────── */
@@ -113,11 +111,12 @@
     padding: 3rem 1rem;
     color: var(--text-muted);
     font-size: .85rem;
+    text-align: center;
 }
 .rpt-empty i { font-size: 2rem; opacity: .4; }
 
 /* ── Tarjetas de módulo en preview ──────────────────────────────────────── */
-.mod-cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap: .85rem; }
+.mod-cards { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: .85rem; }
 .mod-card {
     background: var(--bg-body);
     border: 1px solid var(--border);
@@ -147,6 +146,7 @@
     border-radius: 20px;
     padding: .15rem .65rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 /* ── Spinner ─────────────────────────────────────────────────────────────── */
@@ -159,6 +159,36 @@
     animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+    .rpt-layout {
+        grid-template-columns: 1fr;
+    }
+    .rpt-config {
+        position: static;
+    }
+
+    .rpt-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: .5rem;
+    }
+    .rpt-actions .btn-preview {
+        grid-column: 1 / -1;
+    }
+    .mod-cards {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 480px) {
+    .rpt-actions {
+        grid-template-columns: 1fr;
+    }
+    .rpt-actions .btn-preview {
+        grid-column: auto;
+    }
+}
 </style>
 
 <main class="main-content" id="main-content">
@@ -179,11 +209,17 @@
                 <label class="section-label">Período</label>
                 <div class="rpt-months">
                     <div>
-                        <input type="month" id="rptDesde" value="<?= date('Y-m', strtotime('-1 month')) ?>">
+                        <input type="month" id="rptDesde"
+                               value="<?= date('Y-m', strtotime('-1 month')) ?>"
+                               min="2019-01"
+                               max="<?= date('Y-m') ?>">
                         <div class="month-hint">Desde</div>
                     </div>
                     <div>
-                        <input type="month" id="rptHasta" value="<?= date('Y-m') ?>">
+                        <input type="month" id="rptHasta"
+                               value="<?= date('Y-m') ?>"
+                               min="2019-01"
+                               max="<?= date('Y-m') ?>">
                         <div class="month-hint">Hasta</div>
                     </div>
                 </div>
@@ -195,27 +231,27 @@
                 <div class="mod-list">
                     <label class="mod-item">
                         <input type="checkbox" name="modulo" value="kpi" checked>
-                        <span class="mod-icon">📊</span>
+                        <i class="bi bi-graph-up-arrow mod-icon"></i>
                         <span class="mod-name">Resumen KPI</span>
                     </label>
                     <label class="mod-item">
                         <input type="checkbox" name="modulo" value="cotizaciones" checked>
-                        <span class="mod-icon">📄</span>
+                        <i class="bi bi-file-earmark-text-fill mod-icon"></i>
                         <span class="mod-name">Cotizaciones</span>
                     </label>
                     <label class="mod-item">
                         <input type="checkbox" name="modulo" value="contratos" checked>
-                        <span class="mod-icon">📋</span>
+                        <i class="bi bi-file-earmark-check-fill mod-icon"></i>
                         <span class="mod-name">Contratos</span>
                     </label>
                     <label class="mod-item">
                         <input type="checkbox" name="modulo" value="pagos" checked>
-                        <span class="mod-icon">💰</span>
+                        <i class="bi bi-cash-stack mod-icon"></i>
                         <span class="mod-name">Pagos</span>
                     </label>
                     <label class="mod-item">
                         <input type="checkbox" name="modulo" value="sesiones" checked>
-                        <span class="mod-icon">📷</span>
+                        <i class="bi bi-camera-fill mod-icon"></i>
                         <span class="mod-name">Sesiones fotográficas</span>
                     </label>
                 </div>
@@ -233,7 +269,7 @@
                 </button>
                 <button class="btn btn-outline-secondary rounded-2 d-flex align-items-center justify-content-center gap-2"
                         id="btnPrint" onclick="abrirImpresion()">
-                    <i class="bi bi-printer"></i> Imprimir / PDF
+                    <i class="bi bi-file-earmark-pdf-fill"></i> Descargar PDF
                 </button>
             </div>
         </aside>
@@ -257,8 +293,27 @@
 </main>
 
 <script>
-const BASE_URL    = "<?= base_url('') ?>";
-const CSRF_TOKEN  = "<?= csrf_hash() ?>";
+const BASE_URL   = "<?= base_url('') ?>";
+const MES_MAX    = "<?= date('Y-m') ?>";
+const MES_MIN    = "2019-01";
+
+/* ── Sincronizar límites entre los dos inputs ─────────────────────────── */
+(function () {
+    const desde = document.getElementById('rptDesde');
+    const hasta = document.getElementById('rptHasta');
+
+    function sync() {
+        hasta.min = desde.value || MES_MIN;
+        desde.max = hasta.value || MES_MAX;
+
+        if (hasta.value && hasta.value < desde.value) hasta.value = desde.value;
+        if (desde.value && desde.value > hasta.value) desde.value = hasta.value;
+    }
+
+    desde.addEventListener('change', sync);
+    hasta.addEventListener('change', sync);
+    sync();
+})();
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
 function getConfig() {
@@ -292,11 +347,7 @@ async function generarPreview() {
     document.getElementById('previewBadge').style.display = 'none';
 
     try {
-        const res = await fetch(BASE_URL + 'index.php/admin/reporte/preview', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
-            body: JSON.stringify(cfg),
-        });
+        const res = await fetch(buildUrl('preview'));
         const json = await res.json();
         if (json.status !== 'success') throw new Error('Error del servidor');
         renderPreview(json.data);
