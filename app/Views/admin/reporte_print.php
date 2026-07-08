@@ -13,8 +13,8 @@ body { font-family: DejaVu Sans, Arial, sans-serif; color: #1a1a2e; background: 
 
 /* ── Encabezado ──────────────────────────────────────────────────────────── */
 .rpt-header { border-bottom: 3px solid #1a1a2e; padding-bottom: .7rem; margin-bottom: 1.2rem; overflow: hidden; }
-.rpt-header .brand { font-size: 1.1rem; font-weight: 800; color: #1a1a2e; float: left; }
-.rpt-header .brand span { color: #2d4a8a; }
+.rpt-header .logo { float: left; }
+.rpt-header .logo img { height: 52px; width: auto; }
 .rpt-header .meta { float: right; text-align: right; font-size: .72rem; color: #555; }
 .rpt-header .meta strong { display: block; font-size: .8rem; color: #1a1a2e; }
 .clearfix::after { content: ''; display: table; clear: both; }
@@ -63,8 +63,11 @@ tfoot td { font-weight: 700; background: #e8f4e8; padding: .32rem .45rem; border
 <div class="page">
 
     <!-- Encabezado -->
+    <?php $logoPath = 'file://' . FCPATH . 'images/ronceros_logo.jpeg'; ?>
     <div class="rpt-header clearfix">
-        <div class="brand">Ronceros <span>Fotografía</span></div>
+        <div class="logo">
+            <img src="<?= $logoPath ?>" alt="Ronceros Fotografía">
+        </div>
         <div class="meta">
             <strong>Reporte de actividad</strong>
             <?= esc($rango) ?><br>

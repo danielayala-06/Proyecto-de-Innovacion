@@ -18,24 +18,38 @@ class ContratosRealSeeder extends Seeder
         $db = \Config\Database::connect();
 
         // ──────────────────────────────────────────────────────────────────────
-        // 1. COLEGIOS (solo los que no existen aún)
-        //    id=8 I.E. PROLOG ya existe | id=9 ALEXANDER VON HUMBOLT ya existe
+        // 1. COLEGIOS
+        //    Donald Scarrow y Aurelio ya existen (ColegiosSeeder ids 6 y 7).
+        //    Insertar I.E. PROLOG y ALEXANDER VON HUMBOLT si no existen.
         // ──────────────────────────────────────────────────────────────────────
-        $db->table('colegios')->insert([
-            'nombre_colegio' => 'I.E. Donald Scarrow',
-            'distrito'       => 'Chincha Alta',
-            'provincia'      => 'Chincha',
-            'estado'         => 'ACTIVO',
-        ]);
-        $idDonald = $db->insertID(); // 10
+        $idDonald  = (int) $db->table('colegios')->where('nombre_colegio', 'I.E. Donald Scarrow')->get()->getRow()->id_colegio;
+        $idAurelio = (int) $db->table('colegios')->where('nombre_colegio', 'I.E. Aurelio Moisés Flores')->get()->getRow()->id_colegio;
 
-        $db->table('colegios')->insert([
-            'nombre_colegio' => 'I.E. Aurelio Moisés Flores',
-            'distrito'       => 'Chincha Alta',
-            'provincia'      => 'Chincha',
-            'estado'         => 'ACTIVO',
-        ]);
-        $idAurelio = $db->insertID(); // 11
+        $rowProlog = $db->table('colegios')->where('nombre_colegio', 'I.E. PROLOG')->get()->getRow();
+        if ($rowProlog) {
+            $idProlog = (int) $rowProlog->id_colegio;
+        } else {
+            $db->table('colegios')->insert([
+                'nombre_colegio' => 'I.E. PROLOG',
+                'distrito'       => 'Chincha Alta',
+                'provincia'      => 'Chincha',
+                'estado'         => 'ACTIVO',
+            ]);
+            $idProlog = $db->insertID();
+        }
+
+        $rowHumboldt = $db->table('colegios')->where('nombre_colegio', 'I.E. Alexander Von Humbolt')->get()->getRow();
+        if ($rowHumboldt) {
+            $idHumboldt = (int) $rowHumboldt->id_colegio;
+        } else {
+            $db->table('colegios')->insert([
+                'nombre_colegio' => 'I.E. Alexander Von Humbolt',
+                'distrito'       => 'Pisco',
+                'provincia'      => 'Pisco',
+                'estado'         => 'ACTIVO',
+            ]);
+            $idHumboldt = $db->insertID();
+        }
 
         // ──────────────────────────────────────────────────────────────────────
         // 2. PERSONAS + CLIENTES  (contactos de cada promoción)
@@ -204,7 +218,7 @@ class ContratosRealSeeder extends Seeder
         // 5. PROMOCIONES ESCOLARES
         // ──────────────────────────────────────────────────────────────────────
         $db->table('promociones_escolares')->insert([
-            'id_colegio'      => 9,  // Alexander Von Humbolt
+            'id_colegio'      => $idHumboldt,
             'id_cotizacion'   => $idCotHumboldt,
             'nombre'          => 'Humboldt Secundaria – Pisco',
             'grado'           => 'Secundaria',
@@ -237,7 +251,7 @@ class ContratosRealSeeder extends Seeder
         ]);
 
         $db->table('promociones_escolares')->insert([
-            'id_colegio'      => 8,  // I.E. PROLOG
+            'id_colegio'      => $idProlog,
             'id_cotizacion'   => $idCotProlog,
             'nombre'          => 'Prolog Primaria 6to A',
             'grado'           => 'Primaria',

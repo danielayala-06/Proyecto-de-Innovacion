@@ -55,10 +55,6 @@ class Contratos extends Migration
                 'type'=>'TEXT',
                 'null'=>true
             ],
-            'reglas_aplicadas'=>[
-                'type'=>'JSON',
-                'null'=>true
-            ],
             'estado'=>[
                 'type'=>'ENUM',
                 'constraint'=>['ACTIVO', 'CANCELADO', 'COMPLETADO'],

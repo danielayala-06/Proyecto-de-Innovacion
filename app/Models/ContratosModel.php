@@ -38,7 +38,6 @@ class ContratosModel extends Model
         'contacto2_telefono',
         'observaciones',
         'estado',
-        'reglas_aplicadas',
         'archivado',
     ];
 
@@ -160,7 +159,6 @@ class ContratosModel extends Model
                 'contratos.adelanto',
                 'contratos.total',
                 'contratos.estado',
-                'contratos.reglas_aplicadas',
                 'contratos.contacto2_nombre',
                 'contratos.contacto2_telefono',
                 "CONCAT(p1.nombres,' ',COALESCE(p1.apellidos,'')) AS cliente",
@@ -182,10 +180,6 @@ class ContratosModel extends Model
         if (!$contrato) {
             return null;
         }
-
-        $contrato['reglas_aplicadas'] = !empty($contrato['reglas_aplicadas'])
-            ? json_decode($contrato['reglas_aplicadas'], true)
-            : ['violaciones' => [], 'activadas' => []];
 
         $idCot = (int) $contrato['id_cotizacion'];
 
