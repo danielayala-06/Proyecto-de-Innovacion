@@ -199,6 +199,18 @@ class Database extends Config
         // we don't overwrite live data on accident.
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
+            // Reusar la conexión MySQL del .env en lugar de SQLite3
+            $this->tests = array_merge($this->tests, [
+                'hostname' => $this->default['hostname'],
+                'username' => $this->default['username'],
+                'password' => $this->default['password'],
+                'database' => $this->default['database'],
+                'port'     => $this->default['port'],
+                'DBDriver' => 'MySQLi',
+                'DBPrefix' => '',
+                'charset'  => 'utf8mb4',
+                'DBCollat' => 'utf8mb4_general_ci',
+            ]);
         }
     }
 }
