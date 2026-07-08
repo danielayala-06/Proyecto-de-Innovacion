@@ -64,6 +64,8 @@ tools/*.phar
 #-------------------------
 # Temporary Files
 #-------------------------
+/writable/tunnel_url.txt
+
 /writable/cache/*
 !/writable/cache/index.html
 

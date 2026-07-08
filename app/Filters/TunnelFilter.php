@@ -9,48 +9,33 @@ use CodeIgniter\HTTP\ResponseInterface;
 /**
  * TunnelFilter — restringe el acceso externo vía Cloudflare Tunnel.
  *
- * Cloudflare inyecta el header X-Tunnel-Token en cada request que pasa por
- * el túnel. Si ese header está presente, solo se permite acceder a rutas
- * bajo /formulario/. Todo lo demás devuelve 404.
+ * Cloudflare agrega el header CF-Ray a todo request que pasa por su red
+ * (incluido cloudflared). Si ese header está presente, la petición viene
+ * del exterior y solo se permite acceder a /formulario/*.
  *
- * Requests desde la LAN no llevan el header → acceso completo sin cambios.
+ * Requests desde la LAN (localhost / red local) no llevan CF-Ray
+ * → acceso completo al sistema de gestión sin restricciones.
  *
- * Configuración:
- *   - TUNNEL_SECRET en .env (debe coincidir con el valor en cloudflared config.yml)
- *   - Registrar este filtro como 'tunnel' en app/Config/Filters.php y aplicarlo globalmente.
+ * Configuración: solo registrar este filtro globalmente en Filters.php.
+ * No requiere variables de entorno adicionales.
  */
 class TunnelFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {
-        $secret = env('TUNNEL_SECRET', '');
-
-        // Si no hay secreto configurado el filtro no hace nada (desarrollo local)
-        if ($secret === '') {
+        // Sin CF-Ray → petición local o de LAN → acceso completo
+        if ($request->getHeaderLine('CF-Ray') === '') {
             return;
         }
 
-        $headerToken = $request->getHeaderLine('X-Tunnel-Token');
-
-        // Request sin el header → viene de la LAN → acceso normal
-        if ($headerToken === '') {
-            return;
-        }
-
-        // Header presente pero valor incorrecto → posible spoofing → bloquear
-        if (!hash_equals($secret, $headerToken)) {
-            return response()->setStatusCode(404)->setBody('');
-        }
-
-        // Header correcto → viene del túnel → solo se permite /formulario/*
+        // CF-Ray presente → tráfico externo vía Cloudflare → solo /formulario/*
         $path = ltrim($request->getUri()->getPath(), '/');
+        $path = ltrim(str_replace('index.php/', '', $path), '/');
+
         if (!str_starts_with($path, 'formulario/') && $path !== 'formulario') {
             return response()->setStatusCode(404)->setBody('');
         }
     }
 
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
-    {
-        return $response;
-    }
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null): void {}
 }
