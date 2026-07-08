@@ -21,6 +21,7 @@ class AdminController extends BaseController
         $this->alumnoModel     = new PromAlumnoModel();
         $this->promocionModel  = new PromPromocionModel();
         $this->formularioModel = new PromFormularioModel();
+        helper('tunnel');
     }
 
     // GET /admin/formularios
@@ -236,7 +237,7 @@ class AdminController extends BaseController
             'promocion'        => $resumen,
             'alumnos'          => $alumnos,
             'sesionesLink'     => $sesionesLink,
-            'linkCompartido'   => base_url('formulario/grupo/' . $resumen['token_compartido']),
+            'linkCompartido'   => public_url('formulario/grupo/' . $resumen['token_compartido']),
             'todasPromociones' => $todasPromociones,
             'promoEscolares'   => $promoEscolares,
         ]);
@@ -330,7 +331,7 @@ class AdminController extends BaseController
 
         $resultado = $this->alumnoModel->crearConToken($promocion_id, $nombre);
 
-        $link = base_url('formulario/' . $resultado['token']);
+        $link = public_url('formulario/' . $resultado['token']);
 
         return $this->_json([
             'ok'    => true,
@@ -347,7 +348,7 @@ class AdminController extends BaseController
 
         try {
             $body = $this->request->getJSON(true) ?? [];
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             $body = $this->request->getPost();
         }
 
@@ -375,17 +376,32 @@ class AdminController extends BaseController
             return $this->_json(['ok' => false, 'error' => 'promocion_id y nombres son requeridos.'], 422);
         }
 
+        $rows      = [];
         $insertados = [];
+        $now       = date('Y-m-d H:i:s');
+
         foreach ($nombres as $nombre) {
-            $nombre = trim($nombre);
+            $nombre = trim((string) $nombre);
             if ($nombre === '') {
                 continue;
             }
-            $res        = $this->alumnoModel->crearConToken($promocion_id, $nombre);
+            $token   = bin2hex(random_bytes(32));
+            $rows[]  = [
+                'promocion_id' => $promocion_id,
+                'nombre'       => $nombre,
+                'token'        => $token,
+                'completado'   => 0,
+                'enviado'      => 0,
+                'created_at'   => $now,
+            ];
             $insertados[] = [
                 'nombre' => $nombre,
-                'link'   => base_url('formulario/' . $res['token']),
+                'link'   => public_url('formulario/' . $token),
             ];
+        }
+
+        if (!empty($rows)) {
+            $this->alumnoModel->insertBatch($rows);
         }
 
         return $this->_json(['ok' => true, 'insertados' => $insertados]);

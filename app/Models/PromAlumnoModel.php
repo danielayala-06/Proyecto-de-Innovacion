@@ -36,15 +36,18 @@ class PromAlumnoModel extends Model
                         ->where('token IS NULL OR token', '')
                         ->findAll();
 
-        $count = 0;
-        foreach ($alumnos as $alumno) {
-            $this->update($alumno['id'], [
-                'token' => bin2hex(random_bytes(32)),
-            ]);
-            $count++;
+        if (empty($alumnos)) {
+            return 0;
         }
 
-        return $count;
+        $batch = array_map(fn($a) => [
+            'id'    => $a['id'],
+            'token' => bin2hex(random_bytes(32)),
+        ], $alumnos);
+
+        $this->updateBatch($batch, 'id');
+
+        return count($batch);
     }
 
     public function crearConToken(int $promocion_id, string $nombre): array
