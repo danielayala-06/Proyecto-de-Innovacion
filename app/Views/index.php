@@ -197,6 +197,31 @@ function _fmtFecha(?string $f): string {
             </div>
         </div>
 
+        <!-- EXPORTAR REPORTE MENSUAL -->
+        <div class="chart-card mb-3 px-3 py-3 d-flex align-items-center gap-3 flex-wrap">
+            <div>
+                <div style="font-size:.82rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em;">
+                    <i class="bi bi-file-earmark-excel-fill" style="color:#1d6f42"></i>
+                    Exportar reporte mensual
+                </div>
+                <div style="font-size:.78rem;color:var(--text-muted);margin-top:.2rem;">
+                    KPIs, contratos y pagos del mes seleccionado
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
+                <input type="month" id="reporteMes"
+                    value="<?= date('Y-m') ?>"
+                    max="<?= date('Y-m') ?>"
+                    style="padding:.35rem .6rem;border:1px solid var(--border);border-radius:6px;background:var(--bg-surface);color:var(--text-primary);font-size:.85rem;">
+                <a id="reporteLink"
+                    href="<?= base_url('admin/reporte/mensual') ?>?mes=<?= date('Y-m') ?>"
+                    class="btn btn-success btn-sm d-flex align-items-center gap-1"
+                    style="white-space:nowrap;">
+                    <i class="bi bi-download"></i> Descargar Excel
+                </a>
+            </div>
+        </div>
+
         <!-- PRÓXIMAS SESIONES -->
         <div class="table-card mb-4">
             <div class="card-title">
@@ -234,6 +259,18 @@ function _fmtFecha(?string $f): string {
     </div>
 </main>
 
+<script>
+(function () {
+    const input = document.getElementById('reporteMes');
+    const link  = document.getElementById('reporteLink');
+    const base  = '<?= base_url('admin/reporte/mensual') ?>';
+    if (input && link) {
+        input.addEventListener('change', function () {
+            link.href = base + '?mes=' + encodeURIComponent(this.value);
+        });
+    }
+})();
+</script>
 <script src="<?= base_url('js/vendor/chart.umd.min.js') ?>"></script>
 <script>window.CHART_DATA = <?= $chartData ?? '{}' ?>;</script>
 <script src="<?= base_url('js/modules/dashboard/dashboard.js') ?>"></script>

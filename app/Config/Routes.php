@@ -47,6 +47,9 @@ $routes->group('', ['filter' => 'auth'], function ($routes) {
     $routes->get('/clientes',              'ClienteController::index');
     $routes->get('/calendario',            'CalendarioController::index');
 
+    // ── Reportes ──────────────────────────────────────────────────────────────
+    $routes->get('admin/reporte/mensual', 'App\Controllers\Admin\ReporteController::mensual');
+
     // ── Admin formularios ─────────────────────────────────────────────────────
     $routes->group('admin/formularios', ['namespace' => 'App\Controllers\Admin'], function ($routes) {
         $routes->get ('/',                    'AdminController::index');
