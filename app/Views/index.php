@@ -56,7 +56,7 @@ function _fmtFecha(?string $f): string {
             </div>
             <div class="col-6 col-xl">
                 <div class="stat-card-v">
-                    <div class="stat-icon amber"><i class="bi bi-megaphone-fill"></i></div>
+                    <div class="stat-icon amber"><i class="bi bi-mortarboard-fill"></i></div>
                     <div class="stat-label">Promociones activas</div>
                     <div class="stat-value"><?= $promocioneActivas ?? 0 ?></div>
                 </div>

@@ -18,38 +18,12 @@ class ContratosRealSeeder extends Seeder
         $db = \Config\Database::connect();
 
         // ──────────────────────────────────────────────────────────────────────
-        // 1. COLEGIOS
-        //    Donald Scarrow y Aurelio ya existen (ColegiosSeeder ids 6 y 7).
-        //    Insertar I.E. PROLOG y ALEXANDER VON HUMBOLT si no existen.
+        // 1. COLEGIOS — todos vienen del ColegiosSeeder (nombres en mayúsculas)
         // ──────────────────────────────────────────────────────────────────────
-        $idDonald  = (int) $db->table('colegios')->where('nombre_colegio', 'I.E. Donald Scarrow')->get()->getRow()->id_colegio;
-        $idAurelio = (int) $db->table('colegios')->where('nombre_colegio', 'I.E. Aurelio Moisés Flores')->get()->getRow()->id_colegio;
-
-        $rowProlog = $db->table('colegios')->where('nombre_colegio', 'I.E. PROLOG')->get()->getRow();
-        if ($rowProlog) {
-            $idProlog = (int) $rowProlog->id_colegio;
-        } else {
-            $db->table('colegios')->insert([
-                'nombre_colegio' => 'I.E. PROLOG',
-                'distrito'       => 'Chincha Alta',
-                'provincia'      => 'Chincha',
-                'estado'         => 'ACTIVO',
-            ]);
-            $idProlog = $db->insertID();
-        }
-
-        $rowHumboldt = $db->table('colegios')->where('nombre_colegio', 'I.E. Alexander Von Humbolt')->get()->getRow();
-        if ($rowHumboldt) {
-            $idHumboldt = (int) $rowHumboldt->id_colegio;
-        } else {
-            $db->table('colegios')->insert([
-                'nombre_colegio' => 'I.E. Alexander Von Humbolt',
-                'distrito'       => 'Pisco',
-                'provincia'      => 'Pisco',
-                'estado'         => 'ACTIVO',
-            ]);
-            $idHumboldt = $db->insertID();
-        }
+        $idProlog   = (int) $db->table('colegios')->where('nombre_colegio', 'I.E. PROLOG')->get()->getRow()->id_colegio;
+        $idAurelio  = (int) $db->table('colegios')->where('nombre_colegio', 'I.E. AURELIO MOISÈS FLORES')->get()->getRow()->id_colegio;
+        $idDonald   = (int) $db->table('colegios')->where('nombre_colegio', 'I.E. DONALD SCARROW')->get()->getRow()->id_colegio;
+        $idHumboldt = (int) $db->table('colegios')->where('nombre_colegio', 'I.E. ALEXANDER VON HUMBOLT')->get()->getRow()->id_colegio;
 
         // ──────────────────────────────────────────────────────────────────────
         // 2. PERSONAS + CLIENTES  (contactos de cada promoción)

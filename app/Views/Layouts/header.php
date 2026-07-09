@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ronceros Fotografía</title>
+    <link rel="icon" type="image/svg+xml" href="<?= base_url('images/icon.svg') ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Aplica el tema guardado antes de que la página renderice (evita parpadeo) -->
