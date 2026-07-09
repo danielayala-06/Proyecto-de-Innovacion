@@ -44,10 +44,10 @@ export const sesionForm = {
         document.getElementById('sfHora').value          = '07:00';
         document.getElementById('sfObservaciones').value = '';
 
-        // Restricciones de fecha: hoy → +10 meses
+        // Restricciones de fecha: hoy → +18 meses
         const hoy = new Date();
         const max = new Date(hoy);
-        max.setMonth(max.getMonth() + 10);
+        max.setMonth(max.getMonth() + 18);
         const toISO = d => d.toISOString().split('T')[0];
         const sfFecha = document.getElementById('sfFecha');
         sfFecha.min = toISO(hoy);
@@ -116,7 +116,7 @@ export const sesionForm = {
 
         const max = new Date();
         max.setMonth(max.getMonth() + 10);
-        if (dt > max) return 'La sesión no puede programarse con más de 10 meses de anticipación.';
+        if (dt > max) return 'La sesión no puede programarse con más de 18 meses de anticipación.';
 
         const h = dt.getHours();
         if (h < 7 || h >= 22) return 'El horario debe ser entre las 7:00 a.m. y las 10:00 p.m.';

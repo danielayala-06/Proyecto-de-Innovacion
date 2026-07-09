@@ -96,7 +96,7 @@
                             <i class="bi bi-plus-circle-fill"></i>Agregar sesión
                         </button>
                         <p style="font-size:.73rem;color:var(--text-muted);margin:.5rem 0 0;">
-                            Máximo 3 sesiones &middot; horario: 07:00 – 22:00 &middot; hasta 10 meses desde hoy.
+                            Máximo 3 sesiones &middot; horario: 07:00 – 22:00 &middot; hasta 18 meses desde hoy.
                         </p>
                     </fieldset>
 

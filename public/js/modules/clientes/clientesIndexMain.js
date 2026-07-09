@@ -167,7 +167,7 @@ function _renderPromociones(promos) {
             : '';
 
         const linkCon = p.id_contrato
-            ? `<a href="${BASE_URL}contratos/index.php#${p.id_contrato}" style="font-size:.78rem;color:var(--blue-text);text-decoration:none;" onclick="event.stopPropagation()">
+            ? `<a href="${BASE_URL}contratos/${p.id_contrato}" style="font-size:.78rem;color:var(--blue-text);text-decoration:none;" onclick="event.stopPropagation()">
                    <i class="bi bi-file-earmark-text me-1"></i>Ver contrato
                </a>`
             : '';

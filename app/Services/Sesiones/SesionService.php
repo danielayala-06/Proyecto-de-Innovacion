@@ -348,11 +348,52 @@ class SesionService
             throw new \RuntimeException('Se alcanzó el límite máximo de 3 sesiones por contrato.', 409);
         }
 
-        $this->_validarFecha($data['fecha_hora_sesion'] ?? '');
+        $fechaHora = $data['fecha_hora_sesion'] ?? '';
+        $this->_validarFecha($fechaHora);
+
+        // Regla 1: no puede ser anterior a la primera sesión ya programada
+        // de la misma promoción
+        $primeraExistente = $this->sesionModel
+            ->where('id_promocion', $idPromocion)
+            ->where('estado !=', 'cancelado')
+            ->orderBy('fecha_hora_sesion', 'ASC')
+            ->first();
+
+        if ($primeraExistente) {
+            $dtNueva    = new \DateTime($fechaHora);
+            $dtNueva->setTime(0, 0, 0);
+            $dtPrimera  = new \DateTime($primeraExistente['fecha_hora_sesion']);
+            $dtPrimera->setTime(0, 0, 0);
+            if ($dtNueva < $dtPrimera) {
+                $fechaMin = (new \DateTime($primeraExistente['fecha_hora_sesion']))->format('d/m/Y');
+                throw new \RuntimeException(
+                    "La sesión no puede ser anterior a la primera ya programada ({$fechaMin}).", 422
+                );
+            }
+        }
+
+        // Regla 2: máximo 2 sesiones no canceladas en la misma hora del día (globalmente)
+        $dt       = \DateTime::createFromFormat('Y-m-d H:i:s', $fechaHora);
+        $dia      = $dt->format('Y-m-d');
+        $hora     = $dt->format('H');
+        $db       = $this->sesionModel->db;
+        $cntHora  = (int) $db->query(
+            "SELECT COUNT(*) AS cnt FROM sesiones_fotograficas
+             WHERE estado != 'cancelado'
+               AND DATE(fecha_hora_sesion) = ?
+               AND HOUR(fecha_hora_sesion) = ?",
+            [$dia, $hora]
+        )->getRow()->cnt;
+
+        if ($cntHora >= 2) {
+            throw new \RuntimeException(
+                'Ya hay 2 sesiones programadas en ese horario. El máximo permitido es 2 sesiones por hora.', 409
+            );
+        }
 
         $id = $this->sesionModel->insert([
             'id_promocion'      => $idPromocion,
-            'fecha_hora_sesion' => $data['fecha_hora_sesion'],
+            'fecha_hora_sesion' => $fechaHora,
             'tipo'              => $tipo,
             'observaciones'     => $data['observaciones'] ?? null,
             'estado'            => 'pendiente',
@@ -460,8 +501,52 @@ class SesionService
         $update = [];
 
         if (!empty($data['fecha_hora_sesion'])) {
-            $this->_validarFecha($data['fecha_hora_sesion']);
-            $update['fecha_hora_sesion'] = $data['fecha_hora_sesion'];
+            $fechaHora = $data['fecha_hora_sesion'];
+            $this->_validarFecha($fechaHora);
+
+            // Regla 1: no puede ser anterior a la primera sesión de la misma promoción
+            $idPromocion = (int) $sesion['id_promocion'];
+            $primeraExistente = $this->sesionModel
+                ->where('id_promocion', $idPromocion)
+                ->where('estado !=', 'cancelado')
+                ->where('id_sesion !=', $id)
+                ->orderBy('fecha_hora_sesion', 'ASC')
+                ->first();
+
+            if ($primeraExistente) {
+                $dtNueva   = new \DateTime($fechaHora);
+                $dtNueva->setTime(0, 0, 0);
+                $dtPrimera = new \DateTime($primeraExistente['fecha_hora_sesion']);
+                $dtPrimera->setTime(0, 0, 0);
+                if ($dtNueva < $dtPrimera) {
+                    $fechaMin = (new \DateTime($primeraExistente['fecha_hora_sesion']))->format('d/m/Y');
+                    throw new \RuntimeException(
+                        "La sesión no puede ser anterior a la primera ya programada ({$fechaMin}).", 422
+                    );
+                }
+            }
+
+            // Regla 2: máximo 2 sesiones en la misma hora (excluyendo la propia)
+            $dt      = \DateTime::createFromFormat('Y-m-d H:i:s', $fechaHora);
+            $dia     = $dt->format('Y-m-d');
+            $hora    = $dt->format('H');
+            $db      = $this->sesionModel->db;
+            $cntHora = (int) $db->query(
+                "SELECT COUNT(*) AS cnt FROM sesiones_fotograficas
+                 WHERE estado != 'cancelado'
+                   AND id_sesion != ?
+                   AND DATE(fecha_hora_sesion) = ?
+                   AND HOUR(fecha_hora_sesion) = ?",
+                [$id, $dia, $hora]
+            )->getRow()->cnt;
+
+            if ($cntHora >= 2) {
+                throw new \RuntimeException(
+                    'Ya hay 2 sesiones programadas en ese horario. El máximo permitido es 2 sesiones por hora.', 409
+                );
+            }
+
+            $update['fecha_hora_sesion'] = $fechaHora;
         }
         if (array_key_exists('observaciones', $data)) {
             $update['observaciones'] = $data['observaciones'];

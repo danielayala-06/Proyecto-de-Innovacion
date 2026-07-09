@@ -68,7 +68,8 @@
                             </div>
                             <div class="col-auto" style="min-width:76px;">
                                 <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
-                                <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="9999">
+                                <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="500" step="1"
+                                       oninput="if(this.value!==''){const n=Math.min(500,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
                             </div>
                             <div class="col-auto d-flex align-items-end pb-1">
                                 <span id="servicioSubtotalPreview" style="font-size:.82rem;font-weight:700;color:var(--green-text,#1A5E2E);white-space:nowrap;">= S/ 0.00</span>
@@ -108,7 +109,8 @@
                             </div>
                             <div class="col-auto" style="min-width:76px;">
                                 <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
-                                <input type="number" class="form-control form-control-sm" id="cortesiaCant" value="1" min="1" max="99">
+                                <input type="number" class="form-control form-control-sm" id="cortesiaCant" value="1" min="1" max="100" step="1"
+                                       oninput="if(this.value!==''){const n=Math.min(100,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
                             </div>
                             <div class="col-auto d-flex gap-1">
                                 <button type="button" class="btn btn-sm btn-primary" id="btn-confirmar-cortesia">
@@ -169,20 +171,11 @@
                         <div class="col-12 col-md-5">
                             <label for="numEstudiantes" class="form-label">N.° estudiantes</label>
                             <input type="number" class="form-control" id="numEstudiantes"
-                                   name="num_estudiantes" min="1" max="100" placeholder="0"
+                                   name="num_estudiantes" min="1" max="100" step="1" placeholder="0"
                                    oninput="
-                                       const n = parseInt(this.value) || 0;
-                                       if (this.value !== '' && (n < 1 || n > 100)) this.value = n > 100 ? 100 : '';
-                                       const h = document.getElementById('numEstudiantesHint');
-                                       const v = parseInt(this.value) || 0;
-                                       if (h) {
-                                           if (v > 50) {
-                                               h.innerHTML = '<i class=\'bi bi-exclamation-triangle-fill\' style=\'color:#d97706;\'></i> Está ingresando más de 50 estudiantes. ¿Está seguro de continuar?';
-                                               h.style.display = 'block';
-                                           } else {
-                                               h.style.display = 'none';
-                                           }
-                                       }">
+                                       if (this.value === '') return;
+                                       const n = Math.min(100, Math.max(1, Math.floor(this.valueAsNumber || 0)));
+                                       this.value = isNaN(this.valueAsNumber) || this.valueAsNumber < 1 ? '' : n;">
                             <div id="numEstudiantesHint"
                                  style="display:none;font-size:.72rem;color:#d97706;margin-top:.25rem;line-height:1.3;"></div>
                         </div>
@@ -244,7 +237,8 @@
                     <label for="paqueteCantidad" class="form-label mb-0"
                            style="font-size:0.85rem;font-weight:500;white-space:nowrap;">Cantidad:</label>
                     <input type="number" class="form-control form-control-sm" id="paqueteCantidad"
-                           value="1" min="1" max="999" style="width:75px;">
+                           value="1" min="1" max="100" step="1" style="width:75px;"
+                           oninput="if(this.value!==''){const n=Math.min(100,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
                 </div>
             </div>
             <div class="modal-footer">

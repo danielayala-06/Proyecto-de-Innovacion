@@ -604,7 +604,7 @@ function _renderContainer(containerId, tipo) {
     if (tipo !== 'paquete') return;
 
     const _aplicarCantidad = (idx, nuevaCant) => {
-        nuevaCant = Math.min(999, Math.max(1, nuevaCant));
+        nuevaCant = Math.min(100, Math.max(1, Math.floor(nuevaCant)));
         state.items[idx].cantidad = nuevaCant;
 
         const inputEl    = el.querySelector(`.item-qty-input[data-idx="${idx}"]`);
@@ -633,7 +633,7 @@ function _renderContainer(containerId, tipo) {
     el.querySelectorAll('.item-qty-input').forEach(input =>
         input.addEventListener('change', () => {
             const idx = parseInt(input.dataset.idx);
-            _aplicarCantidad(idx, parseInt(input.value) || 1);
+            _aplicarCantidad(idx, Math.floor(input.valueAsNumber) || 1);
         })
     );
 }
@@ -1147,8 +1147,8 @@ function _validar() {
     if (numEst <= 0) {
         return 'El n.° de estudiantes es obligatorio. Agrégalo al seleccionar paquetes desde el modal.';
     }
-    if (numEst > 500) {
-        return 'El n.° de estudiantes no puede superar 1000.';
+    if (numEst > 100) {
+        return 'El n.° de estudiantes no puede superar 100.';
     }
 
     const nombreColegio = document.getElementById('nombreColegio')?.value?.trim() ?? '';
@@ -2052,7 +2052,7 @@ async function init() {
 
     const _confirmarCortesia = () => {
         const nombre = cortesiaInput?.value?.trim();
-        const cant   = Math.max(1, parseInt(cortesiaCant?.value) || 1);
+        const cant   = Math.min(100, Math.max(1, Math.floor(cortesiaCant?.valueAsNumber || 1)));
 
         if (!nombre) {
             alerts.warning('Escribe el nombre del producto de cortesía.');
@@ -2104,7 +2104,7 @@ async function init() {
     const _confirmarServicio = () => {
         const nombre = servicioNombre?.value?.trim();
         const precio = parseFloat(servicioPrecio?.value);
-        const cant   = Math.max(1, parseInt(servicioCant?.value) || 1);
+        const cant   = Math.min(500, Math.max(1, Math.floor(servicioCant?.valueAsNumber || 1)));
 
         if (!nombre) { alerts.warning('Escribe la descripción del servicio.'); servicioNombre?.focus(); return; }
         if (!precio || precio <= 0) { alerts.warning('El precio unitario debe ser mayor a 0.'); servicioPrecio?.focus(); return; }

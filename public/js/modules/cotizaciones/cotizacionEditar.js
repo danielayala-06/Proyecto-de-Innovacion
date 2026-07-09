@@ -261,7 +261,7 @@ function _renderServiciosContainer() {
             <div style="display:flex;align-items:center;gap:2px;">
                 <button type="button" class="po-qty-btn svc-qty-dec" data-idx="${idx}">−</button>
                 <input type="number" class="svc-qty-input" data-idx="${idx}"
-                       value="${cant}" min="1" max="9999"
+                       value="${cant}" min="1" max="500" step="1"
                        style="width:46px;height:24px;text-align:center;border:1px solid var(--border);
                               border-radius:4px;font-size:.78rem;background:var(--bg-input);
                               color:var(--text-primary);padding:0 2px;">
@@ -280,7 +280,7 @@ function _renderServiciosContainer() {
     }).join('');
 
     const _aplicarCantSvc = (idx, nuevaCant) => {
-        nuevaCant = Math.min(9999, Math.max(1, nuevaCant));
+        nuevaCant = Math.min(500, Math.max(1, Math.floor(nuevaCant)));
         state.items[idx].cantidad = nuevaCant;
         const inputEl    = el.querySelector(`.svc-qty-input[data-idx="${idx}"]`);
         const subtotalEl = el.querySelector(`.svc-subtotal[data-idx="${idx}"]`);
@@ -304,7 +304,7 @@ function _renderServiciosContainer() {
     el.querySelectorAll('.svc-qty-input').forEach(input =>
         input.addEventListener('change', () => {
             const idx = parseInt(input.dataset.idx);
-            _aplicarCantSvc(idx, parseInt(input.value) || 1);
+            _aplicarCantSvc(idx, Math.floor(input.valueAsNumber) || 1);
         })
     );
     el.querySelectorAll('.btn-svc-del').forEach(btn =>
@@ -324,6 +324,41 @@ function _renderContainers() {
     _renderItemsSimple('paquetesContainer', 'paquete');
     _renderServiciosContainer();
     _renderItemsSimple('cortesiasContainer', 'cortesia');
+}
+
+/**
+ * Verifica si la cantidad total de paquetes cubre el número de estudiantes
+ * y actualiza el hint debajo del campo numEstudiantes.
+ */
+function _verificarCobertura() {
+    const hint      = document.getElementById('numEstudiantesHint');
+    const numEstEl  = document.getElementById('numEstudiantes');
+    if (!hint || !numEstEl) return;
+
+    const numEst = Math.floor(Number(numEstEl.value)) || 0;
+    if (numEst <= 0) { hint.style.display = 'none'; return; }
+
+    const totalPaquetes = state.items
+        .filter(i => i.tipo === 'paquete' || i.tipo === 'personalizado')
+        .reduce((s, i) => s + (i.cantidad ?? 1), 0);
+
+    hint.style.display = 'block';
+
+    if (totalPaquetes === 0) {
+        hint.style.color = 'var(--text-muted,#888)';
+        hint.innerHTML   = '<i class="bi bi-info-circle"></i> Sin paquetes agregados para verificar cobertura.';
+    } else if (totalPaquetes < numEst) {
+        const faltan = numEst - totalPaquetes;
+        hint.style.color = '#dc3545';
+        hint.innerHTML   = `<i class="bi bi-exclamation-triangle-fill"></i> Faltan <strong>${faltan}</strong> paquete${faltan > 1 ? 's' : ''} — los actuales cubren ${totalPaquetes} de ${numEst} estudiantes.`;
+    } else if (totalPaquetes > numEst) {
+        const sobran = totalPaquetes - numEst;
+        hint.style.color = '#d97706';
+        hint.innerHTML   = `<i class="bi bi-exclamation-triangle-fill"></i> Sobran <strong>${sobran}</strong> paquete${sobran > 1 ? 's' : ''} para ${numEst} estudiantes.`;
+    } else {
+        hint.style.color = '#198754';
+        hint.innerHTML   = `<i class="bi bi-check-circle-fill"></i> Los paquetes cubren exactamente a los ${numEst} estudiantes.`;
+    }
 }
 
 /**
@@ -371,6 +406,8 @@ function _actualizarResumen() {
             _actualizarResumen();
         });
     });
+
+    _verificarCobertura();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -423,14 +460,22 @@ function _poblarInstitucionPromocion(colegio, promocion) {
     if (colegio) {
         const nc = document.getElementById('nombreColegio');
         const pc = document.getElementById('provinciaColegio');
-        if (nc && colegio.nombre)   nc.value = colegio.nombre;
+        if (nc && colegio.nombre) nc.value = colegio.nombre;
         if (pc && colegio.provincia) {
-            pc.value = colegio.provincia;
-            pc.dispatchEvent(new Event('change'));
-            setTimeout(() => {
-                const dc = document.getElementById('distritoColegio');
-                if (dc && colegio.distrito) dc.value = colegio.distrito;
-            }, 60);
+            const provLower = colegio.provincia.toLowerCase();
+            const provOpt   = Array.from(pc.options).find(o => o.value.toLowerCase() === provLower);
+            if (provOpt) {
+                pc.value = provOpt.value;
+                pc.dispatchEvent(new Event('change'));
+                setTimeout(() => {
+                    const dc = document.getElementById('distritoColegio');
+                    if (dc && colegio.distrito) {
+                        const distLower = colegio.distrito.toLowerCase();
+                        const distOpt   = Array.from(dc.options).find(o => o.value.toLowerCase() === distLower);
+                        if (distOpt) dc.value = distOpt.value;
+                    }
+                }, 80);
+            }
         }
     }
     if (promocion) {
@@ -574,7 +619,8 @@ async function init() {
     document.getElementById('btn-confirmar-paquetes')?.addEventListener('click', () => {
         if (!state.paqueteSeleccionado) { alerts.warning('Selecciona un paquete de la lista.'); return; }
         const { idRef, nombre, precio } = state.paqueteSeleccionado;
-        const cantidad = Math.max(1, parseInt(document.getElementById('paqueteCantidad')?.value) || 1);
+        const _cantEl = document.getElementById('paqueteCantidad');
+        const cantidad = Math.min(100, Math.max(1, Math.floor(_cantEl?.valueAsNumber || 1)));
         const numEst   = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
         if (numEst > 50) {
             if (!confirm(`Está a punto de agregar paquetes para ${numEst} estudiantes. ¿Está seguro de continuar?`)) return;
@@ -609,7 +655,7 @@ async function init() {
     const _confirmarServicio = () => {
         const nombre = servicioNombre?.value?.trim();
         const precio = parseFloat(servicioPrecio?.value);
-        const cant   = Math.max(1, parseInt(servicioCant?.value) || 1);
+        const cant   = Math.min(500, Math.max(1, Math.floor(servicioCant?.valueAsNumber || 1)));
         if (!nombre) { alerts.warning('Escribe la descripción del servicio.'); servicioNombre?.focus(); return; }
         if (!precio || precio <= 0) { alerts.warning('El precio unitario debe ser mayor a 0.'); servicioPrecio?.focus(); return; }
         state.items.push({ tipo: 'servicio', idRef: null, nombre, precio: Math.round(precio * 100) / 100, cantidad: cant });
@@ -643,13 +689,16 @@ async function init() {
 
     const _confirmarCortesia = () => {
         const nombre = cortesiaInput?.value?.trim();
-        const cant   = Math.max(1, parseInt(cortesiaCant?.value) || 1);
+        const cant   = Math.min(100, Math.max(1, Math.floor(cortesiaCant?.valueAsNumber || 1)));
         if (!nombre) { alerts.warning('Escribe el nombre del producto de cortesía.'); cortesiaInput?.focus(); return; }
         state.items.push({ tipo: 'cortesia', idRef: null, nombre, precio: 0, cantidad: cant });
         _limpiarCortesiaForm();
         _renderContainers();
         _actualizarResumen();
     };
+
+    /* Verificar cobertura al cambiar numEstudiantes */
+    document.getElementById('numEstudiantes')?.addEventListener('input', _verificarCobertura);
 
     document.getElementById('btn-agregar-cortesia')?.addEventListener('click', () => {
         if (cortesiaWrap) cortesiaWrap.style.display = '';
@@ -666,6 +715,23 @@ async function init() {
         if (!state.items.length) {
             alerts.error('La cotización debe tener al menos un ítem.');
             return;
+        }
+
+        const numEst = Math.floor(Number(document.getElementById('numEstudiantes')?.value)) || 0;
+        if (numEst > 0) {
+            const totalPaquetes = state.items
+                .filter(i => i.tipo === 'paquete' || i.tipo === 'personalizado')
+                .reduce((s, i) => s + (i.cantidad ?? 1), 0);
+            if (totalPaquetes < numEst) {
+                const faltan = numEst - totalPaquetes;
+                alerts.error(`Los paquetes no cubren a todos los estudiantes. Faltan ${faltan} paquete${faltan > 1 ? 's' : ''} para completar los ${numEst} estudiantes.`);
+                document.getElementById('numEstudiantes')?.focus();
+                return;
+            }
+            if (totalPaquetes > numEst) {
+                const sobran = totalPaquetes - numEst;
+                if (!confirm(`Hay ${sobran} paquete${sobran > 1 ? 's' : ''} de más para ${numEst} estudiantes. ¿Deseas guardar igualmente?`)) return;
+            }
         }
 
         const btnGuardar = document.querySelector('.btn-guardar');

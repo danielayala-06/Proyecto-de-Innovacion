@@ -240,11 +240,11 @@ function _bloquearFormulario(mensaje) {
 
 let _sesionIdx = 0;
 
-/** Límites de fecha para sesiones: hoy como mínimo, +10 meses como máximo. */
+/** Límites de fecha para sesiones: hoy como mínimo, +18 meses como máximo. */
 function _limitesSesion() {
   const hoy = new Date(SERVER_TODAY + 'T00:00:00');
   const max = new Date(hoy);
-  max.setMonth(hoy.getMonth() + 10);
+  max.setMonth(hoy.getMonth() + 18);
   return { hoy, max };
 }
 
@@ -446,7 +446,7 @@ function _abrirConfirmacion(cotId, total) {
       return;
     }
     if (d > maxS) {
-      alerts.warning('Una sesión supera el límite de 10 meses desde hoy. Corrígela antes de continuar.');
+      alerts.warning('Una sesión supera el límite de 18 meses desde hoy. Corrígela antes de continuar.');
       return;
     }
     if (hora < 7 || hora >= 22) {

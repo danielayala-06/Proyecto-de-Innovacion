@@ -306,8 +306,34 @@ window.confirmarGuardarSesion = function () {
 
     const datos      = sesionForm.datos();
     const idEditando = sesionForm.getId();
-    const conflicto  = _detectarConflicto(datos.fecha_hora_sesion, idEditando);
+    const todasActivas = Object.values(state.sesiones).flat()
+        .filter(s => s.estado !== 'cancelado' && s.id_sesion !== idEditando);
 
+    // Regla 1: máximo 2 sesiones en la misma hora (YYYY-MM-DD HH)
+    const nuevaHora    = datos.fecha_hora_sesion.slice(0, 13);
+    const mismaHora    = todasActivas.filter(s => s.fecha_hora_sesion.slice(0, 13) === nuevaHora);
+    if (mismaHora.length >= 2) {
+        alerts.error('Ya hay 2 sesiones programadas en ese horario. El máximo permitido es 2 sesiones por hora.');
+        return;
+    }
+
+    // Regla 2: la nueva sesión no puede ser anterior a la primera sesión ya registrada
+    // de la misma promoción
+    const idPromocion  = parseInt(document.getElementById('sfPromocion')?.value) || 0;
+    const sesionesProm = (state.sesiones[idPromocion] ?? [])
+        .filter(s => s.estado !== 'cancelado' && s.id_sesion !== idEditando);
+    if (sesionesProm.length > 0) {
+        const fechaMin = sesionesProm.map(s => s.fecha_hora_sesion).sort()[0];
+        const nuevaFecha = datos.fecha_hora_sesion.slice(0, 10);
+        const minFecha   = fechaMin.slice(0, 10);
+        if (nuevaFecha < minFecha) {
+            alerts.error(`La sesión no puede ser anterior a la primera ya programada (${minFecha}).`);
+            return;
+        }
+    }
+
+    // Conflicto de horario exacto (advertencia, no bloqueo)
+    const conflicto  = _detectarConflicto(datos.fecha_hora_sesion, idEditando);
     if (conflicto) {
         const tipoConflicto = TIPO_LABEL[conflicto.tipo] || conflicto.tipo;
         const promo = conflicto.nombre_promocion
@@ -716,7 +742,7 @@ window.irAFormulario = function() {
         alerts.warning('Selecciona una promoción primero.');
         return;
     }
-    window.location.href = `${BASE_URL}index.php/admin/formularios/promo-escolar/${state.activePromocion}`;
+    window.location.href = `${BASE_URL}admin/formularios/promo-escolar/${state.activePromocion}`;
 };
 
 window.imprimirListaPromocion = function (idPromocion) {

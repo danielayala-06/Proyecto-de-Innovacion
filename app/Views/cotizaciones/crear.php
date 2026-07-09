@@ -63,8 +63,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">
-                                    Documento
-                                    <span style="font-size:.72rem;color:var(--text-muted);font-weight:250;">(opcional)</span>
+                                    Documento de Identidad
                                 </label>
                                 <div class="input-group">
                                     <select class="form-select" id="tipoDocumento" name="tipo_documento"
@@ -176,7 +175,8 @@
                                     </div>
                                     <div class="col-auto" style="min-width:76px;">
                                         <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
-                                        <input type="number" class="form-control form-control-sm" id="cortesiaCant" value="1" min="1" max="99">
+                                        <input type="number" class="form-control form-control-sm" id="cortesiaCant" value="1" min="1" max="100" step="1"
+                                               oninput="if(this.value!==''){const n=Math.min(100,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
                                     </div>
                                     <div class="col-auto d-flex gap-1">
                                         <button type="button" class="btn btn-sm btn-primary" id="btn-confirmar-cortesia">
@@ -220,7 +220,8 @@
                                 </div>
                                 <div class="col-auto" style="min-width:76px;">
                                     <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
-                                    <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="9999">
+                                    <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="500" step="1"
+                                           oninput="if(this.value!==''){const n=Math.min(500,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
                                 </div>
                                 <div class="col-auto d-flex align-items-end pb-1">
                                     <span id="servicioSubtotalPreview" style="font-size:.82rem;font-weight:700;color:var(--green-text,#1A5E2E);white-space:nowrap;">= S/ 0.00</span>
@@ -410,15 +411,15 @@
                             N.° de estudiantes
                         </label>
                         <input type="number" id="modalNumEstudiantes" class="form-control form-control-sm"
-                               min="1" max="100" placeholder="Ej: 30"
+                               min="1" max="100" step="1" placeholder="Ej: 30"
                                style="max-width:140px;"
                                oninput="
-                                   const n = parseInt(this.value) || 0;
-                                   if (this.value !== '' && (n < 1 || n > 100)) this.value = n > 100 ? 100 : '';
+                                   if (this.value === '') return;
+                                   const n = Math.min(100, Math.max(1, Math.floor(this.valueAsNumber || 0)));
+                                   this.value = isNaN(this.valueAsNumber) || this.valueAsNumber < 1 ? '' : n;
                                    const h = document.getElementById('modal-est-hint');
-                                   const v = parseInt(this.value) || 0;
                                    if (h) {
-                                       if (v > 50) {
+                                       if (n > 50 && this.value !== '') {
                                            h.innerHTML = '<i class=\'bi bi-exclamation-triangle-fill\' style=\'color:#d97706;\'></i> Está ingresando más de 50 estudiantes. ¿Está seguro de continuar?';
                                            h.style.color = '#d97706';
                                        } else {

@@ -417,6 +417,20 @@ class CotizacionService
             if ((float) ($detalle['precio_unitario'] ?? 0) < 0) {
                 throw new \RuntimeException('El precio unitario de los ítems no puede ser negativo.', 422);
             }
+            $tipo = $detalle['tipo'] ?? 'paquete';
+            $cant = (int) ($detalle['cantidad'] ?? 1);
+            if ($cant < 1) {
+                throw new \RuntimeException('La cantidad de un ítem no puede ser menor a 1.', 422);
+            }
+            if ($tipo === 'cortesia' && $cant > 100) {
+                throw new \RuntimeException('La cantidad de un producto de cortesía no puede superar 100.', 422);
+            }
+            if (in_array($tipo, ['servicio', 'personalizado']) && $cant > 500) {
+                throw new \RuntimeException('La cantidad de un servicio adicional no puede superar 500.', 422);
+            }
+            if ($tipo === 'paquete' && $cant > 100) {
+                throw new \RuntimeException('La cantidad de un paquete no puede superar 100.', 422);
+            }
         }
 
         $db = $this->cotizacionModel->db;
@@ -498,9 +512,28 @@ class CotizacionService
             throw new \RuntimeException('Solo se puede editar una cotización PENDIENTE', 409);
         }
 
+        $numEstActualizar = (int) (($data['sesion'] ?? [])['num_estudiantes'] ?? -1);
+        if ($numEstActualizar !== -1 && ($numEstActualizar <= 0 || $numEstActualizar > 100)) {
+            throw new \RuntimeException('El número de estudiantes debe estar entre 1 y 100', 422);
+        }
+
         foreach ($data['detalles'] ?? [] as $detalle) {
             if ((float) ($detalle['precio_unitario'] ?? 0) < 0) {
                 throw new \RuntimeException('El precio unitario de los ítems no puede ser negativo.', 422);
+            }
+            $tipo = $detalle['tipo'] ?? 'paquete';
+            $cant = (int) ($detalle['cantidad'] ?? 1);
+            if ($cant < 1) {
+                throw new \RuntimeException('La cantidad de un ítem no puede ser menor a 1.', 422);
+            }
+            if ($tipo === 'cortesia' && $cant > 100) {
+                throw new \RuntimeException('La cantidad de un producto de cortesía no puede superar 100.', 422);
+            }
+            if (in_array($tipo, ['servicio', 'personalizado']) && $cant > 500) {
+                throw new \RuntimeException('La cantidad de un servicio adicional no puede superar 500.', 422);
+            }
+            if ($tipo === 'paquete' && $cant > 100) {
+                throw new \RuntimeException('La cantidad de un paquete no puede superar 100.', 422);
             }
         }
 

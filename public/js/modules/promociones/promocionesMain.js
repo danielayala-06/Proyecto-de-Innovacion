@@ -115,7 +115,7 @@ function _rowHtml(p) {
        </button>`;
 
     const btnFormularios = `<a class="btn-icon" title="Formularios de alumnos"
-            href="${BASE_URL}index.php/admin/formularios/promo-escolar/${p.id_promocion}"
+            href="${BASE_URL}admin/formularios/promo-escolar/${p.id_promocion}"
             style="color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;">
            <i class="bi bi-file-earmark-person"></i>
        </a>`;
@@ -183,7 +183,7 @@ window.verSesiones = async function(idPromocion, idContrato, nombrePromocion) {
     titulo.textContent = nombrePromocion;
     btnIr.style.display = idContrato ? '' : 'none';
     if (idContrato) {
-        btnIr.href = `${BASE_URL}index.php/contratos/${idContrato}/sesiones`;
+        btnIr.href = `${BASE_URL}contratos/${idContrato}/sesiones`;
     }
     body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);"><i class="bi bi-arrow-repeat"></i> Cargando...</div>';
     modal.show();
