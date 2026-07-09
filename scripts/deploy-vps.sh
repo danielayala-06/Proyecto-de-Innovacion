@@ -103,7 +103,7 @@ ok "PHP 8.3-FPM instalado."
 
 # ── 5. Instalar MySQL ─────────────────────────────────────────
 info "Instalando MySQL Server..."
-apt-get install -y -qq mysql-server
+apt-get install -y -qq default-mysql-server
 systemctl enable mysql
 systemctl start mysql
 ok "MySQL instalado."
