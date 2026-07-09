@@ -103,6 +103,7 @@ php_errors.log
 # Composer
 #-------------------------
 vendor/
+!public/js/vendor/
 
 #-------------------------
 # IDE / Development Files
