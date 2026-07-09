@@ -282,10 +282,10 @@ class ContratosRealSeeder extends Seeder
         // 7. PAGOS  (adelantos — forma de pago Efectivo id=1)
         // ──────────────────────────────────────────────────────────────────────
         $db->table('pagos')->insertBatch([
-            ['id_contrato' => $idContratoHumboldt, 'id_form_pago' => 1, 'monto' => 2000.00, 'moneda' => 'PEN', 'fecha' => '2026-05-22'],
-            ['id_contrato' => $idContratoDonald,   'id_form_pago' => 1, 'monto' => 200.00,  'moneda' => 'PEN', 'fecha' => '2026-04-30'],
-            ['id_contrato' => $idContratoAurelio,  'id_form_pago' => 1, 'monto' => 750.00,  'moneda' => 'PEN', 'fecha' => '2026-05-20'],
-            ['id_contrato' => $idContratoProlog,   'id_form_pago' => 1, 'monto' => 704.00,  'moneda' => 'PEN', 'fecha' => '2026-04-30'],
+            ['id_contrato' => $idContratoHumboldt, 'forma_pago' => 'efectivo', 'monto' => 2000.00, 'moneda' => 'PEN', 'fecha' => '2026-05-22'],
+            ['id_contrato' => $idContratoDonald,   'forma_pago' => 'efectivo', 'monto' => 200.00,  'moneda' => 'PEN', 'fecha' => '2026-04-30'],
+            ['id_contrato' => $idContratoAurelio,  'forma_pago' => 'efectivo', 'monto' => 750.00,  'moneda' => 'PEN', 'fecha' => '2026-05-20'],
+            ['id_contrato' => $idContratoProlog,   'forma_pago' => 'efectivo', 'monto' => 704.00,  'moneda' => 'PEN', 'fecha' => '2026-04-30'],
         ]);
     }
 }
