@@ -109,7 +109,7 @@
                 <code style="background:var(--bg-input);border:1px solid var(--border);border-radius:7px;padding:.35rem .75rem;font-size:.75rem;color:var(--text-primary);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">
                     <?= esc($linkCompartido) ?>
                 </code>
-                <button onclick="navigator.clipboard.writeText('<?= esc($linkCompartido) ?>').then(()=>this.textContent='¡Copiado!').catch(()=>{}); setTimeout(()=>this.innerHTML='<i class=\'bi bi-clipboard\'></i> Copiar',2000)"
+                <button onclick="_copiarLink('<?= esc($linkCompartido) ?>', this)"
                         style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:.38rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;">
                     <i class="bi bi-clipboard"></i> Copiar
                 </button>
@@ -194,7 +194,7 @@
                         </span>
                     </td>
                     <td class="text-end" style="white-space:nowrap;">
-                        <button onclick="navigator.clipboard.writeText('<?= public_url('formulario/' . $a['token']) ?>')"
+                        <button onclick="_copiarLink('<?= public_url('formulario/' . $a['token']) ?>', this)"
                                 style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.8rem;padding:.2rem .4rem;"
                                 title="Copiar enlace">
                             <i class="bi bi-clipboard"></i>
@@ -242,6 +242,35 @@
 
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
+function _copiarLink(texto, btn) {
+    const origHTML = btn.innerHTML;
+    const _ok = () => {
+        btn.textContent = '¡Copiado!';
+        setTimeout(() => { btn.innerHTML = origHTML; }, 2000);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(texto).then(_ok).catch(() => _copiarFallback(texto, btn, origHTML));
+    } else {
+        _copiarFallback(texto, btn, origHTML);
+    }
+}
+function _copiarFallback(texto, btn, origHTML) {
+    const ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+        document.execCommand('copy');
+        btn.textContent = '¡Copiado!';
+        setTimeout(() => { btn.innerHTML = origHTML; }, 2000);
+    } catch (_) {
+        prompt('Copia este enlace:', texto);
+    }
+    document.body.removeChild(ta);
+}
+
 const BASE_URL         = "<?= rtrim(base_url(''), '/') . '/' ?>";
 const PROM_ID          = <?= (int) $promocion['id'] ?>;
 const CSRF_TOKEN_NAME  = "<?= csrf_header() ?>";

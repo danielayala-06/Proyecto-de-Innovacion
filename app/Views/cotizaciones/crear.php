@@ -115,8 +115,9 @@
                                 <div class="col-12 col-md-6">
                                     <label for="telefonoCliente2" class="form-label">Teléfono</label>
                                     <input type="text" class="form-control" id="telefonoCliente2"
-                                           placeholder="9XXXXXXXX" maxlength="9">
-                                    <div id="telFeedback2" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;"></div>
+                                           placeholder="9XXXXXXXX" maxlength="9" inputmode="numeric"
+                                           oninput="this.value=this.value.replace(/\D/g,'');const fb2=document.getElementById('telFeedback2');if(this.value&&this.value[0]!=='9'){this.value='';if(fb2)fb2.textContent='Debe iniciar con 9.';}else{if(fb2)fb2.textContent='';}">
+                                    <div id="telFeedback2" class="form-text mt-1" style="font-size:.75rem;min-height:1rem;color:#dc3545;"></div>
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label">
@@ -220,8 +221,8 @@
                                 </div>
                                 <div class="col-auto" style="min-width:76px;">
                                     <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
-                                    <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="500" step="1"
-                                           oninput="if(this.value!==''){const n=Math.min(500,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
+                                    <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="100" step="1"
+                                           oninput="if(this.value!==''){const n=Math.min(100,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
                                 </div>
                                 <div class="col-auto d-flex align-items-end pb-1">
                                     <span id="servicioSubtotalPreview" style="font-size:.82rem;font-weight:700;color:var(--green-text,#1A5E2E);white-space:nowrap;">= S/ 0.00</span>
@@ -322,9 +323,10 @@
                             <div class="col-6 col-md-3" id="wrap-seccion">
                                 <label for="seccionProm" class="form-label">Sección</label>
                                 <input type="text" class="form-control" id="seccionProm"
-                                       name="seccion" maxlength="10"
-                                       placeholder="Ej: A, B, C…"
-                                       oninput="this.value=this.value.toUpperCase()">
+                                       name="seccion" maxlength="5"
+                                       placeholder="Ej: A, 1A, Única"
+                                       oninput="this.value=this.value.toUpperCase().replace(/[^0-9A-ZÁÉÍÓÚÑ]/g,'');document.getElementById('seccionHint').style.display=this.value&&!/^(\d?[A-ZÁÉÍÓÚÑ]|ÚNICA)$/.test(this.value)?'block':'none';">
+                                <div id="seccionHint" style="display:none;font-size:.72rem;color:#dc3545;margin-top:.2rem;">Solo: una letra, dígito+letra (ej: 1A) o "Única".</div>
                             </div>
 
                             <!-- Observaciones -->

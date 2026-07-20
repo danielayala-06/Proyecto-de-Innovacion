@@ -549,6 +549,9 @@ function _renderContainer(containerId, tipo) {
 
     if (!filtered.length) { el.innerHTML = ''; return; }
 
+    const _curNumEst = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
+    const _itemMax   = _curNumEst > 0 ? _curNumEst * 2 : 100;
+
     el.innerHTML = filtered.map(({ item, idx }) => {
         const cant     = item.cantidad ?? 1;
         const subtotal = item.precio * cant;
@@ -557,7 +560,7 @@ function _renderContainer(containerId, tipo) {
             ? `<div class="po-qty" style="display:flex;">
                    <button type="button" class="po-qty-btn item-qty-dec" data-idx="${idx}">−</button>
                    <input  type="number" class="po-qty-input item-qty-input"
-                           data-idx="${idx}" value="${cant}" min="1" max="999">
+                           data-idx="${idx}" value="${cant}" min="1" max="${_itemMax}">
                    <button type="button" class="po-qty-btn item-qty-inc" data-idx="${idx}">+</button>
                </div>`
             : (cant > 1 ? `<span style="font-size:0.75rem;color:#888;white-space:nowrap;">×${cant}</span>` : '');
@@ -604,7 +607,9 @@ function _renderContainer(containerId, tipo) {
     if (tipo !== 'paquete') return;
 
     const _aplicarCantidad = (idx, nuevaCant) => {
-        nuevaCant = Math.min(100, Math.max(1, Math.floor(nuevaCant)));
+        const curNumEst = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
+        const maxCant   = curNumEst > 0 ? curNumEst * 2 : 100;
+        nuevaCant = Math.min(maxCant, Math.max(1, Math.floor(nuevaCant)));
         state.items[idx].cantidad = nuevaCant;
 
         const inputEl    = el.querySelector(`.item-qty-input[data-idx="${idx}"]`);
@@ -660,7 +665,7 @@ function _renderServiciosContainer() {
             <div style="display:flex;align-items:center;gap:2px;">
                 <button type="button" class="po-qty-btn svc-qty-dec" data-idx="${idx}">−</button>
                 <input type="number" class="svc-qty-input" data-idx="${idx}"
-                       value="${cant}" min="1" max="9999"
+                       value="${cant}" min="1" max="100"
                        style="width:46px;height:24px;text-align:center;border:1px solid var(--border);
                               border-radius:4px;font-size:.78rem;background:var(--bg-input);
                               color:var(--text-primary);padding:0 2px;">
@@ -679,7 +684,7 @@ function _renderServiciosContainer() {
     }).join('');
 
     const _aplicarCantSvc = (idx, nuevaCant) => {
-        nuevaCant = Math.min(9999, Math.max(1, nuevaCant));
+        nuevaCant = Math.min(100, Math.max(1, nuevaCant));
         state.items[idx].cantidad = nuevaCant;
         const inputEl    = el.querySelector(`.svc-qty-input[data-idx="${idx}"]`);
         const subtotalEl = el.querySelector(`.svc-subtotal[data-idx="${idx}"]`);
@@ -852,7 +857,7 @@ function _poblarModalPaquetes(paquetes) {
                     <span class="po-price">${formatters.moneda(p.precio ?? 0)}</span>
                     <div class="po-qty" onclick="event.stopPropagation()">
                         <button type="button" class="po-qty-btn" onclick="poQtyStep(this,-1)">−</button>
-                        <input type="number" class="po-qty-input" value="1" min="1" max="999">
+                        <input type="number" class="po-qty-input" value="1" min="1" max="100">
                         <button type="button" class="po-qty-btn" onclick="poQtyStep(this,1)">+</button>
                     </div>
                     <i class="bi bi-check-circle-fill po-check"></i>
@@ -932,16 +937,22 @@ function _actualizarBtnConfirmar() {
         return;
     }
 
-    const alcanza = totalQty >= numEst;
-    btn.disabled    = !alcanza;
-    btn.textContent = alcanza
-        ? `Agregar ${n} paquete${n > 1 ? 's' : ''}`
-        : `Faltan ${numEst - totalQty} para cubrir a todos`;
+    const maxPaq   = numEst * 2;
+    const alcanza  = totalQty >= numEst;
+    const excede   = totalQty > maxPaq;
+    btn.disabled    = !alcanza || excede;
+    btn.textContent = excede
+        ? `Superaste el límite (máx. ${maxPaq})`
+        : alcanza
+            ? `Agregar ${n} paquete${n > 1 ? 's' : ''}`
+            : `Faltan ${numEst - totalQty} para cubrir a todos`;
 
     if (hint) {
-        hint.innerHTML = alcanza
-            ? `<i class="bi bi-check-circle-fill" style="color:#198754;"></i> <strong style="color:#198754;">${totalQty} paquetes</strong> cubren a los ${numEst} estudiantes`
-            : `<i class="bi bi-exclamation-circle-fill" style="color:#dc3545;"></i> Seleccionados: <strong style="color:#dc3545;">${totalQty}</strong> — faltan <strong>${numEst - totalQty}</strong> para cubrir a los ${numEst} estudiantes`;
+        hint.innerHTML = excede
+            ? `<i class="bi bi-x-circle-fill" style="color:#dc3545;"></i> <strong style="color:#dc3545;">${totalQty} paquetes</strong> supera el doble de estudiantes (máx. ${maxPaq})`
+            : alcanza
+                ? `<i class="bi bi-check-circle-fill" style="color:#198754;"></i> <strong style="color:#198754;">${totalQty} paquetes</strong> cubren a los ${numEst} estudiantes`
+                : `<i class="bi bi-exclamation-circle-fill" style="color:#dc3545;"></i> Seleccionados: <strong style="color:#dc3545;">${totalQty}</strong> — faltan <strong>${numEst - totalQty}</strong> para cubrir a los ${numEst} estudiantes`;
     }
 }
 
@@ -964,10 +975,12 @@ window.seleccionarOpcion = function (el, nombre, precio, idRef) {
     } else {
         el.classList.add('selected');
         const numEst   = _getModalNumEst();
+        const maxPaq   = numEst > 0 ? numEst * 2 : 100;
         const qtyInput = el.querySelector('.po-qty-input');
         if (qtyInput) {
             qtyInput.min   = 1;
-            qtyInput.value = numEst > 0 ? numEst : 1;
+            qtyInput.max   = maxPaq;
+            qtyInput.value = numEst > 0 ? Math.min(maxPaq, numEst) : 1;
         }
         state.paquetesSeleccionados.set(key, {
             idRef:  idRef ? parseInt(idRef) : null,
@@ -987,9 +1000,11 @@ window.seleccionarOpcion = function (el, nombre, precio, idRef) {
  * @param {number}      step - +1 o -1.
  */
 window.poQtyStep = function (btn, step) {
-    const input = step > 0 ? btn.previousElementSibling : btn.nextElementSibling;
-    const val   = parseInt(input?.value) || 1;
-    const next  = Math.max(1, val + step);
+    const input  = step > 0 ? btn.previousElementSibling : btn.nextElementSibling;
+    const val    = parseInt(input?.value) || 1;
+    const numEst = _getModalNumEst();
+    const maxVal = numEst > 0 ? numEst * 2 : 100;
+    const next   = Math.min(maxVal, Math.max(1, val + step));
     if (input) input.value = next;
     _actualizarBtnConfirmar();
 };
@@ -1158,6 +1173,16 @@ function _validar() {
     const wrapGrado = document.getElementById('wrap-grado');
     if (wrapGrado?.style.display !== 'none' && !document.getElementById('gradoProm')?.value) {
         return 'Selecciona el grado de la promoción.';
+    }
+
+    const seccion = document.getElementById('seccionProm')?.value?.trim() ?? '';
+    if (seccion && !/^(\d?[A-ZÁÉÍÓÚÑ]|ÚNICA)$/.test(seccion.toUpperCase())) {
+        return 'La sección debe ser una letra, un dígito seguido de una letra (ej: 1A), o la palabra "Única".';
+    }
+
+    const tel2 = document.getElementById('telefonoCliente2')?.value?.trim() ?? '';
+    if (tel2 && !TEL_REGEX.test(tel2)) {
+        return 'El teléfono del segundo responsable debe tener 9 dígitos y comenzar con 9.';
     }
 
     return null;
@@ -1626,6 +1651,7 @@ function _abrirModalPaquetes(scrollToIdRef = null) {
     const modalNumEstEl = document.getElementById('modalNumEstudiantes');
     if (modalNumEstEl) modalNumEstEl.value = formNumEst > 0 ? formNumEst : '';
 
+    const maxPaqAb   = formNumEst > 0 ? formNumEst * 2 : 100;
     const defaultQty = formNumEst > 0 ? formNumEst : 1;
     document.querySelectorAll('.nivel-filtro-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
     document.querySelectorAll('.paquete-option').forEach(o => {
@@ -1636,10 +1662,10 @@ function _abrirModalPaquetes(scrollToIdRef = null) {
         const ya = state.items.find(i => i.tipo === 'paquete' && i.idRef === id);
         if (ya) {
             o.classList.add('selected');
-            if (qi) { qi.value = ya.cantidad ?? 1; qi.min = 1; qi.max = ''; }
+            if (qi) { qi.value = Math.min(maxPaqAb, ya.cantidad ?? 1); qi.min = 1; qi.max = maxPaqAb; }
             state.paquetesSeleccionados.set(id, { idRef: id, nombre: ya.nombre, precio: ya.precio, el: o });
         } else {
-            if (qi) { qi.value = defaultQty; qi.min = 1; qi.max = ''; }
+            if (qi) { qi.value = Math.min(maxPaqAb, defaultQty); qi.min = 1; qi.max = maxPaqAb; }
         }
     });
     _actualizarBtnConfirmar();
@@ -1841,10 +1867,11 @@ async function init() {
     /* 8b. Listener del input de estudiantes en el modal */
     document.getElementById('modalNumEstudiantes')?.addEventListener('input', () => {
         const numEst = _getModalNumEst();
+        const maxPaq = numEst > 0 ? numEst * 2 : 100;
         document.querySelectorAll('.paquete-option .po-qty-input').forEach(inp => {
             inp.min = 1;
-            inp.max = '';
-            if (numEst > 0) inp.value = numEst;
+            inp.max = maxPaq;
+            if (numEst > 0) inp.value = Math.min(maxPaq, numEst);
         });
         _actualizarBtnConfirmar();
     });
@@ -1865,11 +1892,12 @@ async function init() {
 
     /** Reemplaza los paquetes en state.items con la selección actual del modal y cierra. */
     function _ejecutarAgregarPaquetes() {
-        const numEst = _getModalNumEst();
+        const numEst  = _getModalNumEst();
+        const maxCant = numEst > 0 ? numEst * 2 : 100;
         // Mantener ítems que no son paquetes (servicios, cortesías) y reemplazar los paquetes
         state.items = state.items.filter(i => i.tipo !== 'paquete');
         state.paquetesSeleccionados.forEach(({ idRef, nombre, precio, el }) => {
-            const cantidad = Math.max(1, parseInt(el.querySelector('.po-qty-input')?.value) || 1);
+            const cantidad = Math.min(maxCant, Math.max(1, parseInt(el.querySelector('.po-qty-input')?.value) || 1));
             state.items.push({ tipo: idRef ? 'paquete' : 'personalizado', idRef: idRef ?? null, nombre, precio, cantidad, descuento: 0 });
         });
         const numEstEl = document.getElementById('numEstudiantes');
@@ -1893,6 +1921,10 @@ async function init() {
         const totalQty = _calcularTotalModalQty();
         if (totalQty < numEst) {
             alerts.warning(`La cantidad total seleccionada (${totalQty}) no cubre a todos los estudiantes (${numEst}). Aumenta la cantidad o selecciona más paquetes.`);
+            return;
+        }
+        if (totalQty > numEst * 2) {
+            alerts.error(`La cantidad de paquetes (${totalQty}) supera el doble del n.° de estudiantes (máx. ${numEst * 2}).`);
             return;
         }
 
@@ -2104,7 +2136,7 @@ async function init() {
     const _confirmarServicio = () => {
         const nombre = servicioNombre?.value?.trim();
         const precio = parseFloat(servicioPrecio?.value);
-        const cant   = Math.min(500, Math.max(1, Math.floor(servicioCant?.valueAsNumber || 1)));
+        const cant   = Math.min(100, Math.max(1, Math.floor(servicioCant?.valueAsNumber || 1)));
 
         if (!nombre) { alerts.warning('Escribe la descripción del servicio.'); servicioNombre?.focus(); return; }
         if (!precio || precio <= 0) { alerts.warning('El precio unitario debe ser mayor a 0.'); servicioPrecio?.focus(); return; }

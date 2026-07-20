@@ -149,6 +149,7 @@ export const ui = {
                     data-id="${c.id}"
                     data-estado="${c.estado?.toUpperCase()}"
                     data-archivado="${c.archivado ? '1' : '0'}"
+                    data-label="${c.promocion?.colegio ?? c.cliente?.nombre ?? ''}"
                     onclick="abrirMenuCon(event, this)">
               <i class="bi bi-three-dots-vertical"></i>
             </button>

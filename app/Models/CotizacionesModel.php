@@ -88,7 +88,7 @@ class CotizacionesModel extends Model
             ->join('usuarios',                  'usuarios.id_usuario = cotizaciones.id_usuario')
             ->join('clientes c2',               'c2.id_cliente = cotizaciones.id_cliente2', 'left')
             ->join('personas p2',               'p2.id_persona = c2.id_persona', 'left')
-            ->join('promociones_escolares pe',  'pe.id_cotizacion = cotizaciones.id_cotizacion', 'left')
+            ->join('promociones_escolares pe',  'pe.id_cotizacion = cotizaciones.id_cotizacion AND pe.id_promocion = (SELECT MIN(id_promocion) FROM promociones_escolares WHERE id_cotizacion = cotizaciones.id_cotizacion)', 'left')
             ->join('colegios co',               'co.id_colegio = pe.id_colegio', 'left')
             ->orderBy('cotizaciones.id_cotizacion', 'DESC')
             ->findAll();

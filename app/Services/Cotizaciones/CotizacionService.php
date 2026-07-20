@@ -425,8 +425,8 @@ class CotizacionService
             if ($tipo === 'cortesia' && $cant > 100) {
                 throw new \RuntimeException('La cantidad de un producto de cortesía no puede superar 100.', 422);
             }
-            if (in_array($tipo, ['servicio', 'personalizado']) && $cant > 500) {
-                throw new \RuntimeException('La cantidad de un servicio adicional no puede superar 500.', 422);
+            if (in_array($tipo, ['servicio', 'personalizado']) && $cant > 100) {
+                throw new \RuntimeException('La cantidad de un servicio adicional no puede superar 100.', 422);
             }
             if ($tipo === 'paquete' && $cant > 100) {
                 throw new \RuntimeException('La cantidad de un paquete no puede superar 100.', 422);
@@ -529,8 +529,8 @@ class CotizacionService
             if ($tipo === 'cortesia' && $cant > 100) {
                 throw new \RuntimeException('La cantidad de un producto de cortesía no puede superar 100.', 422);
             }
-            if (in_array($tipo, ['servicio', 'personalizado']) && $cant > 500) {
-                throw new \RuntimeException('La cantidad de un servicio adicional no puede superar 500.', 422);
+            if (in_array($tipo, ['servicio', 'personalizado']) && $cant > 100) {
+                throw new \RuntimeException('La cantidad de un servicio adicional no puede superar 100.', 422);
             }
             if ($tipo === 'paquete' && $cant > 100) {
                 throw new \RuntimeException('La cantidad de un paquete no puede superar 100.', 422);

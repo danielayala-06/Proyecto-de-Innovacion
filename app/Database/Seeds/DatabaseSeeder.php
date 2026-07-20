@@ -8,7 +8,7 @@ use CodeIgniter\Database\Seeder;
  * DatabaseSeeder — Ejecuta todos los seeders en orden respetando las FK.
  *
  * Uso:
- *   php spark db:seed DatabaseSeeder
+ *   php spark migrate:fresh && php spark db:seed DatabaseSeeder
  */
 class DatabaseSeeder extends Seeder
 {
@@ -23,25 +23,16 @@ class DatabaseSeeder extends Seeder
         $this->call('PaquetesSeeder');
 
         // ── Tablas que dependen de las anteriores ───────────────────────────
-        $this->call('UsuariosSeeder');       // depende de: personas, roles
-        $this->call('ClientesSeeder');       // depende de: personas
-        $this->call('RolesPermisosSeeder');  // depende de: roles, permisos
+        $this->call('UsuariosSeeder');          // depende de: personas, roles
+        $this->call('ClientesSeeder');          // depende de: personas
+        $this->call('RolesPermisosSeeder');     // depende de: roles, permisos
         $this->call('PaquetesProductosSeeder'); // depende de: paquetes, productos
         $this->call('PaquetesSesionesSeeder');  // depende de: paquetes
 
-        // ── Cotizaciones y su árbol ──────────────────────────────────────────
-        $this->call('CotizacionesSeeder');        // depende de: clientes, usuarios
-        $this->call('PromocionesEscolaresSeeder'); // depende de: colegios, cotizaciones
-        $this->call('CotizacionesDetallesSeeder'); // depende de: cotizaciones
-
-        // ── Contratos, pagos y sesiones ──────────────────────────────────────
-        $this->call('ContratosSeeder');            // depende de: cotizaciones
-        $this->call('PagosSeeder');                // depende de: contratos
-        $this->call('SesionesFotograficasSeeder'); // depende de: promociones_escolares
-
-        // ── Estudiantes ──────────────────────────────────────────────────────
-        $this->call('ApoderadosSeeder');   // depende de: personas
-        $this->call('EstudiantesSeeder');  // depende de: apoderados, promociones_escolares
+        // ── Contratos reales 2026 ────────────────────────────────────────────
+        // Incluye: clientes reales, cotizaciones, detalles, promociones_escolares,
+        //          contratos, pagos, sesiones_fotograficas, apoderados, estudiantes.
+        $this->call('ContratosRealSeeder');
 
         // ── Formularios de promoción escolar (sistema de tokens) ─────────────
         $this->call('PromPromocionesSeeder'); // depende de: colegios

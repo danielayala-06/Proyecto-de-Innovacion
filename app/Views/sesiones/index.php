@@ -19,8 +19,13 @@
                     </span>
                 </div>
             </div>
-            <div class="d-flex justify-content-end w-25">
-                <button type="button" class="align-self-end btn btn-nuevo-paquete" style="cursor:pointer;">Ir al formulario <i class="bi bi-arrow-right"></i></button>
+            <div class="d-flex align-items-center gap-2">
+                <?php if (!empty($promociones) && $contrato['estado'] === 'ACTIVO'): ?>
+                <button type="button" class="btn btn-primary btn-sm" onclick="abrirNuevaSesion()">
+                    <i class="bi bi-camera me-1"></i>Agendar sesión
+                </button>
+                <?php endif; ?>
+                <button type="button" class="btn btn-nuevo-paquete" style="cursor:pointer;">Ir al formulario <i class="bi bi-arrow-right"></i></button>
             </div>
         </div>
 

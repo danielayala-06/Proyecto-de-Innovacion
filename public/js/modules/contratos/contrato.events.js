@@ -169,6 +169,7 @@ window.abrirMenuCon = function (e, btn) {
   const id       = Number(btn.dataset.id);
   const estado   = btn.dataset.estado;
   const archivado = btn.dataset.archivado === '1';
+  const label     = btn.dataset.label || formatters.codigo(id);
   const isActivo  = estado === 'ACTIVO';
   const canArchive = !isActivo;
 
@@ -181,7 +182,8 @@ window.abrirMenuCon = function (e, btn) {
     </button>`);
     items.push('<div class="cot-row-dropdown-divider"></div>');
     items.push(`<button class="cot-row-dropdown-item"
-        onclick="_cerrarMenuCon();confirmarEliminar(${id},'${formatters.codigo(id)}')">
+        data-cid="${id}" data-clabel="${label.replace(/"/g, '&quot;')}"
+        onclick="_cerrarMenuCon();confirmarEliminar(+this.dataset.cid,this.dataset.clabel)">
       <i class="bi bi-x-circle" style="color:var(--red-text);"></i>Cancelar contrato
     </button>`);
   }

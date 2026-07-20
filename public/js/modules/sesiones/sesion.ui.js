@@ -59,17 +59,12 @@ function _slotLleno(s, num) {
 }
 
 function _tablaAsistencia(activas, estudiantes, asistencias, promo) {
-    const puedeAgregar = activas.length < 3;
     const sesionCols = [0, 1, 2].map(i => {
         const s = activas[i];
         if (!s) {
             return `<th class="asis-th-slot">
                 <div class="asis-slot-card empty">
-                    ${puedeAgregar
-                        ? `<button class="asis-slot-add-btn" onclick="abrirNuevaSesion()" title="Crear sesión">
-                               <i class="bi bi-plus-lg"></i>
-                           </button>`
-                        : `<span class="asis-slot-empty-hint">Sin programar</span>`}
+                    <span class="asis-slot-empty-hint">Sin programar</span>
                 </div>
             </th>`;
         }
@@ -211,7 +206,13 @@ export const ui = {
 
         container.innerHTML = (activas.length > 0 || estudiantes.length > 0)
             ? _tablaAsistencia(activas, estudiantes, asistencias, promo)
-            : `<div class="asis-empty-hint"><i class="bi bi-info-circle me-1"></i>Agrega sesiones y estudiantes para ver el control de asistencia.</div>`;
+            : `<div class="asis-empty-hint">
+                <i class="bi bi-camera me-1"></i>
+                Aún no hay sesiones agendadas.
+                <button class="btn btn-primary btn-sm ms-2" onclick="abrirNuevaSesion()">
+                    <i class="bi bi-camera me-1"></i>Agendar primera sesión
+                </button>
+               </div>`;
     },
 
     renderEstudiantes(estudiantes, idPromocion) {

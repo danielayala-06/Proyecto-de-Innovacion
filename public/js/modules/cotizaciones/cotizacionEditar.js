@@ -261,7 +261,7 @@ function _renderServiciosContainer() {
             <div style="display:flex;align-items:center;gap:2px;">
                 <button type="button" class="po-qty-btn svc-qty-dec" data-idx="${idx}">−</button>
                 <input type="number" class="svc-qty-input" data-idx="${idx}"
-                       value="${cant}" min="1" max="500" step="1"
+                       value="${cant}" min="1" max="100" step="1"
                        style="width:46px;height:24px;text-align:center;border:1px solid var(--border);
                               border-radius:4px;font-size:.78rem;background:var(--bg-input);
                               color:var(--text-primary);padding:0 2px;">
@@ -280,7 +280,7 @@ function _renderServiciosContainer() {
     }).join('');
 
     const _aplicarCantSvc = (idx, nuevaCant) => {
-        nuevaCant = Math.min(500, Math.max(1, Math.floor(nuevaCant)));
+        nuevaCant = Math.min(100, Math.max(1, Math.floor(nuevaCant)));
         state.items[idx].cantidad = nuevaCant;
         const inputEl    = el.querySelector(`.svc-qty-input[data-idx="${idx}"]`);
         const subtotalEl = el.querySelector(`.svc-subtotal[data-idx="${idx}"]`);
@@ -622,6 +622,15 @@ async function init() {
         const _cantEl = document.getElementById('paqueteCantidad');
         const cantidad = Math.min(100, Math.max(1, Math.floor(_cantEl?.valueAsNumber || 1)));
         const numEst   = parseInt(document.getElementById('numEstudiantes')?.value) || 0;
+        if (numEst > 0) {
+            const yaExisten = state.items
+                .filter(i => i.tipo === 'paquete' || i.tipo === 'personalizado')
+                .reduce((s, i) => s + (i.cantidad ?? 1), 0);
+            if (yaExisten + cantidad > numEst * 2) {
+                alerts.error(`La cantidad de paquetes no puede superar el doble de estudiantes (máx. ${numEst * 2}).`);
+                return;
+            }
+        }
         if (numEst > 50) {
             if (!confirm(`Está a punto de agregar paquetes para ${numEst} estudiantes. ¿Está seguro de continuar?`)) return;
         }
@@ -655,7 +664,7 @@ async function init() {
     const _confirmarServicio = () => {
         const nombre = servicioNombre?.value?.trim();
         const precio = parseFloat(servicioPrecio?.value);
-        const cant   = Math.min(500, Math.max(1, Math.floor(servicioCant?.valueAsNumber || 1)));
+        const cant   = Math.min(100, Math.max(1, Math.floor(servicioCant?.valueAsNumber || 1)));
         if (!nombre) { alerts.warning('Escribe la descripción del servicio.'); servicioNombre?.focus(); return; }
         if (!precio || precio <= 0) { alerts.warning('El precio unitario debe ser mayor a 0.'); servicioPrecio?.focus(); return; }
         state.items.push({ tipo: 'servicio', idRef: null, nombre, precio: Math.round(precio * 100) / 100, cantidad: cant });

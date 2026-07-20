@@ -68,8 +68,8 @@
                             </div>
                             <div class="col-auto" style="min-width:76px;">
                                 <label style="font-size:.72rem;color:var(--text-muted);margin-bottom:3px;display:block;">Cantidad</label>
-                                <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="500" step="1"
-                                       oninput="if(this.value!==''){const n=Math.min(500,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
+                                <input type="number" class="form-control form-control-sm" id="servicioCant" value="1" min="1" max="100" step="1"
+                                       oninput="if(this.value!==''){const n=Math.min(100,Math.max(1,Math.floor(this.valueAsNumber||1)));this.value=isNaN(this.valueAsNumber)||this.valueAsNumber<1?1:n;}">
                             </div>
                             <div class="col-auto d-flex align-items-end pb-1">
                                 <span id="servicioSubtotalPreview" style="font-size:.82rem;font-weight:700;color:var(--green-text,#1A5E2E);white-space:nowrap;">= S/ 0.00</span>

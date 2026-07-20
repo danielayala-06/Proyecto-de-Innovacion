@@ -223,7 +223,8 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" style="font-size:0.85rem;color:var(--text-secondary);">
-                    ¿Estás seguro de que deseas cancelar el contrato <strong id="confirmCod" style="color:var(--text-primary);"></strong>?
+                    ¿Estás seguro de que deseas cancelar el contrato de
+                    <strong id="confirmCod" style="color:var(--text-primary);"></strong>?
                     El contrato quedará archivado y no se podrá reactivar.
                 </div>
                 <div class="modal-footer">
