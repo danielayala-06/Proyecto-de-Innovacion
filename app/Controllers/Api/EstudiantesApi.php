@@ -237,7 +237,8 @@ class EstudiantesApi extends BaseApiController
                 ->setJSON(['status' => 'error', 'message' => 'id_promocion es requerido']);
         }
 
-        $filas = $this->estudianteService->exportarDatos($idPromocion);
+        $filas    = $this->estudianteService->exportarDatos($idPromocion);
+        $filename = $this->_slugExportEstudiantes($idPromocion);
 
         $columnas = [
             'nombres', 'apellidos', 'fecha_nacimiento', 'color_favorito', 'profesion_futura',
@@ -271,9 +272,47 @@ class EstudiantesApi extends BaseApiController
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
-            ->setHeader('Content-Disposition', 'attachment; filename="estudiantes_promo_' . $idPromocion . '.csv"')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
             ->setHeader('Cache-Control', 'no-store')
             ->setBody($csv);
+    }
+
+    /**
+     * Genera el nombre de archivo para el CSV de exportación de estudiantes.
+     * Formato: estudiantes_{nombre}_{grado}{seccion}.csv
+     * Usa iconv para transliterar tildes/ñ y queda como slug limpio.
+     *
+     * @param  int    $idPromocion
+     * @return string Nombre de archivo listo para Content-Disposition.
+     */
+    private function _slugExportEstudiantes(int $idPromocion): string
+    {
+        $db   = \Config\Database::connect();
+        $promo = $db->query(
+            'SELECT pe.nombre, pe.grado, pe.seccion, c.nombre_colegio
+             FROM promociones_escolares pe
+             LEFT JOIN colegios c ON c.id_colegio = pe.id_colegio
+             WHERE pe.id_promocion = ?',
+            [$idPromocion]
+        )->getRowArray();
+
+        if (!$promo) {
+            return 'estudiantes_promo_' . $idPromocion . '.csv';
+        }
+
+        $partes = array_filter([
+            $promo['nombre']        ?? '',
+            $promo['grado']         ?? '',
+            $promo['seccion']       ?? '',
+        ]);
+
+        $base = implode('_', $partes) ?: ($promo['nombre_colegio'] ?? 'promo_' . $idPromocion);
+        $slug = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $base) ?: $base;
+        $slug = strtolower((string) $slug);
+        $slug = preg_replace('/[^a-z0-9]+/', '_', $slug);
+        $slug = trim($slug, '_');
+
+        return 'estudiantes_' . ($slug ?: 'promo_' . $idPromocion) . '.csv';
     }
 
     /**
