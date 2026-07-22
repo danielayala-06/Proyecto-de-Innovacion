@@ -178,51 +178,56 @@ class FormularioController extends BaseController
             return $this->_json(['ok' => false, 'error' => 'Token requerido.'], 422);
         }
 
-        $db   = \Config\Database::connect();
-        $prom = $db->query(
-            'SELECT * FROM prom_promociones WHERE token_compartido = ? AND activa = 1 FOR UPDATE',
-            [$token]
-        )->getRowArray();
-
-        if (!$prom) {
-            return $this->_json(['ok' => false, 'error' => 'Enlace inválido o promoción cerrada.'], 404);
-        }
+        $db = \Config\Database::connect();
 
         $nombreAlumno = trim($body['nombre_alumno'] ?? '');
         if ($nombreAlumno === '') {
             return $this->_json(['ok' => false, 'error' => 'El nombre del alumno es obligatorio.'], 422);
         }
 
+        // Verificar duplicado por teléfono/email antes de abrir la transacción
         $telefono = trim($body['telefono'] ?? '');
         $email    = trim($body['email'] ?? '');
         if ($telefono !== '' || $email !== '') {
-            $duplicate = $db->table('prom_formularios f')
-                ->select('f.id')
-                ->join('prom_alumnos a', 'a.id = f.alumno_id')
-                ->where('a.promocion_id', (int) $prom['id']);
+            $promBase = $db->table('prom_promociones')
+                ->where('token_compartido', $token)
+                ->where('activa', 1)
+                ->get()->getRowArray();
 
-            $duplicate->groupStart();
-            if ($telefono !== '') {
-                $duplicate->where('f.telefono', $telefono);
-            }
-            if ($email !== '') {
-                if ($telefono !== '') {
-                    $duplicate->orWhere('f.email', $email);
-                } else {
-                    $duplicate->where('f.email', $email);
+            if ($promBase) {
+                $duplicate = $db->table('prom_formularios f')
+                    ->select('f.id')
+                    ->join('prom_alumnos a', 'a.id = f.alumno_id')
+                    ->where('a.promocion_id', (int) $promBase['id']);
+
+                $duplicate->groupStart();
+                if ($telefono !== '') $duplicate->where('f.telefono', $telefono);
+                if ($email !== '') {
+                    $telefono !== '' ? $duplicate->orWhere('f.email', $email)
+                                    : $duplicate->where('f.email', $email);
                 }
-            }
-            $duplicate->groupEnd();
+                $duplicate->groupEnd();
 
-            if ($duplicate->get()->getRowArray()) {
-                return $this->_json(['ok' => false, 'error' => 'Este formulario ya fue enviado con estos datos.'], 409);
+                if ($duplicate->get()->getRowArray()) {
+                    return $this->_json(['ok' => false, 'error' => 'Este formulario ya fue enviado con estos datos.'], 409);
+                }
             }
         }
 
         $tieneCuadro  = !empty($body['tiene_cuadro']);
         $tieneAnuario = !empty($body['tiene_anuario']);
 
+        // FOR UPDATE dentro de la transacción para garantizar el lock atómico sobre el stock
         $db->transStart();
+        $prom = $db->query(
+            'SELECT * FROM prom_promociones WHERE token_compartido = ? AND activa = 1 FOR UPDATE',
+            [$token]
+        )->getRowArray();
+
+        if (!$prom) {
+            $db->transRollback();
+            return $this->_json(['ok' => false, 'error' => 'Enlace inválido o promoción cerrada.'], 404);
+        }
 
         if ($tieneCuadro && ((int) $prom['cuadros_usados'] >= (int) $prom['cuadros_total'])) {
             $db->transRollback();
