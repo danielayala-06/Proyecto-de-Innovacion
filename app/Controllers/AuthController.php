@@ -19,6 +19,8 @@
 namespace App\Controllers;
 
 use App\Models\UsuariosModel;
+use App\Services\Auth\RememberTokenService;
+use CodeIgniter\Cookie\Cookie;
 
 /**
  * Gestiona el ciclo de vida de la autenticación web.
@@ -57,7 +59,8 @@ class AuthController extends BaseController
     /**
      * Muestra el formulario de inicio de sesión.
      *
-     * Si el usuario ya tiene sesión activa es redirigido al dashboard.
+     * Si el usuario ya tiene sesión activa, o una cookie "Recuérdame" válida,
+     * es redirigido al dashboard sin mostrar el formulario.
      *
      * @return \CodeIgniter\HTTP\RedirectResponse|string Vista o redirección.
      */
@@ -65,6 +68,18 @@ class AuthController extends BaseController
     {
         if (session()->get('logged_in')) {
             return redirect()->to('/');
+        }
+
+        // Auto-login por cookie: la ruta /login no pasa por AuthFilter,
+        // así que verificamos el token aquí también.
+        $cookieToken = $this->request->getCookie('remember_token');
+        if ($cookieToken) {
+            $service = new RememberTokenService();
+            $usuario = $service->validarYObtenerUsuario($cookieToken);
+            if ($usuario) {
+                RememberTokenService::iniciarSesion($usuario);
+                return redirect()->to('/');
+            }
         }
 
         return view('auth/login');
@@ -155,31 +170,48 @@ class AuthController extends BaseController
         }
 
         // ── 6. Sesión segura ──────────────────────────────────────────────────
-        // regenerate(true) destruye la sesión anterior y crea un nuevo ID.
-        session()->regenerate(true);
-        session()->set([
-            'logged_in'   => true,
-            'usuario_id'  => (int) $usuario['id_usuario'],
-            'nombre_user' => $usuario['nombre_user'],
-            'nombres'     => $usuario['nombres'],
-            'apellidos'   => $usuario['apellidos'],
-            'id_rol'      => (int) $usuario['id_rol'],
-            'rol'         => $usuario['rol'],
-        ]);
+        RememberTokenService::iniciarSesion($usuario);
+
+        // ── 7. "Recuérdame": emitir cookie persistente si el usuario lo pidió ─
+        if ($this->request->getPost('remember_me')) {
+            $tokenService = new RememberTokenService();
+            $rawToken     = $tokenService->crear((int) $usuario['id_usuario']);
+
+            $cookie = new Cookie('remember_token', $rawToken, [
+                'expires'  => time() + RememberTokenService::ttl(),
+                'path'     => '/',
+                'httponly' => true,
+                'samesite' => Cookie::SAMESITE_STRICT,
+                'secure'   => false,
+            ]);
+
+            return redirect()->to('/')->setCookie($cookie);
+        }
 
         return redirect()->to('/');
     }
 
     /**
-     * Cierra la sesión activa y redirige al login.
+     * Cierra la sesión activa, invalida el token "Recuérdame" si existe
+     * y redirige al login.
      *
      * @return \CodeIgniter\HTTP\RedirectResponse
      */
     public function logout()
     {
+        $cookieToken = $this->request->getCookie('remember_token');
+        if ($cookieToken) {
+            (new RememberTokenService())->invalidar($cookieToken);
+        }
+
         session()->destroy();
 
-        return redirect()->to('/login')
-            ->with('info', 'Sesión cerrada correctamente.');
+        $response = redirect()->to('/login')->with('info', 'Sesión cerrada correctamente.');
+
+        if ($cookieToken) {
+            $response->deleteCookie('remember_token', '', '/');
+        }
+
+        return $response;
     }
 }

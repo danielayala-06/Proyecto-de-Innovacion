@@ -123,6 +123,15 @@
                     <div id="error-pass" class="field-error" role="alert" aria-live="polite"></div>
                 </div>
 
+                <div class="mb-3 d-flex align-items-center gap-2">
+                    <input type="checkbox" id="remember_me" name="remember_me" value="1"
+                           class="form-check-input m-0" style="width:1.1rem;height:1.1rem;cursor:pointer;">
+                    <label for="remember_me" class="login-label mb-0"
+                           style="cursor:pointer;font-weight:400;font-size:.85rem;">
+                        Mantener sesión iniciada
+                    </label>
+                </div>
+
                 <button type="submit" id="btn-submit" class="btn-login">
                     <span id="btn-text">
                         <i class="bi bi-box-arrow-in-right me-1"></i>

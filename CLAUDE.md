@@ -75,7 +75,7 @@ Single stylesheet: public/css/styles.css. Uses CSS custom properties for theming
 
 | Username | Password | Role |
 |---|---|---|
-| carlos.admin | Admin1234! | Administrador |
+| quique.admin | Admin1234! | Administrador |
 | maria.ventas | Ventas123! | Vendedor |
 | jorge.foto | Foto1234! | Fotógrafo |
 | ana.supervisor | Super123! | Supervisor |

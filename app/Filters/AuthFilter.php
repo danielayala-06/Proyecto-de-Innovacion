@@ -2,13 +2,19 @@
 
 namespace App\Filters;
 
+use App\Services\Auth\RememberTokenService;
 use CodeIgniter\Filters\FilterInterface;
+use CodeIgniter\HTTP\IncomingRequest;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
  * AuthFilter — verifica que el usuario tenga sesión activa.
- * Rutas API devuelven 401 JSON; rutas web redirigen a /login.
+ *
+ * Orden de comprobación:
+ *  1. Sesión activa → pasar.
+ *  2. Cookie "remember_token" válida → iniciar sesión automáticamente y pasar.
+ *  3. Sin credenciales → 401 JSON para API, redirección a /login para web.
  */
 class AuthFilter implements FilterInterface
 {
@@ -18,9 +24,24 @@ class AuthFilter implements FilterInterface
             return;
         }
 
-        // Detectar si la petición es a la API (espera JSON).
-        // getPath() puede incluir el segmento 'index.php' en dev, por eso
-        // se busca el segmento 'api' en cualquier posición del path.
+        // Auto-login por cookie "Recuérdame"
+        /** @var IncomingRequest $request */
+        $cookieToken = $request->getCookie('remember_token');
+        if ($cookieToken) {
+            $service = new RememberTokenService();
+            $usuario = $service->validarYObtenerUsuario($cookieToken);
+
+            if ($usuario) {
+                RememberTokenService::iniciarSesion($usuario);
+                return; // sesión establecida, continuar con la petición
+            }
+
+            // Token inválido o expirado: la cookie se limpiará en el próximo logout;
+            // no la borramos aquí porque no podemos emitir Set-Cookie desde un filtro
+            // de forma fiable en todas las rutas (API vs web).
+        }
+
+        // Sin sesión ni token válido → rechazar
         $path = ltrim($request->getUri()->getPath(), '/');
         if (str_starts_with($path, 'api/') || str_starts_with($path, 'index.php/api/')) {
             return service('response')
