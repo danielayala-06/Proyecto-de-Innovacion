@@ -165,7 +165,7 @@
 </style>
 
 <!-- ═══════ MODAL NUEVA / EDITAR SESIÓN ════════════════════════════════════════ -->
-<div class="modal fade" id="modalSesion" tabindex="-1">
+<div class="modal fade" id="modalSesion" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -281,7 +281,7 @@
 </div>
 
 <!-- ═══════ MODAL NUEVO ESTUDIANTE ════════════════════════════════════════════ -->
-<div class="modal fade" id="modalEstudiante" tabindex="-1">
+<div class="modal fade" id="modalEstudiante" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -292,13 +292,44 @@
                 <!-- Datos del estudiante -->
                 <p class="form-section-label"><i class="bi bi-person-badge"></i> Datos del estudiante</p>
                 <div class="row g-3 mb-3">
-                    <div class="col-12">
-                        <label>Nombre completo *</label>
-                        <input type="text" class="form-control" id="efNombreCompleto" maxlength="100" placeholder="Ej: Tony Quispe Mamani">
+                    <div class="col-12 col-md-6">
+                        <label>Nombres *</label>
+                        <input type="text" class="form-control" id="efNombres" maxlength="100" placeholder="Ej: Tony Aldair">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label>Apellidos</label>
+                        <input type="text" class="form-control" id="efApellidos" maxlength="100" placeholder="Ej: Quispe Mamani">
                     </div>
                     <div class="col-12 col-md-4">
                         <label>Fecha de nacimiento</label>
-                        <input type="date" class="form-control" id="efNacimiento">
+                        <div class="row g-1">
+                            <div class="col-4">
+                                <select class="form-select form-select-sm" id="efNacAnio"
+                                        onchange="actualizarDias('efNacAnio','efNacMes','efNacDia')">
+                                    <option value="">Año</option>
+                                    <?php for ($a = (int) date('Y') - 5; $a >= (int) date('Y') - 30; $a--): ?>
+                                    <option value="<?= $a ?>"><?= $a ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-select form-select-sm" id="efNacMes"
+                                        onchange="actualizarDias('efNacAnio','efNacMes','efNacDia')">
+                                    <option value="">Mes</option>
+                                    <?php foreach (['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'] as $i => $mes): ?>
+                                    <option value="<?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?>"><?= $mes ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-select form-select-sm" id="efNacDia">
+                                    <option value="">Día</option>
+                                    <?php for ($d = 1; $d <= 31; $d++): ?>
+                                    <option value="<?= str_pad($d, 2, '0', STR_PAD_LEFT) ?>"><?= $d ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-12 col-md-4">
                         <label>Color favorito</label>
@@ -313,9 +344,13 @@
                 <!-- Datos del apoderado -->
                 <p class="form-section-label"><i class="bi bi-person-fill"></i> Datos del apoderado</p>
                 <div class="row g-3">
-                    <div class="col-12 col-md-8">
-                        <label>Nombre completo *</label>
-                        <input type="text" class="form-control" id="apNombreCompleto" maxlength="100" placeholder="Ej: Mirian Tasayco Murillo">
+                    <div class="col-12 col-md-4">
+                        <label>Nombres *</label>
+                        <input type="text" class="form-control" id="apNombres" maxlength="100" placeholder="Ej: Mirian">
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label>Apellidos</label>
+                        <input type="text" class="form-control" id="apApellidos" maxlength="100" placeholder="Ej: Tasayco Murillo">
                     </div>
                     <div class="col-12 col-md-4">
                         <label>Teléfono * (9 dígitos)</label>

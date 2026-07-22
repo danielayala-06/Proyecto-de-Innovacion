@@ -218,9 +218,10 @@ class EstudianteService
         // 3. Estudiante
         if (!empty($esData['fecha_nacimiento'])) {
             $fn = \DateTime::createFromFormat('Y-m-d', $esData['fecha_nacimiento']);
-            if (!$fn) {
+            // Re-formatear evita falsos válidos por desbordamiento (ej. "2023-02-30" → 2023-03-02)
+            if (!$fn || $fn->format('Y-m-d') !== $esData['fecha_nacimiento']) {
                 $db->transRollback();
-                throw new \RuntimeException('Formato de fecha de nacimiento inválido (Y-m-d).', 422);
+                throw new \RuntimeException('La fecha de nacimiento no es válida.', 422);
             }
             $hoy = new \DateTime('today');
             $min = (new \DateTime('today'))->modify('-30 years');

@@ -7,6 +7,7 @@ use App\Models\ColegiosModel;
 use App\Models\PromAlumnoModel;
 use App\Models\PromPromocionModel;
 use App\Models\PromFormularioModel;
+use App\Services\Estudiantes\EstudianteService;
 
 class AdminController extends BaseController
 {
@@ -414,26 +415,45 @@ class AdminController extends BaseController
         $promocion_id = (int) ($body['promocion_id'] ?? 0);
 
         // ── Validación de entrada ───────────────────────────────────────────
-        $nombre = trim($body['nombre_alumno'] ?? '');
-        $tutor  = trim($body['nombre_tutor']  ?? '');
-        $tel    = trim($body['telefono']      ?? '');
+        $nombres   = trim($body['nombres_alumno']   ?? '');
+        $apellidos = trim($body['apellidos_alumno'] ?? '');
+        $tutor     = trim($body['nombre_tutor']     ?? '');
+        $tel       = trim($body['telefono']         ?? '');
+
+        // Nombre completo para prom_alumnos y prom_formularios (compatibilidad)
+        $nombre = trim(implode(' ', array_filter([$nombres, $apellidos])));
 
         if ($promocion_id === 0) {
             return $this->_json(['ok' => false, 'error' => 'Promoción no especificada.'], 422);
         }
-        if ($nombre === '') {
-            return $this->_json(['ok' => false, 'error' => 'El nombre del alumno es obligatorio.'], 422);
+        if ($nombres === '') {
+            return $this->_json(['ok' => false, 'error' => 'Los nombres del alumno son obligatorios.'], 422);
         }
         // Solo letras Unicode, tildes y espacios — sin números, comas ni especiales
         $reLetras = '/^[\pL\s]+$/u';
-        if (!preg_match($reLetras, $nombre)) {
-            return $this->_json(['ok' => false, 'error' => 'El nombre del alumno solo puede contener letras y espacios.'], 422);
+        if (!preg_match($reLetras, $nombres)) {
+            return $this->_json(['ok' => false, 'error' => 'Los nombres solo pueden contener letras y espacios.'], 422);
+        }
+        if ($apellidos !== '' && !preg_match($reLetras, $apellidos)) {
+            return $this->_json(['ok' => false, 'error' => 'Los apellidos solo pueden contener letras y espacios.'], 422);
         }
         if ($tutor !== '' && !preg_match($reLetras, $tutor)) {
             return $this->_json(['ok' => false, 'error' => 'El nombre del apoderado solo puede contener letras y espacios.'], 422);
         }
         if ($tel !== '' && !preg_match('/^9\d{8}$/', $tel)) {
             return $this->_json(['ok' => false, 'error' => 'El teléfono debe tener 9 dígitos y comenzar con 9.'], 422);
+        }
+
+        $fecha = ($body['fecha_nacimiento'] ?? '') ?: '';
+        if ($fecha !== '') {
+            $dt = \DateTime::createFromFormat('Y-m-d', $fecha);
+            // createFromFormat acepta desbordamiento (ej. 30-feb → 01-mar), por eso se re-formatea
+            if (!$dt || $dt->format('Y-m-d') !== $fecha) {
+                return $this->_json(['ok' => false, 'error' => 'La fecha de nacimiento no es válida.'], 422);
+            }
+            if ($dt > new \DateTime('today')) {
+                return $this->_json(['ok' => false, 'error' => 'La fecha de nacimiento no puede ser en el futuro.'], 422);
+            }
         }
 
         $prom = $this->promocionModel->find($promocion_id);
@@ -505,11 +525,84 @@ class AdminController extends BaseController
             }
 
             $db->transCommit();
+
+            // Sincronización best-effort con el sistema de sesiones.
+            // Se ejecuta fuera de la transacción principal para no bloquear
+            // el registro del alumno si el estudiante ya existe o hay un error de datos.
+            $idPromoEscolar = (int) ($prom['id_promocion_escolar'] ?? 0);
+            if ($idPromoEscolar) {
+                $this->_sincronizarEstudiante(
+                    $alumnoId, $nombres, $apellidos, $body, $idPromoEscolar
+                );
+            }
+
             return $this->_json(['ok' => true]);
 
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             $db->transRollback();
             return $this->_json(['ok' => false, 'error' => 'Error al guardar. Intenta de nuevo.'], 500);
+        }
+    }
+
+    /**
+     * Crea el registro de estudiante en el sistema de sesiones a partir
+     * de los datos del formulario admin. Operación best-effort: si falla
+     * (duplicado, datos incompletos) el formulario ya fue guardado correctamente.
+     */
+    private function _sincronizarEstudiante(
+        int    $alumnoId,
+        string $nombres,
+        string $apellidos,
+        array  $body,
+        int    $idPromocionEscolar
+    ): void {
+        try {
+            $db = \Config\Database::connect();
+
+            // Evitar duplicado si ya fue sincronizado en una ejecución anterior
+            $yaCreado = $db->table('prom_alumnos')
+                ->select('id_estudiante')
+                ->where('id', $alumnoId)
+                ->where('id_estudiante IS NOT NULL', null, false)
+                ->get()->getRowArray();
+            if ($yaCreado) return;
+
+            $tutor      = trim($body['nombre_tutor'] ?? '');
+            $partes     = preg_split('/\s+/', $tutor, 2);
+            $tutorNom   = $partes[0] ?: 'Sin nombre';
+            $tutorAp    = $partes[1] ?? '';
+
+            $relacion = strtolower(trim($body['relacion_tutor'] ?? 'otro'));
+            if (!in_array($relacion, ['padre', 'madre', 'hermano', 'otro'], true)) {
+                $relacion = 'otro';
+            }
+
+            $idEstudiante = (new EstudianteService())->crear([
+                'id_promocion' => $idPromocionEscolar,
+                'estudiante'   => [
+                    'nombres'          => $nombres,
+                    'apellidos'        => $apellidos ?: null,
+                    'fecha_nacimiento' => ($body['fecha_nacimiento'] ?? '') ?: null,
+                    'color_fav'        => ($body['color_favorito']   ?? '') ?: null,
+                    'profesion_futura' => ($body['profesion_futura'] ?? '') ?: null,
+                ],
+                'apoderado' => [
+                    'nombres'          => $tutorNom,
+                    'apellidos'        => $tutorAp   ?: null,
+                    'telefono'         => trim($body['telefono'] ?? ''),
+                    'correo'           => ($body['email']        ?? '') ?: null,
+                    'tipo_relacion'    => $relacion,
+                    'tipo_documento'   => 'CE',
+                    'numero_documento' => 'FORM-' . str_pad($alumnoId, 6, '0', STR_PAD_LEFT),
+                ],
+            ]);
+
+            $db->table('prom_alumnos')
+               ->where('id', $alumnoId)
+               ->update(['id_estudiante' => $idEstudiante]);
+
+        } catch (\Throwable) {
+            // Fallo silencioso: el formulario ya quedó guardado correctamente
         }
     }
 

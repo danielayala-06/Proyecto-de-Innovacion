@@ -13,10 +13,61 @@
  *  `sfId`, `sfTipo`, `sfFecha`, `sfHora`, `sfObservaciones`, `sfPromocion`
  *
  * Campos del formulario de estudiante (IDs):
- *  `efNombres`, `efApellidos`, `efNacimiento`, `efColor`, `efProfesion`,
+ *  `efNombres`, `efApellidos`, `efNacAnio`, `efNacMes`, `efNacDia`,
+ *  `efColor`, `efProfesion`,
  *  `apNombres`, `apApellidos`, `apTelefono`, `apDocTipo`, `apDocNum`,
  *  `apCorreo`, `apRelacion`
  */
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS DE FECHA (3 selects → YYYY-MM-DD)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Construye una fecha ISO "YYYY-MM-DD" desde tres selects (año, mes, día).
+ * Devuelve null si alguno está vacío.
+ */
+function _buildFecha(idAnio, idMes, idDia) {
+    const a = document.getElementById(idAnio)?.value || '';
+    const m = document.getElementById(idMes)?.value  || '';
+    const d = document.getElementById(idDia)?.value  || '';
+    return (a && m && d) ? `${a}-${m}-${d}` : null;
+}
+
+/**
+ * Valida los tres selects de fecha de nacimiento.
+ * Comprueba:
+ *   - Relleno parcial (todos o ninguno).
+ *   - Fecha inexistente (ej. 29-feb en año no bisiesto).
+ *   - Fecha futura o más antigua que maxAnios.
+ *
+ * @param {string} idAnio
+ * @param {string} idMes
+ * @param {string} idDia
+ * @param {number} maxAnios  Máximo de años atrás permitidos.
+ * @returns {string|null}    Mensaje de error o null si es válida.
+ */
+function _validarFecha(idAnio, idMes, idDia, maxAnios) {
+    const a = document.getElementById(idAnio)?.value || '';
+    const m = document.getElementById(idMes)?.value  || '';
+    const d = document.getElementById(idDia)?.value  || '';
+
+    const llenos = [a, m, d].filter(Boolean).length;
+    if (llenos > 0 && llenos < 3) return 'Selecciona día, mes y año de nacimiento.';
+    if (!llenos) return null; // fecha opcional — sin problema
+
+    const fn  = new Date(`${a}-${m}-${d}T00:00:00`);
+    // Detecta desbordamiento de mes (ej. 30-feb → 01-mar en JS)
+    if (isNaN(fn.getTime()) || fn.getDate() !== parseInt(d, 10)) {
+        return `La fecha ${d}/${m}/${a} no existe (¿año bisiesto?).`;
+    }
+
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const min = new Date(hoy.getFullYear() - maxAnios, hoy.getMonth(), hoy.getDate());
+    if (fn > hoy) return 'La fecha de nacimiento no puede ser en el futuro.';
+    if (fn < min) return `El estudiante no puede tener más de ${maxAnios} años.`;
+    return null;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FORMULARIO DE SESIÓN
@@ -152,18 +203,11 @@ export const estudianteForm = {
      * @returns {void}
      */
     limpiar() {
-        ['efNombreCompleto','efNacimiento','efColor','efProfesion',
-         'apNombreCompleto','apTelefono','apCorreo','apRelacion'].forEach(id => {
+        ['efNombres','efApellidos','efNacDia','efNacMes','efNacAnio','efColor','efProfesion',
+         'apNombres','apApellidos','apTelefono','apCorreo','apRelacion'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-
-        // Fecha de nacimiento: no futura, no más de 120 años atrás
-        const hoy = new Date();
-        const min = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
-        const toISO = d => d.toISOString().split('T')[0];
-        const ef = document.getElementById('efNacimiento');
-        if (ef) { ef.min = toISO(min); ef.max = toISO(hoy); }
     },
 
     /**
@@ -194,15 +238,15 @@ export const estudianteForm = {
         return {
             id_promocion: idPromocion,
             estudiante: {
-                nombres:          (document.getElementById('efNombreCompleto').value || '').trim().toLocaleUpperCase('es-PE'),
-                apellidos:        null,
-                fecha_nacimiento: document.getElementById('efNacimiento').value || null,
-                color_fav:        (document.getElementById('efColor').value || '').trim()     || null,
+                nombres:          (document.getElementById('efNombres').value   || '').trim().toLocaleUpperCase('es-PE'),
+                apellidos:        (document.getElementById('efApellidos').value || '').trim().toLocaleUpperCase('es-PE') || null,
+                fecha_nacimiento: _buildFecha('efNacAnio', 'efNacMes', 'efNacDia'),
+                color_fav:        (document.getElementById('efColor').value     || '').trim() || null,
                 profesion_futura: (document.getElementById('efProfesion').value || '').trim().toLocaleUpperCase('es-PE') || null,
             },
             apoderado: {
-                nombres:       (document.getElementById('apNombreCompleto').value || '').trim().toLocaleUpperCase('es-PE'),
-                apellidos:     null,
+                nombres:       (document.getElementById('apNombres').value   || '').trim().toLocaleUpperCase('es-PE'),
+                apellidos:     (document.getElementById('apApellidos').value || '').trim().toLocaleUpperCase('es-PE') || null,
                 telefono:      document.getElementById('apTelefono').value.trim(),
                 correo:        document.getElementById('apCorreo').value.trim() || null,
                 tipo_relacion: document.getElementById('apRelacion').value,
@@ -218,23 +262,17 @@ export const estudianteForm = {
      */
     validar() {
         const reqs = {
-            efNombreCompleto: 'El nombre completo del estudiante es obligatorio.',
-            apNombreCompleto: 'El nombre completo del apoderado es obligatorio.',
-            apTelefono:       'El teléfono del apoderado es obligatorio.',
-            apRelacion:       'La relación con el estudiante es obligatoria.',
+            efNombres: 'Los nombres del estudiante son obligatorios.',
+            apNombres: 'Los nombres del apoderado son obligatorios.',
+            apTelefono: 'El teléfono del apoderado es obligatorio.',
+            apRelacion: 'La relación con el estudiante es obligatoria.',
         };
         for (const [id, msg] of Object.entries(reqs)) {
             if (!document.getElementById(id)?.value.trim()) return msg;
         }
 
-        const nacimiento = document.getElementById('efNacimiento').value;
-        if (nacimiento) {
-            const fn  = new Date(nacimiento + 'T00:00:00');
-            const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-            const min = new Date(hoy.getFullYear() - 30, hoy.getMonth(), hoy.getDate());
-            if (fn > hoy) return 'La fecha de nacimiento no puede ser en el futuro.';
-            if (fn < min) return 'El estudiante no puede tener más de 30 años.';
-        }
+        const err = _validarFecha('efNacAnio', 'efNacMes', 'efNacDia', 30);
+        if (err) return err;
 
         const tel = document.getElementById('apTelefono').value.trim();
         if (!/^\d{9}$/.test(tel)) return 'El teléfono debe tener exactamente 9 dígitos.';

@@ -200,6 +200,42 @@ const miniCal = {
     },
 };
 
+/**
+ * Recalcula los días válidos del select de día al cambiar mes o año.
+ * Maneja correctamente febrero en años bisiestos.
+ * Llamado desde onchange de los selects de fecha de nacimiento.
+ *
+ * @param {string} idAnio
+ * @param {string} idMes
+ * @param {string} idDia
+ */
+window.actualizarDias = function (idAnio, idMes, idDia) {
+    const anioEl = document.getElementById(idAnio);
+    const mesEl  = document.getElementById(idMes);
+    const diaEl  = document.getElementById(idDia);
+    if (!anioEl || !mesEl || !diaEl) return;
+
+    const mes  = parseInt(mesEl.value,  10) || 0;
+    // Sin año seleccionado se usa el actual (relevante solo para febrero bisiesto)
+    const anio = parseInt(anioEl.value, 10) || new Date().getFullYear();
+
+    // new Date(year, mes, 0) devuelve el último día del mes anterior → días del mes
+    const maxDia = mes ? new Date(anio, mes, 0).getDate() : 31;
+    const prevDia = parseInt(diaEl.value, 10) || 0;
+
+    diaEl.innerHTML = '<option value="">Día</option>';
+    for (let d = 1; d <= maxDia; d++) {
+        const opt = document.createElement('option');
+        opt.value = String(d).padStart(2, '0');
+        opt.textContent = d;
+        diaEl.appendChild(opt);
+    }
+    // Restaurar selección previa solo si sigue siendo válida
+    if (prevDia && prevDia <= maxDia) {
+        diaEl.value = String(prevDia).padStart(2, '0');
+    }
+};
+
 window.miniCalPrev = () => {
     let { año, mes } = miniCal;
     mes--; if (mes < 0) { mes = 11; año--; }
@@ -606,7 +642,7 @@ window.verDetalleEstudiante = async function(idEstudiante) {
                         </div>
                         <div class="col-6">
                             <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Apellidos</div>
-                            <div style="font-weight:500;">${e.apellidos}</div>
+                            <div style="font-weight:500;">${e.apellidos || '—'}</div>
                         </div>
                         <div class="col-6">
                             <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">Nacimiento</div>
@@ -624,7 +660,7 @@ window.verDetalleEstudiante = async function(idEstudiante) {
                 </div>
                 <div class="col-12 col-md-6" style="border-left:1px solid var(--border-color);padding-left:1rem;">
                     <div style="font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;">Apoderado</div>
-                    <div style="font-weight:500;">${e.apoderado_nombres} ${e.apoderado_apellidos ?? ''}</div>
+                    <div style="font-weight:500;">${e.apoderado_nombres ?? '—'} ${e.apoderado_apellidos ?? ''}</div>
                     <div style="font-size:.8rem;color:var(--text-muted);margin-top:2px;">${e.tipo_relacion ?? ''}</div>
                     <div style="font-size:.83rem;margin-top:6px;">
                         <i class="bi bi-telephone me-1"></i>${e.apoderado_telefono ?? '—'}

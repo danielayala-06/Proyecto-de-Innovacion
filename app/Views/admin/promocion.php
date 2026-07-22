@@ -390,19 +390,48 @@ function adminPanel() {
         <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
                     color:var(--text-muted);margin-bottom:.75rem;">Datos del alumno</div>
 
-        <div style="margin-bottom:.85rem;">
-            <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">
-                Nombres y apellidos *
-            </label>
-            <input type="text" id="nfNombre" class="form-control form-control-sm"
-                   maxlength="150" placeholder="Nombres y apellidos">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem;">
+            <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">
+                    Nombres *
+                </label>
+                <input type="text" id="nfNombres" class="form-control form-control-sm"
+                       maxlength="100" placeholder="Juan Carlos">
+            </div>
+            <div>
+                <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">
+                    Apellidos
+                </label>
+                <input type="text" id="nfApellidos" class="form-control form-control-sm"
+                       maxlength="100" placeholder="García López">
+            </div>
         </div>
         <div style="margin-bottom:.85rem;">
             <label style="font-size:.8rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:.3rem;">
                 Fecha de nacimiento *
             </label>
-            <input type="date" id="nfFechaNacimiento" class="form-control form-control-sm"
-                   min="2005-01-01" max="<?= date('Y-m-d', strtotime('-5 years')) ?>">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.45rem;">
+                <select id="nfNacAnio" class="form-select form-select-sm"
+                        onchange="nfActualizarDias()">
+                    <option value="">Año</option>
+                    <?php for ($a = (int) date('Y') - 5; $a >= 2005; $a--): ?>
+                    <option value="<?= $a ?>"><?= $a ?></option>
+                    <?php endfor; ?>
+                </select>
+                <select id="nfNacMes" class="form-select form-select-sm"
+                        onchange="nfActualizarDias()">
+                    <option value="">Mes</option>
+                    <?php foreach (['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'] as $i => $mes): ?>
+                    <option value="<?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?>"><?= $mes ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select id="nfNacDia" class="form-select form-select-sm">
+                    <option value="">Día</option>
+                    <?php for ($d = 1; $d <= 31; $d++): ?>
+                    <option value="<?= str_pad($d, 2, '0', STR_PAD_LEFT) ?>"><?= $d ?></option>
+                    <?php endfor; ?>
+                </select>
+            </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem;">
             <div>
@@ -556,6 +585,29 @@ function adminPanel() {
 </div>
 
 <script>
+// Recalcula los días del select nfNacDia según mes y año seleccionados.
+// Nombre único (prefijo nf) para no colisionar con la función del módulo de sesiones.
+function nfActualizarDias() {
+    const mes   = parseInt(document.getElementById('nfNacMes')?.value,  10) || 0;
+    const anio  = parseInt(document.getElementById('nfNacAnio')?.value, 10) || new Date().getFullYear();
+    const diaEl = document.getElementById('nfNacDia');
+    if (!diaEl) return;
+
+    const maxDia  = mes ? new Date(anio, mes, 0).getDate() : 31;
+    const prevDia = parseInt(diaEl.value, 10) || 0;
+
+    diaEl.innerHTML = '<option value="">Día</option>';
+    for (let d = 1; d <= maxDia; d++) {
+        const opt = document.createElement('option');
+        opt.value = String(d).padStart(2, '0');
+        opt.textContent = d;
+        diaEl.appendChild(opt);
+    }
+    if (prevDia && prevDia <= maxDia) diaEl.value = String(prevDia).padStart(2, '0');
+}
+</script>
+
+<script>
 (function () {
     const modal          = document.getElementById('modalNuevoFormulario');
     const btnAbrir       = document.getElementById('btnNuevoFormulario');
@@ -574,7 +626,7 @@ function adminPanel() {
     const g = id => document.getElementById(id);
 
     function resetForm() {
-        ['nfNombre','nfFechaNacimiento','nfColor','nfProfesion',
+        ['nfNombres','nfApellidos','nfNacDia','nfNacMes','nfNacAnio','nfColor','nfProfesion',
          'nfTutor','nfTelefono','nfEmail'].forEach(id => { const el = g(id); if (el) el.value = ''; });
         const rel = g('nfRelacion'); if (rel) rel.value = 'Padre';
         ['nfTieneCuadro','nfTieneAnuario','nfAceptaImagenes','nfAceptaDatos'].forEach(id => {
@@ -723,19 +775,32 @@ function adminPanel() {
             const STOCK_ANUARIOS  = <?= $anuariosDisponibles ?>;
             const RE_EMAIL  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-            const nombre    = (g('nfNombre')?.value          ?? '').trim();
-            const fecha     =  g('nfFechaNacimiento')?.value ?? '';
+            const nombres   = (g('nfNombres')?.value   ?? '').trim();
+            const apellidos = (g('nfApellidos')?.value ?? '').trim();
+            const _nacDia   =  g('nfNacDia')?.value   ?? '';
+            const _nacMes   =  g('nfNacMes')?.value   ?? '';
+            const _nacAnio  =  g('nfNacAnio')?.value  ?? '';
+            const fecha     = (_nacDia && _nacMes && _nacAnio)
+                              ? `${_nacAnio}-${_nacMes}-${_nacDia}` : '';
             const color     = (g('nfColor')?.value           ?? '').trim();
             const profesion = (g('nfProfesion')?.value       ?? '').trim();
             const tutor     = (g('nfTutor')?.value           ?? '').trim();
             const tel       = (g('nfTelefono')?.value        ?? '').trim();
             const email     = (g('nfEmail')?.value           ?? '').trim();
 
-            if (!nombre)                              { mostrarError('El nombre del alumno es obligatorio.');                                         focusField(g('nfNombre'));          savingAlumno = false; return; }
-            if (!RE_LETRAS.test(nombre))              { mostrarError('El nombre solo puede contener letras y espacios (sin números ni emojis).');     focusField(g('nfNombre'));          savingAlumno = false; return; }
-            if (!fecha)                               { mostrarError('La fecha de nacimiento es obligatoria.');                                       focusField(g('nfFechaNacimiento')); savingAlumno = false; return; }
-            if (fecha < '2005-01-01')                 { mostrarError('La fecha de nacimiento no puede ser anterior al año 2005.');                    focusField(g('nfFechaNacimiento')); savingAlumno = false; return; }
-            if (fecha > '<?= date('Y-m-d', strtotime('-5 years')) ?>')  { mostrarError('El alumno debe tener al menos 5 años de edad.');             focusField(g('nfFechaNacimiento')); savingAlumno = false; return; }
+            if (!nombres)                             { mostrarError('Los nombres del alumno son obligatorios.');                                     focusField(g('nfNombres'));         savingAlumno = false; return; }
+            if (!RE_LETRAS.test(nombres))             { mostrarError('Los nombres solo pueden contener letras y espacios (sin números ni emojis).'); focusField(g('nfNombres'));         savingAlumno = false; return; }
+            if (apellidos && !RE_LETRAS.test(apellidos)) { mostrarError('Los apellidos solo pueden contener letras y espacios.');                    focusField(g('nfApellidos'));       savingAlumno = false; return; }
+            {
+                const llenos = [_nacDia, _nacMes, _nacAnio].filter(Boolean).length;
+                if (llenos > 0 && llenos < 3)         { mostrarError('Selecciona día, mes y año de nacimiento.');                                    focusField(g('nfNacDia'));          savingAlumno = false; return; }
+                if (llenos === 0)                      { mostrarError('La fecha de nacimiento es obligatoria.');                                       focusField(g('nfNacDia'));          savingAlumno = false; return; }
+                const _fn = new Date(`${_nacAnio}-${_nacMes}-${_nacDia}T00:00:00`);
+                if (isNaN(_fn.getTime()) || _fn.getDate() !== parseInt(_nacDia, 10))
+                                                       { mostrarError(`La fecha ${_nacDia}/${_nacMes}/${_nacAnio} no existe.`);                       focusField(g('nfNacDia'));          savingAlumno = false; return; }
+                if (fecha < '2005-01-01')              { mostrarError('La fecha de nacimiento no puede ser anterior al año 2005.');                   focusField(g('nfNacAnio'));          savingAlumno = false; return; }
+                if (fecha > '<?= date('Y-m-d', strtotime('-5 years')) ?>') { mostrarError('El alumno debe tener al menos 5 años de edad.');          focusField(g('nfNacAnio'));          savingAlumno = false; return; }
+            }
             if (color     && !RE_LETRAS.test(color))      { mostrarError('El color favorito solo puede contener letras y espacios.');                 focusField(g('nfColor'));           savingAlumno = false; return; }
             if (profesion && !RE_LETRAS.test(profesion))  { mostrarError('La profesión solo puede contener letras y espacios.');                     focusField(g('nfProfesion'));       savingAlumno = false; return; }
             if (!tutor)                               { mostrarError('El nombre del apoderado es obligatorio.');                                      focusField(g('nfTutor'));           savingAlumno = false; return; }
@@ -763,7 +828,8 @@ function adminPanel() {
                     },
                     body: JSON.stringify({
                         promocion_id:     PROM_ID,
-                        nombre_alumno:    nombre,
+                        nombres_alumno:   nombres,
+                        apellidos_alumno: apellidos || null,
                         fecha_nacimiento: fecha,
                         color_favorito:   color     || null,
                         profesion_futura: profesion || null,
