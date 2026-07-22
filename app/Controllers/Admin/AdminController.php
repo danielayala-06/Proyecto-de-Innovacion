@@ -412,10 +412,28 @@ class AdminController extends BaseController
     {
         $body         = $this->request->getJSON(true) ?? [];
         $promocion_id = (int) ($body['promocion_id'] ?? 0);
-        $nombre       = trim($body['nombre_alumno'] ?? '');
 
-        if ($promocion_id === 0 || $nombre === '') {
+        // ── Validación de entrada ───────────────────────────────────────────
+        $nombre = trim($body['nombre_alumno'] ?? '');
+        $tutor  = trim($body['nombre_tutor']  ?? '');
+        $tel    = trim($body['telefono']      ?? '');
+
+        if ($promocion_id === 0) {
+            return $this->_json(['ok' => false, 'error' => 'Promoción no especificada.'], 422);
+        }
+        if ($nombre === '') {
             return $this->_json(['ok' => false, 'error' => 'El nombre del alumno es obligatorio.'], 422);
+        }
+        // Solo letras Unicode, tildes y espacios — sin números, comas ni especiales
+        $reLetras = '/^[\pL\s]+$/u';
+        if (!preg_match($reLetras, $nombre)) {
+            return $this->_json(['ok' => false, 'error' => 'El nombre del alumno solo puede contener letras y espacios.'], 422);
+        }
+        if ($tutor !== '' && !preg_match($reLetras, $tutor)) {
+            return $this->_json(['ok' => false, 'error' => 'El nombre del apoderado solo puede contener letras y espacios.'], 422);
+        }
+        if ($tel !== '' && !preg_match('/^9\d{8}$/', $tel)) {
+            return $this->_json(['ok' => false, 'error' => 'El teléfono debe tener 9 dígitos y comenzar con 9.'], 422);
         }
 
         $prom = $this->promocionModel->find($promocion_id);
@@ -426,57 +444,73 @@ class AdminController extends BaseController
         $tieneCuadro  = !empty($body['tiene_cuadro']);
         $tieneAnuario = !empty($body['tiene_anuario']);
 
+        // ── Transacción ACID con control manual para poder hacer rollback ──
         $db = \Config\Database::connect();
-        $db->transStart();
+        $db->transBegin();
 
-        $token = bin2hex(random_bytes(32));
-        $db->table('prom_alumnos')->insert([
-            'promocion_id' => $promocion_id,
-            'nombre'       => $nombre,
-            'token'        => $token,
-            'completado'   => 1,
-            'enviado'      => 0,
-            'created_at'   => date('Y-m-d H:i:s'),
-        ]);
-        $alumnoId = $db->insertID();
+        try {
+            $token = bin2hex(random_bytes(32));
+            $db->table('prom_alumnos')->insert([
+                'promocion_id' => $promocion_id,
+                'nombre'       => $nombre,
+                'token'        => $token,
+                'completado'   => 1,
+                'enviado'      => 0,
+                'created_at'   => date('Y-m-d H:i:s'),
+            ]);
+            $alumnoId = $db->insertID();
 
-        $db->table('prom_formularios')->insert([
-            'alumno_id'        => $alumnoId,
-            'nombre_alumno'    => $nombre,
-            'fecha_nacimiento' => ($body['fecha_nacimiento'] ?? '') ?: null,
-            'color_favorito'   => ($body['color_favorito']   ?? '') ?: null,
-            'profesion_futura' => ($body['profesion_futura'] ?? '') ?: null,
-            'nombre_tutor'     => ($body['nombre_tutor']     ?? '') ?: null,
-            'relacion_tutor'   => $body['relacion_tutor'] ?? 'Padre',
-            'telefono'         => ($body['telefono']         ?? '') ?: null,
-            'email'            => ($body['email']            ?? '') ?: null,
-            'tiene_cuadro'     => $tieneCuadro  ? 1 : 0,
-            'tiene_anuario'    => $tieneAnuario ? 1 : 0,
-            'anuario_modelo'   => ($body['anuario_modelo']   ?? '') ?: null,
-            'acepta_imagenes'  => !empty($body['acepta_imagenes']) ? 1 : 0,
-            'acepta_datos'     => !empty($body['acepta_datos'])    ? 1 : 0,
-            'ip_address'       => $this->request->getIPAddress(),
-            'created_at'       => date('Y-m-d H:i:s'),
-        ]);
+            $db->table('prom_formularios')->insert([
+                'alumno_id'        => $alumnoId,
+                'nombre_alumno'    => $nombre,
+                'fecha_nacimiento' => ($body['fecha_nacimiento'] ?? '') ?: null,
+                'color_favorito'   => ($body['color_favorito']   ?? '') ?: null,
+                'profesion_futura' => ($body['profesion_futura'] ?? '') ?: null,
+                'nombre_tutor'     => $tutor ?: null,
+                'relacion_tutor'   => $body['relacion_tutor'] ?? 'Padre',
+                'telefono'         => $tel ?: null,
+                'email'            => ($body['email']            ?? '') ?: null,
+                'tiene_cuadro'     => $tieneCuadro  ? 1 : 0,
+                'tiene_anuario'    => $tieneAnuario ? 1 : 0,
+                'anuario_modelo'   => ($body['anuario_modelo']   ?? '') ?: null,
+                'acepta_imagenes'  => !empty($body['acepta_imagenes']) ? 1 : 0,
+                'acepta_datos'     => !empty($body['acepta_datos'])    ? 1 : 0,
+                'ip_address'       => $this->request->getIPAddress(),
+                'created_at'       => date('Y-m-d H:i:s'),
+            ]);
 
-        if ($tieneCuadro) {
-            $db->table('prom_promociones')
-               ->where('id', $promocion_id)
-               ->update(['cuadros_usados' => (int) $prom['cuadros_usados'] + 1]);
-        }
-        if ($tieneAnuario) {
-            $db->table('prom_promociones')
-               ->where('id', $promocion_id)
-               ->update(['anuarios_usados' => (int) $prom['anuarios_usados'] + 1]);
-        }
+            // Incremento atómico: solo actualiza si aún hay stock disponible
+            if ($tieneCuadro) {
+                $db->query(
+                    'UPDATE prom_promociones SET cuadros_usados = cuadros_usados + 1
+                     WHERE id = ? AND cuadros_usados < cuadros_total',
+                    [$promocion_id]
+                );
+                if ($db->affectedRows() === 0) {
+                    $db->transRollback();
+                    return $this->_json(['ok' => false, 'error' => 'No hay cuadros disponibles en este momento.'], 409);
+                }
+            }
 
-        $db->transComplete();
+            if ($tieneAnuario) {
+                $db->query(
+                    'UPDATE prom_promociones SET anuarios_usados = anuarios_usados + 1
+                     WHERE id = ? AND anuarios_usados < anuarios_total',
+                    [$promocion_id]
+                );
+                if ($db->affectedRows() === 0) {
+                    $db->transRollback();
+                    return $this->_json(['ok' => false, 'error' => 'No hay anuarios disponibles en este momento.'], 409);
+                }
+            }
 
-        if ($db->transStatus() === false) {
+            $db->transCommit();
+            return $this->_json(['ok' => true]);
+
+        } catch (\Exception $e) {
+            $db->transRollback();
             return $this->_json(['ok' => false, 'error' => 'Error al guardar. Intenta de nuevo.'], 500);
         }
-
-        return $this->_json(['ok' => true]);
     }
 
     // GET /admin/formularios/exportar/{id}

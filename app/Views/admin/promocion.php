@@ -359,8 +359,10 @@ function adminPanel() {
 
 <?php if (!empty($promocion['id_promocion_escolar'])): ?>
 <?php
-    $hayCuadros  = (int) ($promocion['cuadros_total']  ?? 0) > 0;
-    $hayAnuarios = (int) ($promocion['anuarios_total'] ?? 0) > 0;
+    $hayCuadros          = (int) ($promocion['cuadros_total']  ?? 0) > 0;
+    $hayAnuarios         = (int) ($promocion['anuarios_total'] ?? 0) > 0;
+    $cuadrosDisponibles  = max(0, (int) ($promocion['cuadros_total']  ?? 0) - (int) ($promocion['cuadros_usados']  ?? 0));
+    $anuariosDisponibles = max(0, (int) ($promocion['anuarios_total'] ?? 0) - (int) ($promocion['anuarios_usados'] ?? 0));
 ?>
 <!-- ══════ MODAL NUEVO FORMULARIO (alumno individual — datos completos) ══════ -->
 <div id="modalNuevoFormulario"
@@ -455,19 +457,57 @@ function adminPanel() {
                     border-top:1px solid var(--border);padding-top:1rem;">Productos</div>
         <?php if ($hayCuadros): ?>
         <div style="margin-bottom:.85rem;">
-            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;">
-                <input type="checkbox" id="nfTieneCuadro"
-                       style="accent-color:var(--accent);width:1rem;height:1rem;cursor:pointer;">
-                <label for="nfTieneCuadro" style="font-size:.82rem;font-weight:600;cursor:pointer;">Cuadro escolar</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem;">
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                    <input type="checkbox" id="nfTieneCuadro"
+                           <?= $cuadrosDisponibles === 0 ? 'disabled' : '' ?>
+                           style="accent-color:var(--accent);width:1rem;height:1rem;
+                                  cursor:<?= $cuadrosDisponibles === 0 ? 'not-allowed' : 'pointer' ?>;">
+                    <label for="nfTieneCuadro"
+                           style="font-size:.82rem;font-weight:600;cursor:pointer;
+                                  <?= $cuadrosDisponibles === 0 ? 'opacity:.45;' : '' ?>">
+                        Cuadro escolar
+                    </label>
+                </div>
+                <?php if ($cuadrosDisponibles > 0): ?>
+                <span style="font-size:.73rem;font-weight:600;padding:.15rem .5rem;border-radius:20px;
+                             color:#198754;background:rgba(25,135,84,.1);">
+                    <?= $cuadrosDisponibles ?> disponible<?= $cuadrosDisponibles !== 1 ? 's' : '' ?>
+                </span>
+                <?php else: ?>
+                <span style="font-size:.73rem;font-weight:600;padding:.15rem .5rem;border-radius:20px;
+                             color:#dc3545;background:rgba(220,53,69,.1);">
+                    Sin stock
+                </span>
+                <?php endif; ?>
             </div>
         </div>
         <?php endif; ?>
         <?php if ($hayAnuarios): ?>
         <div style="margin-bottom:.85rem;">
-            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;">
-                <input type="checkbox" id="nfTieneAnuario"
-                       style="accent-color:var(--accent);width:1rem;height:1rem;cursor:pointer;">
-                <label for="nfTieneAnuario" style="font-size:.82rem;font-weight:600;cursor:pointer;">Anuario</label>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem;">
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                    <input type="checkbox" id="nfTieneAnuario"
+                           <?= $anuariosDisponibles === 0 ? 'disabled' : '' ?>
+                           style="accent-color:var(--accent);width:1rem;height:1rem;
+                                  cursor:<?= $anuariosDisponibles === 0 ? 'not-allowed' : 'pointer' ?>;">
+                    <label for="nfTieneAnuario"
+                           style="font-size:.82rem;font-weight:600;cursor:pointer;
+                                  <?= $anuariosDisponibles === 0 ? 'opacity:.45;' : '' ?>">
+                        Anuario
+                    </label>
+                </div>
+                <?php if ($anuariosDisponibles > 0): ?>
+                <span style="font-size:.73rem;font-weight:600;padding:.15rem .5rem;border-radius:20px;
+                             color:#198754;background:rgba(25,135,84,.1);">
+                    <?= $anuariosDisponibles ?> disponible<?= $anuariosDisponibles !== 1 ? 's' : '' ?>
+                </span>
+                <?php else: ?>
+                <span style="font-size:.73rem;font-weight:600;padding:.15rem .5rem;border-radius:20px;
+                             color:#dc3545;background:rgba(220,53,69,.1);">
+                    Sin stock
+                </span>
+                <?php endif; ?>
             </div>
             <select id="nfAnuarioModelo" class="form-select form-select-sm" style="display:none;">
                 <option value="">— Selecciona un modelo —</option>
@@ -677,8 +717,10 @@ function adminPanel() {
             savingAlumno = true;
             errorEl.style.display = 'none';
 
-            const RE_LETRAS = /^[A-Za-záéíóúüñÁÉÍÓÚÜÑ\s'.,-]+$/;
-            const RE_TEL    = /^9\d{8}$/;
+            const RE_LETRAS       = /^[A-Za-záéíóúüñÁÉÍÓÚÜÑ\s]+$/;
+            const RE_TEL          = /^9\d{8}$/;
+            const STOCK_CUADROS   = <?= $cuadrosDisponibles ?>;
+            const STOCK_ANUARIOS  = <?= $anuariosDisponibles ?>;
             const RE_EMAIL  = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
             const nombre    = (g('nfNombre')?.value          ?? '').trim();
@@ -704,6 +746,8 @@ function adminPanel() {
 
             const tieneCuadro  = g('nfTieneCuadro')?.checked  ?? false;
             const tieneAnuario = g('nfTieneAnuario')?.checked ?? false;
+            if (tieneCuadro  && STOCK_CUADROS  === 0) { mostrarError('No hay cuadros disponibles para esta promoción.');  savingAlumno = false; return; }
+            if (tieneAnuario && STOCK_ANUARIOS  === 0) { mostrarError('No hay anuarios disponibles para esta promoción.'); savingAlumno = false; return; }
             if (tieneAnuario && !g('nfAnuarioModelo')?.value)  { mostrarError('Selecciona el modelo del anuario.'); focusField(g('nfAnuarioModelo')); savingAlumno = false; return; }
 
             btnGuardar.disabled = true;
