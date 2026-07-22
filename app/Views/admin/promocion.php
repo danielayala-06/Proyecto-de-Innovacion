@@ -39,24 +39,7 @@
         <?php endif; ?> -->
  
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
-            <?php if (!empty($sesionesLink)): ?>
-            <a href="<?= esc($sesionesLink) ?>"
-               style="display:inline-flex;align-items:center;gap:.35rem;background:var(--accent);color:#fff;
-                      border:none;border-radius:8px;padding:.4rem .85rem;font-size:.8rem;font-weight:600;
-                      text-decoration:none;cursor:pointer;">
-                <i class="bi bi-camera"></i> Ver sesiones
-            </a>
-            <?php endif; ?>
-
             <?php if (!empty($promocion['id_promocion_escolar'])): ?>
-            <!-- Campaña vinculada a contrato: se pueden agregar formularios -->
-            <button id="btnNuevoFormulario"
-                    type="button"
-                    style="display:inline-flex;align-items:center;gap:.35rem;background:var(--accent);color:#fff;
-                           border:none;border-radius:8px;padding:.4rem .85rem;font-size:.8rem;font-weight:600;
-                           cursor:pointer;">
-                <i class="bi bi-person-plus-fill"></i> Agregar alumno
-            </button>
             <button id="btnAbrirImportar"
                     type="button"
                     style="display:inline-flex;align-items:center;gap:.35rem;background:var(--bg-input);
@@ -113,10 +96,6 @@
                         style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:.38rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;">
                     <i class="bi bi-clipboard"></i> Copiar
                 </button>
-                <a href="<?= esc($linkCompartido) ?>" target="_blank"
-                   style="color:var(--text-muted);font-size:.8rem;text-decoration:none;display:inline-flex;align-items:center;gap:.25rem;">
-                    <i class="bi bi-box-arrow-up-right"></i> Abrir
-                </a>
             </div>
         </div>
     </div>
@@ -189,23 +168,16 @@
                         <?php endif; ?>
                     </td>
                     <td>
-                        <span class="adm-link-text" title="<?= public_url('formulario/' . $a['token']) ?>">
-                            <?= public_url('formulario/' . $a['token']) ?>
+                        <span class="adm-link-text" title="<?= base_url('formulario/' . $a['token']) ?>">
+                            <?= base_url('formulario/' . $a['token']) ?>
                         </span>
                     </td>
                     <td class="text-end" style="white-space:nowrap;">
-                        <button onclick="_copiarLink('<?= public_url('formulario/' . $a['token']) ?>', this)"
+                        <button onclick="_copiarLink('<?= base_url('formulario/' . $a['token']) ?>', this)"
                                 style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.8rem;padding:.2rem .4rem;"
                                 title="Copiar enlace">
                             <i class="bi bi-clipboard"></i>
                         </button>
-                        <?php if (!$a['completado']): ?>
-                        <a href="<?= public_url('formulario/' . $a['token']) ?>" target="_blank"
-                           style="color:var(--text-muted);font-size:.8rem;padding:.2rem .4rem;"
-                           title="Abrir formulario">
-                            <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
-                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>

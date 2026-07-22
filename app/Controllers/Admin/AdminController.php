@@ -22,7 +22,6 @@ class AdminController extends BaseController
         $this->alumnoModel     = new PromAlumnoModel();
         $this->promocionModel  = new PromPromocionModel();
         $this->formularioModel = new PromFormularioModel();
-        helper('tunnel');
     }
 
     // GET /admin/formularios
@@ -238,7 +237,7 @@ class AdminController extends BaseController
             'promocion'        => $resumen,
             'alumnos'          => $alumnos,
             'sesionesLink'     => $sesionesLink,
-            'linkCompartido'   => public_url('formulario/grupo/' . $resumen['token_compartido']),
+            'linkCompartido'   => base_url('formulario/grupo/' . $resumen['token_compartido']),
             'todasPromociones' => $todasPromociones,
             'promoEscolares'   => $promoEscolares,
         ]);
@@ -332,7 +331,7 @@ class AdminController extends BaseController
 
         $resultado = $this->alumnoModel->crearConToken($promocion_id, $nombre);
 
-        $link = public_url('formulario/' . $resultado['token']);
+        $link = base_url('formulario/' . $resultado['token']);
 
         return $this->_json([
             'ok'    => true,
@@ -397,7 +396,7 @@ class AdminController extends BaseController
             ];
             $insertados[] = [
                 'nombre' => $nombre,
-                'link'   => public_url('formulario/' . $token),
+                'link'   => base_url('formulario/' . $token),
             ];
         }
 

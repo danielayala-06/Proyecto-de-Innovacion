@@ -3,7 +3,6 @@
 namespace Config;
 
 use App\Filters\AuthFilter;
-use App\Filters\TunnelFilter;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
 use CodeIgniter\Filters\CSRF;
@@ -34,8 +33,6 @@ class Filters extends BaseFilters
         'performance'   => PerformanceMetrics::class,
         // ── Autenticación ──────────────────────────────────────────────────────
         'auth'          => AuthFilter::class,
-        // ── Acceso externo vía Cloudflare Tunnel ───────────────────────────────
-        'tunnel'        => TunnelFilter::class,
     ];
 
     /**
@@ -69,7 +66,6 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
-            'tunnel', // bloquea tráfico externo (túnel) fuera de /formulario/*
             'csrf' => ['except' => ['api/*', 'api', 'formulario/guardar', 'formulario/grupo/guardar', 'formulario/stock/*']],
             // 'honeypot',
             // 'invalidchars',
