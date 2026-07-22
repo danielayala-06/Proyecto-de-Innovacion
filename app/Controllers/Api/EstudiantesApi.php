@@ -43,6 +43,32 @@ class EstudiantesApi extends BaseApiController
     }
 
     /**
+     * GET /api/estudiantes/stock?id_promocion=X
+     *
+     * Devuelve el stock de productos del paquete para una promoción:
+     * total contratado y disponible (no asignado aún a ningún estudiante).
+     *
+     * @return ResponseInterface 200 con array de productos | 422 si falta id_promocion.
+     */
+    public function stockPromocion()
+    {
+        $idPromocion = (int) ($this->request->getGet('id_promocion') ?? 0);
+
+        if (!$idPromocion) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'id_promocion es requerido']);
+        }
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON([
+                'status' => 'success',
+                'data'   => $this->estudianteService->stockPorPromocion($idPromocion),
+            ]);
+    }
+
+    /**
      * GET /api/estudiantes/{id}
      *
      * Retorna el perfil completo: datos personales, apoderado,

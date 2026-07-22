@@ -35,6 +35,8 @@ class EstudiantesModel extends Model
         'profesion_futura',
         'id_apoderado',
         'id_promocion',
+        'tiene_cuadro',
+        'tiene_anuario',
     ];
 
     protected bool $allowEmptyInserts = false;

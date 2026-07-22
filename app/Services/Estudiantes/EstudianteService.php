@@ -48,6 +48,83 @@ class EstudianteService
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // STOCK
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Devuelve el stock de cada producto del paquete contratado para una promoción.
+     *
+     * Total: derivado de cotizaciones_detalles → paquetes → paquetes_productos.
+     * Usado: contado desde estudiante_productos JOIN estudiantes de esa promoción.
+     *
+     * @param  int $idPromocion
+     * @return array<int, array{
+     *   id_producto:     int,
+     *   nombre_producto: string,
+     *   categoria:       string,
+     *   total:           int,
+     *   disponible:      int
+     * }>
+     */
+    public function stockPorPromocion(int $idPromocion): array
+    {
+        $db = \Config\Database::connect();
+
+        // Totales de cada producto según el paquete contratado
+        $totales = $db->query(
+            'SELECT
+                pr.id_producto,
+                pr.nombre_producto,
+                pr.categoria,
+                SUM(cd.cantidad * pp.cantidad) AS total
+             FROM cotizaciones_detalles cd
+             JOIN paquetes             pk ON pk.id_paquete   = cd.id_referencia
+             JOIN paquetes_productos   pp ON pp.id_paquete   = pk.id_paquete
+             JOIN productos            pr ON pr.id_producto  = pp.id_producto
+             JOIN promociones_escolares pe ON pe.id_cotizacion = cd.id_cotizacion
+             WHERE pe.id_promocion = ?
+               AND cd.tipo_item = "paquete"
+             GROUP BY pr.id_producto, pr.nombre_producto, pr.categoria',
+            [$idPromocion]
+        )->getResultArray();
+
+        if (empty($totales)) {
+            return [];
+        }
+
+        // Unidades ya asignadas a estudiantes de esta promoción
+        $ids     = array_column($totales, 'id_producto');
+        $usadosR = $db->query(
+            'SELECT ep.id_producto, COUNT(*) AS usados
+             FROM estudiante_productos ep
+             JOIN estudiantes e ON e.id_estudiante = ep.id_estudiante
+             WHERE e.id_promocion = ?
+               AND ep.id_producto IN (' . implode(',', array_fill(0, count($ids), '?')) . ')
+             GROUP BY ep.id_producto',
+            array_merge([$idPromocion], $ids)
+        )->getResultArray();
+
+        $usados = array_column($usadosR, 'usados', 'id_producto');
+
+        $resultado = [];
+        foreach ($totales as $row) {
+            $id    = (int) $row['id_producto'];
+            $total = (int) $row['total'];
+            $usado = (int) ($usados[$id] ?? 0);
+
+            $resultado[] = [
+                'id_producto'     => $id,
+                'nombre_producto' => $row['nombre_producto'],
+                'categoria'       => $row['categoria'],
+                'total'           => $total,
+                'disponible'      => max(0, $total - $usado),
+            ];
+        }
+
+        return $resultado;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // CONSULTAS
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -78,25 +155,30 @@ class EstudianteService
             return null;
         }
 
-        $db          = \Config\Database::connect();
-        $idPromocion = (int) $estudiante['id_promocion'];
+        $db = \Config\Database::connect();
 
-        // Productos/paquetes de la cotización vinculada a la promoción
+        // Productos asignados a este estudiante específicamente
         $estudiante['productos'] = $db
-            ->table('cotizaciones_detalles cd')
-            ->select('cd.tipo_item, cd.descripcion, cd.cantidad, cd.precio_unitario')
-            ->join('promociones_escolares pe', 'pe.id_cotizacion = cd.id_cotizacion')
-            ->where('pe.id_promocion', $idPromocion)
+            ->table('estudiante_productos ep')
+            ->select('pr.id_producto, pr.nombre_producto, pr.categoria')
+            ->join('productos pr', 'pr.id_producto = ep.id_producto')
+            ->where('ep.id_estudiante', $id)
             ->get()->getResultArray();
 
         // Historial de asistencia del estudiante
-        $estudiante['sesiones'] = $db
+        // Castear asistio a int|null para que el JSON sea tipado (MySQLi devuelve strings)
+        $sesiones = $db
             ->table('sesion_asistencia sa')
             ->select('sf.id_sesion, sf.tipo, sf.fecha_hora_sesion, sf.estado, sa.asistio')
             ->join('sesiones_fotograficas sf', 'sf.id_sesion = sa.id_sesion')
             ->where('sa.id_estudiante', $id)
             ->orderBy('sf.fecha_hora_sesion', 'ASC')
             ->get()->getResultArray();
+
+        $estudiante['sesiones'] = array_map(function ($s) {
+            $s['asistio'] = $s['asistio'] !== null ? (int) $s['asistio'] : null;
+            return $s;
+        }, $sesiones);
 
         return $estudiante;
     }
@@ -115,6 +197,7 @@ class EstudianteService
      *
      * Estructura esperada en $data:
      * - id_promocion  (int)
+     * - productos     (int[], opcional) — IDs de productos asignados al estudiante
      * - estudiante: { nombres, apellidos, fecha_nacimiento?, color_fav?, profesion_futura? }
      * - apoderado:  { nombres, apellidos?, telefono, correo?, tipo_relacion,
      *                 tipo_documento, numero_documento }
@@ -128,10 +211,30 @@ class EstudianteService
      */
     public function crear(array $data): int
     {
-        $idPromocion = (int) ($data['id_promocion'] ?? 0);
+        $idPromocion      = (int) ($data['id_promocion'] ?? 0);
+        $productosIds     = array_values(array_filter(
+            array_map('intval', (array) ($data['productos'] ?? [])),
+            fn($id) => $id > 0
+        ));
 
         if (!$this->promocionModel->find($idPromocion)) {
             throw new \RuntimeException('Promoción no encontrada', 404);
+        }
+
+        // Validar stock disponible antes de abrir la transacción
+        if (!empty($productosIds)) {
+            $stockActual = $this->stockPorPromocion($idPromocion);
+            $stockMap    = array_column($stockActual, null, 'id_producto');
+
+            foreach ($productosIds as $idProd) {
+                if (!isset($stockMap[$idProd])) {
+                    throw new \RuntimeException("Producto {$idProd} no pertenece a esta promoción.", 422);
+                }
+                if ($stockMap[$idProd]['disponible'] <= 0) {
+                    $nombre = $stockMap[$idProd]['nombre_producto'];
+                    throw new \RuntimeException("Sin stock disponible para: {$nombre}.", 409);
+                }
+            }
         }
 
         $apData = $data['apoderado'] ?? [];
@@ -182,7 +285,7 @@ class EstudianteService
 
             $existing = $qb->get()->getRowArray();
             if (!empty($existing)) {
-                throw new \RuntimeException('Formulario ya completado para esta promoción', 409);
+                throw new \RuntimeException('Ya existe un estudiante registrado con ese número de teléfono en esta promoción.', 409);
             }
         }
 
@@ -248,6 +351,15 @@ class EstudianteService
         if ($idEstudiante === false) {
             $db->transRollback();
             throw new \RuntimeException(json_encode($this->estudianteModel->errors()), 422);
+        }
+
+        // Asignar productos seleccionados al estudiante
+        if (!empty($productosIds)) {
+            $rows = array_map(
+                fn($idProd) => ['id_estudiante' => $idEstudiante, 'id_producto' => $idProd],
+                $productosIds
+            );
+            $db->table('estudiante_productos')->insertBatch($rows);
         }
 
         $db->transComplete();

@@ -341,6 +341,17 @@
                     </div>
                 </div>
 
+                <!-- Productos asignados -->
+                <div id="efProductosSection" style="display:none; margin-bottom:1rem;">
+                    <p class="form-section-label" style="margin-bottom:.55rem;">
+                        <i class="bi bi-box-seam"></i> Productos
+                    </p>
+                    <div id="efProductosLoading" style="font-size:.82rem; color:var(--text-muted); padding:.3rem 0;">
+                        <i class="bi bi-arrow-repeat"></i> Cargando productos…
+                    </div>
+                    <div id="efProductosItems" class="row g-2" style="display:none;"></div>
+                </div>
+
                 <!-- Datos del apoderado -->
                 <p class="form-section-label"><i class="bi bi-person-fill"></i> Datos del apoderado</p>
                 <div class="row g-3">

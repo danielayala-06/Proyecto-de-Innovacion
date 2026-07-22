@@ -145,6 +145,7 @@ $routes->group('api', ['namespace' => 'App\Controllers\Api', 'filter' => 'auth']
     $routes->patch ('sesiones/(:num)/asistencia/(:num)',          'SesionesApi::marcarAsistencia/$1/$2');
 
     // ── Estudiantes ───────────────────────────────────────────────────────────
+    $routes->get   ('estudiantes/stock',  'EstudiantesApi::stockPromocion'); // antes de (:num)
     $routes->get   ('estudiantes',        'EstudiantesApi::index');
     $routes->get   ('estudiantes/(:num)', 'EstudiantesApi::show/$1');
     $routes->post  ('estudiantes',        'EstudiantesApi::create');

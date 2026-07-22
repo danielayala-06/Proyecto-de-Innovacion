@@ -471,6 +471,12 @@ window.abrirNuevoEstudiante = function (idPromocion) {
     estudianteForm.limpiar();
     state.activePromocion = idPromocion;
     _modalEstudiante?.show();
+
+    // Cargar stock de productos en segundo plano; si falla, la sección se mantiene oculta
+    fetch(`${BASE_URL}index.php/api/estudiantes/stock?id_promocion=${idPromocion}`)
+        .then(r => r.json())
+        .then(res => { if (res.status === 'success') estudianteForm.setStock(res.data); })
+        .catch(() => {});
 };
 
 /**
@@ -490,14 +496,6 @@ window.guardarEstudiante = async function () {
         _modalEstudiante?.hide();
         await cargarPromocion(state.activePromocion);
     } catch (e) {
-        // Si el backend indica que el formulario ya fue completado (409),
-        // mostrar agradecimiento y cerrar el modal (evita re-registro).
-        if (e && e.status === 409) {
-            alerts.ok('Formulario ya completado. Gracias.');
-            _modalEstudiante?.hide();
-            await cargarPromocion(state.activePromocion);
-            return;
-        }
         alerts.error(e.message || 'Error al registrar el estudiante.');
     }
 };
@@ -668,25 +666,25 @@ window.verDetalleEstudiante = async function(idEstudiante) {
                 </div>
             </div>`;
 
-        // ── Sección: productos adquiridos ──────────────────────────────────────
+        // ── Sección: productos asignados al estudiante ────────────────────────
+        const CATEGORIA_ICON = { cuadro: 'image', anuario: 'book', photobook: 'images', otro: 'tag' };
         const productosHtml = e.productos?.length
             ? `<div class="mb-4">
                    <div style="font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;">
-                       Productos / paquetes contratados
+                       Productos asignados
                    </div>
                    <div style="border:1px solid var(--border-color);border-radius:8px;overflow:hidden;">
                        ${e.productos.map((p, i) => `
                        <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
                                    ${i < e.productos.length - 1 ? 'border-bottom:1px solid var(--border-color);' : ''}
                                    background:${i % 2 === 0 ? 'transparent' : 'var(--bg-hover)'};">
-                           <i class="bi bi-${p.tipo_item === 'paquete' ? 'box-seam' : 'tag'}"
+                           <i class="bi bi-${CATEGORIA_ICON[p.categoria] ?? 'tag'}"
                               style="color:var(--accent);font-size:.9rem;flex-shrink:0;"></i>
-                           <div style="flex:1;font-size:.83rem;">${p.descripcion}</div>
-                           <span style="font-size:.75rem;color:var(--text-muted);white-space:nowrap;">x${p.cantidad}</span>
+                           <div style="flex:1;font-size:.83rem;">${p.nombre_producto}</div>
                        </div>`).join('')}
                    </div>
                </div>`
-            : `<div class="mb-4" style="font-size:.83rem;color:var(--text-muted);">Sin productos registrados.</div>`;
+            : `<div class="mb-4" style="font-size:.83rem;color:var(--text-muted);">Sin productos asignados.</div>`;
 
         // ── Sección: historial de sesiones ────────────────────────────────────
         const totalSesiones = e.sesiones?.length ?? 0;
@@ -697,12 +695,11 @@ window.verDetalleEstudiante = async function(idEstudiante) {
         const resumenHtml = totalSesiones
             ? `<div class="row g-2 mb-3">
                    ${[
-                       { label:'Total',      val: totalSesiones, color:'var(--text-primary)' },
-                       { label:'Asistió',    val: asistio,       color:'var(--green-text)'  },
-                       { label:'Ausente',    val: ausente,       color:'var(--red-text)'    },
-                       { label:'Sin marcar', val: sinMarcar,     color:'var(--amber-text)'  },
+                       { label:'Asistió',    val: asistio,   color:'var(--green-text)'  },
+                       { label:'Ausente',    val: ausente,   color:'var(--red-text)'    },
+                       { label:'Sin marcar', val: sinMarcar, color:'var(--amber-text)'  },
                    ].map(s => `
-                   <div class="col-3">
+                   <div class="col-4">
                        <div style="text-align:center;background:var(--bg-hover);border:1px solid var(--border-color);
                                    border-radius:8px;padding:8px 4px;">
                            <div style="font-size:1.2rem;font-weight:700;color:${s.color};">${s.val}</div>

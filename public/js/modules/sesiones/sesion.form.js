@@ -197,8 +197,11 @@ export const sesionForm = {
  */
 export const estudianteForm = {
 
+    /** @type {Array<{id_producto:number, disponible:number}>} Stock cargado para la promoción activa. */
+    _stock: [],
+
     /**
-     * Limpia todos los campos del formulario de estudiante y apoderado.
+     * Limpia todos los campos del formulario y oculta la sección de productos.
      *
      * @returns {void}
      */
@@ -208,35 +211,92 @@ export const estudianteForm = {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
+
+        this._stock = [];
+        const section  = document.getElementById('efProductosSection');
+        const loading  = document.getElementById('efProductosLoading');
+        const items    = document.getElementById('efProductosItems');
+        if (section)  section.style.display  = 'none';
+        if (loading)  { loading.style.display = ''; items && (items.style.display = 'none'); }
+        if (items)    items.innerHTML = '';
+    },
+
+    /**
+     * Carga y renderiza los productos disponibles para la promoción en el modal.
+     * Muestra stock disponible y auto-marca el producto si es el único de la promoción.
+     *
+     * @param {Array<{id_producto:number, nombre_producto:string, categoria:string,
+     *                total:number, disponible:number}>} productos
+     * @returns {void}
+     */
+    setStock(productos) {
+        this._stock = productos;
+
+        const section = document.getElementById('efProductosSection');
+        const loading = document.getElementById('efProductosLoading');
+        const items   = document.getElementById('efProductosItems');
+        if (!section || !loading || !items) return;
+
+        loading.style.display = 'none';
+        items.innerHTML       = '';
+
+        if (!productos.length) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = '';
+        items.style.display   = '';
+
+        const autoCheck = productos.length === 1;
+
+        productos.forEach(p => {
+            const disponible = p.disponible > 0;
+            const checked    = autoCheck && disponible ? 'checked' : '';
+            const disabled   = !disponible ? 'disabled' : '';
+            const badge      = disponible
+                ? `<span class="badge bg-success ms-1" style="font-size:.72rem;">${p.disponible} disponible${p.disponible !== 1 ? 's' : ''}</span>`
+                : `<span class="badge bg-danger ms-1" style="font-size:.72rem;">Sin stock</span>`;
+
+            items.insertAdjacentHTML('beforeend', `
+                <div class="col-12 col-sm-6">
+                    <div class="form-check" style="background:var(--bg-elevated);border:1px solid var(--border);
+                                border-radius:8px;padding:.5rem .75rem .5rem 2.2rem;cursor:${disponible ? 'pointer' : 'not-allowed'};
+                                opacity:${disponible ? '1' : '.55'};">
+                        <input class="form-check-input ef-producto-chk" type="checkbox"
+                               id="efProd_${p.id_producto}" value="${p.id_producto}"
+                               ${checked} ${disabled}>
+                        <label class="form-check-label" for="efProd_${p.id_producto}"
+                               style="font-size:.84rem;cursor:${disponible ? 'pointer' : 'not-allowed'};">
+                            ${p.nombre_producto}${badge}
+                        </label>
+                    </div>
+                </div>`);
+        });
+
+        items.style.display = '';
+    },
+
+    /**
+     * Devuelve los IDs de los productos seleccionados en el formulario.
+     *
+     * @returns {number[]}
+     */
+    _productosSeleccionados() {
+        return [...document.querySelectorAll('.ef-producto-chk:checked')]
+            .map(el => parseInt(el.value, 10));
     },
 
     /**
      * Lee los valores del formulario y construye el payload para `POST /api/estudiantes`.
      *
      * @param {number} idPromocion - ID de la promoción a la que se asocia el estudiante.
-     * @returns {{
-     *   id_promocion: number,
-     *   estudiante: {
-     *     nombres:          string,
-     *     apellidos:        string,
-     *     fecha_nacimiento: string|null,
-     *     color_fav:        string|null,
-     *     profesion_futura: string|null
-     *   },
-     *   apoderado: {
-     *     nombres:          string,
-     *     apellidos:        string|null,
-     *     telefono:         string,
-     *     tipo_documento:   string,
-     *     numero_documento: string,
-     *     correo:           string|null,
-     *     tipo_relacion:    string
-     *   }
-     * }}
+     * @returns {object}
      */
     datos(idPromocion) {
         return {
             id_promocion: idPromocion,
+            productos: this._productosSeleccionados(),
             estudiante: {
                 nombres:          (document.getElementById('efNombres').value   || '').trim().toLocaleUpperCase('es-PE'),
                 apellidos:        (document.getElementById('efApellidos').value || '').trim().toLocaleUpperCase('es-PE') || null,
@@ -256,14 +316,13 @@ export const estudianteForm = {
 
     /**
      * Valida los campos requeridos del formulario de estudiante.
-     * Verifica que el teléfono del apoderado tenga exactamente 9 dígitos.
      *
-     * @returns {string|null} Mensaje de error si falla la validación, o `null` si es válido.
+     * @returns {string|null} Mensaje de error o `null` si es válido.
      */
     validar() {
         const reqs = {
-            efNombres: 'Los nombres del estudiante son obligatorios.',
-            apNombres: 'Los nombres del apoderado son obligatorios.',
+            efNombres:  'Los nombres del estudiante son obligatorios.',
+            apNombres:  'Los nombres del apoderado son obligatorios.',
             apTelefono: 'El teléfono del apoderado es obligatorio.',
             apRelacion: 'La relación con el estudiante es obligatoria.',
         };
@@ -276,6 +335,14 @@ export const estudianteForm = {
 
         const tel = document.getElementById('apTelefono').value.trim();
         if (!/^\d{9}$/.test(tel)) return 'El teléfono debe tener exactamente 9 dígitos.';
+
+        // Verificar que productos seleccionados aún tienen stock (doble verificación cliente)
+        const seleccionados = this._productosSeleccionados();
+        const stockMap      = Object.fromEntries(this._stock.map(p => [p.id_producto, p.disponible]));
+        for (const id of seleccionados) {
+            if ((stockMap[id] ?? 0) <= 0) return 'Uno de los productos seleccionados ya no tiene stock disponible.';
+        }
+
         return null;
     },
 };
