@@ -423,4 +423,113 @@ class EstudianteService
         }
         $this->estudianteModel->delete($id);
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // IMPORTACIÓN / EXPORTACIÓN CSV
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Retorna todos los estudiantes de una promoción en formato aplanado
+     * (incluye datos del apoderado y correo) listo para volcar a CSV.
+     *
+     * @param  int $idPromocion
+     * @return array<int, array<string, mixed>>
+     */
+    public function exportarDatos(int $idPromocion): array
+    {
+        $db = \Config\Database::connect();
+
+        return $db->query(
+            'SELECT
+                e.nombres, e.apellidos, e.fecha_nacimiento, e.color_fav, e.profesion_futura,
+                p.nombres  AS apoderado_nombres, p.apellidos AS apoderado_apellidos,
+                p.telefono AS apoderado_telefono, p.correo   AS apoderado_correo,
+                a.tipo_relacion
+             FROM estudiantes e
+             JOIN apoderados a ON a.id_apoderado = e.id_apoderado
+             JOIN personas   p ON p.id_persona   = a.id_persona
+             WHERE e.id_promocion = ?
+             ORDER BY e.apellidos ASC, e.nombres ASC',
+            [$idPromocion]
+        )->getResultArray();
+    }
+
+    /**
+     * Importa estudiantes desde un array de filas ya parseadas del CSV.
+     * Reutiliza crear() para mantener todas las validaciones y transacciones ACID.
+     *
+     * Columnas esperadas:
+     *   nombres*, apellidos, fecha_nacimiento (YYYY-MM-DD), color_favorito,
+     *   profesion_futura, apoderado_nombres*, apoderado_apellidos,
+     *   apoderado_telefono* (9 dígitos), apoderado_correo, tipo_relacion*.
+     *
+     * @param  int   $idPromocion
+     * @param  array $filas  Array de arrays asociativos con las columnas del CSV.
+     * @return array{ creados: int, errores: list<array{fila: int, mensaje: string}> }
+     */
+    public function importarDesdeArray(int $idPromocion, array $filas): array
+    {
+        $creados = 0;
+        $errores = [];
+
+        foreach ($filas as $i => $fila) {
+            $num          = $i + 2; // fila 1 = encabezado
+            $nombres      = trim($fila['nombres']             ?? '');
+            $apNombres    = trim($fila['apoderado_nombres']   ?? '');
+            $apTelefono   = trim($fila['apoderado_telefono']  ?? '');
+            $tipoRelacion = strtolower(trim($fila['tipo_relacion'] ?? ''));
+
+            if ($nombres === '') {
+                $errores[] = ['fila' => $num, 'mensaje' => 'El campo "nombres" es obligatorio.'];
+                continue;
+            }
+            if ($apNombres === '') {
+                $errores[] = ['fila' => $num, 'mensaje' => 'El campo "apoderado_nombres" es obligatorio.'];
+                continue;
+            }
+            if (!preg_match('/^\d{9}$/', $apTelefono)) {
+                $errores[] = ['fila' => $num, 'mensaje' => '"apoderado_telefono" debe tener exactamente 9 dígitos.'];
+                continue;
+            }
+            if (!in_array($tipoRelacion, ['padre', 'madre', 'hermano', 'otro'], true)) {
+                $errores[] = ['fila' => $num, 'mensaje' => '"tipo_relacion" debe ser padre, madre, hermano u otro.'];
+                continue;
+            }
+
+            $fechaNac = trim($fila['fecha_nacimiento'] ?? '');
+            if ($fechaNac !== '') {
+                $fn = \DateTime::createFromFormat('Y-m-d', $fechaNac);
+                if (!$fn || $fn->format('Y-m-d') !== $fechaNac) {
+                    $errores[] = ['fila' => $num, 'mensaje' => '"fecha_nacimiento" debe estar en formato YYYY-MM-DD (ej. 2005-03-15).'];
+                    continue;
+                }
+            }
+
+            try {
+                $this->crear([
+                    'id_promocion' => $idPromocion,
+                    'productos'    => [],
+                    'estudiante'   => [
+                        'nombres'          => $nombres,
+                        'apellidos'        => trim($fila['apellidos']        ?? '') ?: null,
+                        'fecha_nacimiento' => $fechaNac                                ?: null,
+                        'color_fav'        => trim($fila['color_favorito']   ?? '') ?: null,
+                        'profesion_futura' => trim($fila['profesion_futura'] ?? '') ?: null,
+                    ],
+                    'apoderado'    => [
+                        'nombres'       => $apNombres,
+                        'apellidos'     => trim($fila['apoderado_apellidos'] ?? '') ?: null,
+                        'telefono'      => $apTelefono,
+                        'correo'        => trim($fila['apoderado_correo']    ?? '') ?: null,
+                        'tipo_relacion' => $tipoRelacion,
+                    ],
+                ]);
+                $creados++;
+            } catch (\RuntimeException $e) {
+                $errores[] = ['fila' => $num, 'mensaje' => $e->getMessage()];
+            }
+        }
+
+        return ['creados' => $creados, 'errores' => $errores];
+    }
 }

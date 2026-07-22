@@ -55,6 +55,8 @@ let _modalDetalleSesion = null;
 let _modalConfirmarSesion = null;
 /** @type {bootstrap.Modal|null} Modal de advertencia de conflicto de horario. */
 let _modalConflicto       = null;
+/** @type {bootstrap.Modal|null} Modal de importación CSV. */
+let _modalImportarCsv     = null;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CARGA POR PROMOCIÓN
@@ -778,6 +780,135 @@ window.irAFormulario = function() {
     window.location.href = `${BASE_URL}admin/formularios/promo-escolar/${state.activePromocion}`;
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CSV — EXPORTAR / IMPORTAR
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Abre la URL de descarga del CSV de estudiantes de la promoción.
+ * @param {number} idPromocion
+ */
+window.exportarCsvEstudiantes = function (idPromocion) {
+    window.open(`${BASE_URL}index.php/api/estudiantes/exportar?id_promocion=${idPromocion}`, '_blank');
+};
+
+/**
+ * Descarga una plantilla CSV con encabezados, instrucciones y filas de ejemplo.
+ * No requiere llamada al servidor — se genera como Blob en el navegador.
+ *
+ * Columnas obligatorias (*): nombres, apoderado_nombres, apoderado_telefono, tipo_relacion.
+ * Columnas opcionales: apellidos, fecha_nacimiento (YYYY-MM-DD), color_favorito,
+ *   profesion_futura, apoderado_apellidos, apoderado_correo.
+ * tipo_relacion valores aceptados: padre / madre / hermano / otro
+ */
+window.descargarPlantillaCsv = function () {
+    const filas = [
+        // Fila 0: encabezados (nombres técnicos, no modificar)
+        ['nombres','apellidos','fecha_nacimiento','color_favorito','profesion_futura',
+         'apoderado_nombres','apoderado_apellidos','apoderado_telefono','apoderado_correo','tipo_relacion'],
+        // Filas de ejemplo — eliminar antes de importar o dejar como referencia
+        ['LUCIANA','TORRES QUISPE','2010-03-15','rosado','Doctora',
+         'CARMEN','QUISPE VEGA','987654321','carmen@mail.com','madre'],
+        ['MATEO','FLORES RAMOS','2009-11-08','azul','Futbolista',
+         'JORGE','FLORES','956321478','','padre'],
+        ['VALERIA SOFIA','MENDOZA','2011-05-22','morado','Arquitecta',
+         'ROSA','MENDOZA CALDERON','912345678','','madre'],
+        ['DIEGO','HUAMANI CCOYA','','verde','Ingeniero',
+         'PEDRO','HUAMANI','934567890','pedro@mail.com','padre'],
+        ['CAMILA','','' ,'celeste','',
+         'LUCIA','PAREDES','978123456','','hermano'],
+    ];
+
+    // Construir CSV manualmente para control total del escapado
+    const csvStr = filas.map(fila =>
+        fila.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
+    ).join('\r\n') + '\r\n';
+
+    const blob = new Blob(['﻿' + csvStr], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {
+        href: url, download: 'plantilla_estudiantes.csv',
+    });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
+/**
+ * Abre el modal de importación CSV para la promoción indicada.
+ * @param {number} idPromocion
+ */
+window.abrirImportarCsv = function (idPromocion) {
+    document.getElementById('csvImportPromocion').value = idPromocion;
+    document.getElementById('csvImportArchivo').value   = '';
+    const resultado = document.getElementById('csvImportResultado');
+    resultado.style.display = 'none';
+    resultado.innerHTML     = '';
+    _modalImportarCsv?.show();
+};
+
+/**
+ * Lee el archivo CSV seleccionado, lo sube al servidor y muestra el resumen de la importación.
+ * @returns {Promise<void>}
+ */
+window.procesarImportacion = async function () {
+    const idPromocion = parseInt(document.getElementById('csvImportPromocion').value, 10);
+    const fileInput   = document.getElementById('csvImportArchivo');
+    const archivo     = fileInput.files[0];
+
+    if (!archivo) { alerts.error('Selecciona un archivo CSV primero.'); return; }
+
+    const btn = document.getElementById('btnProcesarImport');
+    btn.disabled    = true;
+    btn.innerHTML   = '<i class="bi bi-arrow-repeat"></i> Importando…';
+
+    const formData = new FormData();
+    formData.append('id_promocion', idPromocion);
+    formData.append('archivo', archivo);
+
+    try {
+        const res  = await fetch(`${BASE_URL}index.php/api/estudiantes/importar`, { method: 'POST', body: formData });
+        const json = await res.json();
+
+        const { creados = 0, errores = [] } = json.data ?? {};
+        const resultado = document.getElementById('csvImportResultado');
+
+        let html = '';
+        if (creados > 0) {
+            html += `<div style="color:var(--green-text);margin-bottom:.4rem;font-size:.85rem;">
+                         <i class="bi bi-check-circle-fill me-1"></i>
+                         ${creados} estudiante${creados !== 1 ? 's' : ''} importado${creados !== 1 ? 's' : ''} correctamente.
+                     </div>`;
+        }
+        if (errores.length) {
+            html += `<div style="color:var(--amber-text);font-size:.82rem;margin-bottom:.25rem;">
+                         <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                         ${errores.length} fila${errores.length !== 1 ? 's' : ''} con error:
+                     </div>
+                     <ul style="font-size:.79rem;margin:0;padding-left:1.25rem;max-height:140px;
+                                overflow-y:auto;color:var(--red-text);">
+                         ${errores.map(e => `<li>Fila ${e.fila}: ${e.mensaje}</li>`).join('')}
+                     </ul>`;
+        }
+        if (!html) {
+            html = `<div style="color:var(--text-muted);font-size:.85rem;">No se importó ningún estudiante.</div>`;
+        }
+
+        resultado.style.display = '';
+        resultado.innerHTML     = html;
+
+        if (creados > 0) {
+            await cargarPromocion(state.activePromocion);
+        }
+    } catch {
+        alerts.error('Error de red al importar el archivo.');
+    } finally {
+        btn.disabled  = false;
+        btn.innerHTML = '<i class="bi bi-upload me-1"></i>Importar';
+    }
+};
+
 window.imprimirListaPromocion = function (idPromocion) {
     if (!idPromocion) {
         alerts.warning('No se encontró la promoción para imprimir.');
@@ -805,6 +936,7 @@ function init() {
     _modalDetalleSesion   = new bootstrap.Modal(document.getElementById('modalDetalleSesion'));
     _modalConfirmarSesion = new bootstrap.Modal(document.getElementById('modalConfirmarSesion'));
     _modalConflicto       = new bootstrap.Modal(document.getElementById('modalConflictoSesion'));
+    _modalImportarCsv     = new bootstrap.Modal(document.getElementById('modalImportarCsv'));
 
     document.getElementById('promocionesTabs')?.addEventListener('click', e => {
         const btn = e.target.closest('.promo-tab');

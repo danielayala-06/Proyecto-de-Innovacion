@@ -10,6 +10,8 @@
  *
  * Endpoints:
  *   GET    /api/estudiantes?id_promocion=X  → listar por promoción
+ *   GET    /api/estudiantes/exportar?id_promocion=X → descargar CSV con todos los datos
+ *   POST   /api/estudiantes/importar        → importar estudiantes desde CSV (multipart)
  *   POST   /api/estudiantes                 → crear (incluye apoderado + persona en transacción)
  *   PUT    /api/estudiantes/{id}            → actualizar datos del estudiante
  *   DELETE /api/estudiantes/{id}            → eliminar
@@ -215,6 +217,171 @@ class EstudiantesApi extends BaseApiController
         return $this->response
             ->setStatusCode(ResponseInterface::HTTP_OK)
             ->setJSON(['status' => 'success', 'message' => 'Estudiante eliminado']);
+    }
+
+    /**
+     * GET /api/estudiantes/exportar?id_promocion=X
+     *
+     * Descarga un archivo CSV con todos los estudiantes y apoderados de la promoción.
+     * El BOM (EF BB BF) permite que Excel lo abra correctamente en UTF-8.
+     *
+     * @return ResponseInterface Descarga CSV | 422 si falta id_promocion.
+     */
+    public function exportarCsv(): ResponseInterface
+    {
+        $idPromocion = (int) ($this->request->getGet('id_promocion') ?? 0);
+
+        if (!$idPromocion) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'id_promocion es requerido']);
+        }
+
+        $filas = $this->estudianteService->exportarDatos($idPromocion);
+
+        $columnas = [
+            'nombres', 'apellidos', 'fecha_nacimiento', 'color_favorito', 'profesion_futura',
+            'apoderado_nombres', 'apoderado_apellidos', 'apoderado_telefono', 'apoderado_correo',
+            'tipo_relacion',
+        ];
+
+        ob_start();
+        $handle = fopen('php://output', 'w');
+        fwrite($handle, "\xEF\xBB\xBF"); // BOM UTF-8 para Excel
+        fputcsv($handle, $columnas);
+
+        foreach ($filas as $fila) {
+            fputcsv($handle, [
+                $fila['nombres']             ?? '',
+                $fila['apellidos']           ?? '',
+                $fila['fecha_nacimiento']    ?? '',
+                $fila['color_fav']           ?? '',
+                $fila['profesion_futura']    ?? '',
+                $fila['apoderado_nombres']   ?? '',
+                $fila['apoderado_apellidos'] ?? '',
+                $fila['apoderado_telefono']  ?? '',
+                $fila['apoderado_correo']    ?? '',
+                $fila['tipo_relacion']       ?? '',
+            ]);
+        }
+
+        fclose($handle);
+        $csv = ob_get_clean();
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="estudiantes_promo_' . $idPromocion . '.csv"')
+            ->setHeader('Cache-Control', 'no-store')
+            ->setBody($csv);
+    }
+
+    /**
+     * POST /api/estudiantes/importar
+     *
+     * Importa estudiantes desde un archivo CSV multipart.
+     * Acepta tanto el formato estándar del sistema como el CSV exportado
+     * desde el módulo de formularios (exportarCsv en AdminController).
+     *
+     * @return ResponseInterface 200 con resumen | 422 si el archivo es inválido.
+     */
+    public function importarCsv(): ResponseInterface
+    {
+        $idPromocion = (int) ($this->request->getPost('id_promocion') ?? 0);
+
+        if (!$idPromocion) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'id_promocion es requerido']);
+        }
+
+        $archivo = $this->request->getFile('archivo');
+
+        if (!$archivo || !$archivo->isValid()) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'Archivo CSV no recibido o inválido.']);
+        }
+
+        $handle = fopen($archivo->getTempName(), 'r');
+
+        // Saltar BOM si existe
+        $bom = fread($handle, 3);
+        if ($bom !== "\xEF\xBB\xBF") {
+            rewind($handle);
+        }
+
+        $encabezado = fgetcsv($handle);
+
+        if (!$encabezado) {
+            fclose($handle);
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'El archivo está vacío o no es un CSV válido.']);
+        }
+
+        // Normalizar encabezados: soporta el formato del export de formularios
+        // y el formato estándar del sistema en la misma importación.
+        $encabezado = array_map([$this, '_normalizarColumna'], $encabezado);
+        $filas      = [];
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count(array_filter($row, fn($v) => trim($v) !== '')) === 0) {
+                continue;
+            }
+            $filas[] = array_combine($encabezado, array_pad($row, count($encabezado), ''));
+        }
+
+        fclose($handle);
+
+        if (empty($filas)) {
+            return $this->response
+                ->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)
+                ->setJSON(['status' => 'error', 'message' => 'El CSV no contiene filas de datos.']);
+        }
+
+        $resultado = $this->estudianteService->importarDesdeArray($idPromocion, $filas);
+
+        return $this->response
+            ->setStatusCode(ResponseInterface::HTTP_OK)
+            ->setJSON([
+                'status'  => 'success',
+                'message' => "{$resultado['creados']} estudiante(s) importado(s).",
+                'data'    => $resultado,
+            ]);
+    }
+
+    /**
+     * Normaliza un encabezado de columna CSV al nombre canónico del sistema.
+     * Permite importar tanto el CSV estándar como el CSV exportado desde formularios.
+     *
+     * @param  string $col Nombre de columna tal como viene en el archivo.
+     * @return string      Nombre canónico o la columna original si no se reconoce.
+     */
+    private function _normalizarColumna(string $col): string
+    {
+        // Convertir a minúsculas y eliminar tildes para comparación robusta
+        $norm = mb_strtolower(trim($col), 'UTF-8');
+        $norm = strtr($norm, ['á'=>'a','é'=>'e','í'=>'i','ó'=>'o','ú'=>'u','ü'=>'u','ñ'=>'n']);
+
+        $mapa = [
+            // Formato export de formularios (AdminController::exportarCsv)
+            'nombre alumno'    => 'nombres',
+            'fecha nacimiento' => 'fecha_nacimiento',
+            'color favorito'   => 'color_favorito',
+            'profesion futura' => 'profesion_futura',
+            'nombre tutor'     => 'apoderado_nombres',
+            'relacion'         => 'tipo_relacion',
+            'telefono'         => 'apoderado_telefono',
+            'email'            => 'apoderado_correo',
+            // Alias adicionales para mayor compatibilidad
+            'apellido'         => 'apellidos',
+            'apellidos alumno' => 'apellidos',
+            'correo'           => 'apoderado_correo',
+            'nombre apoderado' => 'apoderado_nombres',
+        ];
+
+        return $mapa[$norm] ?? $norm;
     }
 
 }

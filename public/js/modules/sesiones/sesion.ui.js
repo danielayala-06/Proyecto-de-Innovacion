@@ -218,16 +218,28 @@ export const ui = {
     renderEstudiantes(estudiantes, idPromocion) {
         const container = document.getElementById('estudiantesContainer');
         if (!container) return;
+        const tieneEstudiantes = estudiantes.length > 0;
         container.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;">
                 <span style="font-size:.78rem;color:var(--text-muted);">
                     <i class="bi bi-people me-1"></i>
                     ${estudiantes.length} estudiante${estudiantes.length !== 1 ? 's' : ''}
                 </span>
-                <button class="btn-nuevo-paquete" onclick="abrirNuevoEstudiante(${idPromocion})"
-                        style="padding:5px 12px;font-size:.76rem;">
-                    <i class="bi bi-person-plus"></i> Agregar
-                </button>
+                <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="abrirImportarCsv(${idPromocion})"
+                            title="Importar desde CSV">
+                        <i class="bi bi-upload me-1"></i>Importar
+                    </button>
+                    ${tieneEstudiantes ? `
+                    <button class="btn btn-outline-secondary btn-sm" onclick="exportarCsvEstudiantes(${idPromocion})"
+                            title="Exportar a CSV">
+                        <i class="bi bi-download me-1"></i>Exportar
+                    </button>` : ''}
+                    <button class="btn btn-nuevo-paquete" onclick="abrirNuevoEstudiante(${idPromocion})"
+                            style="padding:5px 12px;font-size:.76rem;">
+                        <i class="bi bi-person-plus"></i> Agregar
+                    </button>
+                </div>
             </div>`;
     },
 };

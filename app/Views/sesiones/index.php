@@ -21,7 +21,7 @@
             </div>
             <div class="d-flex align-items-center gap-2">
                 <?php if (!empty($promociones) && $contrato['estado'] === 'ACTIVO'): ?>
-                <button type="button" class="btn btn-primary btn-sm" onclick="abrirNuevaSesion()">
+                <button type="button" class="btn btn-nuevo-paquete btn-sm" onclick="abrirNuevaSesion()">
                     <i class="bi bi-camera me-1"></i>Agendar sesión
                 </button>
                 <?php endif; ?>
@@ -385,8 +385,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-primary btn-sm" onclick="guardarEstudiante()">Registrar</button>
+                <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-guardar btn-sm" onclick="guardarEstudiante()">Registrar</button>
             </div>
         </div>
     </div>
@@ -430,6 +430,126 @@
                 <div style="text-align:center;padding:2rem;color:var(--text-muted);">
                     <i class="bi bi-arrow-repeat"></i> Cargando...
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════ MODAL IMPORTAR CSV ══════════════════════════════════════════════ -->
+<div class="modal fade" id="modalImportarCsv" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">
+                    <i class="bi bi-upload me-2" style="color:var(--accent);"></i>
+                    Importar estudiantes desde CSV
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="padding:1.25rem;">
+                <input type="hidden" id="csvImportPromocion">
+
+                <!-- Intro + descarga -->
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
+                            margin-bottom:1.1rem;flex-wrap:wrap;">
+                    <p style="font-size:.83rem;color:var(--text-secondary);margin:0;">
+                        El archivo debe ser <strong>.csv</strong> con la primera fila como encabezado.
+                        Codificación UTF-8 (compatible con Excel).
+                    </p>
+                    <a href="#" onclick="descargarPlantillaCsv(); return false;"
+                       style="display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;
+                              color:var(--accent);font-weight:600;font-size:.82rem;text-decoration:none;
+                              background:var(--accent-light);border:1px solid var(--accent);
+                              border-radius:7px;padding:.3rem .75rem;">
+                        <i class="bi bi-file-earmark-arrow-down"></i>Descargar plantilla
+                    </a>
+                </div>
+
+                <!-- Tabla de campos -->
+                <p class="form-section-label" style="margin-bottom:.5rem;">Campos del CSV</p>
+                <div style="overflow-x:auto;margin-bottom:1.1rem;">
+                    <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
+                        <thead>
+                            <tr style="background:var(--bg-hover);text-transform:uppercase;
+                                       font-size:.68rem;letter-spacing:.04em;color:var(--text-muted);">
+                                <th style="padding:.4rem .65rem;text-align:left;border-bottom:1px solid var(--border);">Columna</th>
+                                <th style="padding:.4rem .65rem;text-align:center;border-bottom:1px solid var(--border);">Obligatorio</th>
+                                <th style="padding:.4rem .65rem;text-align:left;border-bottom:1px solid var(--border);">Descripción y formato</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $campos = [
+                                ['nombres',              true,  'Nombre(s) del estudiante. En mayúsculas o minúsculas (el sistema normaliza).'],
+                                ['apellidos',            false, 'Apellido(s) del estudiante. Dejar vacío si no se tiene.'],
+                                ['fecha_nacimiento',     false, 'Formato <code>YYYY-MM-DD</code> — ej. <code>2005-03-15</code>. Dejar vacío si no se conoce.'],
+                                ['color_favorito',       false, 'Color favorito del estudiante. Ej. <code>azul</code>, <code>rosado</code>.'],
+                                ['profesion_futura',     false, 'Profesión futura. Ej. <code>Médico</code>, <code>Ingeniero</code>.'],
+                                ['apoderado_nombres',    true,  'Nombre(s) del apoderado o tutor.'],
+                                ['apoderado_apellidos',  false, 'Apellido(s) del apoderado. Dejar vacío si no se tiene.'],
+                                ['apoderado_telefono',   true,  'Teléfono del apoderado: exactamente <strong>9 dígitos</strong>. Ej. <code>987654321</code>.'],
+                                ['apoderado_correo',     false, 'Correo electrónico del apoderado. Dejar vacío si no se tiene.'],
+                                ['tipo_relacion',        true,  'Relación con el estudiante. Valores aceptados: <code>padre</code> / <code>madre</code> / <code>hermano</code> / <code>otro</code>.'],
+                            ];
+                            foreach ($campos as $i => [$col, $req, $desc]):
+                            ?>
+                            <tr style="background:<?= $i % 2 === 0 ? 'transparent' : 'var(--bg-hover)' ?>;">
+                                <td style="padding:.38rem .65rem;border-bottom:1px solid var(--border);
+                                           font-family:monospace;color:var(--text-primary);white-space:nowrap;">
+                                    <?= $col ?>
+                                </td>
+                                <td style="padding:.38rem .65rem;border-bottom:1px solid var(--border);text-align:center;">
+                                    <?php if ($req): ?>
+                                    <span style="background:var(--red-bg,#ffeef0);color:var(--red-text,#c0392b);
+                                                 border-radius:4px;padding:1px 7px;font-size:.7rem;font-weight:700;">
+                                        Sí
+                                    </span>
+                                    <?php else: ?>
+                                    <span style="color:var(--text-muted);font-size:.75rem;">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="padding:.38rem .65rem;border-bottom:1px solid var(--border);
+                                           color:var(--text-secondary);line-height:1.5;">
+                                    <?= $desc ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Nota compatibilidad formularios -->
+                <div style="background:var(--amber-bg,#F8F0D8);border:1px solid var(--amber-border,#E4C060);
+                            border-radius:8px;padding:.55rem .85rem;margin-bottom:1.1rem;
+                            font-size:.78rem;color:var(--amber-text,#7A5000);display:flex;gap:.5rem;">
+                    <i class="bi bi-info-circle-fill" style="flex-shrink:0;margin-top:.1rem;"></i>
+                    <span>
+                        También se acepta directamente el <strong>CSV exportado desde Formularios</strong>
+                        (columnas "Nombre Alumno", "Nombre Tutor", "Teléfono", etc.).
+                        Las columnas que no correspondan a datos del estudiante se ignoran automáticamente.
+                    </span>
+                </div>
+
+                <!-- File picker -->
+                <div class="mb-2">
+                    <label for="csvImportArchivo"
+                           style="font-size:.82rem;font-weight:600;margin-bottom:.35rem;display:block;">
+                        Seleccionar archivo
+                    </label>
+                    <input type="file" class="form-control form-control-sm"
+                           id="csvImportArchivo" accept=".csv,text/csv">
+                </div>
+
+                <div id="csvImportResultado"
+                     style="display:none;background:var(--bg-input);border:1px solid var(--border);
+                            border-radius:8px;padding:.65rem .85rem;margin-top:.75rem;"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                <button class="btn btn-guardar btn-sm" id="btnProcesarImport"
+                        onclick="procesarImportacion()">
+                    <i class="bi bi-upload me-1"></i>Importar
+                </button>
             </div>
         </div>
     </div>
